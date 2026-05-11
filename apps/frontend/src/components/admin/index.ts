@@ -18,3 +18,5 @@ export {
 export { ConfirmDialog } from "./ConfirmDialog";
 export { KpiTile } from "./KpiTile";
 export { ToastHost } from "./ToastHost";
+export { BilingualField } from "./BilingualField";
+export { AdminMarkdownPreview } from "./AdminMarkdownPreview";

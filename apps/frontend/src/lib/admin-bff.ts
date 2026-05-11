@@ -52,3 +52,32 @@ export async function adminPatch<T>(path: string, body: unknown): Promise<T> {
   }
   return result.data;
 }
+
+/** Server-side POST with the admin token forwarded. */
+export async function adminPost<T>(path: string, body?: unknown): Promise<T> {
+  const token = await requireAdminToken();
+  const result = await serverApiClient.post<T>(path, body, undefined, token);
+  if (result.error || result.data === undefined) {
+    throw new ApiError(
+      result.error?.code ?? "EMPTY_RESPONSE",
+      result.error?.message ?? "Request failed",
+      result.status,
+      result.error?.extra,
+    );
+  }
+  return result.data;
+}
+
+/** Server-side DELETE with the admin token forwarded. Returns void on 204. */
+export async function adminDelete(path: string): Promise<void> {
+  const token = await requireAdminToken();
+  const result = await serverApiClient.delete<void>(path, undefined, token);
+  if (result.error) {
+    throw new ApiError(
+      result.error.code,
+      result.error.message,
+      result.status,
+      result.error.extra,
+    );
+  }
+}

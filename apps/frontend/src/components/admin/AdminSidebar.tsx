@@ -35,13 +35,13 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
 
-  { href: "/admin/services", label: "Services", icon: Briefcase, group: "Content", comingSoon: true },
-  { href: "/admin/vehicles", label: "Vehicles", icon: Car, comingSoon: true },
-  { href: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote, comingSoon: true },
-  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle, comingSoon: true },
+  { href: "/admin/services", label: "Services", icon: Briefcase, group: "Content" },
+  { href: "/admin/vehicles", label: "Vehicles", icon: Car },
+  { href: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },
+  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
   { href: "/admin/pricing", label: "Pricing", icon: Tags, comingSoon: true },
-  { href: "/admin/legal-pages", label: "Legal pages", icon: FileText, comingSoon: true },
-  { href: "/admin/ui-strings", label: "UI strings", icon: Languages, comingSoon: true },
+  { href: "/admin/legal-pages", label: "Legal pages", icon: FileText },
+  { href: "/admin/ui-strings", label: "UI strings", icon: Languages },
 
   { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, group: "Operations", comingSoon: true },
   { href: "/admin/contact-messages", label: "Contact messages", icon: Mail, comingSoon: true },
@@ -111,7 +111,7 @@ export function AdminSidebar() {
 
       {/* Footer */}
       <div className="border-t border-slate-200 p-3">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">v0.5 · Phase 5a</p>
+        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">v0.5 · Phase 5b</p>
       </div>
     </aside>
   );
