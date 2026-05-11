@@ -103,7 +103,7 @@ export default async function ServiceDetailEn({ params }: PageParams) {
   return (
     <>
       <section className="bg-cream">
-        <Container className="pt-12 pb-6 md:pt-16">
+        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
           <Breadcrumb
             crumbs={[
               { name: t("nav.home"), href: "/en" },

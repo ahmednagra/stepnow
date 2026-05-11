@@ -48,21 +48,15 @@ export default async function PricingPageEn() {
   return (
     <>
       <section className="bg-cream">
-        <Container className="pt-12 pb-6 md:pt-16">
+        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
           <Breadcrumb
             crumbs={[
               { name: t("nav.home"), href: "/en" },
               { name: t("pricing.page.title"), href: "/en/pricing" },
             ]}
           />
-          <header className="mt-8 max-w-3xl">
-            <div className="flex items-center gap-3">
-              <span aria-hidden="true" className="block h-px w-10 bg-gold" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-                {pickT(t, "pricing.page.eyebrow", "Transparency")}
-              </p>
-            </div>
-            <h1 className="mt-4 font-serif text-section md:text-hero">
+          <header className="mt-5 max-w-3xl">
+            <h1 className="font-serif text-section md:text-hero">
               {t("pricing.page.title")}
             </h1>
             <p className="mt-4 text-body-lg text-mute">{t("pricing.page.intro")}</p>
