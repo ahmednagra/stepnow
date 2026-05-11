@@ -14,3 +14,4 @@ export { LeafletMap } from "./LeafletMap";
 export type { LeafletMarker } from "./LeafletMap";
 export { BrandMark } from "./BrandMark";
 export { ScrollReveal } from "./ScrollReveal";
+export { Logo } from "./Logo";

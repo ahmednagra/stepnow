@@ -3,11 +3,11 @@
 
 import Link from "next/link";
 import { useUiStrings } from "@/hooks/useUiStrings";
-import { BrandMark } from "./BrandMark";
 import { Container } from "./Container";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
+import { Logo } from "./Logo";
 
 interface FooterProps {
   settings: SettingsPublic;
@@ -69,9 +69,8 @@ export function Footer({ settings }: FooterProps) {
       <Container as="div" className="grid gap-12 py-20 md:grid-cols-12 md:py-24">
         {/* Brand column */}
         <div className="md:col-span-4">
-          <div className="flex items-center gap-3 text-cream">
-            <BrandMark size={32} tone="light" />
-            <span className="wordmark !text-cream">{displayName}</span>
+          <div className="inline-flex items-center bg-cream px-4 py-3">
+            <Logo height={40} />
           </div>
           <p className="mt-6 max-w-xs text-sm leading-relaxed text-cream/55">
             {t("footer.col.brand")}

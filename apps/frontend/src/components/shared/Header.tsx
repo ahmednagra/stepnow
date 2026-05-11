@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
 import { useUiStrings } from "@/hooks/useUiStrings";
-import { BrandMark } from "./BrandMark";
+import { Logo } from "./Logo";
 import { Container } from "./Container";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "@/components/ui";
@@ -67,12 +67,12 @@ export function Header({ settings }: HeaderProps) {
       <Container as="div" className="flex h-[4.5rem] items-center justify-between gap-8 md:h-[5rem]">
         {/* Wordmark */}
         <Link
-          href={locale === "de" ? "/" : "/en"}
-          className="flex items-center gap-2.5 text-ink transition-opacity duration-base hover:opacity-70"
-        >
-          <BrandMark size={26} tone="dark" />
-          <span className="wordmark hidden sm:inline-block">{displayName}</span>
-        </Link>
+        href={locale === "de" ? "/" : "/en"}
+        aria-label={displayName}
+        className="flex items-center transition-opacity duration-base hover:opacity-80"
+      >
+        <Logo height={36} priority />
+      </Link>
 
         {/* Primary nav */}
         <nav aria-label="Primary" className="hidden lg:flex lg:items-center lg:gap-9">
