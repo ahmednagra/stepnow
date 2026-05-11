@@ -1,4 +1,9 @@
-// src/components/shared/Markdown.tsx
+// apps/frontend/src/components/shared/Markdown.tsx
+// Phase 3d polish — restrained markdown renderer using react-markdown.
+// Tailwind classes match the editorial body type used across pages.
+
+"use client";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/utils/cn";
@@ -8,30 +13,55 @@ interface MarkdownProps {
   className?: string;
 }
 
-/**
- * Renders DB-sourced markdown (legal pages, service long descriptions, FAQ
- * answers). Restrains to a known set of safe element types; raw HTML is
- * disabled by default in react-markdown so this is safe.
- */
 export function Markdown({ source, className }: MarkdownProps) {
   return (
-    <div
-      className={cn(
-        "prose-base space-y-4 text-[15px] leading-relaxed text-ink",
-        "[&_h1]:font-serif [&_h1]:text-section [&_h1]:tracking-tight [&_h1]:mt-8 [&_h1]:mb-4",
-        "[&_h2]:font-serif [&_h2]:text-sub [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-3",
-        "[&_h3]:font-serif [&_h3]:text-xl [&_h3]:mt-6 [&_h3]:mb-2",
-        "[&_p]:leading-relaxed",
-        "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1",
-        "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1",
-        "[&_a]:text-gold-dark [&_a]:underline [&_a]:underline-offset-4 [&_a:hover]:text-gold",
-        "[&_strong]:font-semibold",
-        "[&_blockquote]:border-l-2 [&_blockquote]:border-line [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-mute",
-        "[&_code]:font-mono [&_code]:text-sm [&_code]:bg-line/30 [&_code]:px-1",
-        className,
-      )}
-    >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
+    <div className={cn("prose-base text-[16px] leading-[1.75] text-ink/90", className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => (
+            <h1 className="mt-10 mb-4 font-serif text-3xl tracking-tight">{children}</h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="mt-10 mb-4 font-serif text-2xl tracking-tight">{children}</h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="mt-8 mb-3 font-serif text-xl tracking-tight">{children}</h3>
+          ),
+          p: ({ children }) => <p className="mb-5 leading-[1.75]">{children}</p>,
+          a: ({ children, href }) => (
+            <a
+              href={href}
+              className="text-gold-deep underline decoration-gold/40 underline-offset-2 transition-colors hover:text-ink"
+            >
+              {children}
+            </a>
+          ),
+          ul: ({ children }) => <ul className="my-5 space-y-2 pl-5">{children}</ul>,
+          ol: ({ children }) => (
+            <ol className="my-5 list-decimal space-y-2 pl-5 marker:text-gold-deep">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li className="leading-relaxed before:mr-2 before:text-gold before:content-['—']">
+              {children}
+            </li>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold text-ink">{children}</strong>
+          ),
+          em: ({ children }) => <em className="italic">{children}</em>,
+          hr: () => <hr className="my-10 border-line" />,
+          blockquote: ({ children }) => (
+            <blockquote className="my-6 border-l-2 border-gold pl-5 font-serif text-xl italic">
+              {children}
+            </blockquote>
+          ),
+        }}
+      >
+        {source}
+      </ReactMarkdown>
     </div>
   );
 }

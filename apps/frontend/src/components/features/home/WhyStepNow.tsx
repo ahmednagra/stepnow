@@ -1,5 +1,8 @@
-// src/components/features/home/WhyStepNow.tsx
-import { Check } from "lucide-react";
+// apps/frontend/src/components/features/home/WhyStepNow.tsx
+// Phase 3d polish — bullets switched from Check-in-circle to a numbered list
+// with gold serif numerals + hairline dividers between rows. Reads like an
+// editorial pull-out, not a checklist.
+
 import type { TFunction } from "@/lib/i18n/t";
 import { Container } from "@/components/shared";
 
@@ -17,21 +20,38 @@ const BULLETS = [
 
 export function WhyStepNow({ t }: WhyStepNowProps) {
   return (
-    <section className="border-t border-line bg-cream">
-      <Container className="grid gap-12 py-section md:grid-cols-2">
-        <div>
-          <h2 className="font-serif text-section">{t("home.why.heading")}</h2>
-          <p className="mt-4 max-w-prose text-body-lg text-mute">{t("home.why.intro")}</p>
+    <section className="border-t border-line bg-paper">
+      <Container className="grid gap-16 py-section md:grid-cols-12 md:gap-12">
+        <div className="md:col-span-5">
+          <p className="label-eyebrow">{t("home.why.pre_heading") || "Differenzierung"}</p>
+          <h2 className="mt-3 font-serif text-section">{t("home.why.heading")}</h2>
+          <p className="mt-5 max-w-prose text-body-lg text-mute">{t("home.why.intro")}</p>
         </div>
-        <ul className="flex flex-col gap-4">
-          {BULLETS.map((key) => (
-            <li key={key} className="flex items-start gap-3">
-              <span className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold-dark">
-                <Check className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
-              </span>
-              <span className="text-[15px] leading-relaxed text-ink">{t(key)}</span>
-            </li>
-          ))}
+        <ul className="divide-y divide-line border-y border-line md:col-span-7">
+          {BULLETS.map((key, idx) => {
+            const text = t(key);
+            // Split on em-dash (used in the seeded copy) for a small
+            // "lead — supporting text" feel.
+            const [lead, rest] = text.includes("—")
+              ? [text.split("—")[0]?.trim() ?? "", text.split("—").slice(1).join("—").trim()]
+              : [text, ""];
+            return (
+              <li key={key} className="flex items-start gap-5 py-5">
+                <span
+                  aria-hidden="true"
+                  className="font-serif text-xl tabular-nums text-gold-deep"
+                >
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <div className="flex-1">
+                  <p className="font-medium tracking-tight text-ink">{lead}</p>
+                  {rest && (
+                    <p className="mt-1 text-[14.5px] leading-relaxed text-mute">{rest}</p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </Container>
     </section>

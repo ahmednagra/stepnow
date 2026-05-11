@@ -1,23 +1,30 @@
-// src/components/admin/BookingStatusBadge.tsx
-import type { BookingStatus } from "@/types";
+// apps/frontend/src/components/admin/BookingStatusBadge.tsx
+// Phase 3d polish — refined tone palette matching admin restraint.
+
 import { cn } from "@/utils/cn";
 
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  new: "New",
-  contacted: "Contacted",
-  quoted: "Quoted",
-  confirmed: "Confirmed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
+export const BOOKING_STATUS_LABELS = {
+  new: "Neu",
+  confirmed: "Bestätigt",
+  in_progress: "Unterwegs",
+  completed: "Abgeschlossen",
+  cancelled: "Storniert",
+} as const;
 
-const STATUS_TONES: Record<BookingStatus, string> = {
-  new: "bg-amber-50 text-amber-700 border-amber-200",
-  contacted: "bg-blue-50 text-blue-700 border-blue-200",
-  quoted: "bg-violet-50 text-violet-700 border-violet-200",
-  confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  completed: "bg-slate-100 text-slate-700 border-slate-300",
-  cancelled: "bg-red-50 text-red-700 border-red-200",
+export type BookingStatus = keyof typeof BOOKING_STATUS_LABELS;
+
+export const BOOKING_STATUS_TONES: Record<
+  BookingStatus,
+  { wrap: string; dot: string }
+> = {
+  new: { wrap: "bg-amber-50 text-amber-800 border-amber-200", dot: "bg-amber-500" },
+  confirmed: {
+    wrap: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  in_progress: { wrap: "bg-sky-50 text-sky-800 border-sky-200", dot: "bg-sky-500" },
+  completed: { wrap: "bg-slate-100 text-slate-700 border-slate-200", dot: "bg-slate-400" },
+  cancelled: { wrap: "bg-rose-50 text-rose-800 border-rose-200", dot: "bg-rose-500" },
 };
 
 interface BookingStatusBadgeProps {
@@ -26,17 +33,17 @@ interface BookingStatusBadgeProps {
 }
 
 export function BookingStatusBadge({ status, className }: BookingStatusBadgeProps) {
+  const tone = BOOKING_STATUS_TONES[status];
   return (
     <span
       className={cn(
-        "inline-block border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
-        STATUS_TONES[status],
+        "inline-flex items-center gap-1.5 border px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.16em]",
+        tone.wrap,
         className,
       )}
     >
-      {STATUS_LABELS[status]}
+      <span aria-hidden="true" className={cn("inline-block h-1.5 w-1.5 rounded-full", tone.dot)} />
+      {BOOKING_STATUS_LABELS[status]}
     </span>
   );
 }
-
-export { STATUS_LABELS as BOOKING_STATUS_LABELS, STATUS_TONES as BOOKING_STATUS_TONES };

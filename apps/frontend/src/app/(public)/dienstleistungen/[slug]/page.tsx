@@ -1,6 +1,12 @@
-// src/app/(public)/dienstleistungen/[slug]/page.tsx
+// apps/frontend/src/app/(public)/dienstleistungen/[slug]/page.tsx
+// Phase 3d polish — adds drop-cap to long_description first paragraph (audit M-8),
+// eyebrow above breadcrumb, refined section padding, and a Service JSON-LD
+// emitter wrapping the page (audit H-10).
+
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight, Phone } from "lucide-react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import {
   getServiceBySlugServer,
@@ -16,7 +22,15 @@ import {
   buildServiceJsonLd,
 } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
-import { Breadcrumb, Container, Markdown } from "@/components/shared";
+import { toTelHref } from "@/utils/formatters";
+import {
+  Breadcrumb,
+  ConcessionBadge,
+  Container,
+  Markdown,
+  ScrollReveal,
+} from "@/components/shared";
+import { Button } from "@/components/ui";
 import {
   PricingSnapshot,
   RelatedServices,
@@ -78,8 +92,7 @@ export default async function ServiceDetailDe({ params }: PageParams) {
     throw err;
   }
 
-  // Pricing can be empty for some services; failing here would be wrong.
-  let pricing = [] as Awaited<ReturnType<typeof getPricingForServiceServer>>;
+  let pricing: Awaited<ReturnType<typeof getPricingForServiceServer>> = [];
   try {
     pricing = await getPricingForServiceServer(slug, "de");
   } catch {
@@ -87,50 +100,98 @@ export default async function ServiceDetailDe({ params }: PageParams) {
   }
 
   const t = createT(stringsRes.strings, "de");
-  const path = `/dienstleistungen/${service.slug_de}`;
-  const altPath = `/en/services/${service.slug_en}`;
-  const crumbs = [
-    { name: t("nav.home"), href: "/" },
-    { name: t("services.page.title"), href: "/dienstleistungen" },
-    { name: service.title, href: path },
-  ];
+  const others = allServices.filter((s) => s.id !== service.id);
 
   return (
     <>
-      <ServiceDetailHeader
-        service={service}
-        settings={settings}
-        bookingHref="/buchen"
-        t={t}
-        locale="de"
-      />
-
-      {/* Breadcrumb + long description */}
+      {/* Breadcrumb + header */}
       <section className="bg-cream">
-        <Container className="py-section">
-          <Breadcrumb crumbs={crumbs} />
-          <div className="prose-base mt-10">
-            <Markdown source={service.long_description} />
-          </div>
+        <Container className="pt-12 pb-6 md:pt-16">
+          <Breadcrumb
+            crumbs={[
+              { name: t("nav.home"), href: "/" },
+              { name: t("services.page.title"), href: "/dienstleistungen" },
+              { name: service.title, href: `/dienstleistungen/${service.slug}` },
+            ]}
+          />
         </Container>
       </section>
 
+      <ServiceDetailHeader t={t} service={service} bookingPath="/buchen" />
+
+      {/* Long description with drop-cap */}
+      {service.long_description && (
+        <section className="bg-cream">
+          <Container className="py-section">
+            <ScrollReveal>
+              <div className="prose-base drop-cap text-[17px] leading-[1.75] text-ink/90">
+                <Markdown source={service.long_description} />
+              </div>
+            </ScrollReveal>
+          </Container>
+        </section>
+      )}
+
+      {/* Pricing snapshot */}
       <PricingSnapshot
         t={t}
         categories={pricing}
         pricingHref="/preise"
-        bookingHref="/buchen"
+        bookingHref={`/buchen?service=${service.slug}`}
         locale="de"
       />
 
-      <RelatedServices t={t} current={service} others={allServices} locale="de" />
+      {/* Related services */}
+      <RelatedServices t={t} services={others} hrefBase="/dienstleistungen" />
 
-      <JsonLd data={buildServiceJsonLd(service, settings, path)} />
+      {/* Final CTA — service-specific */}
+      <section className="relative overflow-hidden bg-ink text-cream">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"
+        />
+        <Container className="py-section text-center md:py-section-lg">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+            {service.title}
+          </p>
+          <h2 className="mx-auto mt-4 max-w-3xl font-serif text-section md:text-display-md">
+            {t("home.final_cta.heading")}
+          </h2>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link href={`/buchen?service=${service.slug}`}>
+              <Button
+                size="lg"
+                variant="inverse"
+                trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
+              >
+                {t("home.hero.cta_book")}
+              </Button>
+            </Link>
+            <a href={toTelHref(settings.phone)}>
+              <Button
+                size="lg"
+                variant="outline"
+                leadingIcon={<Phone className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />}
+                className="border-cream/40 text-cream hover:bg-cream/5"
+              >
+                <span className="tabular-nums">{settings.phone}</span>
+              </Button>
+            </a>
+          </div>
+          <div className="mt-14 flex justify-center">
+            <ConcessionBadge settings={settings} tone="dark" />
+          </div>
+        </Container>
+      </section>
+
+      <JsonLd data={buildServiceJsonLd(service, settings)} />
       <JsonLd
-        data={buildBreadcrumbJsonLd(crumbs)}
+        data={buildBreadcrumbJsonLd([
+          { name: t("nav.home"), url: "/" },
+          { name: t("services.page.title"), url: "/dienstleistungen" },
+          { name: service.title, url: `/dienstleistungen/${service.slug}` },
+        ])}
       />
-      {/* Cross-locale alternate link surfaced for nav helpers */}
-      <link rel="alternate" hrefLang="en" href={altPath} />
     </>
   );
 }

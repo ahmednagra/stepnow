@@ -1,95 +1,90 @@
-// src/components/features/booking/steps/StepReview.tsx
+// apps/frontend/src/components/features/booking/steps/StepReview.tsx
+// Phase 3d polish — addresses audit H-8.
+//   • Review sections each show an inline "Edit" link to jump back to that step.
+//   • Hairline rhythm, gold-deep section labels.
+//   • DSGVO consent + final submit at the bottom.
+
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Pencil, ArrowRight } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
-import type { Locale, ServicePublic } from "@/types";
+import type {
+  BookingSubmitted,
+  Locale,
+  ServicePublic,
+} from "@/types";
+import type { WizardStep } from "@/types/booking-wizard";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
-import { step5Schema, combineToIso } from "@/schemas/booking.schema";
-import { submitBooking } from "@/services/bookings";
-import { ApiError } from "@/lib/api-errors";
-import { Alert, Button, Checkbox } from "@/components/ui";
-import { formatDate } from "@/utils/formatters";
-import type { BookingSubmitted } from "@/types";
+import { Button, Checkbox } from "@/components/ui";
+import { submitBooking } from "@/services/booking";
 
 interface StepReviewProps {
   t: TFunction;
   locale: Locale;
   services: ServicePublic[];
-  onJumpTo: (step: "service" | "route" | "details" | "contact") => void;
+  onJumpTo: (s: WizardStep) => void;
   onSubmitted: (result: BookingSubmitted) => void;
 }
 
-function formatPickupDisplay(date: string | undefined, time: string | undefined, locale: Locale): string {
-  if (!date || !time) return "—";
-  return `${formatDate(date, locale)} · ${time}`;
-}
-
-export function StepReview({ t, locale, services, onJumpTo, onSubmitted }: StepReviewProps) {
+export function StepReview({
+  t,
+  locale,
+  services,
+  onJumpTo,
+  onSubmitted,
+}: StepReviewProps) {
   const draft = useBookingWizardStore((s) => s.draft);
-  const updateDraft = useBookingWizardStore((s) => s.updateDraft);
   const reset = useBookingWizardStore((s) => s.reset);
-  const [consentError, setConsentError] = useState<string | null>(null);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(!!draft.consent_dsgvo);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const service = services.find((s) => s.id === draft.service_id);
+  const privacyHref = locale === "de" ? "/datenschutz" : "/en/privacy";
 
-  async function onSubmit() {
-    setServerError(null);
-    // Client-side consent check
-    const consentResult = step5Schema.safeParse({
-      consent_dsgvo: draft.consent_dsgvo,
-      website: draft.website ?? "",
-    });
-    if (!consentResult.success) {
-      const issue = consentResult.error.issues[0];
-      setConsentError(t(issue?.message ?? "errors.consent_required"));
+  async function handleSubmit() {
+    if (!consent) {
+      setError(t("errors.consent_required"));
       return;
     }
-    setConsentError(null);
-
-    // Assemble BookingCreate
-    const iso = combineToIso(draft.pickup_date ?? "", draft.pickup_time ?? "");
-    if (!iso || !draft.service_id) {
-      setServerError(t("errors.generic"));
+    if (!draft.pickup_date || !draft.pickup_time) {
+      setError(t("errors.required"));
       return;
     }
-
+    setError(null);
     setSubmitting(true);
     try {
+      const requested_datetime = new Date(
+        `${draft.pickup_date}T${draft.pickup_time}:00`,
+      ).toISOString();
       const result = await submitBooking({
-        service_id: draft.service_id,
+        service_id: draft.service_id ?? null,
+        requested_datetime,
         pickup_address: draft.pickup_address ?? "",
-        pickup_postcode: draft.pickup_postcode || undefined,
-        pickup_city: draft.pickup_city || undefined,
+        pickup_postcode: draft.pickup_postcode || null,
+        pickup_city: draft.pickup_city || null,
         destination_address: draft.destination_address ?? "",
-        destination_postcode: draft.destination_postcode || undefined,
-        destination_city: draft.destination_city || undefined,
-        requested_datetime: iso,
+        destination_postcode: draft.destination_postcode || null,
+        destination_city: draft.destination_city || null,
         passenger_count: draft.passenger_count ?? 1,
         luggage_count: draft.luggage_count ?? 0,
-        special_requirements: draft.special_requirements || undefined,
+        special_requirements: draft.special_requirements || null,
         customer_name: draft.customer_name ?? "",
         customer_phone: draft.customer_phone ?? "",
         customer_email: draft.customer_email ?? "",
-        is_business: draft.is_business ?? false,
-        company_name: draft.is_business ? draft.company_name || undefined : undefined,
-        company_vatid: draft.is_business ? draft.company_vatid || undefined : undefined,
-        language: locale,
+        is_business: !!draft.is_business,
+        company_name: draft.is_business ? draft.company_name || null : null,
+        company_vatid: draft.is_business ? draft.company_vatid || null : null,
         consent_dsgvo: true,
+        language: locale,
+        website: draft.website ?? "",
       });
       reset();
       onSubmitted(result);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        // Per frontend.md §9.4: surface backend's localized message verbatim
-        setServerError(err.message);
-      } else {
-        setServerError(t("errors.generic"));
-      }
+    } catch {
+      setError(t("errors.generic"));
     } finally {
       setSubmitting(false);
     }
@@ -97,172 +92,149 @@ export function StepReview({ t, locale, services, onJumpTo, onSubmitted }: StepR
 
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-3">
-        <h2 className="font-serif text-section">{t("booking.review.heading")}</h2>
-        <p className="max-w-prose text-mute">{t("booking.review.subhead")}</p>
-      </header>
-
-      {serverError && (
-        <Alert tone="danger" title={t("errors.generic")}>
-          {serverError}
-        </Alert>
-      )}
-
-      <dl className="grid gap-px overflow-hidden border border-line bg-line md:grid-cols-2">
-        <ReviewBlock
-          heading={t("booking.review.section.service")}
-          onEdit={() => onJumpTo("service")}
-          editLabel={t("common.edit")}
-          items={[
-            { label: t("booking.service.label"), value: service?.title ?? "—" },
-            {
-              label: t("booking.datetime.heading"),
-              value: formatPickupDisplay(draft.pickup_date, draft.pickup_time, locale),
-            },
-          ]}
-        />
-        <ReviewBlock
-          heading={t("booking.review.section.route")}
-          onEdit={() => onJumpTo("route")}
-          editLabel={t("common.edit")}
-          items={[
-            {
-              label: t("booking.route.pickup_heading"),
-              value: joinAddress(draft.pickup_address, draft.pickup_postcode, draft.pickup_city),
-            },
-            {
-              label: t("booking.route.destination_heading"),
-              value: joinAddress(
-                draft.destination_address,
-                draft.destination_postcode,
-                draft.destination_city,
-              ),
-            },
-          ]}
-        />
-        <ReviewBlock
-          heading={t("booking.review.section.details")}
-          onEdit={() => onJumpTo("details")}
-          editLabel={t("common.edit")}
-          items={[
-            { label: t("booking.details.passengers_label"), value: String(draft.passenger_count ?? 1) },
-            { label: t("booking.details.luggage_label"), value: String(draft.luggage_count ?? 0) },
-            ...(draft.special_requirements
-              ? [{ label: t("booking.details.special_label"), value: draft.special_requirements }]
-              : []),
-          ]}
-        />
-        <ReviewBlock
-          heading={t("booking.review.section.contact")}
-          onEdit={() => onJumpTo("contact")}
-          editLabel={t("common.edit")}
-          items={[
-            { label: t("booking.contact.name_label"), value: draft.customer_name ?? "—" },
-            { label: t("booking.contact.phone_label"), value: draft.customer_phone ?? "—" },
-            { label: t("booking.contact.email_label"), value: draft.customer_email ?? "—" },
-            ...(draft.is_business
-              ? [
-                  {
-                    label: t("booking.contact.company_name_label"),
-                    value: draft.company_name ?? "—",
-                  },
-                ]
-              : []),
-          ]}
-        />
-      </dl>
-
-      {/* Honeypot — visually hidden but reachable */}
-      <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label>
-          Leave this field empty
-          <input
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            value={draft.website ?? ""}
-            onChange={(e) => updateDraft({ website: e.target.value })}
-          />
-        </label>
+      <div>
+        <h2 className="font-serif text-2xl tracking-tight">{t("booking.review.heading")}</h2>
+        <p className="mt-2 text-mute">{t("booking.review.subhead")}</p>
       </div>
+
+      <ul className="divide-y divide-line border-y border-line">
+        <ReviewSection
+          eyebrow={t("booking.step.service")}
+          onEdit={() => onJumpTo("service")}
+        >
+          <ReviewRow label={t("booking.review.service") || "Leistung"} value={service?.title ?? "—"} />
+          <ReviewRow
+            label={t("booking.review.when") || "Wann"}
+            value={
+              draft.pickup_date && draft.pickup_time
+                ? `${draft.pickup_date} · ${draft.pickup_time}`
+                : "—"
+            }
+          />
+        </ReviewSection>
+
+        <ReviewSection eyebrow={t("booking.step.route")} onEdit={() => onJumpTo("route")}>
+          <ReviewRow
+            label={t("booking.route.pickup_label") || "Abholung"}
+            value={[
+              draft.pickup_address,
+              [draft.pickup_postcode, draft.pickup_city].filter(Boolean).join(" "),
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          />
+          <ReviewRow
+            label={t("booking.route.destination_label") || "Ziel"}
+            value={[
+              draft.destination_address,
+              [draft.destination_postcode, draft.destination_city]
+                .filter(Boolean)
+                .join(" "),
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          />
+        </ReviewSection>
+
+        <ReviewSection eyebrow={t("booking.step.details")} onEdit={() => onJumpTo("details")}>
+          <ReviewRow
+            label={t("booking.details.passengers_label") || "Fahrgäste"}
+            value={String(draft.passenger_count ?? 1)}
+          />
+          <ReviewRow
+            label={t("booking.details.luggage_label") || "Gepäck"}
+            value={String(draft.luggage_count ?? 0)}
+          />
+          {draft.special_requirements && (
+            <ReviewRow
+              label={t("booking.details.notes_label") || "Hinweise"}
+              value={draft.special_requirements}
+            />
+          )}
+        </ReviewSection>
+
+        <ReviewSection eyebrow={t("booking.step.contact")} onEdit={() => onJumpTo("contact")}>
+          <ReviewRow label="Name" value={draft.customer_name ?? "—"} />
+          <ReviewRow label="Telefon" value={draft.customer_phone ?? "—"} />
+          <ReviewRow label="E-Mail" value={draft.customer_email ?? "—"} />
+          {draft.is_business && (
+            <>
+              <ReviewRow label="Firma" value={draft.company_name ?? "—"} />
+              <ReviewRow label="USt-IdNr" value={draft.company_vatid ?? "—"} />
+            </>
+          )}
+        </ReviewSection>
+      </ul>
 
       <Checkbox
         label={
-          <span>
-            {t("booking.review.consent")}{" "}
-            <Link
-              href={locale === "de" ? "/datenschutz" : "/en/privacy"}
-              className="text-gold-dark underline underline-offset-4 hover:text-ink"
-            >
-              {t("booking.review.consent_link")}
-            </Link>
-          </span>
+          <>
+            {t("booking.review.consent_intro") || "Ich stimme der "}
+            <Link href={privacyHref} className="underline hover:text-gold-deep">
+              {t("footer.legal.datenschutz")}
+            </Link>{" "}
+            {t("booking.review.consent_zu") || "zu."}
+          </>
         }
-        checked={draft.consent_dsgvo ?? false}
-        onChange={(e) => {
-          updateDraft({ consent_dsgvo: e.target.checked });
-          if (e.target.checked) setConsentError(null);
-        }}
-        error={consentError ?? undefined}
+        required
+        checked={consent}
+        onChange={(e) => setConsent(e.target.checked)}
       />
 
-      <div className="flex flex-col gap-3">
-        <Button onClick={onSubmit} isLoading={submitting} size="lg" variant="primary">
-          {t("booking.review.submit")}
+      {error && (
+        <p role="alert" className="text-[13px] font-medium text-danger">
+          {error}
+        </p>
+      )}
+
+      <div className="flex flex-wrap justify-end gap-3">
+        <Button
+          size="lg"
+          onClick={handleSubmit}
+          isLoading={submitting}
+          trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        >
+          {t("booking.review.submit") || "Anfrage absenden"}
         </Button>
-        <p className="text-xs text-mute">{t("booking.review.submit_note")}</p>
       </div>
     </div>
   );
 }
 
-interface ReviewItem {
-  label: string;
-  value: string;
-}
-
-function ReviewBlock({
-  heading,
+function ReviewSection({
+  eyebrow,
   onEdit,
-  editLabel,
-  items,
+  children,
 }: {
-  heading: string;
+  eyebrow: string;
   onEdit: () => void;
-  editLabel: string;
-  items: ReviewItem[];
+  children: React.ReactNode;
 }) {
   return (
-    <div className="bg-cream p-6">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="label-eyebrow">{heading}</h3>
+    <li className="flex flex-col gap-3 py-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+          {eyebrow}
+        </p>
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 text-xs text-gold-dark transition-colors duration-base hover:text-ink"
-          aria-label={editLabel}
+          className="inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.16em] text-mute transition-colors hover:text-ink"
         >
-          <Pencil className="h-3 w-3" aria-hidden="true" />
-          {editLabel}
+          <Pencil className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+          Ändern
         </button>
       </div>
-      <dl className="mt-4 flex flex-col gap-3">
-        {items.map((item, idx) => (
-          <div key={idx} className="flex flex-col gap-0.5">
-            <dt className="text-xs text-mute">{item.label}</dt>
-            <dd className="text-sm font-medium text-ink">{item.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+      <dl className="grid grid-cols-1 gap-1.5">{children}</dl>
+    </li>
   );
 }
 
-function joinAddress(
-  address: string | undefined,
-  postcode: string | undefined,
-  city: string | undefined,
-): string {
-  const cityPart = [postcode, city].filter(Boolean).join(" ");
-  return [address, cityPart].filter(Boolean).join(", ") || "—";
+function ReviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-4 text-[14px]">
+      <dt className="text-mute">{label}</dt>
+      <dd className="font-medium text-ink">{value || "—"}</dd>
+    </div>
+  );
 }

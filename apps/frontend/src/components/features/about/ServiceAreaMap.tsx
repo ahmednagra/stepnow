@@ -1,49 +1,53 @@
-// src/components/features/about/ServiceAreaMap.tsx
+// apps/frontend/src/components/features/about/ServiceAreaMap.tsx
+// Phase 3d polish — eyebrow + serif heading + premium-framed map.
+
+"use client";
+
 import type { TFunction } from "@/lib/i18n/t";
 import type { SettingsPublic } from "@/types";
-import { Container, LeafletMap } from "@/components/shared";
+import { Container, EmptyState, LeafletMap, type LeafletMarker } from "@/components/shared";
 
 interface ServiceAreaMapProps {
   t: TFunction;
   settings: SettingsPublic;
 }
 
-// Hardcoded coordinates for the headquarters + key service-area cities.
-// In a future iteration these could come from the backend, but for now they're
-// physical constants (a city's location doesn't change between releases).
-const HQ_COORDS = { lat: 48.7240, lng: 9.3854 }; // Deizisau approx.
-const AREA_MARKERS = [
-  { lat: 48.7240, lng: 9.3854, label: "Deizisau" },
-  { lat: 48.7758, lng: 9.1829, label: "Stuttgart" },
-  { lat: 48.7404, lng: 9.3061, label: "Esslingen am Neckar" },
-  { lat: 48.7113, lng: 9.4136, label: "Plochingen" },
-];
-
 export function ServiceAreaMap({ t, settings }: ServiceAreaMapProps) {
-  const markers = [
-    {
-      lat: HQ_COORDS.lat,
-      lng: HQ_COORDS.lng,
-      label: settings.business_name,
-      popup: `${settings.business_name}, ${settings.address_street}, ${settings.address_postcode} ${settings.address_city}`,
-    },
-    ...AREA_MARKERS.filter((m) => m.label !== "Deizisau"),
-  ];
+  const lat = Number(settings.address_lat);
+  const lng = Number(settings.address_lng);
+  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
 
   return (
-    <section className="border-t border-line bg-cream">
+    <section className="border-t border-line bg-paper">
       <Container className="py-section">
-        <header className="mb-8 max-w-3xl">
-          <h2 className="font-serif text-section">{t("about.service_area.heading")}</h2>
-          <p className="mt-3 text-body-lg text-mute">{t("about.service_area.body")}</p>
+        <header className="mb-12 max-w-3xl">
+          <p className="label-eyebrow">{t("about.area.eyebrow") || "Einsatzgebiet"}</p>
+          <h2 className="mt-3 font-serif text-section">{t("about.area.heading")}</h2>
+          <p className="mt-4 text-body-lg text-mute">{t("about.area.body")}</p>
         </header>
-        <LeafletMap
-          center={HQ_COORDS}
-          zoom={10}
-          markers={markers}
-          height="480px"
-          ariaLabel={t("about.service_area.heading")}
-        />
+        {hasCoords ? (
+          <div className="border border-line bg-cream">
+            <LeafletMap
+              markers={
+                [
+                  {
+                    lat,
+                    lng,
+                    label: settings.business_name,
+                  },
+                ] satisfies LeafletMarker[]
+              }
+              center={[lat, lng]}
+              zoom={11}
+              className="h-[460px]"
+            />
+          </div>
+        ) : (
+          <EmptyState
+            title={t("about.area.empty.title") || "Karte nicht verfügbar"}
+            description={t("about.area.empty.body") || "Standort wird in Kürze hinterlegt."}
+          />
+        )}
       </Container>
     </section>
   );

@@ -1,4 +1,8 @@
-// src/components/shared/ScrollReveal.tsx
+// apps/frontend/src/components/shared/ScrollReveal.tsx
+// Phase 3d polish — adds `stagger` prop for staggered child reveal (audit M-7).
+// When `stagger` is set, the component adds the `.stagger` class to its root
+// so direct children fade-up in sequence (delays defined in globals.css).
+
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
@@ -10,9 +14,11 @@ interface ScrollRevealProps {
   delay?: number;
   /** Disable reveal — render plain. Useful for hero/above-fold content. */
   immediate?: boolean;
+  /** Stagger direct children (80ms each, max 6) — for grids, lists. */
+  stagger?: boolean;
   className?: string;
   /** Render as this tag. */
-  as?: "div" | "section" | "article" | "li" | "header";
+  as?: "div" | "section" | "article" | "li" | "header" | "ul" | "ol";
 }
 
 /**
@@ -27,6 +33,7 @@ export function ScrollReveal({
   children,
   delay = 0,
   immediate = false,
+  stagger = false,
   className,
   as: Tag = "div",
 }: ScrollRevealProps) {
@@ -66,7 +73,10 @@ export function ScrollReveal({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const TagAny = Tag as any;
   return (
-    <TagAny ref={setRef} className={cn("reveal", visible && "is-visible", className)}>
+    <TagAny
+      ref={setRef}
+      className={cn(stagger ? "stagger" : "reveal", visible && "is-visible", className)}
+    >
       {children}
     </TagAny>
   );

@@ -1,4 +1,11 @@
-// src/components/features/home/FleetPreview.tsx
+// apps/frontend/src/components/features/home/FleetPreview.tsx
+// Phase 3d polish — addresses audit H-7.
+//   • Locked 4:3 aspect ratio on vehicle imagery.
+//   • Capacity icons promoted to a card footer row separated by a hairline.
+//   • Feature list rendered as wrap-aware pills (audit §11.2 — feature pills
+//     must wrap, never single-line scroll).
+//   • Empty image state: typographic placeholder per design-direction.md §11.3.
+
 import Image from "next/image";
 import { Users, Briefcase } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
@@ -11,52 +18,61 @@ interface FleetPreviewProps {
   vehicles: VehiclePublic[];
 }
 
-/**
- * Renders the fleet preview. If there are no vehicles configured, the section
- * hides entirely (returns null) — never an awkward "no vehicles to show" message.
- * Per design-direction.md §11.3: empty content disappears, doesn't placeholder.
- */
 export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
   if (vehicles.length === 0) return null;
 
   return (
-    <section className="bg-cream">
+    <section className="border-t border-line bg-cream">
       <Container className="py-section">
         <header className="mb-12 max-w-3xl">
-          <h2 className="font-serif text-section">{t("home.fleet.heading")}</h2>
+          <p className="label-eyebrow">{t("home.fleet.pre_heading") || "Unsere Flotte"}</p>
+          <h2 className="mt-3 font-serif text-section">{t("home.fleet.heading")}</h2>
         </header>
         <ul
           className={cn(
             "grid gap-6",
             vehicles.length === 1
-              ? "md:grid-cols-1 md:max-w-2xl"
+              ? "md:max-w-2xl md:grid-cols-1"
               : vehicles.length === 2
-              ? "md:grid-cols-2"
-              : "md:grid-cols-3",
+                ? "md:grid-cols-2"
+                : "md:grid-cols-3",
           )}
         >
           {vehicles.map((v) => (
-            <li key={v.id} className="flex flex-col border border-line bg-cream">
+            <li
+              key={v.id}
+              className="group flex flex-col border border-line bg-cream card-hover"
+            >
               <VehicleImage url={v.image_url} alt={v.name} />
-              <div className="flex flex-1 flex-col gap-3 p-6">
+              <div className="flex flex-1 flex-col gap-4 p-6">
                 <h3 className="font-serif text-xl tracking-tight">{v.name}</h3>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-mute">
+                {v.features.length > 0 && (
+                  <ul className="flex flex-wrap gap-1.5">
+                    {v.features.slice(0, 4).map((feature) => (
+                      <li
+                        key={feature}
+                        className="border border-line-soft bg-paper px-2.5 py-1 text-[11px] tracking-tight text-mute-strong"
+                      >
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {/* Card footer — capacity icons separated by hairline. */}
+                <div className="mt-auto flex items-center gap-5 border-t border-line pt-4 text-[13px] text-mute">
                   <span className="inline-flex items-center gap-1.5">
-                    <Users className="h-4 w-4" aria-hidden="true" />
-                    {v.capacity_passengers}
+                    <Users className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
+                    <span className="tabular-nums">{v.capacity_passengers}</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Briefcase className="h-4 w-4" aria-hidden="true" />
-                    {v.capacity_luggage}
+                    <Briefcase
+                      className="h-4 w-4 text-gold-deep"
+                      aria-hidden="true"
+                      strokeWidth={1.5}
+                    />
+                    <span className="tabular-nums">{v.capacity_luggage}</span>
                   </span>
                 </div>
-                <ul className="mt-2 space-y-1 text-sm text-mute">
-                  {v.features.slice(0, 4).map((feature) => (
-                    <li key={feature} className="before:mr-2 before:text-gold before:content-['—']">
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </li>
           ))}
@@ -67,25 +83,29 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
 }
 
 function VehicleImage({ url, alt }: { url: string | null; alt: string }) {
-  // Typographic empty-state when no photo yet — see design-direction.md §11.3.
   if (!url) {
+    // Typographic empty-state — same idea as service tiles when hero image
+    // is missing. Keeps the section feeling intentional, not broken.
     return (
-      <div
-        className="flex aspect-[4/3] items-center justify-center bg-ink/95"
-        aria-hidden="true"
-      >
-        <span className="font-serif text-4xl text-cream/30">{alt.split(" ")[0]}</span>
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-ink">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,134,90,0.18),transparent_60%)]"
+        />
+        <span className="absolute bottom-5 left-5 right-5 font-serif text-2xl tracking-tight text-cream/85">
+          {alt}
+        </span>
       </div>
     );
   }
   return (
-    <div className="relative aspect-[4/3] overflow-hidden bg-line/30">
+    <div className="relative aspect-[4/3] w-full overflow-hidden bg-line-soft">
       <Image
         src={url}
         alt={alt}
         fill
-        sizes="(max-width: 768px) 100vw, 33vw"
-        className="object-cover"
+        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+        className="object-cover transition-transform duration-slow ease-out-premium group-hover:scale-[1.02]"
       />
     </div>
   );

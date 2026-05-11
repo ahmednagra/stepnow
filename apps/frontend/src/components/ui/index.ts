@@ -1,4 +1,4 @@
-// src/components/ui/index.ts
+// apps/frontend/src/components/ui/index.ts
 export { Button } from "./Button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 export { Input } from "./Input";
@@ -16,3 +16,5 @@ export type { BadgeTone } from "./Badge";
 export { Skeleton } from "./Skeleton";
 export { Alert } from "./Alert";
 export type { AlertTone } from "./Alert";
+export { Card } from "./Card";
+export type { CardProps, CardTone, CardPadding } from "./Card";

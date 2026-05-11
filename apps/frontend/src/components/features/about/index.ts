@@ -1,4 +1,4 @@
-// src/components/features/about/index.ts
+// apps/frontend/src/components/features/about/index.ts
 export { StorySection } from "./StorySection";
 export { ValuesSection } from "./ValuesSection";
 export { Credentials } from "./Credentials";

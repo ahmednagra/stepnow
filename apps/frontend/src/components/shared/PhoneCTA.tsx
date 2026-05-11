@@ -1,45 +1,50 @@
-// src/components/shared/PhoneCTA.tsx
-"use client";
+// apps/frontend/src/components/shared/PhoneCTA.tsx
+// Phase 3d polish — refined tone variants for dark and light surfaces.
 
+import Link from "next/link";
 import { Phone } from "lucide-react";
+import { toTelHref } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 
 interface PhoneCTAProps {
   phone: string;
   label?: string;
+  tone?: "dark" | "light";
+  size?: "sm" | "md" | "lg";
   className?: string;
-  /** Compact: icon + number on one line. Default: stacked label + number. */
-  variant?: "compact" | "stacked";
 }
 
-/** Sanitize phone number for `tel:` link — strip spaces, dashes, parentheses. */
-function toTelHref(phone: string): string {
-  const cleaned = phone.replace(/[^\d+]/g, "");
-  return `tel:${cleaned}`;
-}
+const SIZES = {
+  sm: "text-[12px]",
+  md: "text-[14px]",
+  lg: "text-[16px]",
+};
 
-export function PhoneCTA({ phone, label, className, variant = "compact" }: PhoneCTAProps) {
-  if (variant === "stacked") {
-    return (
-      <a
-        href={toTelHref(phone)}
-        className={cn("flex flex-col text-ink hover:text-gold-dark", className)}
-      >
-        {label && <span className="label-eyebrow">{label}</span>}
-        <span className="mt-1 font-medium tracking-tight">{phone}</span>
-      </a>
-    );
-  }
+export function PhoneCTA({
+  phone,
+  label,
+  tone = "light",
+  size = "md",
+  className,
+}: PhoneCTAProps) {
   return (
-    <a
+    <Link
       href={toTelHref(phone)}
       className={cn(
-        "inline-flex items-center gap-2 text-ink hover:text-gold-dark transition-colors duration-base",
+        "inline-flex items-center gap-2 font-medium tracking-tight transition-colors duration-base",
+        SIZES[size],
+        tone === "dark"
+          ? "text-cream hover:text-gold"
+          : "text-ink hover:text-gold-deep",
         className,
       )}
     >
-      <Phone className="h-4 w-4" aria-hidden="true" />
-      <span className="font-medium">{phone}</span>
-    </a>
+      <Phone className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
+      {label ? (
+        <span>{label}</span>
+      ) : (
+        <span className="tabular-nums">{phone}</span>
+      )}
+    </Link>
   );
 }

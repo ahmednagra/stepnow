@@ -1,11 +1,14 @@
-// src/app/en/pricing/page.tsx
+// apps/frontend/src/app/en/pricing/page.tsx
+// Phase 3d polish — English pricing page mirroring (public)/preise/page.tsx.
+
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { getPricingForServiceServer } from "@/services/pricing";
+import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
-import { Breadcrumb, Container } from "@/components/shared";
+import { Breadcrumb, ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
 import { PricingTable } from "@/components/features/pricing/PricingTable";
 import type { PricingCategoryPublic } from "@/types";
 
@@ -23,9 +26,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PricingPageEn() {
-  const [stringsRes, services] = await Promise.all([
+  const [stringsRes, services, settings] = await Promise.all([
     getUiStringsServer("en"),
     listServicesServer("en"),
+    getSettingsServer("en"),
   ]);
   const t = createT(stringsRes.strings, "en");
 
@@ -51,9 +55,20 @@ export default async function PricingPageEn() {
             ]}
           />
           <header className="mt-8 max-w-3xl">
-            <h1 className="font-serif text-section md:text-hero">{t("pricing.page.title")}</h1>
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="block h-px w-10 bg-gold" />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+                {t("pricing.page.eyebrow") || "Transparency"}
+              </p>
+            </div>
+            <h1 className="mt-4 font-serif text-section md:text-hero">
+              {t("pricing.page.title")}
+            </h1>
             <p className="mt-4 text-body-lg text-mute">{t("pricing.page.intro")}</p>
-            <p className="mt-2 text-sm text-mute">{t("pricing.disclaimer")}</p>
+            <p className="mt-2 text-[13.5px] text-mute">{t("pricing.disclaimer")}</p>
+            <div className="mt-8">
+              <ConcessionBadge settings={settings} tone="light" />
+            </div>
           </header>
         </Container>
       </section>
@@ -68,6 +83,8 @@ export default async function PricingPageEn() {
           showDivider={idx > 0}
         />
       ))}
+
+      <MobileStickyBar settings={settings} />
     </>
   );
 }

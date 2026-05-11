@@ -1,4 +1,6 @@
-// src/components/ui/Input.tsx
+// apps/frontend/src/components/ui/Input.tsx
+// Phase 3d polish — refined border, focus animation, nudge on error (audit §11.3).
+
 "use client";
 
 import { forwardRef, useId, type InputHTMLAttributes } from "react";
@@ -11,10 +13,12 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   required?: boolean;
   /** Visually hide the label but keep it accessible to screen readers. */
   hideLabel?: boolean;
+  /** Optional leading visual (e.g., icon) — must be sized 16px. */
+  leadingAdornment?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, hint, error, required, hideLabel, id, className, ...rest },
+  { label, hint, error, required, hideLabel, id, className, leadingAdornment, ...rest },
   ref,
 ) {
   const reactId = useId();
@@ -29,36 +33,49 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <label
           htmlFor={inputId}
           className={cn(
-            "text-sm font-medium text-ink",
+            "text-[13px] font-medium tracking-tight text-ink",
             hideLabel && "sr-only",
           )}
         >
           {label}
-          {required && <span className="ml-1 text-gold-dark" aria-hidden="true">*</span>}
+          {required && <span className="ml-1 text-gold-deep" aria-hidden="true">*</span>}
         </label>
       )}
-      <input
-        ref={ref}
-        id={inputId}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        aria-required={required || undefined}
-        className={cn(
-          "h-11 w-full border bg-cream px-4 text-[15px] text-ink transition-colors duration-base",
-          "placeholder:text-mute",
-          "focus:border-gold focus:outline-none",
-          error ? "border-red-600" : "border-line",
-          rest.disabled && "cursor-not-allowed bg-line/30 text-mute",
+      <div className={cn("relative", error && "animate-nudge")}>
+        {leadingAdornment && (
+          <span
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mute"
+            aria-hidden="true"
+          >
+            {leadingAdornment}
+          </span>
         )}
-        {...rest}
-      />
+        <input
+          ref={ref}
+          id={inputId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          aria-required={required || undefined}
+          className={cn(
+            "h-11 w-full border bg-cream text-[15px] text-ink",
+            "transition-all duration-base ease-out-premium",
+            "placeholder:text-mute-soft",
+            "hover:border-line-strong",
+            "focus:border-gold-deep focus:bg-paper focus:outline-none",
+            error ? "border-danger" : "border-line",
+            rest.disabled && "cursor-not-allowed bg-line/30 text-mute",
+            leadingAdornment ? "pl-10 pr-4" : "px-4",
+          )}
+          {...rest}
+        />
+      </div>
       {hint && !error && (
         <p id={hintId} className="text-xs text-mute">
           {hint}
         </p>
       )}
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600">
+        <p id={errorId} role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       )}

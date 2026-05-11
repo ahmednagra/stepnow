@@ -1,4 +1,6 @@
-// src/components/ui/Textarea.tsx
+// apps/frontend/src/components/ui/Textarea.tsx
+// Phase 3d polish — matches Input refinements; supports optional character counter.
+
 "use client";
 
 import { forwardRef, useId, type TextareaHTMLAttributes } from "react";
@@ -10,55 +12,106 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   error?: string;
   required?: boolean;
   hideLabel?: boolean;
+  /** When set, displays a `count / max` counter (audit §6.4 contact form). */
+  showCounter?: boolean;
+  /** Used by the counter when `showCounter` is true; falls back to maxLength. */
+  maxChars?: number;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { label, hint, error, required, hideLabel, id, className, rows = 5, ...rest },
+  {
+    label,
+    hint,
+    error,
+    required,
+    hideLabel,
+    showCounter,
+    maxChars,
+    id,
+    className,
+    rows = 4,
+    value,
+    defaultValue,
+    ...rest
+  },
   ref,
 ) {
   const reactId = useId();
-  const inputId = id ?? `textarea-${reactId}`;
-  const hintId = hint ? `${inputId}-hint` : undefined;
-  const errorId = error ? `${inputId}-error` : undefined;
+  const taId = id ?? `ta-${reactId}`;
+  const hintId = hint ? `${taId}-hint` : undefined;
+  const errorId = error ? `${taId}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
+
+  // Best-effort current length (controlled or defaultValue).
+  const currentLen =
+    typeof value === "string"
+      ? value.length
+      : typeof defaultValue === "string"
+        ? defaultValue.length
+        : 0;
+  const cap = maxChars ?? rest.maxLength;
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
         <label
-          htmlFor={inputId}
-          className={cn("text-sm font-medium text-ink", hideLabel && "sr-only")}
+          htmlFor={taId}
+          className={cn(
+            "text-[13px] font-medium tracking-tight text-ink",
+            hideLabel && "sr-only",
+          )}
         >
           {label}
-          {required && <span className="ml-1 text-gold-dark" aria-hidden="true">*</span>}
+          {required && <span className="ml-1 text-gold-deep" aria-hidden="true">*</span>}
         </label>
       )}
-      <textarea
-        ref={ref}
-        id={inputId}
-        rows={rows}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        aria-required={required || undefined}
-        className={cn(
-          "w-full resize-y border bg-cream px-4 py-3 text-[15px] text-ink transition-colors duration-base",
-          "placeholder:text-mute",
-          "focus:border-gold focus:outline-none",
-          error ? "border-red-600" : "border-line",
-          rest.disabled && "cursor-not-allowed bg-line/30 text-mute",
+      <div className={cn("relative", error && "animate-nudge")}>
+        <textarea
+          ref={ref}
+          id={taId}
+          rows={rows}
+          value={value}
+          defaultValue={defaultValue}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          aria-required={required || undefined}
+          className={cn(
+            "w-full border bg-cream px-4 py-3 text-[15px] text-ink",
+            "transition-all duration-base ease-out-premium",
+            "placeholder:text-mute-soft",
+            "hover:border-line-strong",
+            "focus:border-gold-deep focus:bg-paper focus:outline-none",
+            error ? "border-danger" : "border-line",
+            rest.disabled && "cursor-not-allowed bg-line/30 text-mute",
+          )}
+          {...rest}
+        />
+      </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          {hint && !error && (
+            <p id={hintId} className="text-xs text-mute">
+              {hint}
+            </p>
+          )}
+          {error && (
+            <p id={errorId} role="alert" className="text-xs font-medium text-danger">
+              {error}
+            </p>
+          )}
+        </div>
+        {showCounter && cap !== undefined && (
+          <p
+            className={cn(
+              "text-[11px] tabular-nums text-mute",
+              currentLen > cap * 0.9 && "text-gold-dark",
+              currentLen >= cap && "text-danger",
+            )}
+          >
+            {currentLen} / {cap}
+          </p>
         )}
-        {...rest}
-      />
-      {hint && !error && (
-        <p id={hintId} className="text-xs text-mute">
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600">
-          {error}
-        </p>
-      )}
+      </div>
     </div>
   );
 });

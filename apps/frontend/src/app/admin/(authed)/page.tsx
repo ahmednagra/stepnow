@@ -1,7 +1,5 @@
-// src/app/admin/(authed)/page.tsx
-// Dashboard. Server component — fetches counts via the existing server-side
-// admin endpoints (requires the access cookie which getCurrentAdmin already
-// verified in the parent (authed)/layout.tsx).
+// apps/frontend/src/app/admin/(authed)/page.tsx
+// Phase 3d polish — admin dashboard with refined KPI tiles and recent activity.
 
 import { Suspense } from "react";
 import { CalendarCheck, Mail, MessageSquareQuote, Briefcase, History } from "lucide-react";
@@ -25,7 +23,7 @@ import {
   AdminTableEmpty,
 } from "@/components/admin";
 
-export const dynamic = "force-dynamic"; // counts must be fresh per request
+export const dynamic = "force-dynamic";
 
 interface DashboardData {
   totalBookings: number;
@@ -36,8 +34,6 @@ interface DashboardData {
 }
 
 async function loadDashboardData(): Promise<DashboardData> {
-  // We're in the (authed) layout — the token MUST be present here because
-  // the layout would have redirected otherwise. But fetch defensively.
   const token = await getAccessTokenFromCookies();
   if (!token) {
     return {
@@ -98,6 +94,15 @@ async function loadDashboardData(): Promise<DashboardData> {
   };
 }
 
+function fmtTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return iso;
+  }
+}
+
 export default async function DashboardPage() {
   const data = await loadDashboardData();
 
@@ -105,7 +110,7 @@ export default async function DashboardPage() {
     <>
       <AdminPageHeader
         title="Dashboard"
-        description="At-a-glance overview of recent activity."
+        description="Übersicht über aktuelle Aktivität."
       />
 
       <div className="p-6">
@@ -147,7 +152,7 @@ export default async function DashboardPage() {
               description="Last 10 audit log entries"
               flush
               headerActions={
-                <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-slate-400">
+                <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                   <History className="h-3 w-3" aria-hidden="true" />
                   Read-only
                 </span>
@@ -159,29 +164,27 @@ export default async function DashboardPage() {
                 ) : (
                   data.recentActivity.map((entry) => (
                     <AdminTableRow key={entry.id}>
-                      <AdminTableCell>
-                        <time
-                          dateTime={entry.created_at}
-                          className="text-[12px] text-slate-500"
-                          title={entry.created_at}
-                        >
-                          {formatRelativeTime(entry.created_at)}
-                        </time>
+                      <AdminTableCell className="tabular-nums">
+                        {fmtTime(entry.created_at)}
                       </AdminTableCell>
                       <AdminTableCell>
-                        <span className="text-[12px] text-slate-900">
-                          {entry.actor_email ?? "system"}
-                        </span>
+                        {entry.actor_email || (
+                          <span className="text-slate-400">system</span>
+                        )}
                       </AdminTableCell>
                       <AdminTableCell>
-                        <span className="inline-block bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-700">
+                        <span className="font-mono text-[11.5px] text-slate-700">
                           {entry.action}
                         </span>
                       </AdminTableCell>
                       <AdminTableCell>
-                        <span className="font-mono text-[11px] text-slate-600">
-                          {entry.table_name}
-                          {entry.record_id ? ` · ${truncate(entry.record_id, 12)}` : ""}
+                        <span className="text-slate-600">
+                          {entry.resource_type}
+                          {entry.resource_id && (
+                            <span className="ml-1 font-mono text-[11px] text-slate-400">
+                              · {entry.resource_id.slice(0, 8)}
+                            </span>
+                          )}
                         </span>
                       </AdminTableCell>
                     </AdminTableRow>
@@ -194,22 +197,4 @@ export default async function DashboardPage() {
       </div>
     </>
   );
-}
-
-function formatRelativeTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  const now = Date.now();
-  const seconds = Math.max(0, Math.floor((now - then) / 1000));
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-}
-
-function truncate(s: string, n: number): string {
-  return s.length > n ? `${s.slice(0, n)}…` : s;
 }

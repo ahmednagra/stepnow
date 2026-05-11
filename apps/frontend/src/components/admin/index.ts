@@ -1,4 +1,4 @@
-// src/components/admin/index.ts
+// apps/frontend/src/components/admin/index.ts
 export { AdminLayout } from "./AdminLayout";
 export { AdminSidebar } from "./AdminSidebar";
 export { AdminTopbar } from "./AdminTopbar";
@@ -17,7 +17,8 @@ export {
 } from "./AdminTable";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { KpiTile } from "./KpiTile";
-export { ToastHost } from "./ToastHost";
+export { ToastHost, pushToast } from "./ToastHost";
+export type { ToastAction } from "./ToastHost";
 export { BilingualField } from "./BilingualField";
 export { AdminMarkdownPreview } from "./AdminMarkdownPreview";
 export { Pagination } from "./Pagination";
@@ -26,4 +27,5 @@ export {
   BOOKING_STATUS_LABELS,
   BOOKING_STATUS_TONES,
 } from "./BookingStatusBadge";
+export type { BookingStatus } from "./BookingStatusBadge";
 export { ImageUploadField } from "./ImageUploadField";

@@ -1,11 +1,13 @@
-// src/app/en/book/page.tsx
+// apps/frontend/src/app/en/book/page.tsx
+// Phase 3d polish — English booking page mirror.
+
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
+import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
-import { WizardShell } from "@/components/features/booking";
+import { WizardShell } from "@/components/features/booking/WizardShell";
 
 export const revalidate = 300;
 
@@ -17,20 +19,21 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("booking.page.subhead"),
     path: "/en/book",
     locale: "en",
-    noindex: false,
   });
 }
 
 export default async function BookingPageEn() {
-  const services = await listServicesServer("en");
+  const [services, settings] = await Promise.all([
+    listServicesServer("en"),
+    getSettingsServer("en"),
+  ]);
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-cream" />}>
-      <WizardShell
-        locale="en"
-        services={services}
-        confirmationPath="/en/book/confirmation"
-      />
-    </Suspense>
+    <WizardShell
+      locale="en"
+      services={services}
+      confirmationPath="/en/book/confirmation"
+      settings={settings}
+    />
   );
 }

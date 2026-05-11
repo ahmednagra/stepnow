@@ -1,4 +1,7 @@
-// src/components/features/booking/WizardNavigation.tsx
+// apps/frontend/src/components/features/booking/WizardNavigation.tsx
+// Phase 3d polish — refined wizard nav: back-link feels like a footnote,
+// continue button is the visual anchor.
+
 "use client";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -7,9 +10,7 @@ import { Button } from "@/components/ui";
 
 interface WizardNavigationProps {
   t: TFunction;
-  /** Hide the back button on step 1. */
   canGoBack: boolean;
-  /** Hide the forward button on the final step (review submits via its own button). */
   showContinue: boolean;
   onBack: () => void;
   onContinue: () => void;
@@ -23,21 +24,21 @@ export function WizardNavigation({
   onContinue,
 }: WizardNavigationProps) {
   return (
-    <div className="flex items-center justify-between gap-4 border-t border-line pt-8">
+    <div className="flex items-center justify-between gap-4">
       {canGoBack ? (
-        <Button
-          variant="ghost"
+        <button
+          type="button"
           onClick={onBack}
-          leadingIcon={<ArrowLeft className="h-4 w-4" aria-hidden="true" />}
+          className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.20em] text-mute transition-colors hover:text-ink"
         >
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           {t("common.back")}
-        </Button>
+        </button>
       ) : (
         <span />
       )}
       {showContinue && (
         <Button
-          variant="primary"
           size="lg"
           onClick={onContinue}
           trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}

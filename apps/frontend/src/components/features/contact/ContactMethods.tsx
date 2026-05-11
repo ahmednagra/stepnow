@@ -1,5 +1,8 @@
-// src/components/features/contact/ContactMethods.tsx
-import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+// apps/frontend/src/components/features/contact/ContactMethods.tsx
+// Phase 3d polish — refined contact tiles with hairlines, gold-deep icons,
+// and an opening-hours block beneath the address tile.
+
+import { Phone, Mail, MapPin, Clock3 } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
@@ -11,62 +14,84 @@ interface ContactMethodsProps {
 
 export function ContactMethods({ t, settings }: ContactMethodsProps) {
   return (
-    <ul className="flex flex-col divide-y divide-line border-y border-line">
-      <li>
+    <ul className="flex flex-col gap-px bg-line">
+      {/* Phone */}
+      <li className="bg-cream">
         <a
           href={toTelHref(settings.phone)}
-          className="flex items-start gap-4 py-5 transition-colors duration-base hover:text-gold-dark"
+          className="flex items-start gap-5 p-6 transition-colors duration-base hover:bg-paper"
         >
-          <Phone className="mt-1 h-5 w-5 shrink-0 text-gold-dark" aria-hidden="true" />
-          <div className="flex flex-col">
-            <span className="label-eyebrow">{t("contact.method.phone")}</span>
-            <span className="mt-1 font-serif text-lg">{settings.phone}</span>
-            <span className="text-sm text-mute">{settings.opening_hours}</span>
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
+            <Phone className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <div className="flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
+              {t("contact.method.phone") || "Telefon"}
+            </p>
+            <p className="mt-1 font-serif text-xl tracking-tight tabular-nums text-ink">
+              {settings.phone}
+            </p>
+            {settings.opening_hours_phone && (
+              <p className="mt-1 text-[13px] text-mute">{settings.opening_hours_phone}</p>
+            )}
           </div>
         </a>
       </li>
-      <li>
+      {/* Email */}
+      <li className="bg-cream">
         <a
           href={`mailto:${settings.email}`}
-          className="flex items-start gap-4 py-5 transition-colors duration-base hover:text-gold-dark"
+          className="flex items-start gap-5 p-6 transition-colors duration-base hover:bg-paper"
         >
-          <Mail className="mt-1 h-5 w-5 shrink-0 text-gold-dark" aria-hidden="true" />
-          <div className="flex flex-col">
-            <span className="label-eyebrow">{t("contact.method.email")}</span>
-            <span className="mt-1 font-serif text-lg">{settings.email}</span>
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
+            <Mail className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <div className="flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
+              {t("contact.method.email") || "E-Mail"}
+            </p>
+            <p className="mt-1 break-all font-serif text-xl tracking-tight text-ink">
+              {settings.email}
+            </p>
           </div>
         </a>
       </li>
-      {settings.whatsapp_url && (
-        <li>
-          <a
-            href={settings.whatsapp_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-start gap-4 py-5 transition-colors duration-base hover:text-gold-dark"
-          >
-            <MessageCircle
-              className="mt-1 h-5 w-5 shrink-0 text-gold-dark"
-              aria-hidden="true"
-            />
-            <div className="flex flex-col">
-              <span className="label-eyebrow">{t("contact.method.whatsapp")}</span>
-              <span className="mt-1 font-serif text-lg">WhatsApp</span>
-            </div>
-          </a>
-        </li>
-      )}
-      <li className="flex items-start gap-4 py-5">
-        <MapPin className="mt-1 h-5 w-5 shrink-0 text-gold-dark" aria-hidden="true" />
-        <div className="flex flex-col">
-          <span className="label-eyebrow">{t("contact.method.address")}</span>
-          <address className="mt-1 not-italic font-serif text-lg leading-tight">
-            {settings.address_street}
-            <br />
-            {settings.address_postcode} {settings.address_city}
-          </address>
+      {/* Address */}
+      <li className="bg-cream">
+        <div className="flex items-start gap-5 p-6">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
+            <MapPin className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <div className="flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
+              {t("contact.method.address") || "Adresse"}
+            </p>
+            <address className="mt-1 not-italic font-serif text-lg leading-snug tracking-tight text-ink">
+              {settings.address_street}
+              <br />
+              {settings.address_postcode} {settings.address_city}
+            </address>
+          </div>
         </div>
       </li>
+      {/* Opening hours */}
+      {settings.opening_hours_rides && (
+        <li className="bg-cream">
+          <div className="flex items-start gap-5 p-6">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
+              <Clock3 className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+            </span>
+            <div className="flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
+                {t("contact.method.hours") || "Fahrzeiten"}
+              </p>
+              <p className="mt-1 text-[15px] leading-relaxed text-ink">
+                {settings.opening_hours_rides}
+              </p>
+            </div>
+          </div>
+        </li>
+      )}
     </ul>
   );
 }

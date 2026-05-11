@@ -1,64 +1,46 @@
-// src/components/shared/EmptyState.tsx
-import { type ReactNode } from "react";
+// apps/frontend/src/components/shared/EmptyState.tsx
+// Phase 3d polish — refined editorial empty-state for "no pricing yet",
+// "no map coordinates", etc. Hairline frame + gold eyebrow optional.
+
+import type { ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
 interface EmptyStateProps {
-  /** Optional eyebrow label above the title. */
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
-  /** Optional CTA at the bottom (button, link, etc). */
   action?: ReactNode;
-  /** Tone — dark for use over light bg (default), light for use over ink bg. */
-  tone?: "dark" | "light";
   className?: string;
 }
 
-/**
- * Typographic empty state. Used when an image is missing (no hero photo yet),
- * when a list is empty (no testimonials, no FAQs in a category), or as a
- * placeholder section per design-direction.md §11.3.
- */
 export function EmptyState({
   eyebrow,
   title,
   description,
   action,
-  tone = "dark",
   className,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 border px-6 py-16 text-center",
-        tone === "dark"
-          ? "border-line bg-cream text-ink"
-          : "border-cream/15 bg-ink text-cream",
+        "border border-line bg-paper p-10 text-center md:p-14",
         className,
       )}
     >
       {eyebrow && (
-        <span
-          className={cn(
-            "label-eyebrow",
-            tone === "light" && "!text-cream/60",
-          )}
-        >
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
           {eyebrow}
-        </span>
+        </p>
       )}
-      <p className="font-serif text-2xl md:text-3xl">{title}</p>
+      <h3 className="mt-3 font-serif text-2xl tracking-tight text-ink md:text-3xl">
+        {title}
+      </h3>
       {description && (
-        <p
-          className={cn(
-            "max-w-md text-sm",
-            tone === "dark" ? "text-mute" : "text-cream/70",
-          )}
-        >
+        <p className="mx-auto mt-4 max-w-md text-[14.5px] leading-relaxed text-mute">
           {description}
         </p>
       )}
-      {action && <div className="mt-3">{action}</div>}
+      {action && <div className="mt-6 flex justify-center">{action}</div>}
     </div>
   );
 }

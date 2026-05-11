@@ -1,4 +1,8 @@
-// src/components/shared/Footer.tsx
+// apps/frontend/src/components/shared/Footer.tsx
+// Phase 3d polish — refined column hierarchy, gold hairline accents on column
+// headings, opening-hours block, and concession line in the bottom strip
+// (audit §11.2 — "Final CTA / footer"). Matches website-outline.md §1.12.
+
 "use client";
 
 import Link from "next/link";
@@ -72,14 +76,23 @@ export function Footer({ settings }: FooterProps) {
           <div className="inline-flex items-center bg-cream px-4 py-3">
             <Logo height={40} />
           </div>
-          <p className="mt-6 max-w-xs text-sm leading-relaxed text-cream/55">
+          <p className="mt-7 max-w-xs text-[14px] leading-relaxed text-cream/60">
             {t("footer.col.brand")}
           </p>
+          {/* Concession line — strongest trust signal in footer (audit H-1). */}
+          {settings.concession_number && (
+            <p className="mt-6 inline-block border-t border-gold/30 pt-3 text-[11px] uppercase tracking-[0.22em] text-gold">
+              § 49 PBefG · {settings.concession_number}
+            </p>
+          )}
         </div>
 
         {/* Quick links */}
         <div className="md:col-span-2">
-          <p className="label-eyebrow !text-cream/45">{t("footer.col.quick_links")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+            {t("footer.col.quick_links")}
+          </p>
+          <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
           <ul className="mt-5 space-y-3">
             {QUICK_LINKS.map((item) => (
               <li key={item.key}>
@@ -96,7 +109,10 @@ export function Footer({ settings }: FooterProps) {
 
         {/* Services */}
         <div className="md:col-span-3">
-          <p className="label-eyebrow !text-cream/45">{t("footer.col.services")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+            {t("footer.col.services")}
+          </p>
+          <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
           <ul className="mt-5 space-y-3">
             {SERVICE_LINKS.map((item) => (
               <li key={item.key}>
@@ -113,7 +129,10 @@ export function Footer({ settings }: FooterProps) {
 
         {/* Contact */}
         <div className="md:col-span-3">
-          <p className="label-eyebrow !text-cream/45">{t("footer.col.contact")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+            {t("footer.col.contact")}
+          </p>
+          <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
           <address className="mt-5 space-y-1 not-italic text-[13px] leading-relaxed text-cream/75">
             <p>{settings.address_street}</p>
             <p>
@@ -122,7 +141,7 @@ export function Footer({ settings }: FooterProps) {
             <p className="mt-3">
               <a
                 href={toTelHref(settings.phone)}
-                className="transition-colors duration-base hover:text-gold"
+                className="tabular-nums transition-colors duration-base hover:text-gold"
               >
                 {settings.phone}
               </a>
@@ -139,13 +158,13 @@ export function Footer({ settings }: FooterProps) {
         </div>
       </Container>
 
-      {/* Bottom bar */}
+      {/* Bottom strip */}
       <div className="border-t border-cream/10">
         <Container
           as="div"
           className="flex flex-col items-start justify-between gap-4 py-6 md:flex-row md:items-center"
         >
-          <p className="text-xs tracking-wide text-cream/45">
+          <p className="text-[11px] tracking-wide text-cream/45">
             © {new Date().getFullYear()} {displayName}. {t("footer.copyright")}
           </p>
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -153,7 +172,7 @@ export function Footer({ settings }: FooterProps) {
               <li key={item.key}>
                 <Link
                   href={hrefFor(item)}
-                  className="text-xs tracking-wide text-cream/55 transition-colors duration-base hover:text-gold"
+                  className="text-[11px] tracking-wide text-cream/55 transition-colors duration-base hover:text-gold"
                 >
                   {t(item.key)}
                 </Link>

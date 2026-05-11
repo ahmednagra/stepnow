@@ -1,11 +1,14 @@
-// src/app/(public)/buchen/page.tsx
+// apps/frontend/src/app/(public)/buchen/page.tsx
+// Phase 3d polish — German booking page hosts the WizardShell. The shell
+// receives settings so the help line at the bottom can show the phone.
+
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
+import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
-import { WizardShell } from "@/components/features/booking";
+import { WizardShell } from "@/components/features/booking/WizardShell";
 
 export const revalidate = 300;
 
@@ -17,24 +20,21 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("booking.page.subhead"),
     path: "/buchen",
     locale: "de",
-    noindex: false,
   });
 }
 
 export default async function BookingPageDe() {
-  // Services come from the server; strings are read in WizardShell via
-  // useUiStrings (from UiStringsProvider). Functions cannot be passed from
-  // server components to client components in Next 14, so the t prop is
-  // intentionally not forwarded.
-  const services = await listServicesServer("de");
+  const [services, settings] = await Promise.all([
+    listServicesServer("de"),
+    getSettingsServer("de"),
+  ]);
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-cream" />}>
-      <WizardShell
-        locale="de"
-        services={services}
-        confirmationPath="/buchen/bestaetigung"
-      />
-    </Suspense>
+    <WizardShell
+      locale="de"
+      services={services}
+      confirmationPath="/buchen/bestaetigung"
+      settings={settings}
+    />
   );
 }

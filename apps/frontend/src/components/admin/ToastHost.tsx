@@ -1,58 +1,118 @@
-// src/components/admin/ToastHost.tsx
+// apps/frontend/src/components/admin/ToastHost.tsx
+// Phase 3d polish — addresses audit M-4 (Undo for destructive actions).
+//   • Toast queue with up to 3 visible at once.
+//   • Each toast may include an action (e.g. "Undo") that fires a callback
+//     and dismisses the toast.
+//   • Auto-dismiss after 6s (10s when an action is attached so the user has
+//     time to click Undo).
+
 "use client";
 
-import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
-import { useAdminToast, type ToastTone } from "@/hooks/useAdminToast";
+import { useEffect, useState } from "react";
+import { Check, AlertTriangle, Info, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 
-const TONE_CONFIG: Record<ToastTone, { icon: typeof CheckCircle2; bar: string; iconColor: string }> = {
-  success: { icon: CheckCircle2, bar: "border-l-emerald-500", iconColor: "text-emerald-500" },
-  error: { icon: AlertCircle, bar: "border-l-red-500", iconColor: "text-red-500" },
-  info: { icon: Info, bar: "border-l-blue-500", iconColor: "text-blue-500" },
-};
+type ToastTone = "success" | "error" | "info";
+
+export interface ToastAction {
+  label: string;
+  onClick: () => void | Promise<void>;
+}
+
+interface ToastEntry {
+  id: number;
+  tone: ToastTone;
+  message: string;
+  action?: ToastAction;
+}
+
+// Module-level subscriber so any component can push toasts.
+const subscribers: Array<(t: ToastEntry) => void> = [];
+let nextId = 1;
+
+export function pushToast(toast: Omit<ToastEntry, "id">) {
+  const entry: ToastEntry = { id: nextId++, ...toast };
+  for (const fn of subscribers) fn(entry);
+}
 
 export function ToastHost() {
-  const toasts = useAdminToast((s) => s.toasts);
-  const dismiss = useAdminToast((s) => s.dismiss);
+  const [toasts, setToasts] = useState<ToastEntry[]>([]);
+
+  useEffect(() => {
+    function push(t: ToastEntry) {
+      setToasts((cur) => [...cur, t].slice(-3));
+      const delay = t.action ? 10000 : 6000;
+      window.setTimeout(() => {
+        setToasts((cur) => cur.filter((x) => x.id !== t.id));
+      }, delay);
+    }
+    subscribers.push(push);
+    return () => {
+      const idx = subscribers.indexOf(push);
+      if (idx !== -1) subscribers.splice(idx, 1);
+    };
+  }, []);
 
   if (toasts.length === 0) return null;
 
   return (
     <div
+      role="status"
       aria-live="polite"
       aria-atomic="true"
-      className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2"
+      className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2"
     >
-      {toasts.map((toast) => {
-        const cfg = TONE_CONFIG[toast.tone];
-        const Icon = cfg.icon;
-        return (
-          <div
-            key={toast.id}
-            role={toast.tone === "error" ? "alert" : "status"}
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={cn(
+            "pointer-events-auto flex items-start gap-3 border bg-white px-4 py-3 shadow-lg",
+            t.tone === "success" && "border-emerald-300",
+            t.tone === "error" && "border-rose-300",
+            t.tone === "info" && "border-slate-300",
+          )}
+          style={{ minWidth: 280, maxWidth: 420 }}
+        >
+          <span
+            aria-hidden="true"
             className={cn(
-              "pointer-events-auto flex w-80 items-start gap-3 border border-l-4 bg-white p-3 shadow-md",
-              cfg.bar,
+              "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center",
+              t.tone === "success" && "text-emerald-700",
+              t.tone === "error" && "text-rose-700",
+              t.tone === "info" && "text-slate-700",
             )}
           >
-            <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", cfg.iconColor)} aria-hidden="true" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900">{toast.title}</p>
-              {toast.body && (
-                <p className="mt-0.5 text-xs text-slate-600">{toast.body}</p>
-              )}
-            </div>
+            {t.tone === "success" ? (
+              <Check className="h-4 w-4" strokeWidth={2} />
+            ) : t.tone === "error" ? (
+              <AlertTriangle className="h-4 w-4" strokeWidth={1.5} />
+            ) : (
+              <Info className="h-4 w-4" strokeWidth={1.5} />
+            )}
+          </span>
+          <p className="flex-1 text-[13px] leading-snug text-slate-800">{t.message}</p>
+          {t.action && (
             <button
               type="button"
-              onClick={() => dismiss(toast.id)}
-              aria-label="Dismiss"
-              className="text-slate-400 transition-colors hover:text-slate-900"
+              onClick={() => {
+                t.action!.onClick();
+                setToasts((cur) => cur.filter((x) => x.id !== t.id));
+              }}
+              className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-slate-700 transition-colors hover:text-slate-900"
             >
-              <X className="h-3.5 w-3.5" />
+              {t.action.label}
             </button>
-          </div>
-        );
-      })}
+          )}
+          <button
+            type="button"
+            onClick={() => setToasts((cur) => cur.filter((x) => x.id !== t.id))}
+            aria-label="Dismiss"
+            className="shrink-0 text-slate-400 transition-colors hover:text-slate-700"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

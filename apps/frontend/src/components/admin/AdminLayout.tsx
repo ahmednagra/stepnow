@@ -1,4 +1,6 @@
-// src/components/admin/AdminLayout.tsx
+// apps/frontend/src/components/admin/AdminLayout.tsx
+// Phase 3d polish — admin shell stays restrained per design-direction.md §11.6.
+
 import type { ReactNode } from "react";
 import type { CurrentAdmin } from "@/types";
 import { AdminSidebar } from "./AdminSidebar";

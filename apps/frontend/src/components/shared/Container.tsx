@@ -1,25 +1,26 @@
-// src/components/shared/Container.tsx
-import { type HTMLAttributes } from "react";
+// apps/frontend/src/components/shared/Container.tsx
+// Phase 3d polish — kept thin; uses the .container-base utility from globals.css.
+
+import { type ElementType, type HTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
-interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
-  as?: "div" | "section" | "header" | "footer" | "main" | "article" | "nav";
-  size?: "default" | "prose";
+interface ContainerProps extends HTMLAttributes<HTMLElement> {
+  /** Render as this tag. Default 'section'. */
+  as?: ElementType;
+  children: ReactNode;
 }
 
 export function Container({
-  as: Tag = "div",
-  size = "default",
+  as: Tag = "section",
   className,
   children,
   ...rest
 }: ContainerProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const TagAny = Tag as any;
   return (
-    <Tag
-      className={cn(size === "prose" ? "prose-base" : "container-base", className)}
-      {...rest}
-    >
+    <TagAny className={cn("container-base", className)} {...rest}>
       {children}
-    </Tag>
+    </TagAny>
   );
 }

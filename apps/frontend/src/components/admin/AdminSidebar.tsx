@@ -1,4 +1,8 @@
-// src/components/admin/AdminSidebar.tsx
+// apps/frontend/src/components/admin/AdminSidebar.tsx
+// Phase 3d polish — admin sidebar stays restrained (per design-direction §11.6).
+// Refinements: tighter active-state bar, refined hover, group dividers, and a
+// version stamp footer.
+
 "use client";
 
 import Link from "next/link";
@@ -26,9 +30,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
-  /** Section divider above this item. */
   group?: string;
-  /** Marked as "coming in 5b/5c" — still rendered but disabled visually. */
   comingSoon?: boolean;
 }
 
@@ -60,13 +62,13 @@ export function AdminSidebar() {
       {/* Brand */}
       <div className="flex h-14 items-center gap-2.5 border-b border-slate-200 px-5">
         <BrandMark size={22} tone="dark" />
-        <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-slate-900">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.20em] text-slate-900">
           StepNow Admin
         </span>
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4">
         {NAV.map((item) => {
           const isActive =
             item.href === "/admin"
@@ -76,32 +78,44 @@ export function AdminSidebar() {
           return (
             <div key={item.href}>
               {item.group && (
-                <p className="mt-3 px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <p className="mt-4 px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.20em] text-slate-400">
                   {item.group}
                 </p>
               )}
               {item.comingSoon ? (
                 <span
                   aria-disabled="true"
-                  className="group flex cursor-not-allowed items-center gap-2.5 rounded px-2 py-1.5 text-[13px] text-slate-400"
+                  className="group flex cursor-not-allowed items-center gap-2.5 px-2 py-2 text-[13px] text-slate-400"
                   title="Coming soon"
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                   <span className="flex-1 truncate">{item.label}</span>
-                  <span className="text-[9px] font-medium uppercase tracking-wider text-slate-300">soon</span>
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                    soon
+                  </span>
                 </span>
               ) : (
                 <Link
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-2.5 rounded px-2 py-1.5 text-[13px] transition-colors",
+                    "group relative flex items-center gap-2.5 px-2 py-2 text-[13px] transition-colors duration-150",
                     isActive
                       ? "bg-slate-900 text-white"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900",
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                  <span className="flex-1 truncate">{item.label}</span>
+                  {isActive && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -left-3 top-1/2 h-5 w-px -translate-y-1/2 bg-slate-900"
+                    />
+                  )}
+                  <Icon
+                    className={cn("h-3.5 w-3.5 shrink-0", isActive && "text-amber-300")}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                  <span className="flex-1 truncate font-medium tracking-tight">{item.label}</span>
                 </Link>
               )}
             </div>
@@ -111,7 +125,7 @@ export function AdminSidebar() {
 
       {/* Footer */}
       <div className="border-t border-slate-200 p-3">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">v0.5 · Phase 5c</p>
+        <p className="text-[10px] uppercase tracking-[0.20em] text-slate-400">v0.5 · Phase 5c</p>
       </div>
     </aside>
   );

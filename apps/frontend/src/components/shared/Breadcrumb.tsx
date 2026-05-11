@@ -1,9 +1,9 @@
-// src/components/shared/Breadcrumb.tsx
+// apps/frontend/src/components/shared/Breadcrumb.tsx
+// Phase 3d polish — refined: smaller, all-caps with wider tracking, gold
+// last-crumb. Slash separators feel more editorial than chevrons.
+
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { buildBreadcrumbJsonLd } from "@/lib/seo";
-import { JsonLd } from "@/utils/json-ld";
-import { cn } from "@/utils/cn";
+import { Fragment } from "react";
 
 export interface BreadcrumbCrumb {
   name: string;
@@ -12,48 +12,40 @@ export interface BreadcrumbCrumb {
 
 interface BreadcrumbProps {
   crumbs: BreadcrumbCrumb[];
-  className?: string;
 }
 
-/**
- * Visible breadcrumb trail + matching BreadcrumbList JSON-LD.
- * The current page is the last crumb and rendered as text (no link).
- */
-export function Breadcrumb({ crumbs, className }: BreadcrumbProps) {
+export function Breadcrumb({ crumbs }: BreadcrumbProps) {
   if (crumbs.length === 0) return null;
-
   return (
-    <>
-      <nav
-        aria-label="Breadcrumb"
-        className={cn("flex items-center text-sm text-mute", className)}
-      >
-        <ol className="flex flex-wrap items-center gap-1.5">
-          {crumbs.map((crumb, idx) => {
-            const isLast = idx === crumbs.length - 1;
-            return (
-              <li key={crumb.href} className="flex items-center gap-1.5">
-                {idx > 0 && (
-                  <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-line" />
-                )}
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.22em]">
+        {crumbs.map((crumb, idx) => {
+          const isLast = idx === crumbs.length - 1;
+          return (
+            <Fragment key={`${crumb.href}-${idx}`}>
+              <li>
                 {isLast ? (
-                  <span aria-current="page" className="text-ink">
+                  <span aria-current="page" className="text-gold-deep">
                     {crumb.name}
                   </span>
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="transition-colors duration-base hover:text-ink"
+                    className="text-mute transition-colors duration-base hover:text-ink"
                   >
                     {crumb.name}
                   </Link>
                 )}
               </li>
-            );
-          })}
-        </ol>
-      </nav>
-      <JsonLd data={buildBreadcrumbJsonLd(crumbs)} />
-    </>
+              {!isLast && (
+                <li aria-hidden="true" className="text-line-strong">
+                  /
+                </li>
+              )}
+            </Fragment>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }

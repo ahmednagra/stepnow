@@ -1,17 +1,40 @@
-// src/app/(public)/buchen/bestaetigung/page.tsx
+// apps/frontend/src/app/(public)/buchen/bestaetigung/page.tsx
+// Phase 3d polish — German booking confirmation page. Reads ?ref= from the
+// URL and renders the premium BookingConfirmation surface.
+
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { ConfirmationPageInner } from "./_inner";
+import { getUiStringsServer } from "@/services/uiStrings";
+import { getSettingsServer } from "@/services/settings";
+import { createT } from "@/lib/i18n/t";
+import { buildMetadata } from "@/lib/seo";
+import { BookingConfirmation } from "@/components/features/booking/BookingConfirmation";
 
-export const metadata: Metadata = {
-  title: "Buchungsanfrage gesendet",
-  robots: { index: false, follow: false },
-};
+export const dynamic = "force-dynamic";
 
-export default function ConfirmationPageDe() {
+export async function generateMetadata(): Promise<Metadata> {
+  const stringsRes = await getUiStringsServer("de");
+  const t = createT(stringsRes.strings, "de");
+  return buildMetadata({
+    title: t("booking.confirmation.heading"),
+    description: t("booking.confirmation.body"),
+    path: "/buchen/bestaetigung",
+    locale: "de",
+    robots: { index: false, follow: true },
+  });
+}
+
+interface PageProps {
+  searchParams: Promise<{ ref?: string }>;
+}
+
+export default async function BookingConfirmationDe({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const settings = await getSettingsServer("de");
   return (
-    <Suspense fallback={<div className="min-h-screen bg-cream" />}>
-      <ConfirmationPageInner locale="de" />
-    </Suspense>
+    <BookingConfirmation
+      reference={sp.ref ?? null}
+      settings={settings}
+      homeHref="/"
+    />
   );
 }

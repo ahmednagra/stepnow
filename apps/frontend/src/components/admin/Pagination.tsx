@@ -1,114 +1,66 @@
-// src/components/admin/Pagination.tsx
+// apps/frontend/src/components/admin/Pagination.tsx
+// Phase 3d polish — restrained, ink/slate pagination controls.
+
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/utils/cn";
 
 interface PaginationProps {
   page: number;
   totalPages: number;
-  onChange: (page: number) => void;
-  /** Total record count for the small "X–Y of Z" label. Optional. */
-  total?: number;
-  size?: number;
+  onPageChange: (next: number) => void;
+  /** When set, shows the total item count next to the controls. */
+  totalItems?: number;
 }
 
-/**
- * Numbered pagination. Shows: ← 1 … 4 5 [6] 7 8 … 20 →
- * Calls `onChange` with the new page (1-based). Disables prev/next at edges.
- */
-export function Pagination({ page, totalPages, onChange, total, size }: PaginationProps) {
-  if (totalPages <= 1) {
-    return total != null ? (
-      <p className="text-[11px] text-slate-500">
-        {total === 0 ? "No items" : `${total} ${total === 1 ? "item" : "items"}`}
-      </p>
-    ) : null;
-  }
-
-  const window = buildWindow(page, totalPages);
-
-  const rangeStart = (page - 1) * (size ?? 1) + 1;
-  const rangeEnd = Math.min(page * (size ?? 1), total ?? page * (size ?? 1));
-
+export function Pagination({
+  page,
+  totalPages,
+  onPageChange,
+  totalItems,
+}: PaginationProps) {
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
   return (
-    <div className="flex items-center justify-between gap-3">
-      {total != null && size != null ? (
-        <p className="text-[11px] text-slate-500 tabular-nums">
-          {rangeStart}–{rangeEnd} of {total}
-        </p>
-      ) : (
-        <span />
-      )}
-      <nav aria-label="Pagination" className="flex items-center gap-0.5">
-        <button
-          type="button"
-          onClick={() => onChange(page - 1)}
-          disabled={page <= 1}
-          aria-label="Previous page"
-          className="flex h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
-        >
-          <ChevronLeft className="h-3 w-3" />
-        </button>
-        {window.map((p, idx) =>
-          p === "…" ? (
-            <span
-              key={`gap-${idx}`}
-              aria-hidden="true"
-              className="flex h-7 w-7 items-center justify-center text-[12px] text-slate-400"
-            >
-              …
-            </span>
-          ) : (
-            <button
-              key={p}
-              type="button"
-              onClick={() => onChange(p)}
-              aria-current={p === page ? "page" : undefined}
-              className={
-                p === page
-                  ? "flex h-7 min-w-7 items-center justify-center bg-slate-900 px-1.5 text-[12px] font-medium tabular-nums text-white"
-                  : "flex h-7 min-w-7 items-center justify-center border border-slate-300 bg-white px-1.5 text-[12px] tabular-nums text-slate-700 transition-colors hover:bg-slate-100"
-              }
-            >
-              {p}
-            </button>
-          ),
+    <div className="flex items-center justify-between gap-4 border-t border-slate-200 bg-white px-4 py-3">
+      <p className="text-[12px] text-slate-500">
+        Page <span className="font-medium tabular-nums text-slate-700">{page}</span> of{" "}
+        <span className="font-medium tabular-nums text-slate-700">{Math.max(totalPages, 1)}</span>
+        {totalItems !== undefined && (
+          <>
+            {" "}
+            ·{" "}
+            <span className="tabular-nums">{totalItems}</span> items
+          </>
         )}
+      </p>
+      <div className="flex items-center gap-1">
         <button
           type="button"
-          onClick={() => onChange(page + 1)}
-          disabled={page >= totalPages}
-          aria-label="Next page"
-          className="flex h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+          onClick={() => canPrev && onPageChange(page - 1)}
+          disabled={!canPrev}
+          className={cn(
+            "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-[12px] font-medium text-slate-700 transition-colors",
+            canPrev ? "hover:bg-slate-100" : "cursor-not-allowed opacity-40",
+          )}
         >
-          <ChevronRight className="h-3 w-3" />
+          <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+          Prev
         </button>
-      </nav>
+        <button
+          type="button"
+          onClick={() => canNext && onPageChange(page + 1)}
+          disabled={!canNext}
+          className={cn(
+            "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-[12px] font-medium text-slate-700 transition-colors",
+            canNext ? "hover:bg-slate-100" : "cursor-not-allowed opacity-40",
+          )}
+        >
+          Next
+          <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
-}
-
-/**
- * Build the window of page numbers to show.
- * Always include: 1, last, current, current±1.
- * Use "…" for gaps.
- */
-function buildWindow(current: number, total: number): (number | "…")[] {
-  const out: (number | "…")[] = [];
-  const add = (v: number | "…") => {
-    if (out[out.length - 1] !== v) out.push(v);
-  };
-
-  for (let i = 1; i <= total; i++) {
-    if (
-      i === 1 ||
-      i === total ||
-      (i >= current - 1 && i <= current + 1)
-    ) {
-      add(i);
-    } else if (i < current - 1 || i > current + 1) {
-      add("…");
-    }
-  }
-  return out;
 }

@@ -1,6 +1,10 @@
-// src/components/features/home/FaqTeaser.tsx
+// apps/frontend/src/components/features/home/FaqTeaser.tsx
+// Phase 3d polish — premium accordion with eyebrow, gold chevron, and a
+// gentle gap-and-padding rhythm that matches the editorial feel of the
+// home page. The component remains SSR-friendly (uses native <details>).
+
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { FaqPublic, Locale } from "@/types";
 import { Container, Markdown } from "@/components/shared";
@@ -15,20 +19,22 @@ interface FaqTeaserProps {
 
 export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   if (faqs.length === 0) return null;
-  // Show up to 5 general FAQs
   const items = faqs.filter((f) => f.category === "general").slice(0, 5);
   if (items.length === 0) return null;
 
   const allFaqHref = locale === "de" ? "/kontakt#faq" : "/en/contact#faq";
 
   return (
-    <section className="bg-cream">
+    <section className="bg-paper">
       <Container className="py-section">
-        <header className="mb-12 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <h2 className="font-serif text-section">{t("home.faq.heading")}</h2>
+        <header className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="label-eyebrow">{t("home.faq.pre_heading") || "FAQ"}</p>
+            <h2 className="mt-3 font-serif text-section">{t("home.faq.heading")}</h2>
+          </div>
           <Link
             href={allFaqHref}
-            className="text-sm font-medium text-gold-dark transition-colors duration-base hover:text-ink"
+            className="text-[13px] font-medium uppercase tracking-[0.18em] text-gold-deep transition-colors duration-base hover:text-ink"
           >
             {t("home.faq.view_all")} →
           </Link>
@@ -37,14 +43,18 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
           {items.map((faq) => (
             <li key={faq.id}>
               <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between gap-4 py-5 text-left text-ink">
-                  <span className="font-serif text-lg leading-snug">{faq.question}</span>
-                  <ChevronDown
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-6 text-left text-ink">
+                  <span className="font-serif text-lg leading-snug md:text-xl">
+                    {faq.question}
+                  </span>
+                  <span
                     aria-hidden="true"
-                    className="h-5 w-5 shrink-0 text-mute transition-transform duration-base group-open:rotate-180"
-                  />
+                    className="mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center border border-line text-mute transition-all duration-base ease-out-premium group-open:rotate-45 group-open:border-gold group-open:text-gold-deep"
+                  >
+                    <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </span>
                 </summary>
-                <div className="pb-6 pr-9 text-mute">
+                <div className="prose-faq pb-7 pr-12 text-mute">
                   <Markdown source={faq.answer} />
                 </div>
               </details>

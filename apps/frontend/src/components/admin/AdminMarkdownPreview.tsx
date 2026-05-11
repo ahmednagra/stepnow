@@ -1,4 +1,8 @@
-// src/components/admin/AdminMarkdownPreview.tsx
+// apps/frontend/src/components/admin/AdminMarkdownPreview.tsx
+// Phase 3d polish — preview pane used in admin editors so Naeem can see how
+// markdown will render before saving. Restrained typography (slate, not the
+// public-site palette).
+
 "use client";
 
 import ReactMarkdown from "react-markdown";
@@ -10,46 +14,61 @@ interface AdminMarkdownPreviewProps {
   className?: string;
 }
 
-/**
- * Markdown preview pane for admin editors. Plain Inter typography (no serif),
- * dense vertical rhythm, slate palette to match the rest of the admin UI.
- *
- * Raw HTML is disabled by default in react-markdown, so this is safe to
- * render with un-trusted input from the editor field.
- */
 export function AdminMarkdownPreview({ source, className }: AdminMarkdownPreviewProps) {
   if (!source.trim()) {
     return (
-      <div className={cn("text-[12px] italic text-slate-400", className)}>
-        Nothing to preview yet — start typing in the editor.
+      <div
+        className={cn(
+          "border border-dashed border-slate-300 bg-slate-50 p-4 text-[12.5px] italic text-slate-400",
+          className,
+        )}
+      >
+        Nichts zu zeigen — die Vorschau erscheint, sobald Sie Inhalt eingeben.
       </div>
     );
   }
   return (
     <div
       className={cn(
-        "text-[13px] leading-relaxed text-slate-800",
-        "[&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-4 [&_h1]:mb-2",
-        "[&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1.5",
-        "[&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1",
-        "[&_p]:my-2",
-        "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-1",
-        "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-1",
-        "[&_a]:text-slate-900 [&_a]:underline [&_a]:underline-offset-2",
-        "[&_strong]:font-semibold [&_strong]:text-slate-900",
-        "[&_em]:italic",
-        "[&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:italic [&_blockquote]:text-slate-600",
-        "[&_code]:font-mono [&_code]:text-[11px] [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-px",
-        "[&_pre]:bg-slate-900 [&_pre]:text-slate-100 [&_pre]:p-2 [&_pre]:overflow-x-auto [&_pre]:my-2",
-        "[&_pre_code]:bg-transparent [&_pre_code]:text-inherit [&_pre_code]:p-0",
-        "[&_hr]:border-slate-200 [&_hr]:my-3",
-        "[&_table]:border-collapse [&_table]:my-2",
-        "[&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left",
-        "[&_td]:border [&_td]:border-slate-300 [&_td]:px-2 [&_td]:py-1",
+        "border border-slate-200 bg-white p-5 text-[13.5px] leading-relaxed text-slate-800",
         className,
       )}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => (
+            <h1 className="mb-3 mt-5 text-[18px] font-semibold tracking-tight text-slate-900">
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="mb-3 mt-5 text-[16px] font-semibold tracking-tight text-slate-900">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="mb-2 mt-4 text-[14px] font-semibold tracking-tight text-slate-900">
+              {children}
+            </h3>
+          ),
+          p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+          a: ({ children, href }) => (
+            <a
+              href={href}
+              className="text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-600"
+            >
+              {children}
+            </a>
+          ),
+          ul: ({ children }) => <ul className="my-3 list-disc space-y-1 pl-5">{children}</ul>,
+          ol: ({ children }) => <ol className="my-3 list-decimal space-y-1 pl-5">{children}</ol>,
+          li: ({ children }) => <li>{children}</li>,
+          hr: () => <hr className="my-4 border-slate-200" />,
+        }}
+      >
+        {source}
+      </ReactMarkdown>
     </div>
   );
 }

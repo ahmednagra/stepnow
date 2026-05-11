@@ -1,123 +1,139 @@
-// src/components/features/booking/steps/StepService.tsx
+// apps/frontend/src/components/features/booking/steps/StepService.tsx
+// Phase 3d polish — refined service-picker card grid + date/time inputs.
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, ServicePublic } from "@/types";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
-import { step1Schema } from "@/schemas/booking.schema";
-import { MAX_ADVANCE_DAYS } from "@/constants/booking-wizard";
-import { ServiceCard } from "../ServiceCard";
-import { DateTimeField } from "../DateTimeField";
+import { MAX_ADVANCE_DAYS, MIN_LEAD_TIME_MINUTES } from "@/constants/booking-wizard";
+import { Input } from "@/components/ui";
+import { cn } from "@/utils/cn";
 
 interface StepServiceProps {
   t: TFunction;
   locale: Locale;
   services: ServicePublic[];
   onValidated: () => void;
-  /** Bound externally — exposes a "trigger validation" handle to the shell. */
-  registerValidator?: (validate: () => boolean) => void;
+  registerValidator: (fn: () => boolean) => void;
 }
 
-type FieldErrors = Partial<Record<"service_id" | "pickup_date" | "pickup_time", string>>;
-
-/** YYYY-MM-DD for today (local). */
 function todayStr(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString().slice(0, 10);
+  return new Date().toISOString().slice(0, 10);
 }
-
-/** YYYY-MM-DD for `n` days from now (local). */
 function dateOffsetStr(days: number): string {
   const d = new Date();
-  d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
-export function StepService({ t, locale, services, registerValidator }: StepServiceProps) {
+export function StepService({
+  t,
+  services,
+  registerValidator,
+}: StepServiceProps) {
   const draft = useBookingWizardStore((s) => s.draft);
   const updateDraft = useBookingWizardStore((s) => s.updateDraft);
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [errors, setErrors] = useState<{
+    service?: string;
+    date?: string;
+    time?: string;
+  }>({});
 
-  function validate(): boolean {
-    const result = step1Schema.safeParse({
-      service_id: draft.service_id,
-      pickup_date: draft.pickup_date,
-      pickup_time: draft.pickup_time,
+  useEffect(() => {
+    registerValidator(() => {
+      const next: typeof errors = {};
+      if (!draft.pickup_date) next.date = t("errors.required");
+      if (!draft.pickup_time) next.time = t("errors.required");
+      // Lead time check
+      if (draft.pickup_date && draft.pickup_time) {
+        const requested = new Date(`${draft.pickup_date}T${draft.pickup_time}:00`);
+        const minLead = new Date(Date.now() + MIN_LEAD_TIME_MINUTES * 60 * 1000);
+        if (requested < minLead) {
+          next.time =
+            t("errors.lead_time") ||
+            `Mindestens ${MIN_LEAD_TIME_MINUTES} Minuten Vorlauf erforderlich.`;
+        }
+      }
+      setErrors(next);
+      return Object.keys(next).length === 0;
     });
-    if (result.success) {
-      setErrors({});
-      return true;
-    }
-    const next: FieldErrors = {};
-    for (const issue of result.error.issues) {
-      const field = issue.path[0] as keyof FieldErrors;
-      if (field && !next[field]) next[field] = t(issue.message);
-    }
-    setErrors(next);
-    return false;
-  }
-
-  // Expose validator upward
-  registerValidator?.(validate);
+  }, [registerValidator, draft, t]);
 
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-3">
-        <h2 className="font-serif text-section">{t("booking.service.heading")}</h2>
-        <p className="max-w-prose text-mute">{t("booking.service.subhead")}</p>
-      </header>
+      <div>
+        <h2 className="font-serif text-2xl tracking-tight">{t("booking.service.heading")}</h2>
+        <p className="mt-2 text-mute">{t("booking.service.subhead")}</p>
+      </div>
 
-      {/* Service selection */}
-      <fieldset className="flex flex-col gap-3">
-        <legend className="sr-only">{t("booking.service.label")}</legend>
-        {services.map((s) => (
-          <ServiceCard
-            key={s.id}
-            service={s}
-            selected={draft.service_id === s.id}
-            onSelect={(id) => {
-              updateDraft({ service_id: id });
-              setErrors((e) => ({ ...e, service_id: undefined }));
-            }}
-            name="service"
-          />
-        ))}
-        {errors.service_id && (
-          <p role="alert" className="text-xs text-red-600">
-            {errors.service_id}
+      {/* Service grid */}
+      <fieldset>
+        <legend className="sr-only">{t("booking.service.heading")}</legend>
+        <ul className="grid gap-px bg-line md:grid-cols-2">
+          {services.map((s) => {
+            const isSelected = draft.service_id === s.id;
+            return (
+              <li key={s.id} className="bg-cream">
+                <button
+                  type="button"
+                  onClick={() => updateDraft({ service_id: s.id })}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    "flex h-full w-full flex-col items-start gap-2 p-6 text-left transition-all duration-base ease-out-premium",
+                    isSelected
+                      ? "bg-paper shadow-ring-ink"
+                      : "hover:shadow-ring-ink",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "text-[10.5px] font-semibold uppercase tracking-[0.20em]",
+                      isSelected ? "text-gold-deep" : "text-mute",
+                    )}
+                  >
+                    {isSelected ? "Ausgewählt" : "Auswählen"}
+                  </span>
+                  <span className="font-serif text-xl tracking-tight text-ink">
+                    {s.title}
+                  </span>
+                  <span className="line-clamp-2 text-[13.5px] leading-relaxed text-mute">
+                    {s.short_description}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {errors.service && (
+          <p role="alert" className="mt-2 text-xs font-medium text-danger">
+            {errors.service}
           </p>
         )}
       </fieldset>
 
-      {/* Date + time */}
-      <section className="flex flex-col gap-4 border-t border-line pt-8">
-        <h3 className="font-serif text-xl tracking-tight">{t("booking.datetime.heading")}</h3>
-        <DateTimeField
-          date={draft.pickup_date ?? ""}
-          time={draft.pickup_time ?? ""}
-          onDateChange={(date) => {
-            updateDraft({ pickup_date: date });
-            setErrors((e) => ({ ...e, pickup_date: undefined, pickup_time: undefined }));
-          }}
-          onTimeChange={(time) => {
-            updateDraft({ pickup_time: time });
-            setErrors((e) => ({ ...e, pickup_time: undefined }));
-          }}
-          dateLabel={t("booking.datetime.date_label")}
-          timeLabel={t("booking.datetime.time_label")}
-          hint={t("booking.datetime.hint")}
-          dateError={errors.pickup_date}
-          timeError={errors.pickup_time}
-          minDate={todayStr()}
-          maxDate={dateOffsetStr(MAX_ADVANCE_DAYS)}
+      {/* Datetime */}
+      <div className="grid gap-5 md:grid-cols-2">
+        <Input
+          type="date"
+          label={t("booking.service.date_label")}
+          required
+          min={todayStr()}
+          max={dateOffsetStr(MAX_ADVANCE_DAYS)}
+          value={draft.pickup_date ?? ""}
+          onChange={(e) => updateDraft({ pickup_date: e.target.value })}
+          error={errors.date}
         />
-      </section>
-
-      {/* Suppress unused-var lint for locale */}
-      <span className="sr-only">{locale}</span>
+        <Input
+          type="time"
+          label={t("booking.service.time_label")}
+          required
+          value={draft.pickup_time ?? ""}
+          onChange={(e) => updateDraft({ pickup_time: e.target.value })}
+          error={errors.time}
+        />
+      </div>
     </div>
   );
 }

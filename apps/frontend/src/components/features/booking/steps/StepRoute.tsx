@@ -1,126 +1,104 @@
-// src/components/features/booking/steps/StepRoute.tsx
+// apps/frontend/src/components/features/booking/steps/StepRoute.tsx
+// Phase 3d polish — refined two-column route inputs.
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { MapPin } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
-import { step2Schema } from "@/schemas/booking.schema";
 import { Input } from "@/components/ui";
 
 interface StepRouteProps {
   t: TFunction;
-  registerValidator?: (validate: () => boolean) => void;
+  registerValidator: (fn: () => boolean) => void;
 }
-
-type FieldKey =
-  | "pickup_address"
-  | "pickup_postcode"
-  | "pickup_city"
-  | "destination_address"
-  | "destination_postcode"
-  | "destination_city";
-
-type FieldErrors = Partial<Record<FieldKey, string>>;
 
 export function StepRoute({ t, registerValidator }: StepRouteProps) {
   const draft = useBookingWizardStore((s) => s.draft);
   const updateDraft = useBookingWizardStore((s) => s.updateDraft);
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [errors, setErrors] = useState<{
+    pickup?: string;
+    destination?: string;
+  }>({});
 
-  function validate(): boolean {
-    const result = step2Schema.safeParse({
-      pickup_address: draft.pickup_address ?? "",
-      pickup_postcode: draft.pickup_postcode ?? "",
-      pickup_city: draft.pickup_city ?? "",
-      destination_address: draft.destination_address ?? "",
-      destination_postcode: draft.destination_postcode ?? "",
-      destination_city: draft.destination_city ?? "",
+  useEffect(() => {
+    registerValidator(() => {
+      const next: typeof errors = {};
+      if (!draft.pickup_address?.trim()) next.pickup = t("errors.required");
+      if (!draft.destination_address?.trim()) next.destination = t("errors.required");
+      setErrors(next);
+      return Object.keys(next).length === 0;
     });
-    if (result.success) {
-      setErrors({});
-      return true;
-    }
-    const next: FieldErrors = {};
-    for (const issue of result.error.issues) {
-      const field = issue.path[0] as FieldKey;
-      if (field && !next[field]) next[field] = t(issue.message);
-    }
-    setErrors(next);
-    return false;
-  }
-
-  registerValidator?.(validate);
-
-  function setField(key: FieldKey, value: string) {
-    updateDraft({ [key]: value });
-    setErrors((e) => ({ ...e, [key]: undefined }));
-  }
+  }, [registerValidator, draft, t]);
 
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-3">
-        <h2 className="font-serif text-section">{t("booking.route.heading")}</h2>
-        <p className="max-w-prose text-mute">{t("booking.route.subhead")}</p>
-      </header>
+      <div>
+        <h2 className="font-serif text-2xl tracking-tight">{t("booking.route.heading")}</h2>
+        <p className="mt-2 text-mute">{t("booking.route.subhead")}</p>
+      </div>
 
       {/* Pickup */}
-      <section className="flex flex-col gap-4">
-        <h3 className="label-eyebrow">{t("booking.route.pickup_heading")}</h3>
+      <fieldset className="flex flex-col gap-4">
+        <legend className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+          {t("booking.route.pickup_label") || "Abholung"}
+        </legend>
         <Input
-          label={t("booking.route.address_label")}
+          label={t("booking.route.address_label") || "Adresse"}
           required
-          autoComplete="street-address"
+          leadingAdornment={<MapPin className="h-4 w-4" strokeWidth={1.5} />}
           value={draft.pickup_address ?? ""}
-          onChange={(e) => setField("pickup_address", e.target.value)}
-          error={errors.pickup_address}
+          onChange={(e) => updateDraft({ pickup_address: e.target.value })}
+          error={errors.pickup}
+          autoComplete="street-address"
         />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Input
-            label={t("booking.route.postcode_label")}
-            autoComplete="postal-code"
+            label={t("booking.route.postcode_label") || "PLZ"}
             value={draft.pickup_postcode ?? ""}
-            onChange={(e) => setField("pickup_postcode", e.target.value)}
-            error={errors.pickup_postcode}
+            onChange={(e) => updateDraft({ pickup_postcode: e.target.value })}
+            inputMode="numeric"
+            maxLength={5}
+            autoComplete="postal-code"
           />
-          <div className="md:col-span-2">
-            <Input
-              label={t("booking.route.city_label")}
-              autoComplete="address-level2"
-              value={draft.pickup_city ?? ""}
-              onChange={(e) => setField("pickup_city", e.target.value)}
-              error={errors.pickup_city}
-            />
-          </div>
+          <Input
+            label={t("booking.route.city_label") || "Ort"}
+            value={draft.pickup_city ?? ""}
+            onChange={(e) => updateDraft({ pickup_city: e.target.value })}
+            autoComplete="address-level2"
+          />
         </div>
-      </section>
+      </fieldset>
 
       {/* Destination */}
-      <section className="flex flex-col gap-4 border-t border-line pt-8">
-        <h3 className="label-eyebrow">{t("booking.route.destination_heading")}</h3>
+      <fieldset className="flex flex-col gap-4">
+        <legend className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+          {t("booking.route.destination_label") || "Ziel"}
+        </legend>
         <Input
-          label={t("booking.route.address_label")}
+          label={t("booking.route.address_label") || "Adresse"}
           required
+          leadingAdornment={<MapPin className="h-4 w-4" strokeWidth={1.5} />}
           value={draft.destination_address ?? ""}
-          onChange={(e) => setField("destination_address", e.target.value)}
-          error={errors.destination_address}
+          onChange={(e) => updateDraft({ destination_address: e.target.value })}
+          error={errors.destination}
         />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Input
-            label={t("booking.route.postcode_label")}
+            label={t("booking.route.postcode_label") || "PLZ"}
             value={draft.destination_postcode ?? ""}
-            onChange={(e) => setField("destination_postcode", e.target.value)}
-            error={errors.destination_postcode}
+            onChange={(e) => updateDraft({ destination_postcode: e.target.value })}
+            inputMode="numeric"
+            maxLength={5}
           />
-          <div className="md:col-span-2">
-            <Input
-              label={t("booking.route.city_label")}
-              value={draft.destination_city ?? ""}
-              onChange={(e) => setField("destination_city", e.target.value)}
-              error={errors.destination_city}
-            />
-          </div>
+          <Input
+            label={t("booking.route.city_label") || "Ort"}
+            value={draft.destination_city ?? ""}
+            onChange={(e) => updateDraft({ destination_city: e.target.value })}
+          />
         </div>
-      </section>
+      </fieldset>
     </div>
   );
 }

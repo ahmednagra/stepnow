@@ -1,66 +1,57 @@
-// src/components/shared/LanguageSwitcher.tsx
+// apps/frontend/src/components/shared/LanguageSwitcher.tsx
+// Phase 3d polish — refined: tighter divider, tabular-nums, hover gold-deep.
+
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useUiStrings } from "@/hooks/useUiStrings";
-import { LOCALE_COOKIE_MAX_AGE_SECONDS, LOCALE_COOKIE_NAME } from "@/lib/i18n/config";
 import { getAlternateUrl } from "@/lib/i18n/routes";
-import type { Locale } from "@/types";
 import { cn } from "@/utils/cn";
 
 interface LanguageSwitcherProps {
-  /** Optional override for dynamic routes (e.g. service detail with slug pairs). */
-  dynamicSlugMap?: Record<string, string>;
   className?: string;
+  /** Override alt path for dynamic routes (e.g. service detail). */
+  dynamicSlugMap?: Record<string, string>;
 }
 
-export function LanguageSwitcher({ dynamicSlugMap, className }: LanguageSwitcherProps) {
-  const { t, locale } = useUiStrings();
-  const pathname = usePathname() || "/";
-  const router = useRouter();
+export function LanguageSwitcher({ className, dynamicSlugMap }: LanguageSwitcherProps) {
+  const { locale } = useUiStrings();
+  const pathname = usePathname() ?? "/";
 
-  function setLocale(target: Locale) {
-    if (target === locale) return;
-    // Persist preference
-    document.cookie =
-      `${LOCALE_COOKIE_NAME}=${target}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
-    const dest = getAlternateUrl(pathname, dynamicSlugMap);
-    router.push(dest);
-  }
+  const isEn = locale === "en";
+  const alt = getAlternateUrl(pathname, dynamicSlugMap);
 
   return (
     <div
-      role="group"
-      aria-label={t("language.switch.current")}
-      className={cn("inline-flex items-center gap-2 text-sm", className)}
+      className={cn(
+        "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.20em]",
+        className,
+      )}
     >
-      <button
-        type="button"
-        onClick={() => setLocale("de")}
-        aria-current={locale === "de" ? "true" : undefined}
+      <Link
+        href={isEn ? alt : pathname}
+        aria-current={!isEn ? "true" : undefined}
         className={cn(
-          "px-1 py-0.5 transition-colors duration-base",
-          locale === "de"
-            ? "font-semibold text-ink underline underline-offset-4"
-            : "text-mute hover:text-ink",
+          "transition-colors duration-base",
+          !isEn ? "text-current" : "text-current/55 hover:text-current",
         )}
       >
         DE
-      </button>
-      <span aria-hidden="true" className="text-line">/</span>
-      <button
-        type="button"
-        onClick={() => setLocale("en")}
-        aria-current={locale === "en" ? "true" : undefined}
+      </Link>
+      <span aria-hidden="true" className="text-current/30">
+        /
+      </span>
+      <Link
+        href={isEn ? pathname : alt}
+        aria-current={isEn ? "true" : undefined}
         className={cn(
-          "px-1 py-0.5 transition-colors duration-base",
-          locale === "en"
-            ? "font-semibold text-ink underline underline-offset-4"
-            : "text-mute hover:text-ink",
+          "transition-colors duration-base",
+          isEn ? "text-current" : "text-current/55 hover:text-current",
         )}
       >
         EN
-      </button>
+      </Link>
     </div>
   );
 }

@@ -1,186 +1,169 @@
-// src/components/features/contact/ContactForm.tsx
+// apps/frontend/src/components/features/contact/ContactForm.tsx
+// Phase 3d polish — refined inputs (uses new Input/Textarea), message field
+// gets a char counter, success state uses a premium gold check.
+
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Check } from "lucide-react";
+import Link from "next/link";
 import { useUiStrings } from "@/hooks/useUiStrings";
+import { Button, Input, Textarea, Select, Checkbox } from "@/components/ui";
 import { submitContact } from "@/services/contact";
-import { ApiError } from "@/lib/api-errors";
-import { contactSchema, type ContactFormData } from "@/schemas/contact.schema";
-import { Alert, Button, Checkbox, Input, Select, Textarea } from "@/components/ui";
-import { CONTACT_CATEGORIES, type ContactCategory } from "@/types";
+
+const SUBJECT_OPTIONS = [
+  { value: "general", labelKey: "contact.form.subject.general" },
+  { value: "booking", labelKey: "contact.form.subject.booking" },
+  { value: "complaint", labelKey: "contact.form.subject.complaint" },
+  { value: "business", labelKey: "contact.form.subject.business" },
+  { value: "other", labelKey: "contact.form.subject.other" },
+] as const;
+
+const schema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  subject_category: z.enum(["general", "booking", "complaint", "business", "other"]),
+  message: z.string().min(10).max(2000),
+  consent_dsgvo: z.literal(true),
+  website: z.string().optional(),
+});
+type FormValues = z.infer<typeof schema>;
 
 interface ContactFormProps {
-  /** ID of the wrapping section, used for in-page anchor scrolling. */
   id?: string;
 }
 
-/**
- * Bilingual contact form. Client-side validation via Zod for UX, server-side
- * re-validation is authoritative. Server REQUIRED_FIELD messages are surfaced
- * verbatim per frontend.md §9.4.
- */
 export function ContactForm({ id }: ContactFormProps) {
   const { t, locale } = useUiStrings();
-  const [submitted, setSubmitted] = useState<{ message: string } | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
-    reset,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      subject_category: "general" satisfies ContactCategory,
-      message: "",
-      consent_dsgvo: undefined,
-      language: locale,
-      website: "",
+      subject_category: "general",
+      consent_dsgvo: false as unknown as true,
     },
   });
 
-  async function onSubmit(values: ContactFormData) {
+  const messageValue = watch("message") ?? "";
+  const privacyHref = locale === "de" ? "/datenschutz" : "/en/privacy";
+
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setServerError(null);
     try {
-      const result = await submitContact({
-        ...values,
-        // Strip empty phone before send
-        phone: values.phone || undefined,
-        // Honeypot must not be forwarded as a real field
-        website: undefined,
-      });
-      setSubmitted({ message: result.message });
-      reset();
-    } catch (err) {
-      if (err instanceof ApiError) {
-        // Surface backend's localized message verbatim (per frontend.md §9.4).
-        setServerError(err.message);
-      } else {
-        setServerError(t("errors.generic"));
-      }
+      await submitContact({ ...data, language: locale });
+      setSubmitted(true);
+    } catch {
+      setServerError(t("errors.generic"));
     }
-  }
+  };
 
   if (submitted) {
     return (
-      <Alert tone="success" title={t("contact.form.success_title")} id={id}>
-        {submitted.message}
-      </Alert>
+      <div className="border border-gold/30 bg-paper p-8">
+        <div className="inline-flex h-12 w-12 items-center justify-center border border-gold/40 text-gold-deep">
+          <Check className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+        </div>
+        <p className="mt-6 font-serif text-2xl tracking-tight text-ink">
+          {t("contact.form.success.heading") || "Vielen Dank!"}
+        </p>
+        <p className="mt-3 text-mute">
+          {t("contact.form.success.body") ||
+            "Wir melden uns innerhalb eines Werktages bei Ihnen."}
+        </p>
+      </div>
     );
   }
 
   return (
-    <form
-      id={id}
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="flex flex-col gap-5"
-    >
-      {serverError && (
-        <Alert tone="danger" title={t("contact.form.error_title")}>
-          {serverError}
-        </Alert>
-      )}
-
+    <form id={id} onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+      {/* Honeypot — hidden visually but accessible to bots. */}
+      <input
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute -left-[9999px] h-0 w-0 opacity-0"
+        {...register("website")}
+      />
       <div className="grid gap-5 md:grid-cols-2">
         <Input
-          label={t("contact.form.name")}
+          label={t("contact.form.name") || "Name"}
           required
           autoComplete="name"
+          error={errors.name && t("errors.required")}
           {...register("name")}
-          error={errors.name ? t(errors.name.message ?? "errors.required") : undefined}
         />
         <Input
-          label={t("contact.form.email")}
+          label={t("contact.form.email") || "E-Mail"}
           type="email"
           required
           autoComplete="email"
+          error={errors.email && t("errors.email")}
           {...register("email")}
-          error={errors.email ? t(errors.email.message ?? "errors.required") : undefined}
         />
       </div>
-
       <div className="grid gap-5 md:grid-cols-2">
         <Input
-          label={t("contact.form.phone")}
+          label={t("contact.form.phone") || "Telefon (optional)"}
           type="tel"
           autoComplete="tel"
           {...register("phone")}
-          error={errors.phone ? t(errors.phone.message ?? "errors.required") : undefined}
-          hint={t("contact.form.phone_hint")}
         />
         <Select
-          label={t("contact.form.category")}
+          label={t("contact.form.subject") || "Betreff"}
           required
           {...register("subject_category")}
-          error={
-            errors.subject_category
-              ? t(errors.subject_category.message ?? "errors.required")
-              : undefined
-          }
         >
-          {CONTACT_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {t(`contact.form.category.${cat}`)}
+          {SUBJECT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {t(opt.labelKey)}
             </option>
           ))}
         </Select>
       </div>
-
       <Textarea
-        label={t("contact.form.message")}
-        required
+        label={t("contact.form.message") || "Nachricht"}
         rows={6}
+        required
+        showCounter
+        maxChars={2000}
+        error={errors.message && t("errors.required")}
         {...register("message")}
-        error={errors.message ? t(errors.message.message ?? "errors.required") : undefined}
+        value={messageValue}
       />
-
-      {/* Honeypot — visually hidden but reachable by bots */}
-      <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label>
-          Leave this field empty
-          <input
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            {...register("website")}
-          />
-        </label>
-      </div>
-
-      <input type="hidden" {...register("language")} />
-
       <Checkbox
         label={
-          <span>
-            {t("contact.form.consent")}{" "}
-            <a
-              href={locale === "de" ? "/datenschutz" : "/en/privacy"}
-              className="text-gold-dark underline underline-offset-4 hover:text-ink"
-            >
-              {t("contact.form.consent_link")}
-            </a>
-          </span>
+          <>
+            {t("contact.form.consent_intro") || "Ich stimme der "}
+            <Link href={privacyHref} className="underline hover:text-gold-deep">
+              {t("footer.legal.datenschutz")}
+            </Link>{" "}
+            {t("contact.form.consent_zu") || "zu."}
+          </>
         }
+        required
+        error={errors.consent_dsgvo && t("errors.consent_required")}
         {...register("consent_dsgvo")}
-        error={
-          errors.consent_dsgvo
-            ? t(errors.consent_dsgvo.message ?? "errors.consent_required")
-            : undefined
-        }
       />
-
-      <div className="flex items-center gap-4 pt-2">
+      {serverError && (
+        <p role="alert" className="text-[13px] font-medium text-danger">
+          {serverError}
+        </p>
+      )}
+      <div className="mt-2">
         <Button type="submit" size="lg" isLoading={isSubmitting}>
-          {t("contact.form.submit")}
+          {t("contact.form.submit") || "Nachricht senden"}
         </Button>
-        <p className="text-xs text-mute">{t("contact.form.submit_note")}</p>
       </div>
     </form>
   );

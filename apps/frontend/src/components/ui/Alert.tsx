@@ -1,60 +1,38 @@
-// src/components/ui/Alert.tsx
-import { type HTMLAttributes, type ReactNode } from "react";
-import { AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+// apps/frontend/src/components/ui/Alert.tsx
+// Phase 3d polish — refined alert primitive with hairline accent and inline
+// icon. Tones: info, success, warn, danger.
+
+import { Info, CheckCircle2, AlertTriangle, OctagonAlert } from "lucide-react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
-export type AlertTone = "info" | "success" | "warning" | "danger";
+export type AlertTone = "info" | "success" | "warn" | "danger";
 
-interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
+interface AlertProps extends HTMLAttributes<HTMLDivElement> {
   tone?: AlertTone;
   title?: ReactNode;
-  icon?: ReactNode;
+  children?: ReactNode;
 }
 
-const TONES: Record<AlertTone, { container: string; iconColor: string; defaultIcon: ReactNode }> = {
-  info: {
-    container: "bg-cream border-line text-ink",
-    iconColor: "text-mute",
-    defaultIcon: <Info className="h-5 w-5" aria-hidden="true" />,
-  },
-  success: {
-    container: "bg-green-50 border-green-200 text-green-900",
-    iconColor: "text-green-600",
-    defaultIcon: <CheckCircle2 className="h-5 w-5" aria-hidden="true" />,
-  },
-  warning: {
-    container: "bg-yellow-50 border-yellow-200 text-yellow-900",
-    iconColor: "text-yellow-700",
-    defaultIcon: <AlertTriangle className="h-5 w-5" aria-hidden="true" />,
-  },
-  danger: {
-    container: "bg-red-50 border-red-200 text-red-900",
-    iconColor: "text-red-700",
-    defaultIcon: <AlertCircle className="h-5 w-5" aria-hidden="true" />,
-  },
+const TONES: Record<AlertTone, { wrap: string; Icon: typeof Info }> = {
+  info: { wrap: "bg-paper border-line text-ink", Icon: Info },
+  success: { wrap: "bg-success/5 border-success/30 text-mute-strong", Icon: CheckCircle2 },
+  warn: { wrap: "bg-warn/5 border-warn/30 text-mute-strong", Icon: AlertTriangle },
+  danger: { wrap: "bg-danger/5 border-danger/30 text-mute-strong", Icon: OctagonAlert },
 };
 
-export function Alert({
-  tone = "info",
-  title,
-  icon,
-  className,
-  children,
-  role = "status",
-  ...rest
-}: AlertProps) {
-  const { container, iconColor, defaultIcon } = TONES[tone];
+export function Alert({ tone = "info", title, children, className, ...rest }: AlertProps) {
+  const { wrap, Icon } = TONES[tone];
   return (
     <div
-      role={role}
-      aria-live={tone === "danger" ? "assertive" : "polite"}
-      className={cn("flex items-start gap-3 border px-4 py-3 text-sm", container, className)}
+      role={tone === "danger" || tone === "warn" ? "alert" : undefined}
+      className={cn("flex items-start gap-3 border p-4", wrap, className)}
       {...rest}
     >
-      <span className={cn("mt-0.5 shrink-0", iconColor)}>{icon ?? defaultIcon}</span>
-      <div className="flex-1">
-        {title && <p className="font-medium">{title}</p>}
-        {children && <div className={title ? "mt-1" : ""}>{children}</div>}
+      <Icon aria-hidden="true" strokeWidth={1.5} className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="flex-1 text-[14px] leading-relaxed">
+        {title && <p className="font-medium text-ink">{title}</p>}
+        {children && <div className={cn(title ? "mt-1 text-mute" : "")}>{children}</div>}
       </div>
     </div>
   );

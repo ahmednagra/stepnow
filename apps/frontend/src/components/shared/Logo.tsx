@@ -1,28 +1,32 @@
-// src/components/shared/Logo.tsx
+// apps/frontend/src/components/shared/Logo.tsx
+// Phase 3d polish — combined brand mark + wordmark. Used in Header and Footer.
 
-import Image from "next/image";
+import { BrandMark } from "./BrandMark";
 import { cn } from "@/utils/cn";
 
 interface LogoProps {
-    height?: number;
-    priority?: boolean;
-    className?: string;
-    }
+  height?: number;
+  /** Adds 'priority' hint to the mark — usually true in Header. */
+  priority?: boolean;
+  className?: string;
+  tone?: "dark" | "light";
+}
 
-const ASPECT = 1052 / 364; // width / height of the source lockup
-
-export function Logo({ height = 32, priority = false, className }: LogoProps) {
-  const width = Math.round(height * ASPECT);
+export function Logo({ height = 36, className, tone = "dark" }: LogoProps) {
+  const markSize = Math.round(height * 0.85);
+  const wordmarkSize = Math.round(height * 0.32);
   return (
-    <Image
-      src="/brand/logo.png"
-      alt="StepNow — Taxi-Alternative"
-      width={width}
-      height={height}
-      priority={priority}
-      sizes={`${width}px`}
-      className={cn("h-auto w-auto", className)}
-      style={{ height, width: "auto" }}
-    />
+    <span className={cn("inline-flex items-center gap-2.5", className)}>
+      <BrandMark size={markSize} tone={tone} />
+      <span
+        className={cn(
+          "font-sans font-semibold uppercase tracking-[0.22em]",
+          tone === "dark" ? "text-ink" : "text-cream",
+        )}
+        style={{ fontSize: `${wordmarkSize}px` }}
+      >
+        StepNow
+      </span>
+    </span>
   );
 }

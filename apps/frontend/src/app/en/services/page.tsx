@@ -1,5 +1,5 @@
-// src/app/en/services/page.tsx
-// English services list page.
+// apps/frontend/src/app/en/services/page.tsx
+// Phase 3d polish — English services list page mirror.
 
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
@@ -33,9 +33,22 @@ export default async function ServicesListEn() {
     <>
       <section className="bg-cream">
         <Container className="pt-12 pb-6 md:pt-16">
-          <Breadcrumb crumbs={[{ name: t("nav.home"), href: "/en" }, { name: t("services.page.title"), href: "/en/services" }]} />
+          <Breadcrumb
+            crumbs={[
+              { name: t("nav.home"), href: "/en" },
+              { name: t("services.page.title"), href: "/en/services" },
+            ]}
+          />
           <header className="mt-8 max-w-3xl">
-            <h1 className="font-serif text-section md:text-hero">{t("services.page.title")}</h1>
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="block h-px w-10 bg-gold" />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+                {t("services.page.eyebrow") || "Services"}
+              </p>
+            </div>
+            <h1 className="mt-4 font-serif text-section md:text-hero">
+              {t("services.page.title")}
+            </h1>
             <p className="mt-4 text-body-lg text-mute">{t("services.page.subhead")}</p>
           </header>
         </Container>

@@ -1,44 +1,47 @@
-// src/components/features/services/RelatedServices.tsx
+// apps/frontend/src/components/features/services/RelatedServices.tsx
+// Phase 3d polish — 3-up grid with the same hover treatment as the homepage
+// services tiles. Hairline grid built with gap-px on a line-colored parent.
+
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
-import type { Locale, ServicePublic } from "@/types";
+import type { ServicePublic } from "@/types";
 import { Container } from "@/components/shared";
 
 interface RelatedServicesProps {
   t: TFunction;
-  current: ServicePublic;
-  others: ServicePublic[];
-  locale: Locale;
+  services: ServicePublic[];
+  hrefBase: string; // "/dienstleistungen" or "/en/services"
 }
 
-export function RelatedServices({ t, current, others, locale }: RelatedServicesProps) {
-  const related = others.filter((s) => s.id !== current.id).slice(0, 3);
-  if (related.length === 0) return null;
-
-  const detailHrefFor = (s: ServicePublic) =>
-    locale === "de" ? `/dienstleistungen/${s.slug}` : `/en/services/${s.slug}`;
-
+export function RelatedServices({ t, services, hrefBase }: RelatedServicesProps) {
+  if (services.length === 0) return null;
   return (
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
         <header className="mb-10 max-w-3xl">
-          <h2 className="font-serif text-section">
-            {locale === "de" ? "Weitere Dienstleistungen" : "Other services"}
+          <p className="label-eyebrow">{t("services.related.eyebrow") || "Weitere Leistungen"}</p>
+          <h2 className="mt-3 font-serif text-section">
+            {t("services.related.heading") || "Weitere Leistungen"}
           </h2>
         </header>
-        <ul className="grid gap-6 md:grid-cols-3">
-          {related.map((s) => (
-            <li key={s.id}>
+        <ul className="grid gap-px overflow-hidden border border-line bg-line md:grid-cols-3">
+          {services.map((s) => (
+            <li key={s.id} className="bg-cream">
               <Link
-                href={detailHrefFor(s)}
-                className="group flex h-full flex-col gap-3 border border-line bg-cream p-6 transition-colors duration-base hover:border-ink"
+                href={`${hrefBase}/${s.slug}`}
+                className="group flex h-full flex-col gap-3 p-7 transition-all duration-base ease-out-premium hover:shadow-ring-ink"
               >
                 <h3 className="font-serif text-xl tracking-tight">{s.title}</h3>
-                <p className="text-mute">{s.short_description}</p>
-                <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-gold-dark group-hover:text-ink">
+                <p className="line-clamp-3 text-[14.5px] leading-relaxed text-mute">
+                  {s.short_description}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-1.5 pt-3 text-[12px] font-semibold uppercase tracking-[0.18em] text-gold-deep transition-colors duration-base group-hover:text-ink">
                   {t("services.card.learn_more")}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  <ArrowUpRight
+                    className="h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
                 </span>
               </Link>
             </li>

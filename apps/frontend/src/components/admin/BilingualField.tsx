@@ -1,64 +1,50 @@
-// src/components/admin/BilingualField.tsx
+// apps/frontend/src/components/admin/BilingualField.tsx
+// Phase 3d polish — DE/EN side-by-side wrapper for admin forms. Maintains the
+// "German first" convention from design-direction.md §11.5.
+
 import type { ReactNode } from "react";
+import { cn } from "@/utils/cn";
 
 interface BilingualFieldProps {
-  label: string;
-  /** Help text below the row. */
-  helper?: string;
+  label: ReactNode;
+  hint?: ReactNode;
   required?: boolean;
-  /** Left side (DE) input. */
   de: ReactNode;
-  /** Right side (EN) input. */
   en: ReactNode;
-  /** Per-locale error messages. */
-  errorDe?: string;
-  errorEn?: string;
+  className?: string;
 }
 
-/**
- * Wraps two same-purpose inputs as a side-by-side DE | EN field row.
- * Lets editors see both translations at once. Each input keeps its own
- * error state below the input. The shared label sits above both columns.
- */
 export function BilingualField({
   label,
-  helper,
+  hint,
   required,
   de,
   en,
-  errorDe,
-  errorEn,
+  className,
 }: BilingualFieldProps) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[12px] font-medium text-slate-700">
+    <div className={cn("flex flex-col gap-2", className)}>
+      <div className="flex items-baseline justify-between">
+        <p className="text-[12px] font-medium tracking-tight text-slate-700">
           {label}
-          {required && <span className="ml-0.5 text-red-500">*</span>}
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">DE · EN</span>
+          {required && <span className="ml-1 text-rose-600" aria-hidden="true">*</span>}
+        </p>
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Deutsch
+          </span>
           {de}
-          {errorDe && (
-            <p role="alert" className="text-[11px] text-red-600">
-              {errorDe}
-            </p>
-          )}
         </div>
         <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            English
+          </span>
           {en}
-          {errorEn && (
-            <p role="alert" className="text-[11px] text-red-600">
-              {errorEn}
-            </p>
-          )}
         </div>
       </div>
-      {helper && !errorDe && !errorEn && (
-        <p className="text-[11px] text-slate-500">{helper}</p>
-      )}
+      {hint && <p className="text-[11.5px] text-slate-500">{hint}</p>}
     </div>
   );
 }
