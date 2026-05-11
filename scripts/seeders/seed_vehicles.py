@@ -8,7 +8,7 @@
 Idempotent: keyed by name_de.
 """
 
-from config.database import SessionLocal  # noqa: E402
+from apps.backend.config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402
 
 
@@ -98,8 +98,8 @@ def run() -> None:
     log_section(f"Vehicles ({len(VEHICLES)} vehicles)")
     db = SessionLocal()
     try:
-        from app.Models.vehicles import Vehicle
-        from app.Services.VehiclesService import VehiclesService
+        from apps.backend.app.Models.vehicles import Vehicle
+        from apps.backend.app.Services.VehiclesService import VehiclesService
         actor = get_system_actor(db)
         created = 0
         skipped = 0

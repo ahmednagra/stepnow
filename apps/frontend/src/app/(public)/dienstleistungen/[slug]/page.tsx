@@ -184,12 +184,12 @@ export default async function ServiceDetailDe({ params }: PageParams) {
         </Container>
       </section>
 
-      <JsonLd data={buildServiceJsonLd(service, settings)} />
+      <JsonLd data={buildServiceJsonLd(service, settings, `/dienstleistungen/${service.slug}`)} />
       <JsonLd
         data={buildBreadcrumbJsonLd([
-          { name: t("nav.home"), url: "/" },
-          { name: t("services.page.title"), url: "/dienstleistungen" },
-          { name: service.title, url: `/dienstleistungen/${service.slug}` },
+          { name: t("nav.home"), href: "/" },
+          { name: t("services.page.title"), href: "/dienstleistungen" },
+          { name: service.title, href: `/dienstleistungen/${service.slug}` },
         ])}
       />
     </>

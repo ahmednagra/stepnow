@@ -148,12 +148,18 @@ export function buildBreadcrumbJsonLd(crumbs: BreadcrumbCrumb[]): Record<string,
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: crumbs.map((crumb, idx) => ({
-      "@type": "ListItem",
-      position: idx + 1,
-      name: crumb.name,
-      item: crumb.href.startsWith("http") ? crumb.href : `${SITE_CONFIG.url}${crumb.href}`,
-    })),
+    itemListElement: crumbs.map((crumb, idx) => {
+      const raw =
+        (crumb as { href?: string; url?: string }).href ??
+        (crumb as { href?: string; url?: string }).url ??
+        "/";
+      return {
+        "@type": "ListItem",
+        position: idx + 1,
+        name: crumb.name,
+        item: raw.startsWith("http") ? raw : `${SITE_CONFIG.url}${raw}`,
+      };
+    }),
   };
 }
 

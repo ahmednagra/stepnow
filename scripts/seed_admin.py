@@ -15,9 +15,9 @@ try:
 except ImportError:
     pass
 
-from config.database import SessionLocal  # noqa: E402
-from app.Models.admin import AdminUser  # noqa: E402
-from app.Utils.Helpers import hash_password  # noqa: E402
+from apps.backend.config.database import SessionLocal  # noqa: E402
+from apps.backend.app.Models.admin import AdminUser  # noqa: E402
+from apps.backend.app.Utils.Helpers import hash_password  # noqa: E402
 
 
 MIN_PASSWORD_LENGTH = 12

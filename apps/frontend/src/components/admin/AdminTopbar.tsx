@@ -1,12 +1,11 @@
 // apps/frontend/src/components/admin/AdminTopbar.tsx
-// Phase 3d polish — refined topbar with quiet "View site" link and admin email.
 
 "use client";
 
 import Link from "next/link";
 import { ExternalLink, LogOut } from "lucide-react";
 import type { CurrentAdmin } from "@/types";
-import { logoutAdmin } from "@/services/auth";
+import { logout as logoutAdmin } from "@/services/auth";
 
 interface AdminTopbarProps {
   admin: CurrentAdmin;
