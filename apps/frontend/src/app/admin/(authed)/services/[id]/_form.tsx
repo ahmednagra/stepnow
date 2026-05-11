@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw } from "lucide-react";
 import {
@@ -25,6 +25,7 @@ import {
   AdminFormField,
   BilingualField,
   ConfirmDialog,
+  ImageUploadField,
   adminInputClass,
   adminTextareaClass,
 } from "@/components/admin";
@@ -115,6 +116,7 @@ export function ServiceForm({ mode, initial }: ServiceFormProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<AdminServiceInput>({
     resolver: zodResolver(adminServiceSchema),
@@ -362,22 +364,32 @@ export function ServiceForm({ mode, initial }: ServiceFormProps) {
       </AdminCard>
 
       {/* Media */}
-      <AdminCard title="Media" description="URLs only. Real uploads coming in Phase 6.">
+      <AdminCard title="Media" description="Paste a URL or upload a file. Files are stored locally and served by nginx in production.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminFormField label="Hero image URL" error={errors.hero_image_url?.message}>
-            <input
-              type="url"
-              className={adminInputClass}
-              {...register("hero_image_url")}
-              disabled={isDeleted}
+          <AdminFormField label="Hero image" error={errors.hero_image_url?.message}>
+            <Controller
+              name="hero_image_url"
+              control={control}
+              render={({ field }) => (
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isDeleted}
+                />
+              )}
             />
           </AdminFormField>
-          <AdminFormField label="OG image URL" error={errors.og_image_url?.message}>
-            <input
-              type="url"
-              className={adminInputClass}
-              {...register("og_image_url")}
-              disabled={isDeleted}
+          <AdminFormField label="OG image" error={errors.og_image_url?.message} helper="Used for link previews on social media.">
+            <Controller
+              name="og_image_url"
+              control={control}
+              render={({ field }) => (
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isDeleted}
+                />
+              )}
             />
           </AdminFormField>
         </div>

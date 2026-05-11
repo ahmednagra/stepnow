@@ -22,3 +22,4 @@ class Testimonial(Base, TimestampMixin, SoftDeleteMixin):
     quote_en: Mapped[str] = mapped_column(Text, nullable=False)
     rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
     date_given: Mapped[date | None] = mapped_column(Date, nullable=True)
+    author_photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw } from "lucide-react";
 import {
@@ -25,6 +25,7 @@ import {
   AdminFormField,
   BilingualField,
   ConfirmDialog,
+  ImageUploadField,
   adminInputClass,
   adminTextareaClass,
 } from "@/components/admin";
@@ -45,6 +46,7 @@ function emptyDefaults(): AdminTestimonialInput {
     author_name: "",
     author_role_de: "",
     author_role_en: "",
+    author_photo_url: "",
     quote_de: "",
     quote_en: "",
     rating: undefined,
@@ -60,6 +62,7 @@ function fromTestimonial(t: TestimonialAdmin): AdminTestimonialInput {
     author_name: t.author_name,
     author_role_de: t.author_role_de ?? "",
     author_role_en: t.author_role_en ?? "",
+    author_photo_url: t.author_photo_url ?? "",
     quote_de: t.quote_de,
     quote_en: t.quote_en,
     rating: t.rating ?? undefined,
@@ -76,6 +79,7 @@ function toPayload(values: AdminTestimonialInput): TestimonialCreateInput {
     author_name: values.author_name,
     author_role_de: orNull(values.author_role_de),
     author_role_en: orNull(values.author_role_en),
+    author_photo_url: orNull(values.author_photo_url),
     quote_de: values.quote_de,
     quote_en: values.quote_en,
     rating: values.rating ?? null,
@@ -94,6 +98,7 @@ export function TestimonialForm({ mode, initial }: TestimonialFormProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<AdminTestimonialInput>({
     resolver: zodResolver(adminTestimonialSchema),
@@ -231,6 +236,26 @@ export function TestimonialForm({ mode, initial }: TestimonialFormProps) {
             de={<input className={adminInputClass} placeholder="z.B. Geschäftsreisender" {...register("author_role_de")} disabled={isDeleted} />}
             en={<input className={adminInputClass} placeholder="e.g. Business traveler" {...register("author_role_en")} disabled={isDeleted} />}
           />
+        </div>
+        <div className="mt-4">
+          <AdminFormField
+            label="Author photo"
+            hint="optional"
+            helper="Square crop works best. DSGVO: only with the person's written consent."
+            error={errors.author_photo_url?.message}
+          >
+            <Controller
+              name="author_photo_url"
+              control={control}
+              render={({ field }) => (
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isDeleted}
+                />
+              )}
+            />
+          </AdminFormField>
         </div>
       </AdminCard>
 

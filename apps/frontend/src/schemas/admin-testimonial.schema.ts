@@ -11,6 +11,12 @@ export const adminTestimonialSchema = z.object({
   author_name: z.string().trim().min(1, "Required").max(200),
   author_role_de: optStr(200),
   author_role_en: optStr(200),
+  author_photo_url: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .or(z.literal("")),
   quote_de: z.string().trim().min(5, "At least 5 characters"),
   quote_en: z.string().trim().min(5, "At least 5 characters"),
   rating: z.coerce

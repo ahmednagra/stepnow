@@ -83,6 +83,7 @@ class TestimonialPublicResponse(BaseModel):
     id: UUID
     author_name: str
     author_role: str | None
+    author_photo_url: str | None
     quote: str
     rating: int | None
     date_given: date | None

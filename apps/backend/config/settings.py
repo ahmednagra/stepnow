@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     BACKUP_S3_ACCESS_KEY: str | None = None
     BACKUP_S3_SECRET_KEY: str | None = None
     BACKUP_RETENTION_DAYS: int = 30
+    # Uploads (Phase 6a) — local filesystem only for now.
+    UPLOAD_DIR: str = "./uploads"
+    UPLOAD_PUBLIC_URL_PREFIX: str = "/uploads"
+    UPLOAD_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+    UPLOAD_MIN_DIMENSION: int = 100
+    UPLOAD_MAX_DIMENSION: int = 8000
     LOG_LEVEL: str = "INFO"
 
 

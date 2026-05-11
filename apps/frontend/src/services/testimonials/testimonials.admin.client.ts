@@ -16,6 +16,7 @@ export interface TestimonialCreateInput {
   author_name: string;
   author_role_de?: string | null;
   author_role_en?: string | null;
+  author_photo_url?: string | null;
   quote_de: string;
   quote_en: string;
   rating?: number | null;

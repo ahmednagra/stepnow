@@ -103,6 +103,7 @@ class PublicController:
             id=t.id,
             author_name=t.author_name,
             author_role=t.author_role_de if is_de else t.author_role_en,
+            author_photo_url=t.author_photo_url,
             quote=t.quote_de if is_de else t.quote_en,
             rating=t.rating,
             date_given=t.date_given,

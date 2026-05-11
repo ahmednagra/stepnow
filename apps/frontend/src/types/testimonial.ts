@@ -4,6 +4,7 @@ export interface TestimonialPublic {
   id: string;
   author_name: string;
   author_role: string | null;
+  author_photo_url: string | null;
   quote: string;
   rating: number | null;
   date_given: string | null;
@@ -16,6 +17,7 @@ export interface TestimonialAdmin {
   author_name: string;
   author_role_de: string | null;
   author_role_en: string | null;
+  author_photo_url: string | null;
   quote_de: string;
   quote_en: string;
   rating: number | null;

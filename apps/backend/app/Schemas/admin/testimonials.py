@@ -13,6 +13,7 @@ class TestimonialCreate(BaseModel):
     author_name: str = Field(min_length=1, max_length=200)
     author_role_de: str | None = Field(default=None, max_length=200)
     author_role_en: str | None = Field(default=None, max_length=200)
+    author_photo_url: str | None = Field(default=None, max_length=500)
     quote_de: str = Field(min_length=5)
     quote_en: str = Field(min_length=5)
     rating: int | None = Field(default=None, ge=1, le=5)
@@ -27,6 +28,7 @@ class TestimonialUpdate(BaseModel):
     author_name: str | None = Field(default=None, min_length=1, max_length=200)
     author_role_de: str | None = Field(default=None, max_length=200)
     author_role_en: str | None = Field(default=None, max_length=200)
+    author_photo_url: str | None = Field(default=None, max_length=500)
     quote_de: str | None = Field(default=None, min_length=5)
     quote_en: str | None = Field(default=None, min_length=5)
     rating: int | None = Field(default=None, ge=1, le=5)
@@ -42,6 +44,7 @@ class TestimonialAdminResponse(BaseModel):
     author_name: str
     author_role_de: str | None
     author_role_en: str | None
+    author_photo_url: str | None
     quote_de: str
     quote_en: str
     rating: int | None

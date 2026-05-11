@@ -26,3 +26,4 @@ export {
   BOOKING_STATUS_LABELS,
   BOOKING_STATUS_TONES,
 } from "./BookingStatusBadge";
+export { ImageUploadField } from "./ImageUploadField";

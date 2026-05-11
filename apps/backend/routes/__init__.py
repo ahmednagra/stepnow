@@ -11,6 +11,7 @@ from routes.api.v0.admin import services as admin_services_router
 from routes.api.v0.admin import settings as admin_settings_router
 from routes.api.v0.admin import testimonials as admin_testimonials_router
 from routes.api.v0.admin import ui_strings as admin_ui_strings_router
+from routes.api.v0.admin import uploads as admin_uploads_router
 from routes.api.v0.admin import vehicles as admin_vehicles_router
 
 _API_PREFIX = "/api/v0"
@@ -28,4 +29,5 @@ def setup_api_routes(app: FastAPI) -> None:
     app.include_router(admin_testimonials_router.router, prefix=_API_PREFIX)
     app.include_router(admin_legal_pages_router.router, prefix=_API_PREFIX)
     app.include_router(admin_forms_router.router, prefix=_API_PREFIX)
+    app.include_router(admin_uploads_router.router, prefix=_API_PREFIX)
     app.include_router(admin_audit_log_router.router, prefix=_API_PREFIX)

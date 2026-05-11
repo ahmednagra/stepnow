@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
 import type { SettingsAdmin } from "@/types";
@@ -17,6 +17,7 @@ import {
 import {
   AdminCard,
   AdminFormField,
+  ImageUploadField,
   adminInputClass,
   adminTextareaClass,
 } from "@/components/admin";
@@ -98,6 +99,7 @@ export function SettingsForm({ initial }: SettingsFormProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<AdminSettingsInput>({
     resolver: zodResolver(adminSettingsSchema),
@@ -481,16 +483,20 @@ export function SettingsForm({ initial }: SettingsFormProps) {
           </AdminFormField>
           <div className="md:col-span-2">
             <AdminFormField
-              label="Default OG image URL"
-              htmlFor="default_og_image_url"
+              label="Default OG image"
               hint="optional"
+              helper="Used for link previews on social media when a service has no specific OG image."
               error={errors.default_og_image_url?.message}
             >
-              <input
-                id="default_og_image_url"
-                type="url"
-                className={adminInputClass}
-                {...register("default_og_image_url")}
+              <Controller
+                name="default_og_image_url"
+                control={control}
+                render={({ field }) => (
+                  <ImageUploadField
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
             </AdminFormField>
           </div>

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw } from "lucide-react";
 import {
@@ -25,6 +25,7 @@ import {
   AdminFormField,
   BilingualField,
   ConfirmDialog,
+  ImageUploadField,
   adminInputClass,
 } from "@/components/admin";
 import type { VehicleAdmin } from "@/types";
@@ -99,6 +100,7 @@ export function VehicleForm({ mode, initial }: VehicleFormProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<AdminVehicleInput>({
     resolver: zodResolver(adminVehicleSchema),
@@ -323,13 +325,18 @@ export function VehicleForm({ mode, initial }: VehicleFormProps) {
         />
       </AdminCard>
 
-      <AdminCard title="Media">
-        <AdminFormField label="Image URL" error={errors.image_url?.message}>
-          <input
-            type="url"
-            className={adminInputClass}
-            {...register("image_url")}
-            disabled={isDeleted}
+      <AdminCard title="Media" description="Paste a URL or upload a file.">
+        <AdminFormField label="Vehicle image" error={errors.image_url?.message}>
+          <Controller
+            name="image_url"
+            control={control}
+            render={({ field }) => (
+              <ImageUploadField
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isDeleted}
+              />
+            )}
           />
         </AdminFormField>
       </AdminCard>

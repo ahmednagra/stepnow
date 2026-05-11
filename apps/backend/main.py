@@ -89,4 +89,18 @@ async def unhandled_handler(request: Request, exc: Exception):
     )
 
 
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 setup_api_routes(app)
+
+# Mount /uploads for dev. In production nginx aliases this path directly
+# to UPLOAD_DIR with proper cache headers and bypasses FastAPI.
+if settings.ENVIRONMENT != "production":
+    _upload_path = Path(settings.UPLOAD_DIR).resolve()
+    _upload_path.mkdir(parents=True, exist_ok=True)
+    app.mount(
+        settings.UPLOAD_PUBLIC_URL_PREFIX,
+        StaticFiles(directory=str(_upload_path)),
+        name="uploads",
+    )
