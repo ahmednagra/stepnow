@@ -52,7 +52,7 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
       setLoading(true);
       try {
         const res = await listAdminUiStrings({
-          size: 500,
+          size: 100,
           include_deleted: filter !== "active",
           namespace: namespace || undefined,
           q: q || undefined,

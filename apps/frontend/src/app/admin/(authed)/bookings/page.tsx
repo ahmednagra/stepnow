@@ -42,8 +42,7 @@ export default function BookingsKanbanPage() {
       setLoading(true);
       try {
         // Fetch enough to cover all active statuses. Kanban is best for moderate
-        // volume; if bookings grow >500 active, switch to a paginated list view.
-        const res = await listAdminBookings({ size: 200, q: q || undefined });
+        const res = await listAdminBookings({ size: 100, q: q || undefined });
         setBookings(res.items.filter((b) => !b.is_deleted));
       } catch (err) {
         pushToast(
