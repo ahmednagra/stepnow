@@ -1,6 +1,7 @@
 # =====================================================================
 # StepNow monorepo .gitignore
-# Covers: Python (backend), Node.js/Next.js (frontend), OS, IDE, secrets
+# Covers: Python (backend), Node.js/Next.js (frontend), OS, IDE, secrets,
+# DB artifacts, content/data exports, observability tooling.
 # =====================================================================
 
 # ---------- Secrets and environment ----------
@@ -10,8 +11,12 @@
 .env.production
 .env.development
 .env.staging
+.envrc                       # direnv local overrides
 *.pem
 *.key
+*.crt
+*.pfx
+*.jks
 secrets/
 .secrets/
 
@@ -21,30 +26,47 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Python build artifacts
 *.egg-info/
 *.egg
 .installed.cfg
 .eggs/
-dist/
-build/
 develop-eggs/
 downloads/
 eggs/
-lib/
-lib64/
-parts/
 sdist/
-var/
 wheels/
 share/python-wheels/
 MANIFEST
 
-# Virtual environments
+# Backend-specific build/dist directories
+# (scope these so they don't accidentally match unrelated paths)
+apps/backend/build/
+apps/backend/dist/
+apps/backend/var/
+apps/backend/parts/
+
+# Python virtual environments
+# (these typically live in repo root or inside apps/backend/)
 .venv/
 venv/
 ENV/
 env/
 .env-*/
+apps/backend/.venv/
+apps/backend/venv/
+
+# Python virtualenv internals (do NOT use bare lib/ — would clash with frontend src/lib/)
+apps/backend/lib/
+apps/backend/lib64/
+
+# Python tooling
+.python-version              # pyenv — uncomment if you want to commit it
+.tool-versions               # asdf — uncomment if you want to commit it
+.pdm.toml
+.pdm-python
+__pypackages__/
 
 # Python testing & coverage
 .pytest_cache/
@@ -55,8 +77,8 @@ htmlcov/
 .nox/
 coverage.xml
 *.cover
-*.log
-.cache
+*.lcov
+.cache/
 nosetests.xml
 
 # Python type checking & linting
@@ -67,19 +89,28 @@ dmypy.json
 .pytype/
 .ruff_cache/
 
-# Alembic — keep versions/, but ignore any local backup files
+# ---------- Alembic ----------
+# Keep migrations committed (apps/backend/alembic/versions/*.py) but ignore:
 apps/backend/alembic/versions/*.bak
+apps/backend/alembic/versions/*~
+alembic.ini.local
 
-# Logs
+# ---------- Logs ----------
 apps/backend/logs/
+logs/
 *.log
+*.log.*
 
 # ---------- Node.js / Next.js (apps/frontend/) ----------
 node_modules/
 .pnp
 .pnp.js
 .pnp.cjs
-.yarn/install-state.gz
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # Next.js
 apps/frontend/.next/
@@ -91,22 +122,28 @@ apps/frontend/.vercel
 apps/frontend/coverage/
 .nyc_output/
 
-# Production builds
+# TypeScript build artifacts
 *.tsbuildinfo
 next-env.d.ts
 
-# Cache
+# Frontend cache directories
 .eslintcache
 .stylelintcache
 .parcel-cache/
-.cache/
 .turbo/
+.swc/
 
-# pnpm / npm / yarn
+# Storybook (omitted from architecture, but covered if added experimentally)
+storybook-static/
+
+# ---------- Lockfiles ----------
+# IMPORTANT: commit ONE lockfile (the one matching your package manager).
+# We use pnpm by default (see README §Prerequisites), so:
+#   - pnpm-lock.yaml IS committed
+#   - package-lock.json and yarn.lock should not exist
+# If you switch package managers, update these rules:
 package-lock.json
 yarn.lock
-# Keep pnpm-lock.yaml if you use pnpm — uncomment the next line if using npm or yarn instead
-# pnpm-lock.yaml
 
 # ---------- Database ----------
 *.sqlite
@@ -115,30 +152,76 @@ yarn.lock
 *.db-journal
 postgres-data/
 pgdata/
+.pg_data/
 
-# Database dumps (should not be in version control)
+# Database dumps — NEVER commit (contains real customer / personal data)
 *.sql.gz
 *.dump
 *.backup
 backups/
+db-dumps/
+*.bak
+*.bak.sql
+
+# ---------- Content data exports ----------
+# StepNow's all-DB content model means exports of business content,
+# bookings, or audit logs contain real personal data (Naeem's, customers').
+# Never commit these to source control.
+exports/
+*.export.csv
+*.export.json
+audit-log-export-*.csv
+audit-log-export-*.json
+bookings-export-*.csv
+contact-messages-export-*.csv
+
+# Seed data with real content (vs the placeholder seeds in the repo)
+apps/backend/scripts/seed_real_*.py
+apps/backend/scripts/seed_production_*.py
 
 # ---------- Uploads (user content) ----------
-# Vehicle images, etc. that get uploaded via admin
+# Vehicle images, driver photos, etc. uploaded via admin
 apps/backend/uploads/
 apps/backend/storage/
 apps/frontend/public/uploads/
+public/uploads/
+
+# ---------- Email subsystem dev fixtures ----------
+# When developing email templates, providers may write previews to disk
+apps/backend/.email-previews/
+apps/backend/tmp/emails/
+
+# ---------- Observability / monitoring ----------
+.sentryclirc
+.sentry/
+
+# ---------- Security / dependency scanners ----------
+*.sbom.json
+*.sbom.xml
+.dependency-cruiser-cache/
+.snyk
 
 # ---------- IDE and editor ----------
 .vscode/
 !.vscode/settings.json.example
 !.vscode/extensions.json
 .idea/
+*.iml
 *.swp
 *.swo
 *~
 .project
 .classpath
 .settings/
+
+# JetBrains
+.idea_modules/
+out/
+
+# Cursor / Claude / AI assistant context (if these create local files)
+.cursor/
+.claude/
+.continue/
 
 # ---------- macOS ----------
 .DS_Store
@@ -162,15 +245,27 @@ $RECYCLE.BIN/
 .nfs*
 
 # ---------- Project-specific ----------
-# Local-only scratch / drafts
+# Local-only scratch / drafts (developer notes that aren't ready for the repo)
 SCRATCH.md
 NOTES.local.md
 TODO.local.md
 scratch/
+.local/
+
+# Personal data deliberately kept out of the repo
+# (real Impressum content with concession numbers, real testimonials, etc.)
+# The repo holds placeholder/template versions; real values live in DB.
+docs/legal/*-real.md
+docs/legal/private/
 
 # Generated TypeScript types (if/when we add codegen)
 apps/frontend/src/types/generated/
 
-# Compiled documentation (if/when we add a docs site)
+# Compiled documentation (if/when we ever add a docs site)
 docs/.vitepress/dist
 docs/.vitepress/cache
+docs/.docusaurus/
+
+# Local infrastructure overrides
+infra/docker-compose.override.yml
+infra/*.local.conf
