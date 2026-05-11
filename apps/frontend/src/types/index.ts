@@ -29,3 +29,4 @@ export type {
   ClientLoginResponse,
   CurrentAdmin,
 } from "./auth";
+export type { AuditLogEntry, PaginatedAuditLog } from "./audit-log";
