@@ -71,7 +71,7 @@ export default async function AboutPageDe() {
       <ValuesSection t={t} />
       <FleetPreview t={t} vehicles={vehicles} />
       <Credentials t={t} settings={settings} locale="de" />
-      <ServiceAreaMap t={t} settings={settings} />
+      <ServiceAreaMap settings={settings} />
     </>
   );
 }

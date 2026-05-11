@@ -69,7 +69,7 @@ export default async function AboutPageEn() {
       <ValuesSection t={t} />
       <FleetPreview t={t} vehicles={vehicles} />
       <Credentials t={t} settings={settings} locale="en" />
-      <ServiceAreaMap t={t} settings={settings} />
+      <ServiceAreaMap settings={settings} />
     </>
   );
 }

@@ -1,14 +1,6 @@
 /* apps/frontend/src/app/globals.css
  * Phase 3d polish — addresses audit findings C-5 (gold contrast), H-5 (card hover),
  * M-7 (stagger reveals), C-5 (focus ring AA contrast), H-2 (mobile safe-area).
- *
- * BUILD-ERROR FIX (May 2026):
- *   `@apply transition-all duration-base ease-out-premium` on `.card-hover`
- *   failed at build time because Tailwind's `@apply` resolver doesn't see
- *   custom entries in `theme.extend.transitionTimingFunction` as bare
- *   utility classes — they're only available via `className="ease-out-premium"`
- *   in JSX, not via @apply in CSS. Fix: write the transition properties
- *   directly. Same easing, same duration, same visual behavior.
  */
 
 @tailwind base;
@@ -117,8 +109,8 @@
   /* Premium card hover treatment (audit H-5) — replaces bg-shift with a
    * subtle inner ring + shadow lift. Apply with `card-hover` on Link/group.
    * Uses raw transition properties so it doesn't depend on @apply'ing the
-   * `ease-out-premium` utility (which Tailwind exposes only as a named
-   * timing-function entry, not a bare class). */
+   * `ease-out-premium` utility (which Tailwind generates as a *named* timing
+   * function, not a bare class). */
   .card-hover {
     transition-property: box-shadow, transform, background-color, border-color;
     transition-duration: 250ms;

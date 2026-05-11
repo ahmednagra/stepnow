@@ -184,7 +184,7 @@ export default async function HomePageDe() {
 
       {/* === 7. Testimonials — rotating editorial quote === */}
       <ScrollReveal>
-        <TestimonialsSection t={t} testimonials={testimonials} />
+        <TestimonialsSection testimonials={testimonials} />
       </ScrollReveal>
 
       {/* === 8. FAQ teaser === */}

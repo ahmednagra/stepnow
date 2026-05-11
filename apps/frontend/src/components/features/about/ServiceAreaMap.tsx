@@ -1,18 +1,23 @@
 // apps/frontend/src/components/features/about/ServiceAreaMap.tsx
 // Phase 3d polish — eyebrow + serif heading + premium-framed map.
+//
+// IMPORTANT — Server/Client boundary fix (May 2026):
+//   This is a "use client" component, so it can't receive `t` as a prop
+//   from a server component (functions can't cross the boundary). It now
+//   reads `t` from `useUiStrings()` instead.
 
 "use client";
 
-import type { TFunction } from "@/lib/i18n/t";
+import { useUiStrings } from "@/hooks/useUiStrings";
 import type { SettingsPublic } from "@/types";
 import { Container, EmptyState, LeafletMap, type LeafletMarker } from "@/components/shared";
 
 interface ServiceAreaMapProps {
-  t: TFunction;
   settings: SettingsPublic;
 }
 
-export function ServiceAreaMap({ t, settings }: ServiceAreaMapProps) {
+export function ServiceAreaMap({ settings }: ServiceAreaMapProps) {
+  const { t } = useUiStrings();
   const lat = Number(settings.address_lat);
   const lng = Number(settings.address_lng);
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);

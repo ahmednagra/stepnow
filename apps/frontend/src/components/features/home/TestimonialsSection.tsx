@@ -9,22 +9,22 @@
 
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
-import type { TFunction } from "@/lib/i18n/t";
+import { useUiStrings } from "@/hooks/useUiStrings";
 import type { TestimonialPublic } from "@/types";
 import { Container } from "@/components/shared";
 import { cn } from "@/utils/cn";
 
 interface TestimonialsSectionProps {
-  t: TFunction;
   testimonials: TestimonialPublic[];
 }
 
-export function TestimonialsSection({ t, testimonials }: TestimonialsSectionProps) {
-  if (testimonials.length === 0) return null;
-
-  const items = testimonials.slice(0, 6); // cap rotation set
+export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
+  const { t } = useUiStrings();
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  // Hooks must be called unconditionally — bail-out lives below.
+  const items = testimonials.slice(0, 6);
 
   // Restart auto-rotation only when count or pause changes.
   useEffect(() => {
@@ -40,6 +40,7 @@ export function TestimonialsSection({ t, testimonials }: TestimonialsSectionProp
     return () => window.clearInterval(id);
   }, [items.length, paused]);
 
+  if (items.length === 0) return null;
   const current = items[idx];
 
   return (

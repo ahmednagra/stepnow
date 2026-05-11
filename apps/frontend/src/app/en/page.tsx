@@ -166,7 +166,7 @@ export default async function HomePageEn() {
         <FleetPreview t={t} vehicles={vehicles} />
       </ScrollReveal>
       <ScrollReveal>
-        <TestimonialsSection t={t} testimonials={testimonials} />
+        <TestimonialsSection testimonials={testimonials} />
       </ScrollReveal>
       <ScrollReveal>
         <FaqTeaser t={t} faqs={faqs} locale="en" />

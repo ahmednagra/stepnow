@@ -1,20 +1,25 @@
 // apps/frontend/src/components/features/contact/ContactMap.tsx
 // Phase 3d polish — refined frame around the Leaflet map; safe fallback when
 // coordinates are missing.
+//
+// IMPORTANT — Server/Client boundary fix (May 2026):
+//   This is a "use client" component, so it can't receive `t` as a prop
+//   from a server component (functions can't cross the boundary). It now
+//   reads `t` from `useUiStrings()` instead.
 
 "use client";
 
-import type { TFunction } from "@/lib/i18n/t";
+import { useUiStrings } from "@/hooks/useUiStrings";
 import type { SettingsPublic } from "@/types";
 import { LeafletMap, type LeafletMarker } from "@/components/shared";
 import { EmptyState } from "@/components/shared";
 
 interface ContactMapProps {
-  t: TFunction;
   settings: SettingsPublic;
 }
 
-export function ContactMap({ t, settings }: ContactMapProps) {
+export function ContactMap({ settings }: ContactMapProps) {
+  const { t } = useUiStrings();
   const lat = Number(settings.address_lat);
   const lng = Number(settings.address_lng);
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);

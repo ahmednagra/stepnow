@@ -89,7 +89,7 @@ export default async function ContactPageEn() {
             <p className="label-eyebrow">{t("contact.map.eyebrow") || "Location"}</p>
             <h2 className="mt-3 font-serif text-section">{t("contact.map.heading")}</h2>
           </header>
-          <ContactMap t={t} settings={settings} />
+          <ContactMap settings={settings} />
         </Container>
       </section>
 
