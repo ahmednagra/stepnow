@@ -1,0 +1,46 @@
+// src/app/en/legal-notice/page.tsx
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getUiStringsServer } from "@/services/uiStrings";
+import { getLegalPageServer } from "@/services/legalPages";
+import { ApiError } from "@/lib/api-errors";
+import { createT } from "@/lib/i18n/t";
+import { buildMetadata } from "@/lib/seo";
+import { LegalPageRenderer } from "@/components/features/legal";
+
+const SLUG = "impressum";
+const PATH = "/en/legal-notice";
+const ALT_PATH = "/impressum";
+
+export const revalidate = 600;
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const page = await getLegalPageServer(SLUG, "en");
+    return buildMetadata({
+      title: page.title,
+      description: page.title,
+      path: PATH,
+      alternatePath: ALT_PATH,
+      locale: "en",
+    });
+  } catch {
+    return { title: "Legal Notice" };
+  }
+}
+
+export default async function LegalNoticeEn() {
+  let stringsRes;
+  let page;
+  try {
+    [stringsRes, page] = await Promise.all([
+      getUiStringsServer("en"),
+      getLegalPageServer(SLUG, "en"),
+    ]);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) notFound();
+    throw err;
+  }
+  const t = createT(stringsRes.strings, "en");
+  return <LegalPageRenderer t={t} page={page} locale="en" path={PATH} />;
+}
