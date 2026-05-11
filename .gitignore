@@ -1,0 +1,176 @@
+# =====================================================================
+# StepNow monorepo .gitignore
+# Covers: Python (backend), Node.js/Next.js (frontend), OS, IDE, secrets
+# =====================================================================
+
+# ---------- Secrets and environment ----------
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.staging
+*.pem
+*.key
+secrets/
+.secrets/
+
+# ---------- Python (apps/backend/) ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.installed.cfg
+.eggs/
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env-*/
+
+# Python testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.log
+.cache
+nosetests.xml
+
+# Python type checking & linting
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Alembic — keep versions/, but ignore any local backup files
+apps/backend/alembic/versions/*.bak
+
+# Logs
+apps/backend/logs/
+*.log
+
+# ---------- Node.js / Next.js (apps/frontend/) ----------
+node_modules/
+.pnp
+.pnp.js
+.pnp.cjs
+.yarn/install-state.gz
+
+# Next.js
+apps/frontend/.next/
+apps/frontend/out/
+apps/frontend/build/
+apps/frontend/.vercel
+
+# Testing
+apps/frontend/coverage/
+.nyc_output/
+
+# Production builds
+*.tsbuildinfo
+next-env.d.ts
+
+# Cache
+.eslintcache
+.stylelintcache
+.parcel-cache/
+.cache/
+.turbo/
+
+# pnpm / npm / yarn
+package-lock.json
+yarn.lock
+# Keep pnpm-lock.yaml if you use pnpm — uncomment the next line if using npm or yarn instead
+# pnpm-lock.yaml
+
+# ---------- Database ----------
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+postgres-data/
+pgdata/
+
+# Database dumps (should not be in version control)
+*.sql.gz
+*.dump
+*.backup
+backups/
+
+# ---------- Uploads (user content) ----------
+# Vehicle images, etc. that get uploaded via admin
+apps/backend/uploads/
+apps/backend/storage/
+apps/frontend/public/uploads/
+
+# ---------- IDE and editor ----------
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ---------- macOS ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ---------- Windows ----------
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------- Linux ----------
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ---------- Project-specific ----------
+# Local-only scratch / drafts
+SCRATCH.md
+NOTES.local.md
+TODO.local.md
+scratch/
+
+# Generated TypeScript types (if/when we add codegen)
+apps/frontend/src/types/generated/
+
+# Compiled documentation (if/when we add a docs site)
+docs/.vitepress/dist
+docs/.vitepress/cache
