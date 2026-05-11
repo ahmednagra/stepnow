@@ -20,10 +20,10 @@ export interface PricingCategoryPublic {
 export interface PricingItemAdmin {
   id: string;
   category_id: string;
-  from_location_de: string;
-  from_location_en: string;
-  to_location_de: string;
-  to_location_en: string;
+  from_location_de: string | null;
+  from_location_en: string | null;
+  to_location_de: string | null;
+  to_location_en: string | null;
   price_eur: string;
   note_de: string | null;
   note_en: string | null;

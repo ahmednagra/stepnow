@@ -39,17 +39,17 @@ const NAV: NavItem[] = [
   { href: "/admin/vehicles", label: "Vehicles", icon: Car },
   { href: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
-  { href: "/admin/pricing", label: "Pricing", icon: Tags, comingSoon: true },
+  { href: "/admin/pricing", label: "Pricing", icon: Tags },
   { href: "/admin/legal-pages", label: "Legal pages", icon: FileText },
   { href: "/admin/ui-strings", label: "UI strings", icon: Languages },
 
-  { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, group: "Operations", comingSoon: true },
-  { href: "/admin/contact-messages", label: "Contact messages", icon: Mail, comingSoon: true },
+  { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, group: "Operations" },
+  { href: "/admin/contact-messages", label: "Contact messages", icon: Mail },
 
   { href: "/admin/settings", label: "Business settings", icon: Settings, group: "System" },
   { href: "/admin/admin-users", label: "Admin users", icon: Users, comingSoon: true },
   { href: "/admin/email-logs", label: "Email logs", icon: AtSign, comingSoon: true },
-  { href: "/admin/audit-log", label: "Audit log", icon: History, comingSoon: true },
+  { href: "/admin/audit-log", label: "Audit log", icon: History },
 ];
 
 export function AdminSidebar() {
@@ -111,7 +111,7 @@ export function AdminSidebar() {
 
       {/* Footer */}
       <div className="border-t border-slate-200 p-3">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">v0.5 · Phase 5b</p>
+        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">v0.5 · Phase 5c</p>
       </div>
     </aside>
   );

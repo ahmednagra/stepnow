@@ -8,6 +8,9 @@ export interface ListAuditLogParams {
   table_name?: string;
   action?: string;
   actor_email?: string;
+  record_id?: string;
+  from_date?: string;
+  to_date?: string;
 }
 
 export async function listAuditLog(params: ListAuditLogParams = {}): Promise<PaginatedAuditLog> {
