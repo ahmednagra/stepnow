@@ -4,6 +4,9 @@
 **Constraint:** No photography budget — phone photos + stock only
 **Strategy:** Achieve premium feel through typography, restraint, and space — not through expensive imagery
 
+**Changelog**
+- **v1.1 (May 2026)** — Added §11 documenting how the design system interacts with admin-editable content (admin-managed content cannot break the design; design tokens stay in code; content slots have predictable bounds).
+
 ---
 
 ## 1. Brand positioning (what the site must communicate)
@@ -258,7 +261,7 @@ Each of the four service pages (Flughafen / Krankenhaus / Schüler / Shuttle):
 - Step 2: Date, time, passengers, luggage
 - Step 3: Pickup and destination
 - Step 4: Contact info + privacy consent
-- Submit returns: "Wir senden Ihnen innerhalb von 30 Minuten ein Festpreis-Angebot."
+- Submit returns: "Wir senden Ihnen innerhalb von 30 Minuten ein Festpreis-Angebot." plus a booking reference in the format `SN-YYYYMMDD-XXXXXX` (e.g. `SN-20260511-AB3F93`)
 - Each step takes the whole screen — no busy form on one page
 - Form feels fast: instant validation, no friction
 
@@ -299,3 +302,92 @@ If we execute this plan well, here's where StepNow's site lands relative to peer
 - **Below:** Blacklane, Carey, top global players (their advantage is photography + scale, not design system)
 
 That ceiling is achievable and meaningful. Naeem's actual customers — locals booking airport transfers, families booking hospital trips, businesses booking employee transport in the Stuttgart area — will not compare him to Blacklane. They'll compare him to other regional operators. That's the right benchmark, and it's winnable.
+
+---
+
+## 11. How the design system interacts with admin-editable content
+
+The visual design must hold up even though most of the content Naeem will see on the site comes from the database and can be edited via `/admin`. This section keeps design and content concerns properly separated.
+
+### 11.1 What lives in code (design tokens) and what lives in the database (content)
+
+| In code (Tailwind config, components, design tokens) | In the database (editable by Naeem via admin) |
+|---|---|
+| Color palette | Service descriptions, FAQ answers, testimonial quotes |
+| Type scale and font choices | All UI labels (button text, error messages, navigation labels) |
+| Spacing scale, grid, layout breakpoints | Site settings (phone, address, hours) |
+| Icon set | Pricing categories and items |
+| Animation timing curves | Legal page bodies (Impressum, Datenschutz, AGB) |
+| Component visual structure (where things go, how they nest) | Vehicle list and features |
+| Section padding, hairlines, decorative rules | Hero copy and section headlines (via `ui_strings`) |
+
+A designer reading this doc must understand: **the design tokens are immutable in the running system. Only content varies.** When you sketch a component, treat the text it shows as a placeholder for arbitrary content within stated bounds.
+
+### 11.2 Content slots have bounds
+
+To prevent admin edits from breaking the design, every database column has a backend-enforced maximum length and (where it matters) a minimum. The design system must respect the same bounds:
+
+| Content type | Max length | Design implication |
+|---|---|---|
+| Service title | 200 chars | Don't size hero text to expect only short titles. Test with the longest realistic German title. |
+| Service short description | ~500 chars (no DB cap; UI suggests 2-3 sentences) | Card height must accommodate 3 lines comfortably. |
+| Pricing item `from_location` / `to_location` | 200 chars each | Table cells should wrap, not truncate. |
+| Vehicle feature pill | 200 chars per array element | Feature pills wrap to next line; never single-line scroll. |
+| UI string value | 10,000 chars | But typical values are short. The `is_locked` flag protects critical strings from being expanded into novels. |
+| FAQ question | 500 chars | Accordion headers wrap; don't size to 1-line assumption. |
+| Testimonial quote | unbounded (text column) | Cards have a "Read more" affordance after ~300 chars in design. |
+| Legal page body | unbounded (text column) | Standard prose styling; long-form expected. |
+
+### 11.3 Empty-state design
+
+Some sections only render if their data exists. The design must specify both states:
+
+| Section | Populated state | Empty state |
+|---|---|---|
+| Fleet preview (homepage §1.7) | 3-up grid of vehicle cards | **Hide section entirely** |
+| Testimonials (homepage §1.9) | Carousel of customer quotes | **Hide section entirely** — never show placeholders |
+| Service pricing snapshot (§3.6) | Mini-table with 4-6 routes | "Festpreis-Angebot auf Anfrage" + quote CTA |
+| Pricing tables (§4.2, per-service) | Full pricing tree | "Festpreis-Angebot auf Anfrage" + quote CTA |
+| Social icons in footer | Row of icons | Row hidden if no socials set |
+| Concession badge in hero | "Konzessioniert nach § 49 PBefG · Lizenz {number}" | Show "Konzessioniert nach § 49 PBefG" alone until Naeem fills the number |
+
+The empty states matter just as much as the populated ones. Designing both ensures the site looks complete even before Naeem has finished populating content.
+
+### 11.4 Booking reference number — a small but visible design element
+
+Every successful booking surfaces a reference in the format `SN-YYYYMMDD-XXXXXX` (e.g. `SN-20260511-AB3F93`). It appears on the confirmation screen and in the customer's confirmation email.
+
+Design treatment:
+- Mono-spaced font in confirmation UI (or normal sans with letter-spacing) — makes it look like a real, official identifier rather than a chat message
+- Large enough to read across a phone screen — at least 18px
+- Selectable text (not in an image) so customers can copy it
+- Subtle "Copy" affordance (icon button next to it) on the confirmation screen
+
+### 11.5 Localization-aware design
+
+The site is bilingual. German strings are often 15-30% longer than their English equivalents. Design for German first; English will fit comfortably.
+
+The reverse — designing for English and hoping German fits — is the most common failure mode for bilingual sites built by English-speaking designers. Buttons especially: "Jetzt buchen" is longer than "Book now"; "Festpreis-Garantie" is longer than "Fixed-price guarantee."
+
+When in doubt, ask: "Will the longest plausible German translation of this string still look balanced?"
+
+### 11.6 Admin UI design — German-only, restrained
+
+The admin panel at `/admin` is German-only (Naeem's working language). It does not need to be visually exciting; it needs to be:
+
+- Calm and uncluttered — Naeem will spend hours here over the years
+- Predictable — every list/edit/save flow looks identical across the 14 admin sections
+- Forgiving — undo via soft-delete + restore is one click; never destructive
+- Honest — when the backend rejects an edit with a `RequiredFieldError`, the German message is shown verbatim ("Geschäftsname ist gesetzliche Pflicht (§ 5 TMG)") in red inline next to the offending field, not in a generic error toast
+
+Admin design references: Linear admin views (calm CRUD), Stripe Dashboard (clear hierarchy), Vercel project settings (predictable form layout). Admin is not where the brand shows off — it's where Naeem gets work done.
+
+---
+
+## 12. Cross-references
+
+- Page-by-page specifications: `docs/website-outline.md`
+- Frontend architecture (component tiers, i18n, data fetching): `docs/architecture/frontend.md`
+- Backend architecture (API contract, content model, safeguards): `docs/architecture/backend.md`
+- Legal page drafts: `docs/legal/`
+- Live-site triage list: `docs/triage-checklist.md`

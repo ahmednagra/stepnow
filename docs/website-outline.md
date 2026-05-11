@@ -1,9 +1,12 @@
 # StepNow Rides & Movers — Detailed Website Outline
 
-**Version:** 1.1 (May 2026)
+**Version:** 1.2 (May 2026)
 **Purpose:** Page-by-page specification for the rebuild
 **Tech stack:** Next.js 14+ (App Router) + FastAPI + Postgres, bilingual (DE at root, EN at /en/), database-driven content with admin panel
-**Changelog v1.1:** URL structure updated — German at root (`step-now.de/`), English at `/en/` (no `/de/` prefix)
+
+**Changelog**
+- **v1.2 (May 2026)** — Aligned with the completed backend build (51 endpoints, validated end-to-end). Section 0.2 rewritten — legal pages and UI strings are DB-driven, not MDX/JSON. Section 0.3 replaced with a pointer to the real schema. Section 0.4 rewritten — admin panel is built, not Phase 2. Booking endpoint paths, status enum, and reference format corrected throughout. Section 10 phases re-anchored against backend reality.
+- **v1.1 (May 2026)** — URL structure updated — German at root (`step-now.de/`), English at `/en/` (no `/de/` prefix)
 
 ---
 
@@ -51,32 +54,33 @@ The Next.js App Router doesn't ship with built-in i18n for the root-vs-prefixed 
 **Folder structure (app router):**
 ```
 app/
-├─ layout.tsx                    # German root layout
-├─ page.tsx                      # German homepage (/)
-├─ dienstleistungen/
-│  ├─ page.tsx                   # /dienstleistungen
-│  └─ [slug]/page.tsx            # /dienstleistungen/{slug}
-├─ preise/page.tsx               # /preise
-├─ ueber-uns/page.tsx            # /ueber-uns
-├─ kontakt/page.tsx              # /kontakt
-├─ buchen/page.tsx               # /buchen
-├─ impressum/page.tsx            # /impressum
-├─ datenschutz/page.tsx          # /datenschutz
-├─ agb/page.tsx                  # /agb
+├─ (public)/                       # German route group, served at root
+│  ├─ layout.tsx                   # German root layout
+│  ├─ page.tsx                     # German homepage (/)
+│  ├─ dienstleistungen/
+│  │  ├─ page.tsx                  # /dienstleistungen
+│  │  └─ [slug]/page.tsx           # /dienstleistungen/{slug}
+│  ├─ preise/page.tsx              # /preise
+│  ├─ ueber-uns/page.tsx           # /ueber-uns
+│  ├─ kontakt/page.tsx             # /kontakt
+│  ├─ buchen/page.tsx              # /buchen
+│  ├─ impressum/page.tsx           # /impressum
+│  ├─ datenschutz/page.tsx         # /datenschutz
+│  └─ agb/page.tsx                 # /agb
 │
 └─ en/
-   ├─ layout.tsx                 # English layout
-   ├─ page.tsx                   # /en
+   ├─ layout.tsx                   # English layout
+   ├─ page.tsx                     # /en
    ├─ services/
-   │  ├─ page.tsx                # /en/services
-   │  └─ [slug]/page.tsx         # /en/services/{slug}
-   ├─ pricing/page.tsx           # /en/pricing
-   ├─ about/page.tsx             # /en/about
-   ├─ contact/page.tsx           # /en/contact
-   ├─ book/page.tsx              # /en/book
-   ├─ legal-notice/page.tsx      # /en/legal-notice
-   ├─ privacy/page.tsx           # /en/privacy
-   └─ terms/page.tsx             # /en/terms
+   │  ├─ page.tsx                  # /en/services
+   │  └─ [slug]/page.tsx           # /en/services/{slug}
+   ├─ pricing/page.tsx             # /en/pricing
+   ├─ about/page.tsx               # /en/about
+   ├─ contact/page.tsx             # /en/contact
+   ├─ book/page.tsx                # /en/book
+   ├─ legal-notice/page.tsx        # /en/legal-notice
+   ├─ privacy/page.tsx             # /en/privacy
+   └─ terms/page.tsx               # /en/terms
 ```
 
 **Middleware (`middleware.ts`):**
@@ -112,15 +116,9 @@ export const config = {
 }
 ```
 
-**Translation files (`lib/i18n/`):**
-```
-lib/i18n/
-├─ de.json          # German strings (single file or split by feature)
-├─ en.json          # English strings
-└─ index.ts         # Translation helper: t(key, locale)
-```
+**UI string resolution:**
 
-For DB-sourced content, the locale is passed into queries and the helper picks the `_de` or `_en` field.
+UI strings are NOT stored in JSON files. They are fetched at render time from `GET /api/v0/public/ui-strings?locale=de` and provided to all components via a React context. See `docs/architecture/frontend.md` §10.3 for the full mechanism.
 
 **Route mapping** (for the language switcher to map equivalent paths):
 ```typescript
@@ -142,114 +140,108 @@ const ROUTE_MAP = {
 // Plus reverse map for EN → DE
 ```
 
-### 0.2 Static vs. dynamic content split
+For service detail pages, the slug pair is read from the `services` row (`slug_de`, `slug_en`) and passed dynamically to the language switcher.
+
+### 0.2 Static vs. dynamic content split (revised)
+
+This table reflects the actual backend build. Everything textual is in the database — including UI labels and legal pages — and Naeem can edit it all via the admin panel, protected by backend safeguards.
 
 | Content type | Storage | Editable by |
 |---|---|---|
 | Page structure & section order | Code (Next.js components) | Developer |
-| Hero copy & section headlines | Code (i18n JSON files) | Developer |
-| Services list & descriptions | Database | Naeem (admin panel) |
-| Pricing tiers & line items | Database | Naeem (admin panel) |
-| Fleet vehicles | Database | Naeem (admin panel) |
-| FAQ entries | Database | Naeem (admin panel) |
-| Testimonials | Database | Naeem (admin panel — moderated) |
-| Site settings (phone, hours, etc.) | Database (singleton config) | Naeem (admin panel) |
-| Booking submissions | Database | Naeem (read-only history) |
-| Legal pages (Impressum, Datenschutz, AGB) | Code (MDX files) | Developer only — too sensitive |
+| Visual design tokens (colors, fonts, spacing) | Code (Tailwind config) | Developer |
+| Site-wide UI strings (button labels, errors, nav, hero copy) | Database (`ui_strings` table) | Naeem (admin panel, with `is_locked` protection on critical strings) |
+| Services list & descriptions | Database (`services` table) | Naeem (admin panel) |
+| Pricing categories & line items | Database (`pricing_categories`, `pricing_items` tables) | Naeem (admin panel) |
+| Fleet vehicles | Database (`vehicles` table) | Naeem (admin panel) |
+| FAQ entries | Database (`faqs` table) | Naeem (admin panel) |
+| Testimonials | Database (`testimonials` table) | Naeem (admin panel — initials-only per DSGVO) |
+| Site settings (phone, hours, address, concession, etc.) | Database (`site_settings` singleton row) | Naeem (admin panel — with `RequiredFieldError` protection on legally-required fields per § 5 TMG) |
+| Legal pages (Impressum, Datenschutz, AGB) | Database (`legal_pages` + `legal_page_versions` tables) | Naeem (admin panel — with draft → preview → publish → rollback workflow, every change versioned and audited) |
+| Booking submissions | Database (`booking_requests` table) | Naeem (read + status update + soft delete) |
+| Contact submissions | Database (`contact_messages` table) | Naeem (read + mark-handled + soft delete) |
+| Audit log of all changes | Database (`audit_log` table, append-only) | Naeem (read-only via `/admin/audit-log`) |
+
+**Why legal pages moved from "code-only" to "DB with workflow":**
+
+The original v1.0 plan kept legal pages as MDX files for safety. During the backend build, that approach was replaced with a versioned DB workflow because (a) Naeem needs to update the concession number, address, phone, and operating hours over time without a developer in the loop, and (b) legal-binding text changes (e.g. new privacy clauses after a third-party integration) shouldn't require a deploy. The safety concerns are addressed by:
+
+1. **Draft → preview → publish** — no edit goes live until explicitly published.
+2. **Append-only versioning** — every published version is stored forever; rollback is a single click.
+3. **Placeholder whitelist** — only `{site_settings.<field>}` placeholders from a fixed list are accepted, preventing arbitrary template injection.
+4. **Non-blocking warning banner** in the editor reminding Naeem that legal changes have consequences.
+5. **Audit log** captures every draft save, publish, and rollback with timestamp and actor.
+6. **Daily DB backups** make recovery from any catastrophe possible within 24 hours.
 
 ### 0.3 Database schema overview
 
-```
-Site Configuration
-├─ site_settings (singleton)
-│  ├─ phone, email, address, opening_hours_*
-│  ├─ social_facebook, social_instagram, etc.
-│  └─ concession_number, concession_authority
-│
-Services
-├─ services
-│  ├─ id, icon, sort_order, active
-│  ├─ slug_de, slug_en (e.g., "flughafentransfer" / "airport-transfer")
-│  ├─ title_de, title_en
-│  ├─ short_description_de, short_description_en
-│  ├─ long_description_de (markdown), long_description_en (markdown)
-│  ├─ hero_image_url, og_image_url
-│  ├─ meta_title_de, meta_title_en
-│  └─ meta_description_de, meta_description_en
-│
-Pricing
-├─ pricing_categories
-│  ├─ id, service_id (FK), sort_order
-│  ├─ name_de, name_en
-│  ├─ description_de, description_en
-│  └─ items (one-to-many)
-├─ pricing_items
-│  ├─ id, category_id (FK)
-│  ├─ from_location_de, from_location_en (e.g., "Esslingen", "Stuttgart City")
-│  ├─ to_location_de, to_location_en (e.g., "Flughafen Stuttgart")
-│  ├─ price_eur (decimal)
-│  └─ note_de, note_en (e.g., "Festpreis inkl. MwSt.")
-│
-Fleet
-├─ vehicles
-│  ├─ id, sort_order, active
-│  ├─ name_de, name_en (e.g., "Mercedes V-Klasse")
-│  ├─ category (sedan / van / accessible)
-│  ├─ capacity_passengers, capacity_luggage
-│  ├─ features_de (array), features_en (array)
-│  └─ image_url
-│
-Testimonials
-├─ testimonials
-│  ├─ id, sort_order, active, source (manual / google_review_id)
-│  ├─ author_name (first name + initial only — DSGVO)
-│  ├─ author_role_de, author_role_en (optional)
-│  ├─ quote_de, quote_en
-│  ├─ rating (1-5)
-│  └─ date_given
-│
-FAQ
-├─ faqs
-│  ├─ id, sort_order, active, category (general / booking / pricing / vehicles)
-│  ├─ question_de, question_en
-│  └─ answer_de (markdown), answer_en (markdown)
-│
-Bookings
-├─ booking_requests
-│  ├─ id, created_at, status (new / quoted / accepted / declined / completed)
-│  ├─ service_id (FK)
-│  ├─ pickup_address, pickup_postcode, pickup_city
-│  ├─ destination_address, destination_postcode, destination_city
-│  ├─ requested_datetime (UTC)
-│  ├─ passenger_count, luggage_count
-│  ├─ special_requirements (text)
-│  ├─ customer_name, customer_phone, customer_email
-│  ├─ is_business (bool), company_name, company_vatid
-│  ├─ language (de / en)
-│  ├─ ip_address (logged for fraud), user_agent
-│  └─ internal_notes (Naeem's private notes)
-```
+The full schema is documented in the backend Alembic migration at `apps/backend/alembic/versions/05789571f56d_0001_initial_schema.py` and in the SQLAlchemy models at `apps/backend/app/Models/`. Sixteen tables total:
 
-### 0.4 Admin panel scope (Phase 2 — not Phase 1)
+| Table | Purpose |
+|---|---|
+| `admin_users` | Admin authentication (currently single user — Naeem) |
+| `refresh_tokens` | JWT refresh token hashes |
+| `audit_log` | Append-only record of every mutation across the system |
+| `site_settings` | Singleton row at `id=1` with business name, address, phone, hours, concession, social links |
+| `ui_strings` | Per-key bilingual strings with namespace + `is_locked` protection |
+| `services` | The four service types (Flughafentransfer, etc.) with bilingual slugs and SEO fields |
+| `pricing_categories` | Pricing groups bound to a service |
+| `pricing_items` | Individual line items (from → to + price) under a category |
+| `vehicles` | Fleet vehicles with PostgreSQL `ARRAY` features in both languages |
+| `faqs` | Q&A entries grouped by category |
+| `testimonials` | Customer testimonials (initials-only authorship per DSGVO) |
+| `legal_pages` | Current published version + draft for each legal slug |
+| `legal_page_versions` | Append-only history of every published version |
+| `booking_requests` | Public bookings with status lifecycle and reference numbers `SN-YYYYMMDD-XXXXXX` |
+| `contact_messages` | Public contact form submissions with is_handled flag |
+| `email_logs` | Sent-email audit trail (provider response, recipient, timestamp) |
 
-Naeem gets a simple admin at `/admin` (FastAPI + a lightweight admin like Filament-style or SQLAdmin) with:
-- Dashboard: new booking requests, weekly totals
-- CRUD for services, pricing, vehicles, FAQ, testimonials
-- View bookings, change status, add internal notes
-- Edit site settings (phone, address, hours, social links)
+**Cross-cutting columns** present on most tables: `created_at`, `updated_at` (TimestampMixin), `is_deleted`, `deleted_at`, `deleted_by` (SoftDeleteMixin).
 
-Admin is German-only (Naeem's language).
+For the precise column list per table, run `alembic upgrade head` against a local Postgres and inspect with `\d table_name`, or read the model files directly.
+
+### 0.4 Admin panel — built and operational
+
+The admin panel is built. It lives at `/admin` in the Next.js app and consumes 33 dedicated admin endpoints from the FastAPI backend.
+
+**Admin sections** (German-only UI — Naeem's language):
+
+| Section | Path | Purpose |
+|---|---|---|
+| Dashboard | `/admin` | Snapshot — new bookings, recent contact messages, recent audit entries |
+| Stammdaten | `/admin/settings` | Business name, address, phone, email, opening hours, concession, social links, tax/VAT IDs |
+| UI-Texte | `/admin/ui-strings` | Every translatable UI string. Filter by namespace. `is_locked` strings are read-only until explicitly unlocked. |
+| Dienstleistungen | `/admin/services` | Service titles, descriptions, slugs (both languages), hero images, SEO meta |
+| Preise | `/admin/pricing` | Pricing categories per service + items per category. Decimal prices with 2-place precision. |
+| Fahrzeuge | `/admin/vehicles` | Fleet vehicles with capacity numbers and feature arrays |
+| FAQ | `/admin/faqs` | Q&A entries grouped by category |
+| Kundenstimmen | `/admin/testimonials` | Testimonials with rating, role, date (initials-only per DSGVO) |
+| Rechtliche Seiten | `/admin/legal-pages` | Impressum, Datenschutz, AGB — draft → preview → publish workflow with full version history and one-click rollback |
+| Buchungen | `/admin/bookings` | Booking requests with six-state lifecycle (new → contacted → quoted → confirmed → completed / cancelled), auto-stamped timestamps |
+| Kontaktnachrichten | `/admin/contact-messages` | Contact submissions with mark-handled and internal notes |
+| Verlauf | `/admin/audit-log` | Read-only timeline of every change: who edited what, when, before/after diff |
+| Papierkorb | `/admin/trash` | Soft-deleted items from every resource, one-click restore |
+
+**Auth:** JWT bearer tokens with refresh. Login at `/admin/login`. Access tokens stored in `sessionStorage` (cleared on tab close). All admin routes gated server-side at the FastAPI level — frontend route guards are UX only.
+
+**Architectural safeguards** baked into the backend that the admin UI relies on:
+- Audit log on every mutation
+- Soft delete only (no hard delete in UI)
+- `RequiredFieldError` returns a 400 with localized DE message for any attempt to clear a legally-required field on `site_settings`
+- Legal pages cannot be edited directly — only via the draft → publish workflow
+- `is_locked` UI strings cannot be modified or deleted until explicitly unlocked
+- Pricing items inherit soft-delete state from their category for the public read
 
 ### 0.5 SEO baseline (applies to every page)
 
 - `<title>` and `<meta description>` per page, per language
 - Open Graph tags (og:title, og:description, og:image)
 - Structured data:
-  - `LocalBusiness` schema on homepage and contact page
+  - `LocalBusiness` schema on homepage and contact page (built from `/api/v0/public/settings`)
   - `Service` schema on each service detail page
   - `BreadcrumbList` schema everywhere
   - `FAQPage` schema on pages with FAQ
-- Sitemap: `/sitemap.xml` (auto-generated, lists both DE and EN URLs)
+- Sitemap: `/sitemap.xml` (auto-generated, lists both DE and EN URLs from `/api/v0/public/services`)
 - Robots: `/robots.txt` (allow all, point to sitemap)
 
 ---
@@ -263,7 +255,7 @@ First impression. 5 seconds to communicate: legitimate, premium, reliable, easy 
 
 #### 1.1 Header (global — on every page)
 
-Content: **Static**
+Content: **Static structure, dynamic site settings from `/api/v0/public/settings`**
 
 - Logo (left)
 - Navigation (center on desktop, hamburger on mobile):
@@ -273,14 +265,14 @@ Content: **Static**
   - Über uns / About
   - Kontakt / Contact
 - Language switcher (right): DE | EN, current language bold
-- Phone CTA (right, prominent): `+49 7153 9292841` — clickable `tel:` link
+- Phone CTA (right, prominent): `{site_settings.phone}` — clickable `tel:` link
 - "Jetzt buchen" / "Book now" button (rightmost, gold accent)
 
 Sticky on scroll, with subtle shadow once scrolled.
 
 #### 1.2 Hero
 
-Content: **Static (code-controlled)**
+Content: **Static (UI strings from `ui_strings` table)**
 
 - Background: deep black (#0A0A0A) with optional subtle atmospheric image (Stuttgart skyline at twilight, or autobahn at night — stock, dark overlay)
 - Pre-heading (small, uppercase, gold, letter-spaced): `IHRE TAXI-ALTERNATIVE / YOUR TAXI ALTERNATIVE`
@@ -291,15 +283,15 @@ Content: **Static (code-controlled)**
   - DE: "Vorbestellte Fahrten in der Region Stuttgart. Konzessioniert nach § 49 PBefG."
   - EN: "Pre-booked transfers in the Stuttgart region. Licensed under § 49 PBefG."
 - Two CTAs side-by-side:
-  - Primary (gold): "Jetzt buchen" / "Book now" → `/buchen` or `/book`
-  - Secondary (outline): "+49 7153 9292841" — `tel:` link
+  - Primary (gold): "Jetzt buchen" / "Book now" → `/buchen` or `/en/book`
+  - Secondary (outline): `{site_settings.phone}` — `tel:` link
 - Below CTAs, small trust strip: `Konzessioniert · Festpreis-Garantie · 24/7 buchbar`
 
 **Reference:** Aesop product page hero (typography-driven), Blacklane homepage hero (composition only — not the photography)
 
 #### 1.3 Trust strip (icons + short labels, single row)
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 Four items, evenly spaced:
 
@@ -316,18 +308,18 @@ Light background (#F8F6F1), small icons in gold, restrained typography.
 
 #### 1.4 Services section
 
-Content: **Database (services table)**
+Content: **Database — `GET /api/v0/public/services?locale=de`**
 
 Heading: "Unsere Leistungen" / "Our Services"
 Subheading: "Vier spezialisierte Transportdienstleistungen — alle vorbestellt, alle zum Festpreis."
 
 Grid of 4 service cards (2x2 desktop, 1x4 mobile). Each card:
-- Icon (from services.icon, Lucide name)
-- Title (from services.title_*)
-- Short description (from services.short_description_*)
+- Icon (from `services.icon`, Lucide name)
+- Title (`title` — flattened from `title_de`/`title_en` based on locale)
+- Short description (`short_description`)
 - "Mehr erfahren →" / "Learn more →" link to `/dienstleistungen/{slug}` (DE) or `/en/services/{slug}` (EN)
 
-Services to display (active=true, ordered by sort_order):
+Services to display (where `active=true` AND `is_deleted=false`, ordered by `sort_order`):
 1. Flughafentransfer / Airport Transfer
 2. Krankenhausfahrten / Hospital Transport
 3. Schülerbeförderung / School Transport
@@ -337,7 +329,7 @@ Services to display (active=true, ordered by sort_order):
 
 #### 1.5 How it works (3-step process)
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 Heading: "So einfach geht's" / "How it works"
 
@@ -353,7 +345,7 @@ Each step: number (large gold serif), short title (serif), 1-sentence descriptio
 
 #### 1.6 Why StepNow (differentiators)
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 Heading: "Warum StepNow?" / "Why StepNow?"
 
@@ -369,55 +361,55 @@ Two-column layout. Left: a short paragraph of value proposition. Right: bulleted
 
 #### 1.7 Fleet preview (optional — only if real photos exist)
 
-Content: **Database (vehicles table)**
+Content: **Database — `GET /api/v0/public/vehicles?locale=de`**
 
 Heading: "Unsere Fahrzeuge" / "Our Fleet"
 
 Horizontal scrollable row (or 3-up grid on desktop) of vehicle cards. Each card:
-- Image (vehicles.image_url) — fallback to placeholder if missing
-- Name (vehicles.name_*)
+- Image (`image_url`) — fallback to placeholder if missing
+- Name (`name` — flattened from `name_de`/`name_en`)
 - Passenger capacity icon + count
 - Luggage capacity icon + count
-- 2-3 feature pills (vehicles.features_*)
+- 2-3 feature pills (`features` — flattened from `features_de`/`features_en`)
 
-If vehicles table is empty or has no images, hide this section entirely.
+If the vehicles list is empty or has no images, hide this section entirely.
 
 #### 1.8 Booking form (embedded preview)
 
-Content: **Static structure, dynamic service options from DB**
+Content: **Static structure, dynamic service options from `/api/v0/public/services`**
 
 Heading: "Festpreis-Angebot anfordern" / "Request a fixed-price quote"
 
 Simplified version of the full booking form — single screen:
-- Service dropdown (options from services table)
+- Service dropdown (options from `/public/services`)
 - Pickup location (text input with PLZ field)
 - Date + time pickers
 - Passenger count
 - Name, phone, email
-- Privacy checkbox linking to `/datenschutz`
+- Privacy checkbox (`consent_dsgvo`) linking to `/datenschutz`
 - Submit: "Angebot anfordern" / "Request quote"
 
-Submit either:
-- Sends data to FastAPI `/api/bookings` endpoint, shows success message inline
+Submit options (UX choice — pick one):
+- POSTs directly to `/api/v0/public/bookings`, shows success message inline with reference number
 - OR redirects to `/buchen` with pre-filled fields (cleaner UX)
 
 #### 1.9 Testimonials (only if real ones exist)
 
-Content: **Database (testimonials table where active=true)**
+Content: **Database — `GET /api/v0/public/testimonials?locale=de`** (active=true)
 
 Heading: "Was unsere Kunden sagen" / "What our customers say"
 
 Carousel or 3-up grid. Each testimonial:
-- Star rating (1-5)
-- Quote
-- Author name + role (if provided)
+- Star rating (1-5, optional)
+- Quote (`quote`)
+- Author name + role (initials only per DSGVO; `author_role` optional)
 - Date (optional)
 
-If testimonials table is empty, **hide the entire section**. Do not show placeholder testimonials.
+If the testimonials list is empty, **hide the entire section**. Do not show placeholder testimonials.
 
 #### 1.10 FAQ teaser (top 4-5 questions)
 
-Content: **Database (faqs table, category=general, top 5 by sort_order)**
+Content: **Database — `GET /api/v0/public/faqs?locale=de&category=general`** (top 5 by `sort_order`)
 
 Heading: "Häufige Fragen" / "Frequently Asked Questions"
 
@@ -425,24 +417,24 @@ Accordion: question + collapsible answer. Below the list, link: "Alle Fragen ans
 
 #### 1.11 Final CTA section
 
-Content: **Static**
+Content: **Static structure, concession number from `/api/v0/public/settings`**
 
 Full-width dark background section with:
 - Heading: "Bereit für Ihre Fahrt?" / "Ready for your ride?"
 - Subheading: "Buchen Sie jetzt oder rufen Sie an — wir melden uns innerhalb von 30 Minuten."
 - Two CTAs: primary "Jetzt buchen", secondary phone number
-- Concession reference text below: "StepNow Rides & Movers · Konzessioniert nach § 49 PBefG · [Konzessions-Nr.]"
+- Concession reference text below: "StepNow Rides & Movers · Konzessioniert nach § 49 PBefG · {concession_number}"
 
 #### 1.12 Footer (global — on every page)
 
-Content: **Mostly static, settings from DB**
+Content: **Mostly static, settings from `/api/v0/public/settings`**
 
 Four columns on desktop, stacked on mobile:
 
 **Column 1 — Brand**
 - Logo
 - Tagline (1 line)
-- Social icons (only if real accounts exist — pull from site_settings)
+- Social icons (only if real accounts exist — pull from `site_settings.social_*`)
 
 **Column 2 — Schnellzugriff / Quick Links**
 - Startseite / Home
@@ -457,10 +449,10 @@ Four columns on desktop, stacked on mobile:
 - Shuttle Service
 
 **Column 4 — Kontakt / Contact**
-- Address (from site_settings)
+- Address (from `site_settings`)
 - Phone (clickable)
 - Email (clickable)
-- Opening hours
+- Opening hours (`opening_hours`, locale-flattened)
 
 **Footer bottom strip:**
 - Copyright: © 2026 StepNow Rides & Movers
@@ -485,20 +477,20 @@ Overview of all four services. Mostly a routing page to detail pages.
 
 #### 2.1 Page header
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 - Page title (serif, large): "Unsere Leistungen" / "Our Services"
 - Subheading (sans, intro paragraph): "Vier spezialisierte Transportdienstleistungen für Privat- und Geschäftskunden im Raum Stuttgart."
 
 #### 2.2 Service cards (large)
 
-Content: **Database (services table, active=true, all)**
+Content: **Database — `GET /api/v0/public/services?locale=de`** (all active)
 
 Each service rendered as a full-width row (alternating left/right layout):
-- Left/right (alternating): hero_image_url
-- Other side: title (serif), long_description_de/en (first paragraph only — markdown rendered), CTA: "Mehr zu diesem Service →"
+- Left/right (alternating): `hero_image_url`
+- Other side: `title` (serif), first paragraph of `long_description` (markdown rendered), CTA: "Mehr zu diesem Service →"
 
-If hero_image_url is missing, use a typographic block instead (large service name on dark background with subtle pattern).
+If `hero_image_url` is missing, use a typographic block instead (large service name on dark background with subtle pattern).
 
 #### 2.3 Final CTA
 
@@ -524,7 +516,7 @@ Convince a visitor that this specific service is right for them. The SEO foundat
 - `schuelerbefoerderung` (DE) / `school-transport` (EN)
 - `shuttle-service` (DE/EN identical)
 
-**Implementation:** Store both `slug_de` and `slug_en` columns on the `services` table. The DE route handler `/dienstleistungen/[slug]` queries `WHERE slug_de = $slug`, and the EN route handler `/en/services/[slug]` queries `WHERE slug_en = $slug`. The language switcher uses these stored slugs to build the correct alternate-language URL for any given page.
+**Implementation:** The DE route handler `/dienstleistungen/[slug]` calls `GET /api/v0/public/services/{slug}?locale=de`. The EN route handler `/en/services/[slug]` calls the same endpoint with `?locale=en`. The backend resolves the right row by matching the slug against `slug_de` or `slug_en` depending on locale. The frontend reads `slug_de` and `slug_en` from the response so the language switcher can construct the correct alternate-language URL.
 
 ### Sections
 
@@ -534,7 +526,7 @@ Static. "Startseite > Dienstleistungen > Flughafentransfer" — uses BreadcrumbL
 
 #### 3.2 Page header
 
-Content: **Database (services.title, services.short_description)**
+Content: **Database — `services.title`, `services.short_description`**
 
 - Service title (serif, very large)
 - Short description (sans, 18-20px, 2-3 lines)
@@ -545,9 +537,9 @@ Optional small atmospheric image (stock — airport terminal, hospital exterior,
 
 #### 3.3 Long description / story
 
-Content: **Database (services.long_description, markdown)**
+Content: **Database — `services.long_description` (markdown)**
 
-Single column, max-width 720px, body type, generous line-height. Naeem (or copywriter) writes 400-800 words covering:
+Single column, max-width 720px, body type, generous line-height. Naeem writes 400-800 words covering:
 - What this service includes
 - Who it's for (specific use cases)
 - What makes StepNow's version different
@@ -557,7 +549,7 @@ Markdown supports headings, lists, bold, links — so Naeem can structure natura
 
 #### 3.4 Process — 3 or 4 steps specific to this service
 
-Content: **Static (per service, in code/i18n)**
+Content: **Static (UI strings, keyed per service)**
 
 Same visual treatment as homepage section 1.5, but content adapted to the service. Example for Flughafentransfer:
 1. Buchung mit Flugnummer
@@ -567,7 +559,7 @@ Same visual treatment as homepage section 1.5, but content adapted to the servic
 
 #### 3.5 Inclusions / What's included
 
-Content: **Database (or hardcoded list in services)**
+Content: **Static (UI strings, keyed per service)**
 
 Two-column list: ✓ items included + ✗ items not included.
 
@@ -583,9 +575,11 @@ Example for Flughafentransfer:
 
 #### 3.6 Pricing snapshot
 
-Content: **Database (pricing_items where service_id matches)**
+Content: **Database — `GET /api/v0/public/services/{slug}/pricing?locale=de`**
 
 Table or card layout showing 4-6 sample routes with fixed prices. Each row: from → to, price.
+
+The endpoint returns the full nested tree (categories + items). For the snapshot, take the first category and its first 4-6 items.
 
 Below the table, small note: "Andere Strecken auf Anfrage — Festpreis-Angebot innerhalb von 30 Minuten."
 
@@ -593,7 +587,7 @@ CTA: "Vollständige Preise ansehen" → `/preise`
 
 #### 3.7 Service-specific FAQ
 
-Content: **Database (faqs where category={service_slug})**
+Content: **Database — `GET /api/v0/public/faqs?locale=de&category={service_slug}`**
 
 Accordion. 3-5 questions specific to this service.
 
@@ -605,7 +599,7 @@ Full-width dark band with: "Bereit für Ihren [Flughafentransfer]?" + primary CT
 
 #### 3.9 Related services
 
-Content: **Database (other 3 services)**
+Content: **Database (the other 3 active services from `/public/services`)**
 
 3-up grid showing the other services with mini-cards.
 
@@ -614,6 +608,8 @@ Content: **Database (other 3 services)**
 Per service. Example for Flughafentransfer (DE):
 - title: "Flughafentransfer Stuttgart — Festpreis, vorgebucht — StepNow Rides"
 - description: "Zuverlässiger Flughafentransfer zum/vom Flughafen Stuttgart. Festpreis-Garantie, Meet & Greet, Flugverfolgung. Konzessioniert nach PBefG. Jetzt buchen."
+
+The actual title and description come from `services.meta_title_de` / `services.meta_description_de`, fallback to `site_settings.default_meta_title_de` if not set.
 
 Each service page targets specific local + service keywords (e.g., "Flughafentransfer Stuttgart Festpreis", "Krankenfahrt Esslingen Mietwagen", "Schülerbeförderung Stuttgart Mietwagen").
 
@@ -628,27 +624,29 @@ Transparent pricing builds trust. Critical for German market — customers don't
 
 #### 4.1 Page header
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 - Title: "Transparente Festpreise" / "Transparent Fixed Prices"
 - Intro paragraph explaining: prices are fixed before the ride, include 19% MwSt, valid for the route shown
 
 #### 4.2 Pricing tables (one per service)
 
-Content: **Database (pricing_categories grouped by service)**
+Content: **Database — for each service, `GET /api/v0/public/services/{slug}/pricing?locale=de`**
 
 For each service, render a table:
 - Columns: Von / From | Nach / To | Preis / Price | Hinweise / Notes
-- Rows from pricing_items
+- Rows from `pricing_items` (flattened locale)
 - Visual: clean, restrained, gold accent on totals
 
-Above each table: service name (serif heading) + 1-line description.
+Above each table: service name (serif heading) + 1-line description (from the pricing category, e.g. "Stuttgart Flughafen").
 
-If pricing_items for a service is empty, show a placeholder: "Festpreis-Angebot auf Anfrage" with a quote-request CTA.
+The endpoint returns nested categories; render each category as its own sub-section within the service's pricing block.
+
+If a service has no pricing categories or no items, show a placeholder: "Festpreis-Angebot auf Anfrage" with a quote-request CTA.
 
 #### 4.3 What's always included
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 Bulleted list:
 - 19% Mehrwertsteuer
@@ -658,7 +656,7 @@ Bulleted list:
 
 #### 4.4 What's not included
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 Bulleted list:
 - Mautgebühren (falls anfallend)
@@ -667,7 +665,7 @@ Bulleted list:
 
 #### 4.5 Payment methods
 
-Content: **Static (could move to settings)**
+Content: **Static (UI strings)**
 
 - Barzahlung
 - EC-Karte / Girocard (im Fahrzeug)
@@ -676,7 +674,7 @@ Content: **Static (could move to settings)**
 
 #### 4.6 Cancellation policy
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 Plain-language explanation of cancellation terms. Brief — full terms in AGB.
 
@@ -702,7 +700,7 @@ Build trust through transparency about who runs the business.
 
 #### 5.1 Page header
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 - Title: "Über StepNow" / "About StepNow"
 - Subhead: "Ihr regionaler Mobilitätspartner für vorbestellte Fahrten."
@@ -719,9 +717,11 @@ Left: Naeem's portrait photo (the one professional phone shot). Right: 3-4 short
 
 This is the single most important section for trust. Should feel like reading about a person, not a company.
 
+The story copy lives in `ui_strings` (keys like `about.story.paragraph_1`, etc.) so Naeem can refine it over time without code changes.
+
 #### 5.3 Our values / Principles
 
-Content: **Static (code or i18n)**
+Content: **Static (UI strings)**
 
 3-4 principles, each with a heading and short paragraph:
 - Verlässlichkeit / Reliability
@@ -731,16 +731,16 @@ Content: **Static (code or i18n)**
 
 #### 5.4 The fleet
 
-Content: **Database (vehicles table)**
+Content: **Database — `GET /api/v0/public/vehicles?locale=de`**
 
 Same layout as homepage section 1.7, but full grid showing all active vehicles.
 
 #### 5.5 Credentials & qualifications
 
-Content: **Static, but pulls from site_settings for concession number**
+Content: **Static + dynamic concession from `/api/v0/public/settings`**
 
 Card layout:
-- Konzession nach § 49 PBefG — Lizenz-Nr. {concession_number} — erteilt durch {concession_authority}
+- "Konzession nach § 49 PBefG — Lizenz-Nr. {concession_number} — erteilt durch {concession_authority}"
 - Berufskraftfahrer-Qualifikation (BKrFQG)
 - Personenbeförderungs-Haftpflichtversicherung
 - Mitglied [if applicable: BZP / Taxi-Verband / etc.]
@@ -753,7 +753,7 @@ Content: **Static + map**
 
 Description of covered area + interactive map:
 - Use **OpenStreetMap with Leaflet** (no DSGVO complications, unlike Google Maps)
-- Mark the business location (Blumenstr. 8, Deizisau)
+- Mark the business location (Blumenstr. 8, Deizisau — from `site_settings`)
 - Draw a service radius polygon (e.g., 50km around Deizisau, or specific city list)
 
 #### 5.7 Final CTA
@@ -776,51 +776,52 @@ Make it easy to reach StepNow by any channel.
 
 #### 6.1 Page header
 
-Content: **Static**
+Content: **Static (UI strings)**
 
 - Title: "Kontakt" / "Contact"
 - Subhead: "So erreichen Sie uns."
 
 #### 6.2 Contact methods
 
-Content: **Database (site_settings)**
+Content: **Database — `GET /api/v0/public/settings?locale=de`**
 
 Three large cards or stacked rows:
 
 **Telefon / Phone**
-- Number (clickable `tel:` link)
-- Hours available (from settings)
+- Number (clickable `tel:` link, from `site_settings.phone`)
+- Hours available (from `opening_hours`)
 
 **E-Mail**
-- Address (clickable `mailto:` link)
+- Address (clickable `mailto:` link, from `site_settings.email`)
 - Expected response time
 
 **Adresse / Address**
-- Business address
+- Business address (from `site_settings.address_*`)
 - Opening hours
 
-Optional: WhatsApp link if business WhatsApp set up.
+Optional: WhatsApp link if `site_settings.whatsapp_url` is set.
 
 #### 6.3 Contact form
 
-Content: **Static structure, submits to DB**
+Content: **Static structure, submits to `/api/v0/public/contact`**
 
 Simple form:
-- Name
-- E-Mail
-- Phone (optional)
-- Betreff / Subject (dropdown: Allgemeine Anfrage / Buchung / Beschwerde / Sonstiges)
-- Nachricht / Message (textarea)
-- Privacy checkbox
+- Name (`name`)
+- E-Mail (`email`)
+- Phone (`phone`, optional)
+- Betreff / Subject (`subject_category` — dropdown: `general` / `booking` / `complaint` / `business` / `other`)
+- Nachricht / Message (`message`, textarea)
+- Privacy checkbox (`consent_dsgvo`)
+- Honeypot field `website` (hidden, must be empty)
 - Submit
 
-Submit creates a row in `contact_messages` table (separate from bookings) and sends notification to Naeem.
+Submit creates a row in `contact_messages` table (separate from bookings) and sends notification to Naeem in the background. Rate-limited to 5 submissions/minute per IP.
 
 #### 6.4 Map
 
 Content: **Static (OpenStreetMap)**
 
-Embedded Leaflet map showing business address.
+Embedded Leaflet map showing business address (from `site_settings`).
 
 #### 6.5 FAQ teaser
 
@@ -840,54 +841,75 @@ The conversion page. Turn an intent into a booking request.
 
 ### Architecture
 
-Multi-step form on a single page (no full page reloads between steps). Progress indicator at top.
+Multi-step form on a single page (no full page reloads between steps). Progress indicator at top. Cross-step state lives in Zustand (see `docs/architecture/frontend.md` §14).
 
 ### Steps
 
 #### Step 1: Service selection
-- Card grid of 4 services (pulled from DB)
-- One must be selected to proceed
+- Card grid of 4 services (pulled from `/api/v0/public/services`)
+- Selection is optional — the form accepts a booking without a specific service set (`service_id` is optional in the backend schema)
 
 #### Step 2: Trip details
-- Pickup location: address + postcode (autocomplete via Nominatim/OSM for DE; fallback plain text)
-- Destination: same
-- Date picker
-- Time picker
-- Passenger count (1-8)
-- Luggage count (none / 1-2 / 3+)
+- Pickup: `pickup_address` (text, required), `pickup_postcode` (5 digits, optional), `pickup_city` (optional)
+- Destination: `destination_address` (required), `destination_postcode` (optional), `destination_city` (optional)
+- Date picker + time picker, combined into `requested_datetime` ISO string
+- `passenger_count` (1-8)
+- `luggage_count` (0-20)
 
 #### Step 3: Special requirements (optional)
-- Checkboxes: Kindersitz / Rollstuhlgerecht / Tier mitfahren / Sonstiges
-- Textarea: Zusätzliche Anmerkungen
-- Toggle: Bin ich Geschäftskunde? → reveals company name + USt-IdNr fields
+- Checkboxes feed into `special_requirements` text (Kindersitz / Rollstuhlgerecht / Tier mitfahren / Sonstiges)
+- Free-form textarea: zusätzliche Anmerkungen
+- Toggle: Bin ich Geschäftskunde? → reveals `company_name` + `company_vatid` fields, sets `is_business=true`
 
 #### Step 4: Contact info
-- Vorname, Nachname
-- Telefon (required)
-- E-Mail (required)
-- Privacy consent checkbox (links to /datenschutz)
-- Marketing opt-in checkbox (optional, default unchecked — DSGVO)
+- `customer_name` (required, min 2 chars)
+- `customer_phone` (required, regex `/^[\d\s+\-()]{6,}$/`)
+- `customer_email` (required, valid email)
+- `consent_dsgvo` checkbox (required, links to `/datenschutz`)
+- Optional marketing opt-in (separate flag, default unchecked per DSGVO)
+- Hidden honeypot field `website` (must be empty)
+- `language` set automatically from the current locale
 
 ### Submit handling
 
-POST to `/api/bookings`:
-1. Validate (server-side)
-2. Insert into `booking_requests` with status='new', language=current_locale
-3. Send confirmation email to customer (in their language)
-4. Send notification email to Naeem (always in German, includes all details)
-5. Send WhatsApp notification to Naeem (if Twilio/WhatsApp set up)
-6. Return success → show confirmation screen
+POST to `/api/v0/public/bookings` with full JSON body (snake_case fields):
+
+The backend:
+1. Validates the schema; honeypot present → returns 201 silently with `reference=null`
+2. Inserts a row in `booking_requests` with `status="new"`, generates `reference` as `SN-YYYYMMDD-XXXXXX`
+3. Writes an audit log entry
+4. Dispatches via BackgroundTasks: confirmation email to customer (in their language) + notification email to Naeem (always in German, includes all details)
+5. Returns `{ reference: "SN-...", status: "new", message: "..." }`
+
+Rate-limited to 5 submissions/min per IP. Honeypot trips silently — submission appears to succeed but no row is created and no notifications go out.
 
 ### Confirmation screen
+
 - Large checkmark icon
 - "Danke! Ihre Anfrage ist eingegangen."
 - "Wir melden uns innerhalb von 30 Minuten mit einem Festpreis-Angebot."
-- Reference number (booking_requests.id formatted as STN-2026-00123)
+- Reference number (e.g. `SN-20260511-AB3F93`)
 - CTA: "Zurück zur Startseite" / Back to homepage
 
+### Booking lifecycle (admin view)
+
+For reference — what happens to the booking after submission. Naeem manages the lifecycle in `/admin/bookings`:
+
+```
+new → contacted → quoted → confirmed → completed
+                    ↓
+              cancelled (terminal, can transition from any state)
+```
+
+Status transitions auto-stamp timestamps:
+- `status="quoted"` auto-sets `quoted_at`
+- `status="completed"` auto-sets `completed_at`
+
+Naeem can also set `quoted_price_eur` and `internal_notes` per booking.
+
 ### Anti-spam
-- Honeypot field (hidden, must be empty)
-- Rate limiting per IP (5 submissions per hour)
+- Honeypot field `website` (hidden, must be empty)
+- Rate limiting per IP (5 submissions per minute, enforced by FastAPI)
 - Optional: hCaptcha (DSGVO-friendly, unlike reCAPTCHA) — only if spam becomes a problem
 
 ### SEO
@@ -898,25 +920,37 @@ Pages 7-9 should have `noindex` since they're transactional, not content.
 
 ## 8. Legal pages
 
+All legal pages render via `GET /api/v0/public/legal-pages/{slug}?locale=de`. The backend resolves placeholder syntax `{site_settings.field_name}` server-side from the live `site_settings` row, so when Naeem updates the concession number or address in `/admin/settings`, every legal page reflects it immediately.
+
+Naeem edits legal pages via the workflow at `/admin/legal-pages/{slug}`:
+
+1. **Load draft** — clicking "Bearbeiten" opens the bilingual markdown editor with the current draft. If no draft exists, one is created from the latest published version.
+2. **Edit + save** — the draft is saved on each "Speichern" click without affecting the published version.
+3. **Preview** — "Vorschau" renders the draft using the actual public template at `/admin/legal-pages/{slug}/preview`.
+4. **Publish** — "Veröffentlichen" promotes the draft to published, writes a new immutable row to `legal_page_versions`, and updates the public-facing render within the cache TTL (5–10 minutes).
+5. **Rollback** — at `/admin/legal-pages/{slug}/versions`, every past version is listed with a "Wiederherstellen" button that creates a NEW version copying the chosen historical one (the historical row is never mutated — append-only).
+
+A non-blocking warning banner at the top of the editor reminds Naeem that legal-page changes have legal consequences. The audit log captures every save, publish, and rollback.
+
 ### 8.1 Impressum — `/impressum` (DE) and `/en/legal-notice` (EN)
 
-Content: **Static MDX file**
+Content: **Database — `GET /api/v0/public/legal-pages/impressum?locale=de`**
 
-Use the draft from `impressum_de.md` (German) and `impressum_en.md` (English). German is legally binding; English shows banner.
+Initial content seeded from `docs/legal/impressum-de.md` and `docs/legal/impressum-en.md`. German is legally binding; English shows a banner.
 
-Concession number pulled from site_settings (so it can update without code deploy).
+Concession number, business name, phone, etc. come from `site_settings` via placeholders, so they update without re-editing the page body.
 
 ### 8.2 Datenschutzerklärung — `/datenschutz` (DE) and `/en/privacy` (EN)
 
-Content: **Static MDX file**
+Content: **Database — `GET /api/v0/public/legal-pages/datenschutz?locale=de`**
 
-Use the draft from `datenschutz_de.md`. Update for actually-deployed third-party services.
+Initial content seeded from `docs/legal/datenschutz-de.md`. Updated for actually-deployed third-party services (Postmark, Plausible, OpenStreetMap).
 
 ### 8.3 AGB — `/agb` (DE) and `/en/terms` (EN)
 
-Content: **Static MDX file**
+Content: **Database — `GET /api/v0/public/legal-pages/agb?locale=de`**
 
-To be drafted in Phase 2 of the build. For Phase 1, show placeholder: "AGB werden derzeit erarbeitet. Bei Fragen kontaktieren Sie uns bitte direkt."
+To be drafted before launch. If not yet drafted, the legal page slug shows a placeholder body: "AGB werden derzeit erarbeitet. Bei Fragen kontaktieren Sie uns bitte direkt."
 
 ### SEO
 
@@ -926,77 +960,123 @@ All legal pages: `noindex` (not for SEO).
 
 ## 9. 404 page
 
-Content: **Static**
+Content: **Static (UI strings with critical-string fallbacks)**
 
 - "Seite nicht gefunden / Page not found"
 - Friendly explanation
 - Links back to homepage, services, contact
 
+The 404 page text uses `is_locked` UI strings (`404.heading`, `404.cta`, etc.) with code-level fallbacks (see `docs/architecture/frontend.md` §10.4) so the page renders even if `ui_strings` returns nothing.
+
 ---
 
 ## 10. Implementation phases
 
-### Phase 1 — Foundation (Week 1-2)
-- Repo setup, hosting, i18n infrastructure
-- DB schema migration
-- Component library (header, footer, buttons, forms, cards)
-- Legal pages (Impressum, Datenschutz from existing drafts)
-- Placeholder homepage with hero + footer
+### ✅ Phase 0 — Documentation & planning (complete)
+- Architecture docs (backend, frontend)
+- Website outline (this doc)
+- Design direction
+- Legal page drafts (Impressum DE/EN, Datenschutz DE)
+- Triage checklist for live site
 
-### Phase 2 — Content pages (Week 3-4)
-- Homepage (all sections)
+### ✅ Phase 1 — Backend foundation (complete)
+- Repo set up, monorepo structure on GitHub
+- Database schema — 16 tables, Alembic migration deploys cleanly
+- All 51 API endpoints implemented and validated end-to-end against real Postgres
+- Authentication (JWT + refresh tokens, bcrypt password hashing)
+- Audit log (append-only, every mutation tracked)
+- Soft delete + restore on every content resource
+- All seven architectural safeguards in place (audit, soft-delete, required-field validation, legal-page versioning, preview-before-publish, daily-backup-ready, warning-banner-ready)
+
+### Phase 2 — Frontend foundation (next)
+- Next.js 14 App Router scaffolding at `apps/frontend/`
+- Tailwind config with design tokens from `docs/design-direction.md`
+- Self-hosted fonts via `next/font` (DSGVO)
+- i18n middleware + cookie handling
+- `t()` helper backed by `/api/v0/public/ui-strings`
+- Tier 1 component library (Button, Input, etc.)
+- Tier 2 shared components (Header, Footer, LanguageSwitcher)
+- Service layer + API client with snake_case types
+
+### Phase 3 — Public content pages
+- Homepage (all sections from §1)
 - Services list + 4 service detail pages
 - About page
-- Contact page (with form submission to DB)
-- Pricing page
+- Contact page (with form submission to `/api/v0/public/contact`)
+- Pricing page (per-service tables from `/api/v0/public/services/{slug}/pricing`)
+- Legal pages rendering from `/api/v0/public/legal-pages/{slug}`
 
-### Phase 3 — Booking flow (Week 5)
-- Multi-step booking form
-- Backend submission handling
-- Email + WhatsApp notifications
-- Confirmation screen
-- Anti-spam
+### Phase 4 — Booking flow
+- Multi-step booking form (Zustand store + RHF + Zod)
+- Submit to `/api/v0/public/bookings`
+- Confirmation screen with reference number
+- Anti-spam (honeypot + rate-limit)
 
-### Phase 4 — Admin panel (Week 6)
-- Auth (just Naeem — single admin account)
-- CRUD for services, vehicles, FAQ, pricing, testimonials, settings
-- Bookings view (read-only with status updates)
+### Phase 5 — Admin panel
+- Login (`/admin/login`) → JWT in sessionStorage
+- All 14 admin sections (see §0.4)
+- Bilingual edit forms
+- Draft → preview → publish flow for legal pages
+- Status lifecycle UI for bookings
+- Trash + restore
 
-### Phase 5 — Polish & launch (Week 7)
+### Phase 6 — Operational
+- Real email provider (Postmark or Resend) — replace `EmailService` log-only stub
+- Seed scripts: `seed_site_settings.py`, `seed_legal_pages.py`, `seed_ui_strings.py`
+- nginx config + systemd service files
+- Daily pg_dump cron job
+- Plausible analytics
+- Cutover from current step-now.de
+
+### Phase 7 — Polish & launch
 - SEO meta on all pages
-- Structured data
+- Structured data (LocalBusiness, Service, BreadcrumbList, FAQPage)
 - Sitemap, robots
-- Lighthouse pass (target 90+)
+- Lighthouse pass (target 90+ on public pages)
 - Cross-browser, mobile testing
 - Legal review of legal pages
-- Cutover from old site
+- Real fleet photos + actual prices uploaded via admin
+- Real testimonials gathered with author consent
+
+### Content from Naeem (blocking the launch, not the build)
+- Real concession number, authority, and grant date (PBefG)
+- USt-IdNr / Steuernummer
+- Real fleet list — vehicles, capacities, features
+- Actual prices — at least 5-10 sample routes per service
+- Opening hours — phone hours and ride hours
+- Service area boundaries — exact postcodes or city list covered
+- Driver qualifications — what specific badges/qualifications to highlight
+- Real testimonials — at least 3 to start
+- Naeem's portrait + 2 vehicle photos
+
+The Phase 1 backend can run with placeholder content; the frontend can be built and tested against placeholders too. But the **launch** depends on these items.
 
 ---
 
 ## 11. Cross-page references — reusable component library
 
-These appear across multiple pages and should be built as shared components:
+These appear across multiple pages and are built as shared components (see `docs/architecture/frontend.md` §6 for tier discipline):
 
-| Component | Used on pages |
-|---|---|
-| `<Header>` | All |
-| `<Footer>` | All |
-| `<LanguageSwitcher>` | Header, footer |
-| `<HeroCTAButtons>` | Homepage, service pages, about |
-| `<TrustStrip>` | Homepage, service pages |
-| `<ServiceCard>` (small) | Homepage, footer |
-| `<ServiceCard>` (large, alternating layout) | Services list page |
-| `<ProcessSteps>` (3-step layout) | Homepage, service pages |
-| `<VehicleCard>` | Homepage, about page |
-| `<TestimonialCard>` | Homepage, about |
-| `<FAQAccordion>` | Homepage, service pages, contact |
-| `<BookingFormEmbedded>` (single screen) | Homepage |
-| `<BookingFormFull>` (multi-step) | Booking page |
-| `<PricingTable>` | Pricing page, service pages |
-| `<MapEmbed>` (OpenStreetMap) | Contact, about |
-| `<FinalCTABand>` | Homepage, service pages, about |
-| `<Breadcrumb>` | All non-homepage pages |
-| `<MarkdownContent>` | Service descriptions, FAQ answers |
+| Component | Used on pages | Tier |
+|---|---|---|
+| `<Header>` | All | shared |
+| `<Footer>` | All | shared |
+| `<LanguageSwitcher>` | Header, footer | shared |
+| `<HeroCTAButtons>` | Homepage, service pages, about | features/home |
+| `<TrustStrip>` | Homepage, service pages | shared |
+| `<ServiceCard>` (small) | Homepage, footer | features/services |
+| `<ServiceListItem>` (large, alternating layout) | Services list page | features/services |
+| `<ProcessSteps>` (3-step layout) | Homepage, service pages | shared |
+| `<VehicleCard>` | Homepage, about page | features/vehicles |
+| `<TestimonialCard>` | Homepage, about | features/home |
+| `<FAQAccordion>` | Homepage, service pages, contact | shared |
+| `<BookingFormEmbedded>` (single screen) | Homepage | features/booking |
+| `<BookingWizard>` (multi-step) | Booking page | features/booking |
+| `<PricingTable>` | Pricing page, service pages | features/pricing |
+| `<LeafletMap>` | Contact, about | shared |
+| `<FinalCTABand>` | Homepage, service pages, about | shared |
+| `<Breadcrumb>` | All non-homepage pages | shared |
+| `<Markdown>` | Service descriptions, FAQ answers, legal pages | shared |
 
 All components are bilingual-aware: receive locale as prop, render correct language fields.
 
@@ -1016,23 +1096,23 @@ All components are bilingual-aware: receive locale as prop, render correct langu
 | Contact | Apple Store contact pages (simplicity) | Stripe contact |
 | Booking | Blacklane multi-step booking | Lufthansa booking (clarity) |
 
-All references are calibration only — none are to be cloned. The point is to study how premium services handle each pattern.
+All references are calibration only — none are to be cloned. The point is to study how premium services handle each pattern. Full visual direction in `docs/design-direction.md`.
 
 ---
 
-## 13. Open decisions before implementation
+## 13. Open decisions before launch
 
-These need answers from Naeem (with you as translator) before building:
+These need answers from Naeem (with you as translator) before launch:
 
-1. **Concession number and authority** — for Impressum and About page credentials
+1. **Concession number, authority, and grant date** — for Impressum and About page credentials
 2. **USt-IdNr / Steuernummer** — for Impressum
-3. **Real fleet list** — vehicles, capacities, features
-4. **Actual prices** — at least 5-10 sample routes per service
-5. **Opening hours** — phone hours and ride hours
+3. **Real fleet list** — vehicles, capacities, features (entered in `/admin/vehicles`)
+4. **Actual prices** — at least 5-10 sample routes per service (entered in `/admin/pricing`)
+5. **Opening hours** — phone hours and ride hours (entered in `/admin/settings`)
 6. **Service area boundaries** — exact postcodes or city list covered
-7. **Driver qualifications** — what specific badges/qualifications to highlight
-8. **Real testimonials** — at least 3 to start (Google reviews acceptable substitute)
-9. **Booking lead time** — minimum advance booking time
+7. **Driver qualifications** — what specific badges/qualifications to highlight on the About page
+8. **Real testimonials** — at least 3 to start (entered in `/admin/testimonials` with author consent)
+9. **Booking lead time** — minimum advance booking time (becomes a `ui_strings` entry)
 10. **Naeem's portrait + 2 vehicle photos** — for hero and About page
 
-Without items 1-10, the site can be built and deployed, but with placeholders/empty states. Items 1-3 are blocking (legal/trust). Items 4-10 are quality-degrading but not blocking.
+Without items 1–10, the site can be built and deployed with placeholders or empty states (the Phase 5 admin allows Naeem to fill them in himself once content is ready). Items 1–3 are blocking for legal/trust reasons. Items 4–10 are quality-degrading but not blocking.
