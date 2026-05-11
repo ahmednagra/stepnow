@@ -11,6 +11,7 @@ import { buildMetadata } from "@/lib/seo";
 import { Breadcrumb, ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
 import { PricingTable } from "@/components/features/pricing/PricingTable";
 import type { PricingCategoryPublic } from "@/types";
+import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -58,7 +59,7 @@ export default async function PricingPageDe() {
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="block h-px w-10 bg-gold" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-                {t("pricing.page.eyebrow") || "Transparenz"}
+                {pickT(t, "pricing.page.eyebrow", "Transparenz")}
               </p>
             </div>
             <h1 className="mt-4 font-serif text-section md:text-hero">

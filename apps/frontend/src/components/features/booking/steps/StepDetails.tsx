@@ -14,6 +14,7 @@ import {
   PASSENGER_MIN,
 } from "@/constants/booking-wizard";
 import { Textarea } from "@/components/ui";
+import { pickT } from "@/lib/i18n/pick";
 
 interface StepDetailsProps {
   t: TFunction;
@@ -37,14 +38,14 @@ export function StepDetails({ t, registerValidator }: StepDetailsProps) {
 
       <div className="grid gap-6 md:grid-cols-2">
         <Counter
-          label={t("booking.details.passengers_label") || "Fahrgäste"}
+          label={pickT(t, "booking.details.passengers_label", "Fahrgäste")}
           min={PASSENGER_MIN}
           max={PASSENGER_MAX}
           value={draft.passenger_count ?? 1}
           onChange={(n) => updateDraft({ passenger_count: n })}
         />
         <Counter
-          label={t("booking.details.luggage_label") || "Gepäckstücke"}
+          label={pickT(t, "booking.details.luggage_label", "Gepäckstücke")}
           min={LUGGAGE_MIN}
           max={LUGGAGE_MAX}
           value={draft.luggage_count ?? 0}
@@ -53,7 +54,7 @@ export function StepDetails({ t, registerValidator }: StepDetailsProps) {
       </div>
 
       <Textarea
-        label={t("booking.details.notes_label") || "Besondere Hinweise (optional)"}
+        label={pickT(t, "booking.details.notes_label", "Besondere Hinweise (optional)")}
         rows={5}
         showCounter
         maxChars={500}

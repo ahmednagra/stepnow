@@ -12,6 +12,7 @@ import type { TFunction } from "@/lib/i18n/t";
 import type { VehiclePublic } from "@/types";
 import { Container } from "@/components/shared";
 import { cn } from "@/utils/cn";
+import { pickT } from "@/lib/i18n/pick";
 
 interface FleetPreviewProps {
   t: TFunction;
@@ -25,7 +26,7 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
         <header className="mb-12 max-w-3xl">
-          <p className="label-eyebrow">{t("home.fleet.pre_heading") || "Unsere Flotte"}</p>
+          <p className="label-eyebrow">{pickT(t, "home.fleet.pre_heading", "Unsere Flotte")}</p>
           <h2 className="mt-3 font-serif text-section">{t("home.fleet.heading")}</h2>
         </header>
         <ul

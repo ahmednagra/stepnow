@@ -15,6 +15,7 @@ import {
   ValuesSection,
 } from "@/components/features/about";
 import { FleetPreview } from "@/components/features/home";
+import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -51,7 +52,7 @@ export default async function AboutPageEn() {
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="block h-px w-10 bg-gold" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-                {t("about.page.eyebrow") || "About us"}
+                {pickT(t, "about.page.eyebrow", "About us")}
               </p>
             </div>
             <h1 className="mt-4 font-serif text-section md:text-hero">
@@ -66,7 +67,7 @@ export default async function AboutPageEn() {
       </section>
 
       <StorySection t={t} settings={settings} />
-      <ValuesSection t={t} />
+      <ValuesSection t={t} locale="en" />
       <FleetPreview t={t} vehicles={vehicles} />
       <Credentials t={t} settings={settings} locale="en" />
       <ServiceAreaMap settings={settings} />

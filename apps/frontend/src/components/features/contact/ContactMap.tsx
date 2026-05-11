@@ -13,6 +13,7 @@ import { useUiStrings } from "@/hooks/useUiStrings";
 import type { SettingsPublic } from "@/types";
 import { LeafletMap, type LeafletMarker } from "@/components/shared";
 import { EmptyState } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface ContactMapProps {
   settings: SettingsPublic;
@@ -27,10 +28,9 @@ export function ContactMap({ settings }: ContactMapProps) {
   if (!hasCoords) {
     return (
       <EmptyState
-        title={t("contact.map.empty.title") || "Karte nicht verfügbar"}
+        title={pickT(t, "contact.map.empty.title", "Karte nicht verfügbar")}
         description={
-          t("contact.map.empty.body") ||
-          "Die Standortkoordinaten wurden noch nicht hinterlegt."
+          pickT(t, "contact.map.empty.body", "Die Standortkoordinaten wurden noch nicht hinterlegt.")
         }
       />
     );

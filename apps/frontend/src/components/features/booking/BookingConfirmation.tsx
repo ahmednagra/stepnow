@@ -16,6 +16,7 @@ import type { SettingsPublic } from "@/types";
 import { Container } from "@/components/shared";
 import { Button } from "@/components/ui";
 import { toTelHref } from "@/utils/formatters";
+import { pickT } from "@/lib/i18n/pick";
 
 interface BookingConfirmationProps {
   reference: string | null;
@@ -51,21 +52,20 @@ export function BookingConfirmation({
         </div>
 
         <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-          {t("booking.confirmation.eyebrow") || "Anfrage erhalten"}
+          {pickT(t, "booking.confirmation.eyebrow", "Anfrage erhalten")}
         </p>
         <h1 className="mt-3 font-serif text-section md:text-hero">
-          {t("booking.confirmation.heading") || "Danke! Ihre Anfrage ist eingegangen."}
+          {pickT(t, "booking.confirmation.heading", "Danke! Ihre Anfrage ist eingegangen.")}
         </h1>
         <p className="mx-auto mt-5 max-w-md text-body-lg text-mute">
-          {t("booking.confirmation.body") ||
-            "Wir melden uns innerhalb von 30 Minuten mit einem Festpreis-Angebot."}
+          {pickT(t, "booking.confirmation.body", "Wir melden uns innerhalb von 30 Minuten mit einem Festpreis-Angebot.")}
         </p>
 
         {/* Reference number */}
         {reference && (
           <div className="mx-auto mt-12 max-w-md border border-line bg-paper p-6 text-left">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
-              {t("booking.confirmation.reference_label") || "Referenznummer"}
+              {pickT(t, "booking.confirmation.reference_label", "Referenznummer")}
             </p>
             <div className="mt-3 flex items-center justify-between gap-4">
               <code className="font-mono text-lg tracking-wider text-ink select-all">
@@ -80,12 +80,12 @@ export function BookingConfirmation({
                 {copied ? (
                   <>
                     <CheckCheck className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
-                    {t("common.copied") || "Kopiert"}
+                    {pickT(t, "common.copied", "Kopiert")}
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
-                    {t("common.copy") || "Kopieren"}
+                    {pickT(t, "common.copy", "Kopieren")}
                   </>
                 )}
               </button>
@@ -120,11 +120,10 @@ export function BookingConfirmation({
         {/* Urgent CTA */}
         <div className="mx-auto mt-12 max-w-md border-t border-line pt-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mute">
-            {t("booking.confirmation.urgent_heading") || "Dringend?"}
+            {pickT(t, "booking.confirmation.urgent_heading", "Dringend?")}
           </p>
           <p className="mt-3 text-[14.5px] text-mute">
-            {t("booking.confirmation.urgent_body") ||
-              "Für kurzfristige Buchungen rufen Sie uns direkt an."}
+            {pickT(t, "booking.confirmation.urgent_body", "Für kurzfristige Buchungen rufen Sie uns direkt an.")}
           </p>
           <a
             href={toTelHref(settings.phone)}
@@ -143,7 +142,7 @@ export function BookingConfirmation({
               variant="secondary"
               leadingIcon={<ArrowLeft className="h-4 w-4" aria-hidden="true" />}
             >
-              {t("booking.confirmation.cta_home") || "Zur Startseite"}
+              {pickT(t, "booking.confirmation.cta_home", "Zur Startseite")}
             </Button>
           </Link>
           <a href={toTelHref(settings.phone)}>
@@ -152,7 +151,7 @@ export function BookingConfirmation({
               variant="outline"
               leadingIcon={<Phone className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />}
             >
-              {t("booking.confirmation.cta_call") || "Jetzt anrufen"}
+              {pickT(t, "booking.confirmation.cta_call", "Jetzt anrufen")}
             </Button>
           </a>
         </div>

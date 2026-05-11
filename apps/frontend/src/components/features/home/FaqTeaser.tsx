@@ -10,6 +10,7 @@ import type { FaqPublic, Locale } from "@/types";
 import { Container, Markdown } from "@/components/shared";
 import { buildFaqPageJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
+import { pickT } from "@/lib/i18n/pick";
 
 interface FaqTeaserProps {
   t: TFunction;
@@ -29,7 +30,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
       <Container className="py-section">
         <header className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="label-eyebrow">{t("home.faq.pre_heading") || "FAQ"}</p>
+            <p className="label-eyebrow">{pickT(t, "home.faq.pre_heading", "FAQ")}</p>
             <h2 className="mt-3 font-serif text-section">{t("home.faq.heading")}</h2>
           </div>
           <Link

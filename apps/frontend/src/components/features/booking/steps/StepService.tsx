@@ -9,6 +9,7 @@ import type { Locale, ServicePublic } from "@/types";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
 import { MAX_ADVANCE_DAYS, MIN_LEAD_TIME_MINUTES } from "@/constants/booking-wizard";
 import { Input } from "@/components/ui";
+import { pickT } from "@/lib/i18n/pick";
 import { cn } from "@/utils/cn";
 
 interface StepServiceProps {
@@ -51,9 +52,11 @@ export function StepService({
         const requested = new Date(`${draft.pickup_date}T${draft.pickup_time}:00`);
         const minLead = new Date(Date.now() + MIN_LEAD_TIME_MINUTES * 60 * 1000);
         if (requested < minLead) {
-          next.time =
-            t("errors.lead_time") ||
-            `Mindestens ${MIN_LEAD_TIME_MINUTES} Minuten Vorlauf erforderlich.`;
+          next.time = pickT(
+            t,
+            "errors.lead_time",
+            `Mindestens ${MIN_LEAD_TIME_MINUTES} Minuten Vorlauf erforderlich.`,
+          );
         }
       }
       setErrors(next);

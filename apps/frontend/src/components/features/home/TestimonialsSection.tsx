@@ -13,6 +13,7 @@ import { useUiStrings } from "@/hooks/useUiStrings";
 import type { TestimonialPublic } from "@/types";
 import { Container } from "@/components/shared";
 import { cn } from "@/utils/cn";
+import { pickT } from "@/lib/i18n/pick";
 
 interface TestimonialsSectionProps {
   testimonials: TestimonialPublic[];
@@ -48,7 +49,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
       <Container className="py-section">
         <header className="mb-12 max-w-3xl">
           <p className="label-eyebrow">
-            {t("home.testimonials.pre_heading") || "Kundenstimmen"}
+            {pickT(t, "home.testimonials.pre_heading", "Kundenstimmen")}
           </p>
           <h2 className="mt-3 font-serif text-section">{t("home.testimonials.heading")}</h2>
         </header>

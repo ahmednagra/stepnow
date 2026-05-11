@@ -6,6 +6,7 @@ import { Phone, Mail, MapPin, Clock3 } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
+import { pickT } from "@/lib/i18n/pick";
 
 interface ContactMethodsProps {
   t: TFunction;
@@ -26,7 +27,7 @@ export function ContactMethods({ t, settings }: ContactMethodsProps) {
           </span>
           <div className="flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
-              {t("contact.method.phone") || "Telefon"}
+              {pickT(t, "contact.method.phone", "Telefon")}
             </p>
             <p className="mt-1 font-serif text-xl tracking-tight tabular-nums text-ink">
               {settings.phone}
@@ -48,7 +49,7 @@ export function ContactMethods({ t, settings }: ContactMethodsProps) {
           </span>
           <div className="flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
-              {t("contact.method.email") || "E-Mail"}
+              {pickT(t, "contact.method.email", "E-Mail")}
             </p>
             <p className="mt-1 break-all font-serif text-xl tracking-tight text-ink">
               {settings.email}
@@ -64,7 +65,7 @@ export function ContactMethods({ t, settings }: ContactMethodsProps) {
           </span>
           <div className="flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
-              {t("contact.method.address") || "Adresse"}
+              {pickT(t, "contact.method.address", "Adresse")}
             </p>
             <address className="mt-1 not-italic font-serif text-lg leading-snug tracking-tight text-ink">
               {settings.address_street}
@@ -83,7 +84,7 @@ export function ContactMethods({ t, settings }: ContactMethodsProps) {
             </span>
             <div className="flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
-                {t("contact.method.hours") || "Fahrzeiten"}
+                {pickT(t, "contact.method.hours", "Fahrzeiten")}
               </p>
               <p className="mt-1 text-[15px] leading-relaxed text-ink">
                 {settings.opening_hours_rides}

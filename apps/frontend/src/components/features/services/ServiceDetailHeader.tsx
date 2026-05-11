@@ -11,6 +11,7 @@ import type { TFunction } from "@/lib/i18n/t";
 import type { ServicePublic } from "@/types";
 import { Container } from "@/components/shared";
 import { Button } from "@/components/ui";
+import { pickT } from "@/lib/i18n/pick";
 
 interface ServiceDetailHeaderProps {
   t: TFunction;
@@ -40,7 +41,7 @@ export function ServiceDetailHeader({ t, service, bookingPath }: ServiceDetailHe
                   size="lg"
                   trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
                 >
-                  {t("services.detail.cta_book") || "Diesen Service buchen"}
+                  {pickT(t, "services.detail.cta_book", "Diesen Service buchen")}
                 </Button>
               </Link>
             </div>

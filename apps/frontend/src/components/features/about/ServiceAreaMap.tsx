@@ -11,6 +11,7 @@
 import { useUiStrings } from "@/hooks/useUiStrings";
 import type { SettingsPublic } from "@/types";
 import { Container, EmptyState, LeafletMap, type LeafletMarker } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface ServiceAreaMapProps {
   settings: SettingsPublic;
@@ -26,7 +27,7 @@ export function ServiceAreaMap({ settings }: ServiceAreaMapProps) {
     <section className="border-t border-line bg-paper">
       <Container className="py-section">
         <header className="mb-12 max-w-3xl">
-          <p className="label-eyebrow">{t("about.area.eyebrow") || "Einsatzgebiet"}</p>
+          <p className="label-eyebrow">{pickT(t, "about.area.eyebrow", "Einsatzgebiet")}</p>
           <h2 className="mt-3 font-serif text-section">{t("about.area.heading")}</h2>
           <p className="mt-4 text-body-lg text-mute">{t("about.area.body")}</p>
         </header>
@@ -49,8 +50,8 @@ export function ServiceAreaMap({ settings }: ServiceAreaMapProps) {
           </div>
         ) : (
           <EmptyState
-            title={t("about.area.empty.title") || "Karte nicht verfügbar"}
-            description={t("about.area.empty.body") || "Standort wird in Kürze hinterlegt."}
+            title={pickT(t, "about.area.empty.title", "Karte nicht verfügbar")}
+            description={pickT(t, "about.area.empty.body", "Standort wird in Kürze hinterlegt.")}
           />
         )}
       </Container>

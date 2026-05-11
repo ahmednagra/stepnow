@@ -19,6 +19,7 @@ import {
   ContactMethods,
 } from "@/components/features/contact";
 import { FaqTeaser } from "@/components/features/home";
+import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -55,7 +56,7 @@ export default async function ContactPageDe() {
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="block h-px w-10 bg-gold" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-                {t("contact.page.eyebrow") || "Kontakt"}
+                {pickT(t, "contact.page.eyebrow", "Kontakt")}
               </p>
             </div>
             <h1 className="mt-4 font-serif text-section md:text-hero">
@@ -71,7 +72,7 @@ export default async function ContactPageDe() {
         <Container className="grid gap-16 py-section md:grid-cols-12 md:gap-12">
           {/* Left column — methods + hours */}
           <aside className="md:col-span-5">
-            <p className="label-eyebrow">{t("contact.methods.eyebrow") || "Direkt"}</p>
+            <p className="label-eyebrow">{pickT(t, "contact.methods.eyebrow", "Direkt")}</p>
             <h2 className="mt-3 font-serif text-section">{t("contact.methods.heading")}</h2>
             <p className="mt-3 text-mute">{t("contact.methods.intro")}</p>
             <div className="mt-8">
@@ -80,7 +81,7 @@ export default async function ContactPageDe() {
           </aside>
           {/* Right column — form */}
           <div className="md:col-span-7">
-            <p className="label-eyebrow">{t("contact.form.eyebrow") || "Anfrage"}</p>
+            <p className="label-eyebrow">{pickT(t, "contact.form.eyebrow", "Anfrage")}</p>
             <h2 className="mt-3 font-serif text-section">{t("contact.form.heading")}</h2>
             <p className="mt-3 text-mute">{t("contact.form.intro")}</p>
             <div className="mt-8">
@@ -94,7 +95,7 @@ export default async function ContactPageDe() {
       <section className="border-t border-line bg-paper">
         <Container className="py-section">
           <header className="mb-8 max-w-3xl">
-            <p className="label-eyebrow">{t("contact.map.eyebrow") || "Standort"}</p>
+            <p className="label-eyebrow">{pickT(t, "contact.map.eyebrow", "Standort")}</p>
             <h2 className="mt-3 font-serif text-section">{t("contact.map.heading")}</h2>
           </header>
           <ContactMap settings={settings} />

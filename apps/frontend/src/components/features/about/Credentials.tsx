@@ -1,11 +1,12 @@
 // apps/frontend/src/components/features/about/Credentials.tsx
-// Phase 3d polish — credential rows with gold-deep eyebrows and tabular-nums
-// reference values. Hidden cleanly when no concession data is configured.
+// Phase 3d polish — credential rows with gold-deep icons. Every row carries
+// bilingual defaults so missing UI strings never leak into the rendered page.
 
 import { Award, ShieldCheck, FileCheck, BadgeCheck } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, SettingsPublic } from "@/types";
 import { Container } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface CredentialsProps {
   t: TFunction;
@@ -13,10 +14,16 @@ interface CredentialsProps {
   locale: Locale;
 }
 
-export function Credentials({ t, settings }: CredentialsProps) {
-  // If no concession info is set yet, we still render the credentials block
-  // because BKrFQG / insurance entries don't require concession data.
+interface CredentialItem {
+  Icon: typeof Award;
+  titleKey: string;
+  bodyKey: string;
+  defaults: { de: { title: string; body: string }; en: { title: string; body: string } };
+  /** Optional dynamic override (used by the PBefG row for the concession line). */
+  bodyOverride?: string | null;
+}
 
+export function Credentials({ t, settings, locale }: CredentialsProps) {
   const concessionLine = settings.concession_number
     ? locale === "de"
       ? `Lizenz-Nr. ${settings.concession_number}${
@@ -27,37 +34,67 @@ export function Credentials({ t, settings }: CredentialsProps) {
         }`
     : null;
 
-  const ITEMS = [
+  const ITEMS: CredentialItem[] = [
     {
       Icon: Award,
       titleKey: "about.credentials.pbefg.title",
-      defaultTitle: locale === "de" ? "Konzession nach § 49 PBefG" : "License under § 49 PBefG",
-      body: concessionLine ?? t("about.credentials.pbefg.body"),
+      bodyKey: "about.credentials.pbefg.body",
+      defaults: {
+        de: {
+          title: "Konzession nach § 49 PBefG",
+          body: "Lizenziert nach dem deutschen Personenbeförderungsgesetz. Volle Konzessionspflicht erfüllt.",
+        },
+        en: {
+          title: "License under § 49 PBefG",
+          body: "Licensed under the German Passenger Transport Act. Full concession compliance.",
+        },
+      },
+      bodyOverride: concessionLine,
     },
     {
       Icon: BadgeCheck,
       titleKey: "about.credentials.bkrfqg.title",
-      defaultTitle:
-        locale === "de"
-          ? "Berufskraftfahrer-Qualifikation"
-          : "Professional driver qualification",
-      body: t("about.credentials.bkrfqg.body"),
+      bodyKey: "about.credentials.bkrfqg.body",
+      defaults: {
+        de: {
+          title: "Berufskraftfahrer-Qualifikation",
+          body: "Qualifikation nach BKrFQG mit regelmäßigen Weiterbildungen.",
+        },
+        en: {
+          title: "Professional driver qualification",
+          body: "BKrFQG-certified with regular continuing education.",
+        },
+      },
     },
     {
       Icon: ShieldCheck,
       titleKey: "about.credentials.insurance.title",
-      defaultTitle:
-        locale === "de"
-          ? "Personenbeförderungs-Haftpflicht"
-          : "Passenger transport liability",
-      body: t("about.credentials.insurance.body"),
+      bodyKey: "about.credentials.insurance.body",
+      defaults: {
+        de: {
+          title: "Personenbeförderungs-Haftpflicht",
+          body: "Volle Personenbeförderungs-Haftpflichtversicherung für alle Fahrten.",
+        },
+        en: {
+          title: "Passenger transport liability",
+          body: "Full passenger transport liability insurance on every ride.",
+        },
+      },
     },
     {
       Icon: FileCheck,
       titleKey: "about.credentials.handelsregister.title",
-      defaultTitle:
-        locale === "de" ? "Eintrag im Handelsregister" : "Trade register entry",
-      body: t("about.credentials.handelsregister.body"),
+      bodyKey: "about.credentials.handelsregister.body",
+      defaults: {
+        de: {
+          title: "Eintrag im Handelsregister",
+          body: "Eingetragenes Unternehmen am Amtsgericht — Geschäftssitz Deizisau.",
+        },
+        en: {
+          title: "Trade register entry",
+          body: "Registered business at the local commercial court — based in Deizisau.",
+        },
+      },
     },
   ];
 
@@ -66,27 +103,32 @@ export function Credentials({ t, settings }: CredentialsProps) {
       <Container className="py-section">
         <header className="mb-12 max-w-3xl">
           <p className="label-eyebrow">
-            {t("about.credentials.eyebrow") || "Qualifikationen"}
+            {pickT(
+              t,
+              "about.credentials.eyebrow",
+              locale === "de" ? "Qualifikationen" : "Credentials",
+            )}
           </p>
-          <h2 className="mt-3 font-serif text-section">{t("about.credentials.heading")}</h2>
+          <h2 className="mt-3 font-serif text-section">
+            {pickT(
+              t,
+              "about.credentials.heading",
+              locale === "de" ? "Qualifikationen & Lizenzen" : "Credentials & licenses",
+            )}
+          </h2>
         </header>
         <ul className="divide-y divide-line border-y border-line">
           {ITEMS.map((it) => {
-            const body = it.body;
-            // Skip rows that have no body content (no fallback strings either)
-            if (!body || body.startsWith("[")) return null;
+            const title = pickT(t, it.titleKey, it.defaults[locale].title);
+            const body =
+              it.bodyOverride ?? pickT(t, it.bodyKey, it.defaults[locale].body);
             return (
               <li key={it.titleKey} className="flex items-start gap-5 py-6">
                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
                   <it.Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <div className="flex-1">
-                  <p className="font-serif text-lg tracking-tight text-ink">
-                    {(() => {
-                      const fromString = t(it.titleKey);
-                      return fromString && !fromString.startsWith("[") ? fromString : it.defaultTitle;
-                    })()}
-                  </p>
+                  <p className="font-serif text-lg tracking-tight text-ink">{title}</p>
                   <p className="mt-1 text-[14.5px] leading-relaxed text-mute">{body}</p>
                 </div>
               </li>

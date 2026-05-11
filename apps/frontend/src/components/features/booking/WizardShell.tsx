@@ -21,6 +21,7 @@ import { StepRoute } from "./steps/StepRoute";
 import { StepDetails } from "./steps/StepDetails";
 import { StepContact } from "./steps/StepContact";
 import { StepReview } from "./steps/StepReview";
+import { pickT } from "@/lib/i18n/pick";
 
 interface WizardShellProps {
   locale: Locale;
@@ -95,7 +96,7 @@ export function WizardShell({
       <Container className="py-section">
         <div className="mx-auto max-w-2xl">
           <header className="mb-12 flex flex-col gap-4">
-            <p className="label-eyebrow">{t("booking.page.eyebrow") || "Anfrage"}</p>
+            <p className="label-eyebrow">{pickT(t, "booking.page.eyebrow", "Anfrage")}</p>
             <h1 className="font-serif text-section md:text-hero">{t("booking.page.title")}</h1>
             <p className="text-body-lg text-mute">{t("booking.page.subhead")}</p>
           </header>
@@ -114,7 +115,7 @@ export function WizardShell({
           <div className="flex items-center gap-3">
             <span aria-hidden="true" className="block h-px w-8 bg-gold" />
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-              {t("booking.page.eyebrow") || "Anfrage"}
+              {pickT(t, "booking.page.eyebrow", "Anfrage")}
             </p>
           </div>
           <h1 className="font-serif text-section md:text-hero">{t("booking.page.title")}</h1>
@@ -177,7 +178,7 @@ export function WizardShell({
         {settings?.phone && (
           <div className="mt-16 border-t border-line pt-8 text-center">
             <p className="text-[13px] text-mute">
-              {t("booking.help.heading") || "Brauchen Sie Hilfe bei der Buchung?"}
+              {pickT(t, "booking.help.heading", "Brauchen Sie Hilfe bei der Buchung?")}
             </p>
             <a
               href={toTelHref(settings.phone)}

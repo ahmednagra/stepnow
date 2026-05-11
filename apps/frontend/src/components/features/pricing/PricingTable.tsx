@@ -9,6 +9,7 @@ import type { Locale, PricingCategoryPublic, ServicePublic } from "@/types";
 import { Container, EmptyState } from "@/components/shared";
 import { formatPrice } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
+import { pickT } from "@/lib/i18n/pick";
 
 interface PricingTableProps {
   t: TFunction;
@@ -107,8 +108,7 @@ export function PricingTable({
                 </div>
               ))}
             <p className="text-[12.5px] text-mute">
-              {t("pricing.footnote") ||
-                "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage."}
+              {pickT(t, "pricing.footnote", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.")}
             </p>
           </div>
         )}

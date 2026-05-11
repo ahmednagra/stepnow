@@ -11,6 +11,7 @@ import { useUiStrings } from "@/hooks/useUiStrings";
 import type { Locale } from "@/types";
 import { Button } from "@/components/ui";
 import { MAX_ADVANCE_DAYS } from "@/constants/booking-wizard";
+import { pickT } from "@/lib/i18n/pick";
 
 interface HeroBookingWidgetProps {
   locale: Locale;
@@ -92,7 +93,7 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
       </Button>
 
       <p className="text-[11px] leading-relaxed text-cream/50">
-        {t("hero_widget.note") || "Festpreis-Antwort innerhalb von 30 Minuten."}
+        {pickT(t, "hero_widget.note", "Festpreis-Antwort innerhalb von 30 Minuten.")}
       </p>
     </div>
   );

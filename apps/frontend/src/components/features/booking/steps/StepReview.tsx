@@ -19,6 +19,7 @@ import type { WizardStep } from "@/types/booking-wizard";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
 import { Button, Checkbox } from "@/components/ui";
 import { submitBooking } from "@/services/booking";
+import { pickT } from "@/lib/i18n/pick";
 
 interface StepReviewProps {
   t: TFunction;
@@ -102,9 +103,9 @@ export function StepReview({
           eyebrow={t("booking.step.service")}
           onEdit={() => onJumpTo("service")}
         >
-          <ReviewRow label={t("booking.review.service") || "Leistung"} value={service?.title ?? "—"} />
+          <ReviewRow label={pickT(t, "booking.review.service", "Leistung")} value={service?.title ?? "—"} />
           <ReviewRow
-            label={t("booking.review.when") || "Wann"}
+            label={pickT(t, "booking.review.when", "Wann")}
             value={
               draft.pickup_date && draft.pickup_time
                 ? `${draft.pickup_date} · ${draft.pickup_time}`
@@ -115,7 +116,7 @@ export function StepReview({
 
         <ReviewSection eyebrow={t("booking.step.route")} onEdit={() => onJumpTo("route")}>
           <ReviewRow
-            label={t("booking.route.pickup_label") || "Abholung"}
+            label={pickT(t, "booking.route.pickup_label", "Abholung")}
             value={[
               draft.pickup_address,
               [draft.pickup_postcode, draft.pickup_city].filter(Boolean).join(" "),
@@ -124,7 +125,7 @@ export function StepReview({
               .join(", ")}
           />
           <ReviewRow
-            label={t("booking.route.destination_label") || "Ziel"}
+            label={pickT(t, "booking.route.destination_label", "Ziel")}
             value={[
               draft.destination_address,
               [draft.destination_postcode, draft.destination_city]
@@ -138,16 +139,16 @@ export function StepReview({
 
         <ReviewSection eyebrow={t("booking.step.details")} onEdit={() => onJumpTo("details")}>
           <ReviewRow
-            label={t("booking.details.passengers_label") || "Fahrgäste"}
+            label={pickT(t, "booking.details.passengers_label", "Fahrgäste")}
             value={String(draft.passenger_count ?? 1)}
           />
           <ReviewRow
-            label={t("booking.details.luggage_label") || "Gepäck"}
+            label={pickT(t, "booking.details.luggage_label", "Gepäck")}
             value={String(draft.luggage_count ?? 0)}
           />
           {draft.special_requirements && (
             <ReviewRow
-              label={t("booking.details.notes_label") || "Hinweise"}
+              label={pickT(t, "booking.details.notes_label", "Hinweise")}
               value={draft.special_requirements}
             />
           )}
@@ -169,11 +170,11 @@ export function StepReview({
       <Checkbox
         label={
           <>
-            {t("booking.review.consent_intro") || "Ich stimme der "}
+            {pickT(t, "booking.review.consent_intro", "Ich stimme der ")}
             <Link href={privacyHref} className="underline hover:text-gold-deep">
               {t("footer.legal.datenschutz")}
             </Link>{" "}
-            {t("booking.review.consent_zu") || "zu."}
+            {pickT(t, "booking.review.consent_zu", "zu.")}
           </>
         }
         required
@@ -194,7 +195,7 @@ export function StepReview({
           isLoading={submitting}
           trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         >
-          {t("booking.review.submit") || "Anfrage absenden"}
+          {pickT(t, "booking.review.submit", "Anfrage absenden")}
         </Button>
       </div>
     </div>

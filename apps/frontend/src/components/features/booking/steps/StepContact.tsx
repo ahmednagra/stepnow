@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import type { TFunction } from "@/lib/i18n/t";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
 import { Input, Checkbox } from "@/components/ui";
+import { pickT } from "@/lib/i18n/pick";
 
 interface StepContactProps {
   t: TFunction;
@@ -29,10 +30,10 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
         next.name = t("errors.required");
       }
       if (!draft.customer_phone?.trim() || !/^[\d\s+\-()]{6,}$/.test(draft.customer_phone)) {
-        next.phone = t("errors.phone") || "Bitte gültige Telefonnummer angeben.";
+        next.phone = pickT(t, "errors.phone", "Bitte gültige Telefonnummer angeben.");
       }
       if (!draft.customer_email?.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.customer_email)) {
-        next.email = t("errors.email") || "Bitte gültige E-Mail-Adresse angeben.";
+        next.email = pickT(t, "errors.email", "Bitte gültige E-Mail-Adresse angeben.");
       }
       setErrors(next);
       return Object.keys(next).length === 0;
@@ -48,7 +49,7 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
 
       <div className="flex flex-col gap-5">
         <Input
-          label={t("booking.contact.name_label") || "Name"}
+          label={pickT(t, "booking.contact.name_label", "Name")}
           required
           autoComplete="name"
           value={draft.customer_name ?? ""}
@@ -57,7 +58,7 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
         />
         <div className="grid gap-5 md:grid-cols-2">
           <Input
-            label={t("booking.contact.phone_label") || "Telefon"}
+            label={pickT(t, "booking.contact.phone_label", "Telefon")}
             type="tel"
             required
             autoComplete="tel"
@@ -66,7 +67,7 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
             error={errors.phone}
           />
           <Input
-            label={t("booking.contact.email_label") || "E-Mail"}
+            label={pickT(t, "booking.contact.email_label", "E-Mail")}
             type="email"
             required
             autoComplete="email"
@@ -77,7 +78,7 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
         </div>
 
         <Checkbox
-          label={t("booking.contact.business_toggle") || "Ich buche als Geschäftskunde"}
+          label={pickT(t, "booking.contact.business_toggle", "Ich buche als Geschäftskunde")}
           checked={!!draft.is_business}
           onChange={(e) => updateDraft({ is_business: e.target.checked })}
         />
@@ -85,13 +86,13 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
         {draft.is_business && (
           <div className="grid gap-5 border-l-2 border-gold/50 pl-6 md:grid-cols-2">
             <Input
-              label={t("booking.contact.company_label") || "Firmenname"}
+              label={pickT(t, "booking.contact.company_label", "Firmenname")}
               value={draft.company_name ?? ""}
               onChange={(e) => updateDraft({ company_name: e.target.value })}
               autoComplete="organization"
             />
             <Input
-              label={t("booking.contact.vat_label") || "USt-IdNr"}
+              label={pickT(t, "booking.contact.vat_label", "USt-IdNr")}
               value={draft.company_vatid ?? ""}
               onChange={(e) => updateDraft({ company_vatid: e.target.value })}
             />

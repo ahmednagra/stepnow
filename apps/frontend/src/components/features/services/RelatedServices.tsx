@@ -7,6 +7,7 @@ import { ArrowUpRight } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { ServicePublic } from "@/types";
 import { Container } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface RelatedServicesProps {
   t: TFunction;
@@ -20,9 +21,9 @@ export function RelatedServices({ t, services, hrefBase }: RelatedServicesProps)
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
         <header className="mb-10 max-w-3xl">
-          <p className="label-eyebrow">{t("services.related.eyebrow") || "Weitere Leistungen"}</p>
+          <p className="label-eyebrow">{pickT(t, "services.related.eyebrow", "Weitere Leistungen")}</p>
           <h2 className="mt-3 font-serif text-section">
-            {t("services.related.heading") || "Weitere Leistungen"}
+            {pickT(t, "services.related.heading", "Weitere Leistungen")}
           </h2>
         </header>
         <ul className="grid gap-px overflow-hidden border border-line bg-line md:grid-cols-3">

@@ -6,6 +6,7 @@
 import { ClipboardList, CheckCircle, Car } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import { Container } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface HowItWorksProps {
   t: TFunction;
@@ -44,7 +45,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
     <section className="bg-cream">
       <Container className="py-section">
         <header className="mb-16 max-w-3xl">
-          <p className="label-eyebrow">{t("home.how.pre_heading") || "Ablauf"}</p>
+          <p className="label-eyebrow">{pickT(t, "home.how.pre_heading", "Ablauf")}</p>
           <h2 className="mt-3 font-serif text-section md:text-display-md">
             {t("home.how.heading")}
           </h2>

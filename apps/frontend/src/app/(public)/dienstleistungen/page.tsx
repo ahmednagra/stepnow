@@ -9,6 +9,7 @@ import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
 import { Breadcrumb, Container } from "@/components/shared";
 import { ServiceListItem } from "@/components/features/services/ServiceListItem";
+import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -44,7 +45,7 @@ export default async function ServicesListDe() {
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="block h-px w-10 bg-gold" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-                {t("services.page.eyebrow") || "Leistungen"}
+                {pickT(t, "services.page.eyebrow", "Leistungen")}
               </p>
             </div>
             <h1 className="mt-4 font-serif text-section md:text-hero">

@@ -1,10 +1,4 @@
 // apps/frontend/tailwind.config.ts
-// Phase 3d polish — addresses audit findings C-5, P-1, M-7, H-5.
-//   - Adds `gold-deep` for AA-safe usage on cream (#86683F → 6.4:1 vs cream).
-//   - Adds premium shadow scale calibrated for light & dark surfaces.
-//   - Adds stagger / lift animations for card hover & list reveals.
-//   - Adds `tabular-nums` & `pill` border radius for refined micro-UI.
-//   - Adds safe-area-aware bottom utility for the new MobileStickyBar.
 
 import type { Config } from "tailwindcss";
 
@@ -20,9 +14,6 @@ const config: Config = {
         cream: "#F5F2EC", // warm off-white.
         paper: "#FAFAF7", // lighter alternate for nested light surfaces.
 
-        // Accent — gold scale.
-        //   • DEFAULT/light  → for fills, eyebrow labels, hairlines, dark-bg copy.
-        //   • dark/deep      → for body-text use on cream (AA-compliant).
         gold: {
           DEFAULT: "#A8865A",
           light: "#C2A675",

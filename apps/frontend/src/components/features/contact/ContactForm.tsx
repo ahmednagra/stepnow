@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import { Button, Input, Textarea, Select, Checkbox } from "@/components/ui";
 import { submitContact } from "@/services/contact";
+import { pickT } from "@/lib/i18n/pick";
 
 const SUBJECT_OPTIONS = [
   { value: "general", labelKey: "contact.form.subject.general" },
@@ -74,11 +75,10 @@ export function ContactForm({ id }: ContactFormProps) {
           <Check className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
         </div>
         <p className="mt-6 font-serif text-2xl tracking-tight text-ink">
-          {t("contact.form.success.heading") || "Vielen Dank!"}
+          {pickT(t, "contact.form.success.heading", "Vielen Dank!")}
         </p>
         <p className="mt-3 text-mute">
-          {t("contact.form.success.body") ||
-            "Wir melden uns innerhalb eines Werktages bei Ihnen."}
+          {pickT(t, "contact.form.success.body", "Wir melden uns innerhalb eines Werktages bei Ihnen.")}
         </p>
       </div>
     );
@@ -97,14 +97,14 @@ export function ContactForm({ id }: ContactFormProps) {
       />
       <div className="grid gap-5 md:grid-cols-2">
         <Input
-          label={t("contact.form.name") || "Name"}
+          label={pickT(t, "contact.form.name", "Name")}
           required
           autoComplete="name"
           error={errors.name && t("errors.required")}
           {...register("name")}
         />
         <Input
-          label={t("contact.form.email") || "E-Mail"}
+          label={pickT(t, "contact.form.email", "E-Mail")}
           type="email"
           required
           autoComplete="email"
@@ -114,13 +114,13 @@ export function ContactForm({ id }: ContactFormProps) {
       </div>
       <div className="grid gap-5 md:grid-cols-2">
         <Input
-          label={t("contact.form.phone") || "Telefon (optional)"}
+          label={pickT(t, "contact.form.phone", "Telefon (optional)")}
           type="tel"
           autoComplete="tel"
           {...register("phone")}
         />
         <Select
-          label={t("contact.form.subject") || "Betreff"}
+          label={pickT(t, "contact.form.subject", "Betreff")}
           required
           {...register("subject_category")}
         >
@@ -132,7 +132,7 @@ export function ContactForm({ id }: ContactFormProps) {
         </Select>
       </div>
       <Textarea
-        label={t("contact.form.message") || "Nachricht"}
+        label={pickT(t, "contact.form.message", "Nachricht")}
         rows={6}
         required
         showCounter
@@ -144,11 +144,11 @@ export function ContactForm({ id }: ContactFormProps) {
       <Checkbox
         label={
           <>
-            {t("contact.form.consent_intro") || "Ich stimme der "}
+            {pickT(t, "contact.form.consent_intro", "Ich stimme der ")}
             <Link href={privacyHref} className="underline hover:text-gold-deep">
               {t("footer.legal.datenschutz")}
             </Link>{" "}
-            {t("contact.form.consent_zu") || "zu."}
+            {pickT(t, "contact.form.consent_zu", "zu.")}
           </>
         }
         required
@@ -162,7 +162,7 @@ export function ContactForm({ id }: ContactFormProps) {
       )}
       <div className="mt-2">
         <Button type="submit" size="lg" isLoading={isSubmitting}>
-          {t("contact.form.submit") || "Nachricht senden"}
+          {pickT(t, "contact.form.submit", "Nachricht senden")}
         </Button>
       </div>
     </form>

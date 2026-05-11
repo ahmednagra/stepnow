@@ -8,6 +8,7 @@ import { MapPin } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
 import { Input } from "@/components/ui";
+import { pickT } from "@/lib/i18n/pick";
 
 interface StepRouteProps {
   t: TFunction;
@@ -42,10 +43,10 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
       {/* Pickup */}
       <fieldset className="flex flex-col gap-4">
         <legend className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-          {t("booking.route.pickup_label") || "Abholung"}
+          {pickT(t, "booking.route.pickup_label", "Abholung")}
         </legend>
         <Input
-          label={t("booking.route.address_label") || "Adresse"}
+          label={pickT(t, "booking.route.address_label", "Adresse")}
           required
           leadingAdornment={<MapPin className="h-4 w-4" strokeWidth={1.5} />}
           value={draft.pickup_address ?? ""}
@@ -55,7 +56,7 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
         />
         <div className="grid gap-4 md:grid-cols-2">
           <Input
-            label={t("booking.route.postcode_label") || "PLZ"}
+            label={pickT(t, "booking.route.postcode_label", "PLZ")}
             value={draft.pickup_postcode ?? ""}
             onChange={(e) => updateDraft({ pickup_postcode: e.target.value })}
             inputMode="numeric"
@@ -63,7 +64,7 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
             autoComplete="postal-code"
           />
           <Input
-            label={t("booking.route.city_label") || "Ort"}
+            label={pickT(t, "booking.route.city_label", "Ort")}
             value={draft.pickup_city ?? ""}
             onChange={(e) => updateDraft({ pickup_city: e.target.value })}
             autoComplete="address-level2"
@@ -74,10 +75,10 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
       {/* Destination */}
       <fieldset className="flex flex-col gap-4">
         <legend className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-          {t("booking.route.destination_label") || "Ziel"}
+          {pickT(t, "booking.route.destination_label", "Ziel")}
         </legend>
         <Input
-          label={t("booking.route.address_label") || "Adresse"}
+          label={pickT(t, "booking.route.address_label", "Adresse")}
           required
           leadingAdornment={<MapPin className="h-4 w-4" strokeWidth={1.5} />}
           value={draft.destination_address ?? ""}
@@ -86,14 +87,14 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
         />
         <div className="grid gap-4 md:grid-cols-2">
           <Input
-            label={t("booking.route.postcode_label") || "PLZ"}
+            label={pickT(t, "booking.route.postcode_label", "PLZ")}
             value={draft.destination_postcode ?? ""}
             onChange={(e) => updateDraft({ destination_postcode: e.target.value })}
             inputMode="numeric"
             maxLength={5}
           />
           <Input
-            label={t("booking.route.city_label") || "Ort"}
+            label={pickT(t, "booking.route.city_label", "Ort")}
             value={draft.destination_city ?? ""}
             onChange={(e) => updateDraft({ destination_city: e.target.value })}
           />

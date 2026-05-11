@@ -10,6 +10,7 @@ import type { Locale, PricingCategoryPublic } from "@/types";
 import { Container } from "@/components/shared";
 import { Button } from "@/components/ui";
 import { formatPrice } from "@/utils/formatters";
+import { pickT } from "@/lib/i18n/pick";
 
 interface PricingSnapshotProps {
   t: TFunction;
@@ -33,7 +34,7 @@ export function PricingSnapshot({
       <section className="border-t border-line bg-paper">
         <Container className="py-section">
           <header className="mb-8 max-w-3xl">
-            <p className="label-eyebrow">{t("pricing.page.eyebrow") || "Preise"}</p>
+            <p className="label-eyebrow">{pickT(t, "pricing.page.eyebrow", "Preise")}</p>
             <h2 className="mt-3 font-serif text-section">{t("pricing.empty.heading")}</h2>
             <p className="mt-4 text-body-lg text-mute">{t("pricing.empty.body")}</p>
           </header>
@@ -52,7 +53,7 @@ export function PricingSnapshot({
       <Container className="py-section">
         <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="label-eyebrow">{t("pricing.page.eyebrow") || "Preise"}</p>
+            <p className="label-eyebrow">{pickT(t, "pricing.page.eyebrow", "Preise")}</p>
             <h2 className="mt-3 font-serif text-section">{t("pricing.page.title")}</h2>
           </div>
           <Link
@@ -84,8 +85,7 @@ export function PricingSnapshot({
           ))}
         </ul>
         <p className="mt-6 text-[12.5px] text-mute">
-          {t("pricing.disclaimer") ||
-            "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung."}
+          {pickT(t, "pricing.disclaimer", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung.")}
         </p>
       </Container>
     </section>

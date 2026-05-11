@@ -5,6 +5,7 @@
 
 import type { TFunction } from "@/lib/i18n/t";
 import { Container } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface WhyStepNowProps {
   t: TFunction;
@@ -23,7 +24,7 @@ export function WhyStepNow({ t }: WhyStepNowProps) {
     <section className="border-t border-line bg-paper">
       <Container className="grid gap-16 py-section md:grid-cols-12 md:gap-12">
         <div className="md:col-span-5">
-          <p className="label-eyebrow">{t("home.why.pre_heading") || "Differenzierung"}</p>
+          <p className="label-eyebrow">{pickT(t, "home.why.pre_heading", "Differenzierung")}</p>
           <h2 className="mt-3 font-serif text-section">{t("home.why.heading")}</h2>
           <p className="mt-5 max-w-prose text-body-lg text-mute">{t("home.why.intro")}</p>
         </div>

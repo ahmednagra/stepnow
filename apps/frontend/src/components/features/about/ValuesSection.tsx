@@ -1,44 +1,142 @@
 // apps/frontend/src/components/features/about/ValuesSection.tsx
-// Phase 3d polish — values rendered in a 4-column grid (2 on tablet, 4 on
-// desktop) with gold serif numerals as visual anchors. Each card has a
-// hairline top accent.
+// Phase 3d polish — values rendered in a 4-column grid with gold serif
+// numerals as visual anchors.
+//
+// FIX (May 2026): the `pickT(t, "key", "fallback")` pattern doesn't work when t
+// returns the raw key string (truthy) for missing entries. Switched to an
+// `isResolved` helper + baked-in bilingual defaults so missing UI strings
+// never leak into the rendered page.
 
 import type { TFunction } from "@/lib/i18n/t";
+import type { Locale } from "@/types";
 import { Container } from "@/components/shared";
+import { pickT } from "@/lib/i18n/pick";
 
 interface ValuesSectionProps {
   t: TFunction;
+  /** Used to pick the correct bilingual default when a UI string is missing. */
+  locale?: Locale;
 }
 
-const VALUES = [
-  { titleKey: "about.values.reliability.title", bodyKey: "about.values.reliability.body" },
-  { titleKey: "about.values.safety.title", bodyKey: "about.values.safety.body" },
-  { titleKey: "about.values.transparency.title", bodyKey: "about.values.transparency.body" },
-  { titleKey: "about.values.service.title", bodyKey: "about.values.service.body" },
+interface ValueEntry {
+  titleKey: string;
+  bodyKey: string;
+  defaults: { de: { title: string; body: string }; en: { title: string; body: string } };
+}
+
+const VALUES: ValueEntry[] = [
+  {
+    titleKey: "about.values.reliability.title",
+    bodyKey: "about.values.reliability.body",
+    defaults: {
+      de: {
+        title: "Verlässlichkeit",
+        body: "Pünktlich, vorbestellt, bestätigt — keine Überraschungen am Abholtag.",
+      },
+      en: {
+        title: "Reliability",
+        body: "On time, pre-booked, confirmed — no surprises on pickup day.",
+      },
+    },
+  },
+  {
+    titleKey: "about.values.safety.title",
+    bodyKey: "about.values.safety.body",
+    defaults: {
+      de: {
+        title: "Sicherheit",
+        body: "Geprüfte Fahrer, gewartete Fahrzeuge und volle Haftpflicht.",
+      },
+      en: {
+        title: "Safety",
+        body: "Vetted drivers, maintained vehicles, and full liability insurance.",
+      },
+    },
+  },
+  {
+    titleKey: "about.values.transparency.title",
+    bodyKey: "about.values.transparency.body",
+    defaults: {
+      de: {
+        title: "Transparenz",
+        body: "Festpreise vor der Fahrt. Keine versteckten Aufschläge, keine Taxameter-Überraschungen.",
+      },
+      en: {
+        title: "Transparency",
+        body: "Fixed prices up front. No hidden surcharges, no meter surprises.",
+      },
+    },
+  },
+  {
+    titleKey: "about.values.service.title",
+    bodyKey: "about.values.service.body",
+    defaults: {
+      de: {
+        title: "Persönlicher Service",
+        body: "Direkter Kontakt zum Inhaber, kein anonymes Callcenter.",
+      },
+      en: {
+        title: "Personal service",
+        body: "Direct contact with the owner — no anonymous call center.",
+      },
+    },
+  },
 ];
 
-export function ValuesSection({ t }: ValuesSectionProps) {
+function isResolved(value: string | null | undefined, key: string): boolean {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed === key) return false;
+  if (trimmed.startsWith("[")) return false;
+  if (!/\s/.test(trimmed) && /^[a-z0-9._-]+$/i.test(trimmed) && trimmed.includes(".")) {
+    return false;
+  }
+  return true;
+}
+
+function pick(t: TFunction, key: string, fallback: string): string {
+  const raw = t(key);
+  return isResolved(raw, key) ? raw : fallback;
+}
+
+export function ValuesSection({ t, locale = "de" }: ValuesSectionProps) {
+  const eyebrow = pick(
+    t,
+    "about.values.eyebrow",
+    locale === "de" ? "Unsere Prinzipien" : "Our principles",
+  );
+  const heading = pick(
+    t,
+    "about.values.heading",
+    locale === "de" ? "Was uns trägt" : "What we stand for",
+  );
+
   return (
     <section className="border-t border-line bg-paper">
       <Container className="py-section">
         <header className="mb-12 max-w-3xl">
-          <p className="label-eyebrow">{t("about.values.eyebrow") || "Unsere Prinzipien"}</p>
-          <h2 className="mt-3 font-serif text-section">{t("about.values.heading")}</h2>
+          <p className="label-eyebrow">{eyebrow}</p>
+          <h2 className="mt-3 font-serif text-section">{heading}</h2>
         </header>
         <ul className="grid gap-px bg-line md:grid-cols-2 lg:grid-cols-4">
-          {VALUES.map((v, idx) => (
-            <li key={v.titleKey} className="bg-paper p-8">
-              <p
-                aria-hidden="true"
-                className="font-serif text-3xl tabular-nums text-gold-deep"
-              >
-                {String(idx + 1).padStart(2, "0")}
-              </p>
-              <span aria-hidden="true" className="mt-3 block h-px w-10 bg-gold/50" />
-              <h3 className="mt-6 font-serif text-xl tracking-tight">{t(v.titleKey)}</h3>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-mute">{t(v.bodyKey)}</p>
-            </li>
-          ))}
+          {VALUES.map((v, idx) => {
+            const title = pick(t, v.titleKey, v.defaults[locale].title);
+            const body = pick(t, v.bodyKey, v.defaults[locale].body);
+            return (
+              <li key={v.titleKey} className="bg-paper p-8">
+                <p
+                  aria-hidden="true"
+                  className="font-serif text-3xl tabular-nums text-gold-deep"
+                >
+                  {String(idx + 1).padStart(2, "0")}
+                </p>
+                <span aria-hidden="true" className="mt-3 block h-px w-10 bg-gold/50" />
+                <h3 className="mt-6 font-serif text-xl tracking-tight">{title}</h3>
+                <p className="mt-3 text-[14.5px] leading-relaxed text-mute">{body}</p>
+              </li>
+            );
+          })}
         </ul>
       </Container>
     </section>
