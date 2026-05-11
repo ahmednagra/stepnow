@@ -22,7 +22,7 @@ async def list_services(
     include_inactive: bool = Query(True),
     include_deleted: bool = Query(False),
 ) -> PaginatedResponse[ServiceAdminResponse]:
-    return ServicesController.list_services(db, page, size, q, include_inactive, include_deleted)
+    return ServicesController.list(db, page, size, q, include_inactive, include_deleted)
 
 
 @router.get("/{service_id}", response_model=ServiceAdminResponse)

@@ -29,7 +29,7 @@ export default function FaqsListPage() {
     setLoading(true);
     try {
       const res = await listAdminFaqs({
-        size: 200,
+        size: 100,
         include_deleted: f !== "active",
       });
       const filtered =
