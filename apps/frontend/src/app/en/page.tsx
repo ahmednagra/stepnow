@@ -17,7 +17,7 @@ import { Button } from "@/components/ui";
 import {
   FaqTeaser,
   FleetPreview,
-  HeroFeatureBlock,
+  HeroBookingWidget,
   HowItWorks,
   TestimonialsSection,
   TrustStrip,
@@ -91,7 +91,7 @@ export default async function HomePageEn() {
             </div>
           </div>
           <div className="md:col-span-5 md:flex md:items-center">
-            <HeroFeatureBlock t={t} settings={settings} locale="en" />
+            <HeroBookingWidget locale="en" />
           </div>
         </Container>
       </section>

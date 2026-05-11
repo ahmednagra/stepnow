@@ -20,7 +20,7 @@ import { Button } from "@/components/ui";
 import {
   FaqTeaser,
   FleetPreview,
-  HeroFeatureBlock,
+  HeroBookingWidget,
   HowItWorks,
   TestimonialsSection,
   TrustStrip,
@@ -100,7 +100,7 @@ export default async function HomePageDe() {
 
           {/* Right: typographic feature block */}
           <div className="md:col-span-5 md:flex md:items-center">
-            <HeroFeatureBlock t={t} settings={settings} locale="de" />
+            <HeroBookingWidget locale="de" />
           </div>
         </Container>
       </section>

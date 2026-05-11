@@ -9,6 +9,7 @@ export const ROUTE_MAP: Record<string, string> = {
   "/ueber-uns": "/en/about",
   "/kontakt": "/en/contact",
   "/buchen": "/en/book",
+  "/buchen/bestaetigung": "/en/book/confirmation",
   "/impressum": "/en/legal-notice",
   "/datenschutz": "/en/privacy",
   "/agb": "/en/terms",
