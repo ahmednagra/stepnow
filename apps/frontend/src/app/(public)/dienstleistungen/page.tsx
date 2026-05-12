@@ -1,15 +1,10 @@
-// apps/frontend/src/app/(public)/dienstleistungen/page.tsx
-// Phase 3d polish — German services list page with eyebrow header and
-// alternating-layout service rows.
-
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
-import { Breadcrumb, Container } from "@/components/shared";
+import { Container } from "@/components/shared";
 import { ServiceListItem } from "@/components/features/services/ServiceListItem";
-import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -34,22 +29,13 @@ export default async function ServicesListDe() {
   return (
     <>
       <section className="bg-cream">
-        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
-          <Breadcrumb
-            crumbs={[
-              { name: t("nav.home"), href: "/" },
-              { name: t("services.page.title"), href: "/dienstleistungen" },
-            ]}
-          />
-          <header className="mt-5 max-w-3xl">
-            <h1 className="font-serif text-section md:text-hero">
-              {t("services.page.title")}
-            </h1>
-            <p className="mt-4 text-body-lg text-mute">{t("services.page.subhead")}</p>
+        <Container className="pt-10 pb-6 md:pt-14 md:pb-8">
+          <header className="max-w-3xl">
+            <h1 className="font-serif text-section md:text-hero">{t("services.page.title")}</h1>
+            <p className="mt-3 text-body-lg text-mute">{t("services.page.subhead")}</p>
           </header>
         </Container>
       </section>
-
       <section className="bg-cream">
         {services.map((s, idx) => (
           <ServiceListItem

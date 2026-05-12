@@ -1,8 +1,3 @@
-// apps/frontend/src/components/features/home/FaqTeaser.tsx
-// Phase 3d polish — premium accordion with eyebrow, gold chevron, and a
-// gentle gap-and-padding rhythm that matches the editorial feel of the
-// home page. The component remains SSR-friendly (uses native <details>).
-
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
@@ -28,7 +23,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   return (
     <section className="bg-paper">
       <Container className="py-section">
-        <header className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="label-eyebrow">{pickT(t, "home.faq.pre_heading", "FAQ")}</p>
             <h2 className="mt-3 font-serif text-section">{t("home.faq.heading")}</h2>
@@ -44,8 +39,8 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
           {items.map((faq) => (
             <li key={faq.id}>
               <details className="group">
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-6 text-left text-ink">
-                  <span className="font-serif text-lg leading-snug md:text-xl">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left text-ink">
+                  <span className="text-[16px] font-semibold leading-snug tracking-tight md:text-[17px]">
                     {faq.question}
                   </span>
                   <span
@@ -55,7 +50,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
                     <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
                   </span>
                 </summary>
-                <div className="prose-faq pb-7 pr-12 text-mute">
+                <div className="prose-faq pb-6 pr-12 text-mute">
                   <Markdown source={faq.answer} />
                 </div>
               </details>

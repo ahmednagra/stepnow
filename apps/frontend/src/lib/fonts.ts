@@ -1,16 +1,17 @@
-// src/lib/fonts.ts
-// Self-hosted fonts via next/font/google.
-// next/font downloads at build time and serves from our own origin — no
-// runtime requests to Google's CDN, so DSGVO-safe.
+// apps/frontend/src/lib/fonts.ts
 
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 
-export const cormorant = Cormorant_Garamond({
+export const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-serif",
 });
+
+// Re-exported under the previous name so existing imports of `cormorant`
+// don't break in the root layout. The CSS variable name is unchanged.
+export const cormorant = playfair;
 
 export const inter = Inter({
   subsets: ["latin"],

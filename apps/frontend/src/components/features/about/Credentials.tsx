@@ -1,7 +1,3 @@
-// apps/frontend/src/components/features/about/Credentials.tsx
-// Phase 3d polish — credential rows with gold-deep icons. Every row carries
-// bilingual defaults so missing UI strings never leak into the rendered page.
-
 import { Award, ShieldCheck, FileCheck, BadgeCheck } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, SettingsPublic } from "@/types";
@@ -19,7 +15,6 @@ interface CredentialItem {
   titleKey: string;
   bodyKey: string;
   defaults: { de: { title: string; body: string }; en: { title: string; body: string } };
-  /** Optional dynamic override (used by the PBefG row for the concession line). */
   bodyOverride?: string | null;
 }
 
@@ -56,14 +51,8 @@ export function Credentials({ t, settings, locale }: CredentialsProps) {
       titleKey: "about.credentials.bkrfqg.title",
       bodyKey: "about.credentials.bkrfqg.body",
       defaults: {
-        de: {
-          title: "Berufskraftfahrer-Qualifikation",
-          body: "Qualifikation nach BKrFQG mit regelmäßigen Weiterbildungen.",
-        },
-        en: {
-          title: "Professional driver qualification",
-          body: "BKrFQG-certified with regular continuing education.",
-        },
+        de: { title: "Berufskraftfahrer-Qualifikation", body: "Qualifikation nach BKrFQG mit regelmäßigen Weiterbildungen." },
+        en: { title: "Professional driver qualification", body: "BKrFQG-certified with regular continuing education." },
       },
     },
     {
@@ -71,14 +60,8 @@ export function Credentials({ t, settings, locale }: CredentialsProps) {
       titleKey: "about.credentials.insurance.title",
       bodyKey: "about.credentials.insurance.body",
       defaults: {
-        de: {
-          title: "Personenbeförderungs-Haftpflicht",
-          body: "Volle Personenbeförderungs-Haftpflichtversicherung für alle Fahrten.",
-        },
-        en: {
-          title: "Passenger transport liability",
-          body: "Full passenger transport liability insurance on every ride.",
-        },
+        de: { title: "Personenbeförderungs-Haftpflicht", body: "Volle Personenbeförderungs-Haftpflichtversicherung für alle Fahrten." },
+        en: { title: "Passenger transport liability", body: "Full passenger transport liability insurance on every ride." },
       },
     },
     {
@@ -86,14 +69,8 @@ export function Credentials({ t, settings, locale }: CredentialsProps) {
       titleKey: "about.credentials.handelsregister.title",
       bodyKey: "about.credentials.handelsregister.body",
       defaults: {
-        de: {
-          title: "Eintrag im Handelsregister",
-          body: "Eingetragenes Unternehmen am Amtsgericht — Geschäftssitz Deizisau.",
-        },
-        en: {
-          title: "Trade register entry",
-          body: "Registered business at the local commercial court — based in Deizisau.",
-        },
+        de: { title: "Eintrag im Handelsregister", body: "Eingetragenes Unternehmen am Amtsgericht — Geschäftssitz Deizisau." },
+        en: { title: "Trade register entry", body: "Registered business at the local commercial court — based in Deizisau." },
       },
     },
   ];
@@ -101,34 +78,25 @@ export function Credentials({ t, settings, locale }: CredentialsProps) {
   return (
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
-        <header className="mb-12 max-w-3xl">
+        <header className="mb-10 max-w-3xl">
           <p className="label-eyebrow">
-            {pickT(
-              t,
-              "about.credentials.eyebrow",
-              locale === "de" ? "Qualifikationen" : "Credentials",
-            )}
+            {pickT(t, "about.credentials.eyebrow", locale === "de" ? "Qualifikationen" : "Credentials")}
           </p>
           <h2 className="mt-3 font-serif text-section">
-            {pickT(
-              t,
-              "about.credentials.heading",
-              locale === "de" ? "Qualifikationen & Lizenzen" : "Credentials & licenses",
-            )}
+            {pickT(t, "about.credentials.heading", locale === "de" ? "Qualifikationen & Lizenzen" : "Credentials & licenses")}
           </h2>
         </header>
         <ul className="divide-y divide-line border-y border-line">
           {ITEMS.map((it) => {
             const title = pickT(t, it.titleKey, it.defaults[locale].title);
-            const body =
-              it.bodyOverride ?? pickT(t, it.bodyKey, it.defaults[locale].body);
+            const body = it.bodyOverride ?? pickT(t, it.bodyKey, it.defaults[locale].body);
             return (
               <li key={it.titleKey} className="flex items-start gap-5 py-6">
                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
                   <it.Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <div className="flex-1">
-                  <p className="font-serif text-lg tracking-tight text-ink">{title}</p>
+                  <p className="text-[16px] font-semibold tracking-tight text-ink">{title}</p>
                   <p className="mt-1 text-[14.5px] leading-relaxed text-mute">{body}</p>
                 </div>
               </li>

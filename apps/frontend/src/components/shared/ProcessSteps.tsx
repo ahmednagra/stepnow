@@ -1,8 +1,3 @@
-// apps/frontend/src/components/shared/ProcessSteps.tsx
-// Phase 3d polish — generic 3-step layout used by service detail pages.
-// HowItWorks on the homepage uses its own bespoke layout for visual variety;
-// this shared component remains for service-detail "process" sections.
-
 import { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
@@ -35,15 +30,12 @@ export function ProcessSteps({ steps, tone = "light", className }: ProcessStepsP
           </span>
           <span
             aria-hidden="true"
-            className={cn(
-              "mt-4 h-px w-12",
-              tone === "dark" ? "bg-gold/40" : "bg-gold/50",
-            )}
+            className={cn("mt-3 h-px w-12", tone === "dark" ? "bg-gold/40" : "bg-gold/50")}
           />
           {step.icon && (
             <span
               className={cn(
-                "mt-6 inline-flex h-9 w-9 items-center justify-center border",
+                "mt-5 inline-flex h-9 w-9 items-center justify-center border",
                 tone === "dark" ? "border-cream/20 text-cream/70" : "border-line text-mute",
               )}
             >
@@ -52,7 +44,7 @@ export function ProcessSteps({ steps, tone = "light", className }: ProcessStepsP
           )}
           <h3
             className={cn(
-              "mt-6 font-serif text-xl tracking-tight md:text-2xl",
+              "mt-5 text-[19px] font-semibold tracking-tight md:text-[21px]",
               tone === "dark" ? "text-cream" : "text-ink",
             )}
           >
@@ -60,7 +52,7 @@ export function ProcessSteps({ steps, tone = "light", className }: ProcessStepsP
           </h3>
           <p
             className={cn(
-              "mt-3 max-w-xs text-[15px] leading-relaxed",
+              "mt-2 max-w-xs text-[15px] leading-relaxed",
               tone === "dark" ? "text-cream/70" : "text-mute",
             )}
           >

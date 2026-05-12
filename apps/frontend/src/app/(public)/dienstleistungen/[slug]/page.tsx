@@ -1,34 +1,22 @@
-// apps/frontend/src/app/(public)/dienstleistungen/[slug]/page.tsx
-// Phase 3d polish — adds drop-cap to long_description first paragraph (audit M-8),
-// eyebrow above breadcrumb, refined section padding, and a Service JSON-LD
-// emitter wrapping the page (audit H-10).
-
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Phone } from "lucide-react";
 import { getUiStringsServer } from "@/services/uiStrings";
-import {
-  getServiceBySlugServer,
-  listServicesServer,
-} from "@/services/services";
+import { getServiceBySlugServer, listServicesServer } from "@/services/services";
 import { getPricingForServiceServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { ApiError } from "@/lib/api-errors";
 import { createT } from "@/lib/i18n/t";
-import {
-  buildBreadcrumbJsonLd,
-  buildMetadata,
-  buildServiceJsonLd,
-} from "@/lib/seo";
+import { buildMetadata, buildServiceJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { toTelHref } from "@/utils/formatters";
 import {
-  Breadcrumb,
   ConcessionBadge,
   Container,
   Markdown,
   ScrollReveal,
+  SlugMapBridge,
 } from "@/components/shared";
 import { Button } from "@/components/ui";
 import {
@@ -36,8 +24,6 @@ import {
   RelatedServices,
   ServiceDetailHeader,
 } from "@/components/features/services";
-import { SlugMapBridge } from "@/components/shared";
-
 
 export const revalidate = 300;
 
@@ -62,12 +48,11 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
       getServiceBySlugServer(slug, "de"),
     ]);
     const t = createT(stringsRes.strings, "de");
-    const altPath = `/en/services/${service.slug_en}`;
     return buildMetadata({
       title: service.meta_title || `${service.title} — ${t("services.page.title")}`,
       description: service.meta_description || service.short_description,
       path: `/dienstleistungen/${service.slug_de}`,
-      alternatePath: altPath,
+      alternatePath: `/en/services/${service.slug_en}`,
       locale: "de",
       ogImage: service.og_image_url ?? service.hero_image_url ?? undefined,
     });
@@ -111,22 +96,7 @@ export default async function ServiceDetailDe({ params }: PageParams) {
           [`/dienstleistungen/${service.slug_de}`]: `/en/services/${service.slug_en}`,
         }}
       />
-      {/* Breadcrumb + header */}
-      <section className="bg-cream">
-        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
-          <Breadcrumb
-            crumbs={[
-              { name: t("nav.home"), href: "/" },
-              { name: t("services.page.title"), href: "/dienstleistungen" },
-              { name: service.title, href: `/dienstleistungen/${service.slug}` },
-            ]}
-          />
-        </Container>
-      </section>
-
       <ServiceDetailHeader t={t} service={service} bookingPath="/buchen" />
-
-      {/* Long description with drop-cap */}
       {service.long_description && (
         <section className="bg-cream">
           <Container className="py-section">
@@ -138,8 +108,6 @@ export default async function ServiceDetailDe({ params }: PageParams) {
           </Container>
         </section>
       )}
-
-      {/* Pricing snapshot */}
       <PricingSnapshot
         t={t}
         categories={pricing}
@@ -147,11 +115,7 @@ export default async function ServiceDetailDe({ params }: PageParams) {
         bookingHref={`/buchen?service=${service.slug}`}
         locale="de"
       />
-
-      {/* Related services */}
       <RelatedServices t={t} services={others} hrefBase="/dienstleistungen" />
-
-      {/* Final CTA — service-specific */}
       <section className="relative overflow-hidden bg-ink text-cream">
         <div
           aria-hidden="true"
@@ -161,10 +125,10 @@ export default async function ServiceDetailDe({ params }: PageParams) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
             {service.title}
           </p>
-          <h2 className="mx-auto mt-4 max-w-3xl font-serif text-section md:text-display-md">
+          <h2 className="mx-auto mt-3 max-w-3xl font-serif text-section md:text-display-md">
             {t("home.final_cta.heading")}
           </h2>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link href={`/buchen?service=${service.slug}`}>
               <Button
                 size="lg"
@@ -185,20 +149,12 @@ export default async function ServiceDetailDe({ params }: PageParams) {
               </Button>
             </a>
           </div>
-          <div className="mt-14 flex justify-center">
+          <div className="mt-10 flex justify-center">
             <ConcessionBadge settings={settings} tone="dark" />
           </div>
         </Container>
       </section>
-
       <JsonLd data={buildServiceJsonLd(service, settings, `/dienstleistungen/${service.slug}`)} />
-      <JsonLd
-        data={buildBreadcrumbJsonLd([
-          { name: t("nav.home"), href: "/" },
-          { name: t("services.page.title"), href: "/dienstleistungen" },
-          { name: service.title, href: `/dienstleistungen/${service.slug}` },
-        ])}
-      />
     </>
   );
 }

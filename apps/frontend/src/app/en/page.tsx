@@ -1,6 +1,3 @@
-// apps/frontend/src/app/en/page.tsx
-// Phase 3d polish — English homepage mirroring (public)/page.tsx.
-
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Phone } from "lucide-react";
@@ -61,7 +58,6 @@ export default async function HomePageEn() {
 
   return (
     <>
-      {/* === 1. Hero === */}
       <section className="relative overflow-hidden bg-ink text-cream">
         <div
           aria-hidden="true"
@@ -71,9 +67,8 @@ export default async function HomePageEn() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"
         />
-
-        <Container className="relative grid gap-16 py-section-mobile md:grid-cols-12 md:gap-12 md:py-section lg:py-section-lg">
-          <div className="flex flex-col justify-center gap-7 md:col-span-7">
+        <Container className="relative grid gap-10 pt-section-hero pb-section-hero md:grid-cols-12 md:gap-12 md:pt-section-hero-md md:pb-section-hero-md lg:pt-section-hero-lg lg:pb-section-hero-lg">
+          <div className="flex flex-col justify-center gap-5 md:col-span-8">
             <div className="flex items-center gap-3">
               <span aria-hidden="true" className="block h-px w-10 bg-gold" />
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold animate-fade-in">
@@ -86,7 +81,7 @@ export default async function HomePageEn() {
             <p className="max-w-xl font-serif text-2xl italic leading-snug text-cream/80 md:text-3xl">
               {t("home.hero.subhead")}
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-4">
+            <div className="mt-1 flex flex-wrap items-center gap-4">
               <Link href="/en/book">
                 <Button
                   size="lg"
@@ -107,10 +102,9 @@ export default async function HomePageEn() {
                 </Button>
               </a>
             </div>
-            <ConcessionBadge settings={settings} tone="dark" className="mt-2" />
+            <ConcessionBadge settings={settings} tone="dark" className="mt-1" />
           </div>
-
-          <div className="md:col-span-5 md:flex md:items-center">
+          <div className="md:col-span-4 md:mt-6 md:flex md:items-start">
             <HeroBookingWidget locale="en" />
           </div>
         </Container>
@@ -120,12 +114,12 @@ export default async function HomePageEn() {
 
       <section className="bg-cream">
         <Container className="py-section">
-          <ScrollReveal as="header" className="mb-16 max-w-3xl">
+          <ScrollReveal as="header" className="mb-8 max-w-3xl">
             <p className="label-eyebrow">{t("home.services.pre_heading")}</p>
-            <h2 className="mt-3 font-serif text-section md:text-display-md">
+            <h2 className="mt-2 font-serif text-section md:text-display-md">
               {t("home.services.heading")}
             </h2>
-            <p className="mt-5 max-w-prose text-body-lg text-mute">
+            <p className="mt-3 max-w-md text-body-lg text-mute">
               {t("home.services.subheading")}
             </p>
           </ScrollReveal>
@@ -140,7 +134,9 @@ export default async function HomePageEn() {
                   href={`/en/services/${s.slug}`}
                   className="group relative flex h-full flex-col gap-4 p-8 transition-all duration-base ease-out-premium hover:shadow-ring-ink md:p-10"
                 >
-                  <h3 className="font-serif text-2xl tracking-tight md:text-3xl">{s.title}</h3>
+                  <h3 className="text-[22px] font-semibold tracking-tight text-ink md:text-[24px]">
+                    {s.title}
+                  </h3>
                   <p className="max-w-md text-mute">{s.short_description}</p>
                   <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[12px] font-semibold uppercase tracking-[0.18em] text-gold-deep transition-colors duration-base group-hover:text-ink">
                     {t("services.card.learn_more")}
@@ -177,18 +173,18 @@ export default async function HomePageEn() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"
         />
-        <Container className="py-section text-center md:py-section-lg">
+        <Container className="pt-section pb-section text-center md:pt-section-lg md:pb-section">
           <ScrollReveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
               {t("home.final_cta.pre_heading")}
             </p>
-            <h2 className="mx-auto mt-4 max-w-3xl font-serif text-section md:text-display-md">
+            <h2 className="mx-auto mt-3 max-w-3xl font-serif text-section md:text-display-md">
               {t("home.final_cta.heading")}
             </h2>
-            <p className="mx-auto mt-5 max-w-xl text-body-lg text-cream/65">
+            <p className="mx-auto mt-4 max-w-md text-body-lg text-cream/65">
               {t("home.final_cta.subhead")}
             </p>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link href="/en/book">
                 <Button
                   size="lg"
@@ -209,7 +205,7 @@ export default async function HomePageEn() {
                 </Button>
               </a>
             </div>
-            <div className="mt-14 flex flex-col items-center gap-3">
+            <div className="mt-10 flex flex-col items-center gap-3">
               <ConcessionBadge settings={settings} tone="dark" />
             </div>
           </ScrollReveal>
@@ -217,7 +213,6 @@ export default async function HomePageEn() {
       </section>
 
       <MobileStickyBar settings={settings} />
-
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />
     </>
   );

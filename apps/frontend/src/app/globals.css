@@ -1,8 +1,3 @@
-/* apps/frontend/src/app/globals.css
- * Phase 3d polish — addresses audit findings C-5 (gold contrast), H-5 (card hover),
- * M-7 (stagger reveals), C-5 (focus ring AA contrast), H-2 (mobile safe-area).
- */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,7 +10,6 @@
     --color-gold-deep: 110 84 48;
     --color-mute: 90 90 90;
     --color-line: 216 213 206;
-    /* iOS / Android safe-area inset for the mobile sticky bar (audit H-2). */
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -32,22 +26,27 @@
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   }
 
-  h1, h2, h3, h4 {
+  /* Serif is reserved for h1/h2 — display-scale headlines only.
+   * h3/h4 use the body sans (Inter) for readability at smaller sizes.
+   * Components that want serif on a smaller heading can still opt in
+   * with `font-serif` inline; we strip those instances in the components. */
+  h1, h2 {
     @apply font-serif tracking-tight;
+  }
+  h3, h4 {
+    @apply font-sans tracking-tight;
+    font-weight: 600;
   }
 
   h1 { @apply text-section md:text-hero; line-height: 1.05; }
   h2 { @apply text-sub md:text-section; }
 
-  /* Focus ring — switched to gold-deep for AA contrast on cream surfaces
-   * (audit C-5). Falls back to gold on dark surfaces via .ring-on-dark utility. */
   *:focus-visible {
     @apply outline-none ring-2 ring-offset-2 ring-offset-cream;
     --tw-ring-color: rgb(var(--color-gold-deep) / 0.7);
   }
   *:focus:not(:focus-visible) { @apply outline-none ring-0; }
 
-  /* Smooth, premium link transitions. */
   a {
     transition-property: color, background-color, border-color, opacity;
     transition-duration: 250ms;
@@ -59,7 +58,6 @@
     color: rgb(0 0 0);
   }
 
-  /* Subtle scrollbar on dark surfaces. */
   .scrollbar-dark::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-dark::-webkit-scrollbar-thumb { background-color: rgb(255 255 255 / 0.1); }
 }
@@ -73,8 +71,6 @@
     @apply mx-auto w-full max-w-prose;
   }
 
-  /* Eyebrow label — uses gold-deep on cream so body-adjacent eyebrows pass AA
-   * when needed. Components that sit on dark surfaces apply !text-gold inline. */
   .label-eyebrow {
     @apply text-label-sm uppercase text-gold-deep;
     letter-spacing: 0.20em;
@@ -92,7 +88,6 @@
     font-size: 0.875rem;
   }
 
-  /* Inline underline-on-hover link (kept). */
   .link-quiet {
     @apply relative inline-block text-ink transition-colors duration-base;
   }
@@ -106,11 +101,6 @@
   }
   .link-quiet:hover::after { width: 100%; }
 
-  /* Premium card hover treatment (audit H-5) — replaces bg-shift with a
-   * subtle inner ring + shadow lift. Apply with `card-hover` on Link/group.
-   * Uses raw transition properties so it doesn't depend on @apply'ing the
-   * `ease-out-premium` utility (which Tailwind generates as a *named* timing
-   * function, not a bare class). */
   .card-hover {
     transition-property: box-shadow, transform, background-color, border-color;
     transition-duration: 250ms;
@@ -124,14 +114,12 @@
     transform: translateY(-2px);
   }
 
-  /* Hairline accent — gold horizontal rule, used as section divider (audit §11). */
   .hairline-gold {
     height: 1px;
     width: 3rem;
     background-color: rgb(var(--color-gold) / 1);
   }
 
-  /* Drop cap for service-detail long_description first paragraph (audit M-8). */
   .drop-cap > p:first-of-type::first-letter {
     @apply font-serif text-gold-deep;
     float: left;
@@ -143,7 +131,6 @@
 }
 
 @layer utilities {
-  /* Scroll-reveal — fade-up. */
   .reveal {
     opacity: 0;
     transform: translateY(20px);
@@ -157,10 +144,6 @@
     transform: translateY(0);
   }
 
-  /* Stagger children inside a .stagger parent (audit M-7).
-   * Apply `.stagger` to a grid container; each direct child reveals 80ms
-   * after the previous. The IntersectionObserver in ScrollReveal flips
-   * `.is-visible` on the parent. */
   .stagger > * {
     opacity: 0;
     transform: translateY(14px);
@@ -180,10 +163,8 @@
   .stagger.is-visible > *:nth-child(5) { transition-delay: 320ms; }
   .stagger.is-visible > *:nth-child(6) { transition-delay: 400ms; }
 
-  /* Safe-area bottom padding for the mobile sticky bar. */
   .pb-safe { padding-bottom: var(--safe-bottom); }
 
-  /* Reduced-motion: kill all transitions / animations. */
   @media (prefers-reduced-motion: reduce) {
     .reveal, .stagger > * {
       opacity: 1;

@@ -1,32 +1,22 @@
-// apps/frontend/src/app/en/services/[slug]/page.tsx
-// Phase 3d polish — English service detail mirror.
-
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Phone } from "lucide-react";
 import { getUiStringsServer } from "@/services/uiStrings";
-import {
-  getServiceBySlugServer,
-  listServicesServer,
-} from "@/services/services";
+import { getServiceBySlugServer, listServicesServer } from "@/services/services";
 import { getPricingForServiceServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { ApiError } from "@/lib/api-errors";
 import { createT } from "@/lib/i18n/t";
-import {
-  buildBreadcrumbJsonLd,
-  buildMetadata,
-  buildServiceJsonLd,
-} from "@/lib/seo";
+import { buildMetadata, buildServiceJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { toTelHref } from "@/utils/formatters";
 import {
-  Breadcrumb,
   ConcessionBadge,
   Container,
   Markdown,
   ScrollReveal,
+  SlugMapBridge,
 } from "@/components/shared";
 import { Button } from "@/components/ui";
 import {
@@ -34,9 +24,6 @@ import {
   RelatedServices,
   ServiceDetailHeader,
 } from "@/components/features/services";
-
-import { SlugMapBridge } from "@/components/shared";
-
 
 export const revalidate = 300;
 
@@ -61,12 +48,11 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
       getServiceBySlugServer(slug, "en"),
     ]);
     const t = createT(stringsRes.strings, "en");
-    const altPath = `/dienstleistungen/${service.slug_de}`;
     return buildMetadata({
       title: service.meta_title || `${service.title} — ${t("services.page.title")}`,
       description: service.meta_description || service.short_description,
       path: `/en/services/${service.slug_en}`,
-      alternatePath: altPath,
+      alternatePath: `/dienstleistungen/${service.slug_de}`,
       locale: "en",
       ogImage: service.og_image_url ?? service.hero_image_url ?? undefined,
     });
@@ -105,26 +91,12 @@ export default async function ServiceDetailEn({ params }: PageParams) {
 
   return (
     <>
-
       <SlugMapBridge
         slugMap={{
           [`/en/services/${service.slug_en}`]: `/dienstleistungen/${service.slug_de}`,
         }}
       />
-      <section className="bg-cream">
-        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
-          <Breadcrumb
-            crumbs={[
-              { name: t("nav.home"), href: "/en" },
-              { name: t("services.page.title"), href: "/en/services" },
-              { name: service.title, href: `/en/services/${service.slug}` },
-            ]}
-          />
-        </Container>
-      </section>
-
       <ServiceDetailHeader t={t} service={service} bookingPath="/en/book" />
-
       {service.long_description && (
         <section className="bg-cream">
           <Container className="py-section">
@@ -136,7 +108,6 @@ export default async function ServiceDetailEn({ params }: PageParams) {
           </Container>
         </section>
       )}
-
       <PricingSnapshot
         t={t}
         categories={pricing}
@@ -144,9 +115,7 @@ export default async function ServiceDetailEn({ params }: PageParams) {
         bookingHref={`/en/book?service=${service.slug}`}
         locale="en"
       />
-
       <RelatedServices t={t} services={others} hrefBase="/en/services" />
-
       <section className="relative overflow-hidden bg-ink text-cream">
         <div
           aria-hidden="true"
@@ -156,10 +125,10 @@ export default async function ServiceDetailEn({ params }: PageParams) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
             {service.title}
           </p>
-          <h2 className="mx-auto mt-4 max-w-3xl font-serif text-section md:text-display-md">
+          <h2 className="mx-auto mt-3 max-w-3xl font-serif text-section md:text-display-md">
             {t("home.final_cta.heading")}
           </h2>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link href={`/en/book?service=${service.slug}`}>
               <Button
                 size="lg"
@@ -180,20 +149,12 @@ export default async function ServiceDetailEn({ params }: PageParams) {
               </Button>
             </a>
           </div>
-          <div className="mt-14 flex justify-center">
+          <div className="mt-10 flex justify-center">
             <ConcessionBadge settings={settings} tone="dark" />
           </div>
         </Container>
       </section>
-
       <JsonLd data={buildServiceJsonLd(service, settings, `/en/services/${service.slug}`)} />
-      <JsonLd
-        data={buildBreadcrumbJsonLd([
-          { name: t("nav.home"), href: "/en" },
-          { name: t("services.page.title"), href: "/en/services" },
-          { name: service.title, href: `/en/services/${service.slug}` },
-        ])}
-      />
     </>
   );
 }

@@ -1,6 +1,3 @@
-// apps/frontend/src/app/(public)/preise/page.tsx
-// Phase 3d polish — refined page header with eyebrow; pricing block per service.
-
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
@@ -8,10 +5,9 @@ import { getPricingForServiceServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
-import { Breadcrumb, ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
+import { ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
 import { PricingTable } from "@/components/features/pricing/PricingTable";
 import type { PricingCategoryPublic } from "@/types";
-import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -48,26 +44,17 @@ export default async function PricingPageDe() {
   return (
     <>
       <section className="bg-cream">
-        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
-          <Breadcrumb
-            crumbs={[
-              { name: t("nav.home"), href: "/" },
-              { name: t("pricing.page.title"), href: "/preise" },
-            ]}
-          />
-          <header className="mt-5 max-w-3xl">
-            <h1 className="font-serif text-section md:text-hero">
-              {t("pricing.page.title")}
-            </h1>
-            <p className="mt-4 text-body-lg text-mute">{t("pricing.page.intro")}</p>
+        <Container className="pt-10 pb-6 md:pt-14 md:pb-8">
+          <header className="max-w-3xl">
+            <h1 className="font-serif text-section md:text-hero">{t("pricing.page.title")}</h1>
+            <p className="mt-3 text-body-lg text-mute">{t("pricing.page.intro")}</p>
             <p className="mt-2 text-[13.5px] text-mute">{t("pricing.disclaimer")}</p>
-            <div className="mt-8">
+            <div className="mt-6">
               <ConcessionBadge settings={settings} tone="light" />
             </div>
           </header>
         </Container>
       </section>
-
       {pricingByService.map((entry, idx) => (
         <PricingTable
           key={entry.service.id}
@@ -78,7 +65,6 @@ export default async function PricingPageDe() {
           showDivider={idx > 0}
         />
       ))}
-
       <MobileStickyBar settings={settings} />
     </>
   );

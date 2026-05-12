@@ -1,9 +1,3 @@
-// apps/frontend/src/components/features/pricing/PricingTable.tsx
-// Phase 3d polish — addresses audit M-10:
-//   • Per-category section uses a serif sub-heading + hairline rule.
-//   • Price column is tabular-nums + gold-deep for visual weight.
-//   • Always shows the "what's always included" footnote line.
-
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, PricingCategoryPublic, ServicePublic } from "@/types";
 import { Container, EmptyState } from "@/components/shared";
@@ -19,13 +13,7 @@ interface PricingTableProps {
   showDivider?: boolean;
 }
 
-export function PricingTable({
-  t,
-  service,
-  categories,
-  locale,
-  showDivider = true,
-}: PricingTableProps) {
+export function PricingTable({ t, service, categories, locale, showDivider = true }: PricingTableProps) {
   const hasContent = categories.some((c) => c.items.length > 0);
 
   return (
@@ -38,7 +26,7 @@ export function PricingTable({
           <p className="label-eyebrow">{service.title}</p>
           <h2 className="mt-3 font-serif text-section">{service.title}</h2>
           {service.short_description && (
-            <p className="mt-4 max-w-prose text-mute">{service.short_description}</p>
+            <p className="mt-3 max-w-prose text-mute">{service.short_description}</p>
           )}
         </header>
 
@@ -49,37 +37,28 @@ export function PricingTable({
             description={t("pricing.empty.cta_note")}
           />
         ) : (
-          <div className="flex flex-col gap-14">
+          <div className="flex flex-col gap-12">
             {categories
               .filter((c) => c.items.length > 0)
               .map((category) => (
                 <div key={category.id}>
-                  <header className="mb-6 flex flex-col gap-2">
-                    <h3 className="font-serif text-2xl tracking-tight">{category.name}</h3>
+                  <header className="mb-5 flex flex-col gap-2">
+                    <h3 className="text-[20px] font-semibold tracking-tight text-ink">{category.name}</h3>
                     {category.description && (
                       <p className="text-[14px] text-mute">{category.description}</p>
                     )}
-                    <span aria-hidden="true" className="mt-2 block h-px w-12 bg-gold" />
+                    <span aria-hidden="true" className="mt-1 block h-px w-12 bg-gold" />
                   </header>
                   <table className="w-full border-collapse text-left">
                     <thead>
                       <tr className="border-b border-line">
-                        <th
-                          scope="col"
-                          className="py-3 pr-4 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-mute"
-                        >
+                        <th scope="col" className="py-3 pr-4 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-mute">
                           {locale === "de" ? "Von" : "From"}
                         </th>
-                        <th
-                          scope="col"
-                          className="py-3 pr-4 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-mute"
-                        >
+                        <th scope="col" className="py-3 pr-4 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-mute">
                           {locale === "de" ? "Nach" : "To"}
                         </th>
-                        <th
-                          scope="col"
-                          className="py-3 text-right text-[10.5px] font-semibold uppercase tracking-[0.18em] text-mute"
-                        >
+                        <th scope="col" className="py-3 text-right text-[10.5px] font-semibold uppercase tracking-[0.18em] text-mute">
                           {locale === "de" ? "Preis" : "Price"}
                         </th>
                       </tr>
@@ -87,18 +66,14 @@ export function PricingTable({
                     <tbody>
                       {category.items.map((item) => (
                         <tr key={item.id} className="border-b border-line-soft">
-                          <td className="py-4 pr-4 align-top text-[15px] text-ink">
-                            {item.from_location}
-                          </td>
+                          <td className="py-4 pr-4 align-top text-[15px] text-ink">{item.from_location}</td>
                           <td className="py-4 pr-4 align-top text-[15px] text-ink">
                             {item.to_location}
                             {item.note && (
-                              <span className="mt-1 block text-[12.5px] text-mute">
-                                {item.note}
-                              </span>
+                              <span className="mt-1 block text-[12.5px] text-mute">{item.note}</span>
                             )}
                           </td>
-                          <td className="py-4 align-top text-right font-serif text-lg tabular-nums text-gold-deep">
+                          <td className="py-4 align-top text-right text-[17px] font-semibold tabular-nums text-gold-deep">
                             {formatPrice(item.price_eur, locale)}
                           </td>
                         </tr>
@@ -108,7 +83,11 @@ export function PricingTable({
                 </div>
               ))}
             <p className="text-[12.5px] text-mute">
-              {pickT(t, "pricing.footnote", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.")}
+              {pickT(
+                t,
+                "pricing.footnote",
+                "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.",
+              )}
             </p>
           </div>
         )}

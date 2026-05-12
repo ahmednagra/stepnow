@@ -1,5 +1,3 @@
-// apps/frontend/tailwind.config.ts
-
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -7,21 +5,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Base palette — refined for premium feel.
-        ink: "#000000", // pure black for hero backgrounds.
-        charcoal: "#0F1115", // slightly lifted from ink for nested surfaces.
-        elevation: "#1A1A1A", // kept for backwards compat.
-        cream: "#F5F2EC", // warm off-white.
-        paper: "#FAFAF7", // lighter alternate for nested light surfaces.
+        ink: "#000000",
+        charcoal: "#0F1115",
+        elevation: "#1A1A1A",
+        cream: "#F5F2EC",
+        paper: "#FAFAF7",
 
         gold: {
           DEFAULT: "#A8865A",
           light: "#C2A675",
           dark: "#86683F",
-          deep: "#6E5430", // AA-safe on cream for body text (audit C-5)
+          deep: "#6E5430",
         },
 
-        // Neutrals.
         mute: "#5A5A5A",
         "mute-soft": "#7A7A7A",
         "mute-strong": "#3A3A3A",
@@ -29,7 +25,6 @@ const config: Config = {
         "line-soft": "#E5E2DB",
         "line-strong": "#C8C5BE",
 
-        // Status (used sparingly — only forms + admin badges).
         danger: "#9A2A2A",
         success: "#2F7A4B",
         warn: "#B5651D",
@@ -39,7 +34,6 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       fontSize: {
-        // Display scale.
         "display-xl": ["6.5rem", { lineHeight: "0.95", letterSpacing: "-0.035em" }],
         "display-lg": ["5rem", { lineHeight: "1.0", letterSpacing: "-0.03em" }],
         "display-md": ["3.75rem", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
@@ -53,9 +47,16 @@ const config: Config = {
         "label-sm": ["0.75rem", { lineHeight: "1.2", letterSpacing: "0.16em" }],
       },
       spacing: {
-        section: "8rem",
-        "section-mobile": "5rem",
-        "section-lg": "10rem",
+        /* Aggressive compression — Hermès/Aesop density.
+         * Was: section 8rem, mobile 5rem, lg 10rem.
+         * Now: ~37% tighter so adjacent sections don't double up. */
+        section: "5rem",
+        "section-mobile": "3.5rem",
+        "section-lg": "6rem",
+        /* Hero — even tighter so the headline sits close to the header. */
+        "section-hero": "3rem",
+        "section-hero-md": "4rem",
+        "section-hero-lg": "5rem",
       },
       maxWidth: {
         container: "82rem",
@@ -66,7 +67,6 @@ const config: Config = {
         pill: "9999px",
       },
       boxShadow: {
-        // Premium, restrained — calibrated against a cream background.
         "premium-sm": "0 1px 2px 0 rgba(10, 10, 10, 0.04)",
         premium:
           "0 2px 4px -1px rgba(10, 10, 10, 0.04), 0 4px 12px -2px rgba(10, 10, 10, 0.06)",
@@ -74,10 +74,8 @@ const config: Config = {
           "0 4px 8px -2px rgba(10, 10, 10, 0.05), 0 8px 24px -4px rgba(10, 10, 10, 0.08)",
         "premium-lg":
           "0 8px 16px -4px rgba(10, 10, 10, 0.06), 0 16px 40px -8px rgba(10, 10, 10, 0.10)",
-        // Dark-surface variant (hero CTA).
         "premium-dark":
           "0 2px 6px -1px rgba(0, 0, 0, 0.35), 0 8px 24px -4px rgba(0, 0, 0, 0.45)",
-        // Inner ring used as hover treatment on cards instead of bg shift.
         "ring-ink": "inset 0 0 0 1px rgba(0, 0, 0, 0.10)",
         "ring-gold": "inset 0 0 0 1px rgba(168, 134, 90, 0.30)",
       },
@@ -94,9 +92,7 @@ const config: Config = {
       animation: {
         "fade-up": "fadeUp 700ms cubic-bezier(0.16, 1, 0.3, 1) both",
         "fade-in": "fadeIn 500ms cubic-bezier(0.16, 1, 0.3, 1) both",
-        "fade-up-slow":
-          "fadeUp 900ms cubic-bezier(0.16, 1, 0.3, 1) both",
-        // Restrained shake — used on form error (audit §11.3).
+        "fade-up-slow": "fadeUp 900ms cubic-bezier(0.16, 1, 0.3, 1) both",
         nudge: "nudge 220ms cubic-bezier(0.32, 0.72, 0, 1) 1",
       },
       keyframes: {

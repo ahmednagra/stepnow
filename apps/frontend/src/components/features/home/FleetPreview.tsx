@@ -1,11 +1,3 @@
-// apps/frontend/src/components/features/home/FleetPreview.tsx
-// Phase 3d polish — addresses audit H-7.
-//   • Locked 4:3 aspect ratio on vehicle imagery.
-//   • Capacity icons promoted to a card footer row separated by a hairline.
-//   • Feature list rendered as wrap-aware pills (audit §11.2 — feature pills
-//     must wrap, never single-line scroll).
-//   • Empty image state: typographic placeholder per design-direction.md §11.3.
-
 import Image from "next/image";
 import { Users, Briefcase } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
@@ -25,7 +17,7 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
   return (
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
-        <header className="mb-12 max-w-3xl">
+        <header className="mb-10 max-w-3xl">
           <p className="label-eyebrow">{pickT(t, "home.fleet.pre_heading", "Unsere Flotte")}</p>
           <h2 className="mt-3 font-serif text-section">{t("home.fleet.heading")}</h2>
         </header>
@@ -40,13 +32,10 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
           )}
         >
           {vehicles.map((v) => (
-            <li
-              key={v.id}
-              className="group flex flex-col border border-line bg-cream card-hover"
-            >
+            <li key={v.id} className="group flex flex-col border border-line bg-cream card-hover">
               <VehicleImage url={v.image_url} alt={v.name} />
-              <div className="flex flex-1 flex-col gap-4 p-6">
-                <h3 className="font-serif text-xl tracking-tight">{v.name}</h3>
+              <div className="flex flex-1 flex-col gap-3 p-6">
+                <h3 className="text-[17px] font-semibold tracking-tight text-ink">{v.name}</h3>
                 {v.features.length > 0 && (
                   <ul className="flex flex-wrap gap-1.5">
                     {v.features.slice(0, 4).map((feature) => (
@@ -59,18 +48,13 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
                     ))}
                   </ul>
                 )}
-                {/* Card footer — capacity icons separated by hairline. */}
                 <div className="mt-auto flex items-center gap-5 border-t border-line pt-4 text-[13px] text-mute">
                   <span className="inline-flex items-center gap-1.5">
                     <Users className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
                     <span className="tabular-nums">{v.capacity_passengers}</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Briefcase
-                      className="h-4 w-4 text-gold-deep"
-                      aria-hidden="true"
-                      strokeWidth={1.5}
-                    />
+                    <Briefcase className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
                     <span className="tabular-nums">{v.capacity_luggage}</span>
                   </span>
                 </div>
@@ -85,8 +69,6 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
 
 function VehicleImage({ url, alt }: { url: string | null; alt: string }) {
   if (!url) {
-    // Typographic empty-state — same idea as service tiles when hero image
-    // is missing. Keeps the section feeling intentional, not broken.
     return (
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-ink">
         <div

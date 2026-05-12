@@ -1,13 +1,10 @@
-// apps/frontend/src/app/en/about/page.tsx
-// Phase 3d polish — English About page mirroring (public)/ueber-uns/page.tsx.
-
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { getSettingsServer } from "@/services/settings";
 import { listVehiclesServer } from "@/services/vehicles";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
-import { Breadcrumb, ConcessionBadge, Container } from "@/components/shared";
+import { ConcessionBadge, Container } from "@/components/shared";
 import {
   Credentials,
   ServiceAreaMap,
@@ -15,7 +12,6 @@ import {
   ValuesSection,
 } from "@/components/features/about";
 import { FleetPreview } from "@/components/features/home";
-import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -41,25 +37,16 @@ export default async function AboutPageEn() {
   return (
     <>
       <section className="bg-cream">
-        <Container className="pt-7 pb-0 md:pt-10 md:pb-0">
-          <Breadcrumb
-            crumbs={[
-              { name: t("nav.home"), href: "/en" },
-              { name: t("about.page.title"), href: "/en/about" },
-            ]}
-          />
-          <header className="mt-5 max-w-3xl">
-            <h1 className="font-serif text-section md:text-hero">
-              {t("about.page.title")}
-            </h1>
-            <p className="mt-4 text-body-lg text-mute">{t("about.page.subhead")}</p>
-            <div className="mt-8">
+        <Container className="pt-10 pb-6 md:pt-14 md:pb-8">
+          <header className="max-w-3xl">
+            <h1 className="font-serif text-section md:text-hero">{t("about.page.title")}</h1>
+            <p className="mt-3 text-body-lg text-mute">{t("about.page.subhead")}</p>
+            <div className="mt-6">
               <ConcessionBadge settings={settings} tone="light" />
             </div>
           </header>
         </Container>
       </section>
-
       <StorySection t={t} settings={settings} />
       <ValuesSection t={t} locale="en" />
       <FleetPreview t={t} vehicles={vehicles} />
