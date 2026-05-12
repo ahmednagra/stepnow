@@ -1,3 +1,9 @@
+// apps/frontend/src/app/(public)/preise/page.tsx
+// Tier 5 Pricing — German page.
+// Composition: header → featured hero → tabbed price list → trust strip
+// → "19%" moment → excluded strip → comparison → payment/cancellation
+// → concession trailer.
+
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
@@ -6,8 +12,18 @@ import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
 import { ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
-import { PricingTable } from "@/components/features/pricing/PricingTable";
-import type { PricingCategoryPublic } from "@/types";
+import {
+  PricingTabs,
+  PricingFeaturedHero,
+  PricingTrustStrip,
+  PricingIncludedMoment,
+  PricingExcludedStrip,
+  PricingComparison,
+  PricingPaymentCancellation,
+  type ServicePricing,
+} from "@/components/features/pricing";
+import type { PricingCategoryPublic, PricingItemPublic } from "@/types";
+import { pickT } from "@/lib/i18n/pick";
 
 export const revalidate = 300;
 
@@ -22,6 +38,21 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
+/** Pick the first item of the first non-empty category in the airport
+ *  service to headline the featured-route hero. */
+function findFeaturedItem(data: ServicePricing[]): {
+  item: PricingItemPublic | null;
+  serviceImageUrl: string | null | undefined;
+} {
+  const airportSlugs = ["flughafentransfer", "airport-transfer"];
+  const airport = data.find((d) => airportSlugs.includes(d.service.slug));
+  const target = airport ?? data[0];
+  if (!target) return { item: null, serviceImageUrl: null };
+  const firstCategory = target.categories.find((c) => c.items.length > 0);
+  const firstItem = firstCategory?.items[0] ?? null;
+  return { item: firstItem, serviceImageUrl: target.service.hero_image_url };
+}
+
 export default async function PricingPageDe() {
   const [stringsRes, services, settings] = await Promise.all([
     getUiStringsServer("de"),
@@ -30,41 +61,101 @@ export default async function PricingPageDe() {
   ]);
   const t = createT(stringsRes.strings, "de");
 
-  const pricingByService = await Promise.all(
+  const pricingByService: ServicePricing[] = await Promise.all(
     services.map(async (s) => {
       try {
-        const pricing = await getPricingForServiceServer(s.slug, "de");
-        return { service: s, pricing };
+        const categories = await getPricingForServiceServer(s.slug, "de");
+        return { service: s, categories };
       } catch {
-        return { service: s, pricing: [] as PricingCategoryPublic[] };
+        return { service: s, categories: [] as PricingCategoryPublic[] };
       }
     }),
   );
 
+  const { item: featuredItem, serviceImageUrl: featuredBackground } =
+    findFeaturedItem(pricingByService);
+
   return (
     <>
+      {/* 1. Compact page header */}
       <section className="bg-cream">
-        <Container className="pt-10 pb-6 md:pt-14 md:pb-8">
-          <header className="max-w-3xl">
-            <h1 className="font-serif text-section md:text-hero">{t("pricing.page.title")}</h1>
-            <p className="mt-3 text-body-lg text-mute">{t("pricing.page.intro")}</p>
-            <p className="mt-2 text-[13.5px] text-mute">{t("pricing.disclaimer")}</p>
-            <div className="mt-6">
-              <ConcessionBadge settings={settings} tone="light" />
+        <Container className="pt-3 pb-5 md:pt-5 md:pb-6">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-deep">
+                {pickT(t, "pricing.page.eyebrow", "Preise")}
+              </p>
+              <h1 className="mt-1 font-serif text-[34px] leading-[1.05] tracking-tight md:text-[40px]">
+                {t("pricing.page.title")}
+              </h1>
+              <p className="mt-2 text-[12.5px] text-mute-soft">{t("pricing.disclaimer")}</p>
             </div>
-          </header>
+            <p className="max-w-md text-right text-[14px] text-mute md:text-right">
+              {t("pricing.page.intro")}
+            </p>
+          </div>
+          <div className="mt-5">
+            <ConcessionBadge settings={settings} tone="light" />
+          </div>
         </Container>
       </section>
-      {pricingByService.map((entry, idx) => (
-        <PricingTable
-          key={entry.service.id}
-          t={t}
-          service={entry.service}
-          categories={entry.pricing}
-          locale="de"
-          showDivider={idx > 0}
-        />
-      ))}
+
+      {/* 2. Featured route hero */}
+      <PricingFeaturedHero
+        t={t}
+        locale="de"
+        settings={settings}
+        featuredItem={featuredItem}
+        backgroundImageUrl={featuredBackground}
+        bookingHref="/buchen"
+      />
+
+      {/* 3. Tabbed price list */}
+      <section className="bg-cream">
+        <Container className="py-12 md:py-14">
+          <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-deep">
+                {pickT(t, "pricing.tabs.eyebrow", "Vollständige Preisliste")}
+              </p>
+              <h2 className="mt-1 font-serif text-[28px] leading-tight tracking-tight md:text-[32px]">
+                {pickT(t, "pricing.tabs.heading", "Jede Strecke, jeder Service")}
+              </h2>
+            </div>
+            <p className="max-w-sm text-right text-[13.5px] text-mute">
+              {pickT(
+                t,
+                "pricing.tabs.lead",
+                "Wählen Sie einen Service, um alle Festpreis-Strecken anzusehen. Andere Strecken erhalten ein Angebot innerhalb von 30 Minuten.",
+              )}
+            </p>
+          </div>
+          <PricingTabs strings={stringsRes.strings} locale="de" data={pricingByService} />
+        </Container>
+      </section>
+
+      {/* 4. Trust strip */}
+      <PricingTrustStrip t={t} locale="de" />
+
+      {/* 5. "19%" oversized moment */}
+      <PricingIncludedMoment t={t} locale="de" />
+
+      {/* 6. Excluded strip */}
+      <PricingExcludedStrip t={t} locale="de" />
+
+      {/* 7. vs Standard taxi comparison */}
+      <PricingComparison t={t} locale="de" />
+
+      {/* 8. Payment + Cancellation */}
+      <PricingPaymentCancellation t={t} locale="de" agbHref="/agb" />
+
+      {/* 9. Concession trailer */}
+      <section className="border-t border-line bg-cream">
+        <Container className="flex justify-center py-6 md:py-7">
+          <ConcessionBadge settings={settings} tone="light" />
+        </Container>
+      </section>
+
       <MobileStickyBar settings={settings} />
     </>
   );
