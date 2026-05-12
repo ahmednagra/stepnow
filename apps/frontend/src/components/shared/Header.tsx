@@ -81,7 +81,7 @@ export function Header({ settings }: HeaderProps) {
     >
       <Container
         as="div"
-        className="flex h-[4.5rem] items-center justify-between gap-4 md:h-[5rem]"
+        className="flex h-[3.75rem] items-center justify-between gap-4 md:h-[4rem]"
       >
         {/* Wordmark */}
         <Link
@@ -89,7 +89,7 @@ export function Header({ settings }: HeaderProps) {
           aria-label={displayName}
           className="flex items-center transition-opacity duration-base hover:opacity-80"
         >
-          <Logo height={36} priority />
+          <Logo height={32} priority />
         </Link>
 
         {/* Primary nav — desktop only */}

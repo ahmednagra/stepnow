@@ -1,10 +1,11 @@
 // apps/frontend/src/components/features/about/StorySection.tsx
-// Owner portrait + multi-paragraph story with drop-cap; hides when empty.
+// Option A layout — compact story column with floated portrait. Drop-cap on
+// the first paragraph; gold L-corner brackets framing the portrait. Body text
+// wraps to the right of the portrait then flows full-width below.
 
 import Image from "next/image";
 import type { TFunction } from "@/lib/i18n/t";
 import type { SettingsPublic } from "@/types";
-import { Container } from "@/components/shared";
 
 interface StorySectionProps {
   t: TFunction;
@@ -57,58 +58,96 @@ export function StorySection({ t, settings }: StorySectionProps) {
   if (paragraphs.length === 0 && !portraitUrl) return null;
 
   return (
-    <section className="bg-cream">
-      <Container className="grid items-start gap-8 py-section md:grid-cols-12 md:gap-12">
-        <div className="md:col-span-5">
-          <div className="relative mx-auto w-full max-w-[320px]">
-            <span aria-hidden="true" className="absolute -left-2 -top-2 h-4 w-4 border-l border-t border-gold" />
-            <span aria-hidden="true" className="absolute -right-2 -top-2 h-4 w-4 border-r border-t border-gold" />
-            <span aria-hidden="true" className="absolute -left-2 -bottom-2 h-4 w-4 border-l border-b border-gold" />
-            <span aria-hidden="true" className="absolute -right-2 -bottom-2 h-4 w-4 border-r border-b border-gold" />
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+        {eyebrow}
+      </p>
+      <h2 className="mt-1 mb-4 font-serif text-[24px] leading-tight tracking-tight md:text-[26px]">
+        {heading}
+      </h2>
+
+      <div className="story-clearfix">
+        {/* Floated portrait, framed with gold L-corner brackets */}
+        <div className="float-left mb-3 mr-6 hidden w-[200px] md:block">
+          <div className="relative">
+            <span aria-hidden="true" className="absolute -left-1.5 -top-1.5 h-3 w-3 border-l border-t border-gold" />
+            <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 h-3 w-3 border-r border-t border-gold" />
+            <span aria-hidden="true" className="absolute -left-1.5 -bottom-1.5 h-3 w-3 border-l border-b border-gold" />
+            <span aria-hidden="true" className="absolute -right-1.5 -bottom-1.5 h-3 w-3 border-r border-b border-gold" />
             {portraitUrl ? (
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-line-soft">
+              <div className="relative aspect-[4/5] w-[200px] overflow-hidden bg-line">
                 <Image
                   src={portraitUrl}
                   alt={ownerName}
                   fill
-                  sizes="(min-width: 768px) 320px, 90vw"
+                  sizes="200px"
                   className="object-cover"
                 />
               </div>
             ) : (
-              <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-ink text-cream">
+              <div className="relative flex aspect-[4/5] w-[200px] items-center justify-center overflow-hidden bg-ink text-cream">
                 <div
                   aria-hidden="true"
                   className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(168,134,90,0.22),transparent_60%)]"
                 />
-                <span className="relative font-serif text-6xl tracking-tight text-cream/90">
+                <span className="relative font-serif text-5xl tracking-tight text-cream/90">
                   {initials(ownerName) || "SN"}
                 </span>
               </div>
             )}
           </div>
-          <p className="mt-3 text-center text-[11px] uppercase tracking-[0.22em] text-mute md:text-left">
+          <p className="mt-2 text-[10.5px] uppercase tracking-[0.22em] text-mute">
             — {ownerName}
           </p>
         </div>
-        <div className="md:col-span-7">
-          {eyebrow && <p className="label-eyebrow">{eyebrow}</p>}
-          <h2 className="mt-2 font-serif text-section">{heading}</h2>
-          {paragraphs.length > 0 ? (
-            <div className="prose-base mt-4 drop-cap text-[17px] leading-[1.75] text-ink/90">
-              {paragraphs.map((p, idx) => (
-                <p key={idx} className="mb-4 last:mb-0">
-                  {p}
-                </p>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-4 max-w-prose text-mute">
-              {resolve(t, "about.story.placeholder", "Unsere Geschichte wird in Kürze erzählt.")}
-            </p>
-          )}
+
+        {/* Mobile-only portrait (centered, before text) */}
+        <div className="mb-5 flex justify-center md:hidden">
+          <div className="relative">
+            <span aria-hidden="true" className="absolute -left-1.5 -top-1.5 h-3 w-3 border-l border-t border-gold" />
+            <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 h-3 w-3 border-r border-t border-gold" />
+            <span aria-hidden="true" className="absolute -left-1.5 -bottom-1.5 h-3 w-3 border-l border-b border-gold" />
+            <span aria-hidden="true" className="absolute -right-1.5 -bottom-1.5 h-3 w-3 border-r border-b border-gold" />
+            {portraitUrl ? (
+              <div className="relative aspect-[4/5] w-[180px] overflow-hidden bg-line">
+                <Image src={portraitUrl} alt={ownerName} fill sizes="180px" className="object-cover" />
+              </div>
+            ) : (
+              <div className="relative flex aspect-[4/5] w-[180px] items-center justify-center overflow-hidden bg-ink text-cream">
+                <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(168,134,90,0.22),transparent_60%)]" />
+                <span className="relative font-serif text-4xl tracking-tight text-cream/90">
+                  {initials(ownerName) || "SN"}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </Container>
-    </section>
+
+        {/* Body */}
+        {paragraphs.length > 0 ? (
+          <div className="drop-cap text-[15.5px] leading-[1.7] text-ink/90">
+            {paragraphs.map((p, idx) => (
+              <p key={idx} className="mb-3 last:mb-0">
+                {p}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[15px] text-mute">
+            {resolve(t, "about.story.placeholder", "Unsere Geschichte wird in Kürze erzählt.")}
+          </p>
+        )}
+      </div>
+
+      <p className="mt-5 text-[11px] uppercase tracking-[0.22em] text-mute">
+        — {ownerName}
+        {resolve(t, "about.story.role", null) && (
+          <>
+            <span className="mx-2 text-line">·</span>
+            {resolve(t, "about.story.role", "Gründer")}
+          </>
+        )}
+      </p>
+    </div>
   );
 }
