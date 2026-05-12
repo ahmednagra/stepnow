@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, MapPin } from "lucide-react";
 import { useUiStrings } from "@/hooks/useUiStrings";
@@ -32,6 +32,11 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState("");
+  const [bounds, setBounds] = useState<{ min: string; max: string } | null>(null);
+  useEffect(() => {
+    setBounds({ min: todayStr(), max: dateOffsetStr(MAX_ADVANCE_DAYS) });
+  }, []);
+
   const wizardPath = locale === "de" ? "/buchen" : "/en/book";
 
   function submit() {
@@ -73,8 +78,8 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
           </label>
           <input
             type="date"
-            min={todayStr()}
-            max={dateOffsetStr(MAX_ADVANCE_DAYS)}
+            min={bounds?.min}
+            max={bounds?.max}
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="h-11 w-full border border-cream/20 bg-transparent px-3 text-[14px] text-cream transition-colors duration-base focus:border-gold focus:outline-none"
