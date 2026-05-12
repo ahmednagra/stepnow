@@ -21,7 +21,7 @@ export function SlugMapBridge({ slugMap }: SlugMapBridgeProps) {
   useEffect(() => {
     setSlugMap(slugMap);
     return () => clearSlugMap();
-  }, [JSON.stringify(slugMap)]);
+  }, );
 
   return null;
 }
