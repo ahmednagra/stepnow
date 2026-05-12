@@ -21,7 +21,7 @@ export function ServiceAreaMap({ settings }: ServiceAreaMapProps) {
   return (
     <section className="border-t border-line bg-paper">
       <Container className="py-section">
-        <header className="mb-6 max-w-3xl">
+        <header className="mb-4 max-w-3xl">
           <p className="label-eyebrow">{pickT(t, "about.area.eyebrow", "Einsatzgebiet")}</p>
           <h2 className="mt-2 font-serif text-section">{t("about.area.heading")}</h2>
           <p className="mt-3 text-body-lg text-mute">{t("about.area.body")}</p>

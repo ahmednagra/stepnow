@@ -1,10 +1,4 @@
 // apps/frontend/src/components/admin/ToastHost.tsx
-// Phase 3d polish — addresses audit M-4 (Undo for destructive actions).
-//   • Toast queue with up to 3 visible at once.
-//   • Each toast may include an action (e.g. "Undo") that fires a callback
-//     and dismisses the toast.
-//   • Auto-dismiss after 6s (10s when an action is attached so the user has
-//     time to click Undo).
 
 "use client";
 

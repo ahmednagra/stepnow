@@ -27,7 +27,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
   return (
     <section className="bg-cream">
       <Container className="py-section">
-        <header className="mb-6 max-w-3xl">
+        <header className="mb-4 max-w-3xl">
           <p className="label-eyebrow">{pickT(t, "home.how.pre_heading", "Ablauf")}</p>
           <h2 className="mt-2 font-serif text-section md:text-display-md">{t("home.how.heading")}</h2>
         </header>

@@ -1,3 +1,6 @@
+// apps/frontend/tailwind.config.ts
+// Design tokens — final tight spacing matching the homepage audit artifact.
+
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -10,21 +13,18 @@ const config: Config = {
         elevation: "#1A1A1A",
         cream: "#F5F2EC",
         paper: "#FAFAF7",
-
         gold: {
           DEFAULT: "#A8865A",
           light: "#C2A675",
           dark: "#86683F",
           deep: "#6E5430",
         },
-
         mute: "#5A5A5A",
         "mute-soft": "#7A7A7A",
         "mute-strong": "#3A3A3A",
         line: "#D8D5CE",
         "line-soft": "#E5E2DB",
         "line-strong": "#C8C5BE",
-
         danger: "#9A2A2A",
         success: "#2F7A4B",
         warn: "#B5651D",
@@ -37,7 +37,6 @@ const config: Config = {
         "display-xl": ["6.5rem", { lineHeight: "0.95", letterSpacing: "-0.035em" }],
         "display-lg": ["5rem", { lineHeight: "1.0", letterSpacing: "-0.03em" }],
         "display-md": ["3.75rem", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
-
         "hero-lg": ["5rem", { lineHeight: "1.0", letterSpacing: "-0.03em" }],
         hero: ["4rem", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
         section: ["3rem", { lineHeight: "1.1", letterSpacing: "-0.015em" }],
@@ -47,16 +46,12 @@ const config: Config = {
         "label-sm": ["0.75rem", { lineHeight: "1.2", letterSpacing: "0.16em" }],
       },
       spacing: {
-        /* Aggressive compression — Hermès/Aesop density.
-         * Was: section 8rem, mobile 5rem, lg 10rem.
-         * Now: ~37% tighter so adjacent sections don't double up. */
-        section: "5rem",
-        "section-mobile": "3.5rem",
-        "section-lg": "6rem",
-        /* Hero — even tighter so the headline sits close to the header. */
-        "section-hero": "3rem",
-        "section-hero-md": "4rem",
-        "section-hero-lg": "5rem",
+        section: "3.5rem",
+        "section-mobile": "2.5rem",
+        "section-lg": "4.5rem",
+        "section-hero": "2.5rem",
+        "section-hero-md": "3.5rem",
+        "section-hero-lg": "4rem",
       },
       maxWidth: {
         container: "82rem",

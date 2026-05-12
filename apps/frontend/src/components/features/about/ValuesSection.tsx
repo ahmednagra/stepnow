@@ -73,7 +73,7 @@ export function ValuesSection({ t, locale = "de" }: ValuesSectionProps) {
   return (
     <section className="border-t border-line bg-paper">
       <Container className="py-section">
-        <header className="mb-6 max-w-3xl">
+        <header className="mb-4 max-w-3xl">
           <p className="label-eyebrow">{eyebrow}</p>
           <h2 className="mt-2 font-serif text-section">{heading}</h2>
         </header>

@@ -20,7 +20,7 @@ const BULLETS = [
 export function WhyStepNow({ t }: WhyStepNowProps) {
   return (
     <section className="border-t border-line bg-paper">
-      <Container className="grid gap-10 py-section md:grid-cols-12 md:gap-12">
+      <Container className="grid gap-8 py-section md:grid-cols-12 md:gap-12">
         <div className="md:col-span-5">
           <p className="label-eyebrow">{pickT(t, "home.why.pre_heading", "Differenzierung")}</p>
           <h2 className="mt-2 font-serif text-section">{t("home.why.heading")}</h2>

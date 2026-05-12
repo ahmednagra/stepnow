@@ -25,7 +25,7 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
       className={cn(showDivider && "border-t border-line", "bg-cream")}
     >
       <Container className="py-section">
-        <header className="mb-6 max-w-3xl">
+        <header className="mb-4 max-w-3xl">
           <p className="label-eyebrow">{service.title}</p>
           <h2 className="mt-2 font-serif text-section">{service.title}</h2>
           {service.short_description && (

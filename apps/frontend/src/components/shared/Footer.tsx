@@ -1,7 +1,5 @@
 // apps/frontend/src/components/shared/Footer.tsx
-// Phase 3d polish — refined column hierarchy, gold hairline accents on column
-// headings, opening-hours block, and concession line in the bottom strip
-// (audit §11.2 — "Final CTA / footer"). Matches website-outline.md §1.12.
+// Four-column site footer with brand, links, contact, and legal bottom strip.
 
 "use client";
 
@@ -31,26 +29,10 @@ const QUICK_LINKS: FooterLink[] = [
 ];
 
 const SERVICE_LINKS: FooterLink[] = [
-  {
-    key: "services.flughafentransfer",
-    hrefDe: "/dienstleistungen/flughafentransfer",
-    hrefEn: "/en/services/airport-transfer",
-  },
-  {
-    key: "services.krankenhausfahrten",
-    hrefDe: "/dienstleistungen/krankenhausfahrten",
-    hrefEn: "/en/services/hospital-transport",
-  },
-  {
-    key: "services.schuelerbefoerderung",
-    hrefDe: "/dienstleistungen/schuelerbefoerderung",
-    hrefEn: "/en/services/school-transport",
-  },
-  {
-    key: "services.shuttle",
-    hrefDe: "/dienstleistungen/shuttle-service",
-    hrefEn: "/en/services/shuttle-service",
-  },
+  { key: "services.flughafentransfer", hrefDe: "/dienstleistungen/flughafentransfer", hrefEn: "/en/services/airport-transfer" },
+  { key: "services.krankenhausfahrten", hrefDe: "/dienstleistungen/krankenhausfahrten", hrefEn: "/en/services/hospital-transport" },
+  { key: "services.schuelerbefoerderung", hrefDe: "/dienstleistungen/schuelerbefoerderung", hrefEn: "/en/services/school-transport" },
+  { key: "services.shuttle", hrefDe: "/dienstleistungen/shuttle-service", hrefEn: "/en/services/shuttle-service" },
 ];
 
 const LEGAL_LINKS: FooterLink[] = [
@@ -59,7 +41,6 @@ const LEGAL_LINKS: FooterLink[] = [
   { key: "footer.legal.agb", hrefDe: "/agb", hrefEn: "/en/terms" },
 ];
 
-// Admin entry point — same URL in both locales (admin panel is English-only).
 const ADMIN_LINK = { href: "/admin/login", label: "Admin" };
 
 function cleanBusinessName(name: string): string {
@@ -73,30 +54,27 @@ export function Footer({ settings }: FooterProps) {
 
   return (
     <footer className="border-t border-cream/10 bg-ink text-cream">
-      <Container as="div" className="grid gap-12 py-20 md:grid-cols-12 md:py-24">
-        {/* Brand column */}
+      <Container as="div" className="grid gap-10 py-14 md:grid-cols-12 md:py-16">
         <div className="md:col-span-4">
           <div className="inline-flex items-center bg-cream px-4 py-3">
             <Logo height={40} />
           </div>
-          <p className="mt-7 max-w-xs text-[14px] leading-relaxed text-cream/60">
+          <p className="mt-5 max-w-xs text-[14px] leading-relaxed text-cream/60">
             {t("footer.col.brand")}
           </p>
-          {/* Concession line — strongest trust signal in footer (audit H-1). */}
           {settings.concession_number && (
-            <p className="mt-6 inline-block border-t border-gold/30 pt-3 text-[11px] uppercase tracking-[0.22em] text-gold">
+            <p className="mt-4 inline-block border-t border-gold/30 pt-3 text-[11px] uppercase tracking-[0.22em] text-gold">
               § 49 PBefG · {settings.concession_number}
             </p>
           )}
         </div>
 
-        {/* Quick links */}
         <div className="md:col-span-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
             {t("footer.col.quick_links")}
           </p>
           <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
-          <ul className="mt-5 space-y-3">
+          <ul className="mt-4 space-y-2">
             {QUICK_LINKS.map((item) => (
               <li key={item.key}>
                 <Link
@@ -110,13 +88,12 @@ export function Footer({ settings }: FooterProps) {
           </ul>
         </div>
 
-        {/* Services */}
         <div className="md:col-span-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
             {t("footer.col.services")}
           </p>
           <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
-          <ul className="mt-5 space-y-3">
+          <ul className="mt-4 space-y-2">
             {SERVICE_LINKS.map((item) => (
               <li key={item.key}>
                 <Link
@@ -130,13 +107,12 @@ export function Footer({ settings }: FooterProps) {
           </ul>
         </div>
 
-        {/* Contact */}
         <div className="md:col-span-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
             {t("footer.col.contact")}
           </p>
           <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
-          <address className="mt-5 space-y-1 not-italic text-[13px] leading-relaxed text-cream/75">
+          <address className="mt-4 space-y-1 not-italic text-[13px] leading-relaxed text-cream/75">
             <p>{settings.address_street}</p>
             <p>
               {settings.address_postcode} {settings.address_city}
@@ -161,11 +137,10 @@ export function Footer({ settings }: FooterProps) {
         </div>
       </Container>
 
-      {/* Bottom strip */}
       <div className="border-t border-cream/10">
         <Container
           as="div"
-          className="flex flex-col items-start justify-between gap-4 py-6 md:flex-row md:items-center"
+          className="flex flex-col items-start justify-between gap-4 py-5 md:flex-row md:items-center"
         >
           <p className="flex items-center gap-3 text-[11px] tracking-wide text-cream/45">
             <span>

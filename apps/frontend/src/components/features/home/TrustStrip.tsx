@@ -19,7 +19,7 @@ const ITEMS = [
 export function TrustStrip({ t }: TrustStripProps) {
   return (
     <section aria-label={t("home.trust.licensed")} className="border-b border-line bg-paper">
-      <Container className="grid grid-cols-2 gap-x-6 gap-y-6 py-8 md:grid-cols-4 md:gap-x-10 md:py-10">
+      <Container className="grid grid-cols-2 gap-x-6 gap-y-6 py-5 md:grid-cols-4 md:gap-x-10 md:py-6">
         {ITEMS.map(({ key, Icon }) => (
           <div key={key} className="flex items-center gap-4">
             <span

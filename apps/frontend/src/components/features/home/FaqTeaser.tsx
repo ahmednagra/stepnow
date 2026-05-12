@@ -26,7 +26,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   return (
     <section className="bg-paper">
       <Container className="py-section">
-        <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <header className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="label-eyebrow">{pickT(t, "home.faq.pre_heading", "FAQ")}</p>
             <h2 className="mt-2 font-serif text-section">{t("home.faq.heading")}</h2>

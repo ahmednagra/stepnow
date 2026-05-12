@@ -58,7 +58,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
 
   return (
     <section className="bg-cream">
-      <Container className="grid items-start gap-10 py-section md:grid-cols-12 md:gap-12">
+      <Container className="grid items-start gap-8 py-section md:grid-cols-12 md:gap-12">
         <div className="md:col-span-5">
           <div className="relative mx-auto w-full max-w-[320px]">
             <span aria-hidden="true" className="absolute -left-2 -top-2 h-4 w-4 border-l border-t border-gold" />
@@ -95,7 +95,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
           {eyebrow && <p className="label-eyebrow">{eyebrow}</p>}
           <h2 className="mt-2 font-serif text-section">{heading}</h2>
           {paragraphs.length > 0 ? (
-            <div className="prose-base mt-5 drop-cap text-[17px] leading-[1.75] text-ink/90">
+            <div className="prose-base mt-4 drop-cap text-[17px] leading-[1.75] text-ink/90">
               {paragraphs.map((p, idx) => (
                 <p key={idx} className="mb-4 last:mb-0">
                   {p}
@@ -103,7 +103,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
               ))}
             </div>
           ) : (
-            <p className="mt-5 max-w-prose text-mute">
+            <p className="mt-4 max-w-prose text-mute">
               {resolve(t, "about.story.placeholder", "Unsere Geschichte wird in Kürze erzählt.")}
             </p>
           )}

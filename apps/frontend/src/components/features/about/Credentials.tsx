@@ -77,7 +77,7 @@ export function Credentials({ t, settings, locale }: CredentialsProps) {
   return (
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
-        <header className="mb-6 max-w-3xl">
+        <header className="mb-4 max-w-3xl">
           <p className="label-eyebrow">
             {pickT(t, "about.credentials.eyebrow", locale === "de" ? "Qualifikationen" : "Credentials")}
           </p>

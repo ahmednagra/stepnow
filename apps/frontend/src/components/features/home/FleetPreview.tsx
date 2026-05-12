@@ -20,7 +20,7 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
   return (
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
-        <header className="mb-6 max-w-3xl">
+        <header className="mb-4 max-w-3xl">
           <p className="label-eyebrow">{pickT(t, "home.fleet.pre_heading", "Unsere Flotte")}</p>
           <h2 className="mt-2 font-serif text-section">{t("home.fleet.heading")}</h2>
         </header>
