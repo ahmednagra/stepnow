@@ -59,6 +59,9 @@ const LEGAL_LINKS: FooterLink[] = [
   { key: "footer.legal.agb", hrefDe: "/agb", hrefEn: "/en/terms" },
 ];
 
+// Admin entry point — same URL in both locales (admin panel is English-only).
+const ADMIN_LINK = { href: "/admin/login", label: "Admin" };
+
 function cleanBusinessName(name: string): string {
   return name.replace(/\s*\(Dev\)\s*$/i, "").trim();
 }
@@ -164,8 +167,17 @@ export function Footer({ settings }: FooterProps) {
           as="div"
           className="flex flex-col items-start justify-between gap-4 py-6 md:flex-row md:items-center"
         >
-          <p className="text-[11px] tracking-wide text-cream/45">
-            © {new Date().getFullYear()} {displayName}. {t("footer.copyright")}
+          <p className="flex items-center gap-3 text-[11px] tracking-wide text-cream/45">
+            <span>
+              © {new Date().getFullYear()} {displayName}. {t("footer.copyright")}
+            </span>
+            <span aria-hidden="true" className="text-cream/20">·</span>
+            <Link
+              href={ADMIN_LINK.href}
+              className="text-cream/40 transition-colors duration-base hover:text-cream/70"
+            >
+              {ADMIN_LINK.label}
+            </Link>
           </p>
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {LEGAL_LINKS.map((item) => (
