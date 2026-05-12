@@ -1,3 +1,6 @@
+// apps/frontend/src/components/features/home/FleetPreview.tsx
+// Vehicle grid with capacity icons and feature pills — hidden when empty.
+
 import Image from "next/image";
 import { Users, Briefcase } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
@@ -17,9 +20,9 @@ export function FleetPreview({ t, vehicles }: FleetPreviewProps) {
   return (
     <section className="border-t border-line bg-cream">
       <Container className="py-section">
-        <header className="mb-10 max-w-3xl">
+        <header className="mb-6 max-w-3xl">
           <p className="label-eyebrow">{pickT(t, "home.fleet.pre_heading", "Unsere Flotte")}</p>
-          <h2 className="mt-3 font-serif text-section">{t("home.fleet.heading")}</h2>
+          <h2 className="mt-2 font-serif text-section">{t("home.fleet.heading")}</h2>
         </header>
         <ul
           className={cn(

@@ -1,3 +1,6 @@
+// apps/frontend/src/components/features/pricing/PricingTable.tsx
+// Per-service pricing table with localized columns and footnote.
+
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, PricingCategoryPublic, ServicePublic } from "@/types";
 import { Container, EmptyState } from "@/components/shared";
@@ -22,11 +25,11 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
       className={cn(showDivider && "border-t border-line", "bg-cream")}
     >
       <Container className="py-section">
-        <header className="mb-10 max-w-3xl">
+        <header className="mb-6 max-w-3xl">
           <p className="label-eyebrow">{service.title}</p>
-          <h2 className="mt-3 font-serif text-section">{service.title}</h2>
+          <h2 className="mt-2 font-serif text-section">{service.title}</h2>
           {service.short_description && (
-            <p className="mt-3 max-w-prose text-mute">{service.short_description}</p>
+            <p className="mt-2 max-w-prose text-mute">{service.short_description}</p>
           )}
         </header>
 
@@ -37,12 +40,12 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
             description={t("pricing.empty.cta_note")}
           />
         ) : (
-          <div className="flex flex-col gap-12">
+          <div className="flex flex-col gap-8">
             {categories
               .filter((c) => c.items.length > 0)
               .map((category) => (
                 <div key={category.id}>
-                  <header className="mb-5 flex flex-col gap-2">
+                  <header className="mb-4 flex flex-col gap-2">
                     <h3 className="text-[20px] font-semibold tracking-tight text-ink">{category.name}</h3>
                     {category.description && (
                       <p className="text-[14px] text-mute">{category.description}</p>
@@ -69,9 +72,7 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
                           <td className="py-4 pr-4 align-top text-[15px] text-ink">{item.from_location}</td>
                           <td className="py-4 pr-4 align-top text-[15px] text-ink">
                             {item.to_location}
-                            {item.note && (
-                              <span className="mt-1 block text-[12.5px] text-mute">{item.note}</span>
-                            )}
+                            {item.note && <span className="mt-1 block text-[12.5px] text-mute">{item.note}</span>}
                           </td>
                           <td className="py-4 align-top text-right text-[17px] font-semibold tabular-nums text-gold-deep">
                             {formatPrice(item.price_eur, locale)}
@@ -83,11 +84,7 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
                 </div>
               ))}
             <p className="text-[12.5px] text-mute">
-              {pickT(
-                t,
-                "pricing.footnote",
-                "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.",
-              )}
+              {pickT(t, "pricing.footnote", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.")}
             </p>
           </div>
         )}

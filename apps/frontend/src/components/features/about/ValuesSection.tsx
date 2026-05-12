@@ -1,3 +1,6 @@
+// apps/frontend/src/components/features/about/ValuesSection.tsx
+// Four-tile principles grid with gold numerals and bilingual fallbacks.
+
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale } from "@/types";
 import { Container } from "@/components/shared";
@@ -70,21 +73,21 @@ export function ValuesSection({ t, locale = "de" }: ValuesSectionProps) {
   return (
     <section className="border-t border-line bg-paper">
       <Container className="py-section">
-        <header className="mb-10 max-w-3xl">
+        <header className="mb-6 max-w-3xl">
           <p className="label-eyebrow">{eyebrow}</p>
-          <h2 className="mt-3 font-serif text-section">{heading}</h2>
+          <h2 className="mt-2 font-serif text-section">{heading}</h2>
         </header>
         <ul className="grid gap-px bg-line md:grid-cols-2 lg:grid-cols-4">
           {VALUES.map((v, idx) => {
             const title = pick(t, v.titleKey, v.defaults[locale].title);
             const body = pick(t, v.bodyKey, v.defaults[locale].body);
             return (
-              <li key={v.titleKey} className="bg-paper p-8">
+              <li key={v.titleKey} className="bg-paper p-6">
                 <p aria-hidden="true" className="font-serif text-3xl tabular-nums text-gold-deep">
                   {String(idx + 1).padStart(2, "0")}
                 </p>
-                <span aria-hidden="true" className="mt-3 block h-px w-10 bg-gold/50" />
-                <h3 className="mt-5 text-[17px] font-semibold tracking-tight text-ink">{title}</h3>
+                <span aria-hidden="true" className="mt-2 block h-px w-10 bg-gold/50" />
+                <h3 className="mt-4 text-[17px] font-semibold tracking-tight text-ink">{title}</h3>
                 <p className="mt-2 text-[14.5px] leading-relaxed text-mute">{body}</p>
               </li>
             );

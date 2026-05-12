@@ -1,3 +1,6 @@
+// apps/frontend/src/components/features/home/FaqTeaser.tsx
+// Native-details accordion with gold chevron — top-5 general FAQs.
+
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
@@ -23,10 +26,10 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   return (
     <section className="bg-paper">
       <Container className="py-section">
-        <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="label-eyebrow">{pickT(t, "home.faq.pre_heading", "FAQ")}</p>
-            <h2 className="mt-3 font-serif text-section">{t("home.faq.heading")}</h2>
+            <h2 className="mt-2 font-serif text-section">{t("home.faq.heading")}</h2>
           </div>
           <Link
             href={allFaqHref}
@@ -50,7 +53,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
                     <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
                   </span>
                 </summary>
-                <div className="prose-faq pb-6 pr-12 text-mute">
+                <div className="prose-faq pb-5 pr-12 text-mute">
                   <Markdown source={faq.answer} />
                 </div>
               </details>
