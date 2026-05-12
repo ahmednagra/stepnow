@@ -36,6 +36,8 @@ import {
   RelatedServices,
   ServiceDetailHeader,
 } from "@/components/features/services";
+import { SlugMapBridge } from "@/components/shared";
+
 
 export const revalidate = 300;
 
@@ -104,6 +106,11 @@ export default async function ServiceDetailDe({ params }: PageParams) {
 
   return (
     <>
+      <SlugMapBridge
+        slugMap={{
+          [`/dienstleistungen/${service.slug_de}`]: `/en/services/${service.slug_en}`,
+        }}
+      />
       {/* Breadcrumb + header */}
       <section className="bg-cream">
         <Container className="pt-7 pb-0 md:pt-10 md:pb-0">

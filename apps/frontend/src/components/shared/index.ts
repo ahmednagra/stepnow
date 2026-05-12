@@ -17,3 +17,4 @@ export { ScrollReveal } from "./ScrollReveal";
 export { ConcessionBadge } from "./ConcessionBadge";
 export { MobileStickyBar } from "./MobileStickyBar";
 export { Logo } from "./Logo";
+export { SlugMapBridge } from "./SlugMapBridge";

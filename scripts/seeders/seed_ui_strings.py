@@ -10,10 +10,10 @@ Idempotent: each row is keyed by unique 'key' field. Existing rows are
 skipped; only new keys are inserted.
 """
 
-from apps.backend.config.database import SessionLocal  # noqa: E402
+from config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402
-from apps.backend.app.Models.ui_strings import UiString
-from apps.backend.app.Services.AuditService import AuditService
+from app.Models.ui_strings import UiString
+from app.Services.AuditService import AuditService
 
 
 # Format: (key, namespace, value_de, value_en, description, is_locked)
@@ -40,6 +40,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("home.hero.subhead", "hero", "Vorbestellte Fahrten in der Region Stuttgart. Konzessioniert nach § 49 PBefG.", "Pre-booked transfers in the Stuttgart region. Licensed under § 49 PBefG.", "Hero subhead", False),
     ("home.hero.cta_book", "hero", "Jetzt buchen", "Book now", "Hero primary CTA", True),
     ("home.hero.cta_call", "hero", "Anrufen", "Call us", "Hero secondary CTA (paired with phone number)", False),
+    # Hero booking widget — caption rendered beneath the inline quick-quote inputs
+    ("hero_widget.note", "hero", "Unverbindliche Anfrage — Festpreis-Angebot innerhalb von 30 Minuten.", "No-obligation request — fixed-price quote within 30 minutes.", "Caption below the hero booking widget inputs", False),
 
     # === TRUST STRIP ===
     ("home.trust.licensed", "trust", "Konzessioniert nach PBefG", "Licensed under PBefG", "Trust strip: license credential", False),
@@ -68,6 +70,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("home.why.bullet.regional", "home", "Regional verwurzelt — wir kennen die Strecken zwischen Esslingen, Stuttgart und Umgebung", "Regionally rooted — we know the routes between Esslingen, Stuttgart and the surrounding area", "Why bullet", False),
     ("home.fleet.pre_heading", "home", "Unsere Flotte", "Our fleet", "Fleet section eyebrow (small caps above heading)", False),
     ("home.fleet.heading", "home", "Unsere Fahrzeuge", "Our Fleet", "Fleet section heading", False),
+    ("home.testimonials.pre_heading", "home", "Stimmen unserer Kunden", "Customer voices", "Testimonials section eyebrow (small caps above heading)", False),
     ("home.testimonials.heading", "home", "Was unsere Kunden sagen", "What our customers say", "Testimonials section heading", False),
     ("home.faq.pre_heading", "home", "FAQ", "FAQ", "FAQ section eyebrow (small caps above the heading)", False),
     ("home.faq.heading", "home", "Häufige Fragen", "Frequently Asked Questions", "FAQ section heading", False),
@@ -81,6 +84,13 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("services.card.learn_more", "services", "Mehr erfahren", "Learn more", "Service card CTA", False),
     ("services.card.book", "services", "Diesen Service buchen", "Book this service", "Service card secondary CTA", False),
 
+    # Service detail page — primary CTA at the bottom of the page
+    ("services.detail.cta_book", "services", "Diesen Service jetzt buchen", "Book this service now", "Service detail page primary CTA button", False),
+
+    # Service detail page — "Related services" section (cross-sell to other services)
+    ("services.related.eyebrow", "services", "Weitere Leistungen", "More services", "Related-services section eyebrow (small caps above heading)", False),
+    ("services.related.heading", "services", "Das könnte Sie auch interessieren", "You might also be interested in", "Related-services section heading", False),
+
     # Short service labels used in Footer + HeroFeatureBlock
     ("services.flughafentransfer", "services", "Flughafentransfer", "Airport Transfer", "Short service label — footer, hero feature block", True),
     ("services.krankenhausfahrten", "services", "Krankenhausfahrten", "Hospital Transport", "Short service label — footer, hero feature block", True),
@@ -88,6 +98,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("services.shuttle", "services", "Shuttle Service", "Shuttle Service", "Short service label — footer, hero feature block", True),
 
     # === PRICING PAGE ===
+    ("pricing.page.eyebrow", "pricing", "Preise & Tarife", "Pricing & rates", "Pricing page hero eyebrow (small caps above the title)", False),
     ("pricing.page.title", "pricing", "Transparente Festpreise", "Transparent Fixed Prices", "Pricing page title", False),
     ("pricing.page.intro", "pricing", "Alle Preise inkl. 19 % MwSt. Der Preis steht vor Fahrtbeginn fest und ändert sich nicht.", "All prices include 19% VAT. The price is set before the ride begins and does not change.", "Pricing page intro", False),
     ("pricing.disclaimer", "pricing", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung.", "All prices include VAT. Fixed-price guarantee from booking confirmation.", "Pricing page sub-intro disclaimer (also used by PricingSnapshot on service detail)", False),
