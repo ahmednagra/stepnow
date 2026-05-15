@@ -1,50 +1,138 @@
-// src/app/admin/(authed)/ui-strings/page.tsx
+// apps/frontend/src/app/admin/(authed)/ui-strings/page.tsx
+// UI strings — search by key/value, edit inline, export. Self-contained (replaces the old _table.tsx workflow).
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin";
-import { UiStringsTable } from "./_table";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Save } from "lucide-react";
+import {
+  AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty,
+  FilterToolbar,
+} from "@/components/admin";
+import { listAdminUiStrings, updateAdminUiString } from "@/services/uiStrings";
+import type { UiStringAdmin } from "@/types";
+import { ApiError } from "@/lib/api-errors";
+import { useAdminToast } from "@/hooks/useAdminToast";
+import { exportCsv, exportJson } from "@/utils/exporters";
 
 export default function UiStringsPage() {
-  const [showCreate, setShowCreate] = useState(false);
-  // bump key on create to force the table to reload
-  const [refreshKey, setRefreshKey] = useState(0);
+  const pushToast = useAdminToast((s) => s.push);
+  const [items, setItems] = useState<UiStringAdmin[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [drafts, setDrafts] = useState<Record<string, { de: string; en: string }>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
 
-  // Allow the table to expose a "new" trigger
-  useEffect(() => {
-    function onNew() {
-      setShowCreate(true);
-    }
-    window.addEventListener("admin:new-ui-string", onNew);
-    return () => window.removeEventListener("admin:new-ui-string", onNew);
-  }, []);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await listAdminUiStrings({ size: 500 });
+      setItems(res.items);
+      const d: Record<string, { de: string; en: string }> = {};
+      for (const s of res.items) d[s.id] = { de: s.value_de, en: s.value_en };
+      setDrafts(d);
+    } catch (err) {
+      pushToast("error", "Could not load UI strings", err instanceof ApiError ? err.message : "Network error");
+      setItems([]);
+    } finally { setLoading(false); }
+  }, [pushToast]);
+
+  useEffect(() => { void reload(); }, [reload]);
+
+  const filtered = useMemo(() => {
+    if (!items) return [];
+    const term = q.trim().toLowerCase();
+    if (!term) return items;
+    return items.filter((s) =>
+      s.key.toLowerCase().includes(term) ||
+      s.value_de.toLowerCase().includes(term) ||
+      s.value_en.toLowerCase().includes(term),
+    );
+  }, [items, q]);
+
+  async function onSave(s: UiStringAdmin) {
+    setSavingId(s.id);
+    try {
+      const updated = await updateAdminUiString(s.id, {
+        value_de: drafts[s.id].de, value_en: drafts[s.id].en,
+      });
+      setItems((prev) => prev ? prev.map((x) => x.id === s.id ? updated : x) : prev);
+      pushToast("success", "String saved");
+    } catch (err) {
+      pushToast("error", "Save failed", err instanceof ApiError ? err.message : "Network error");
+    } finally { setSavingId(null); }
+  }
 
   return (
     <>
       <AdminPageHeader
+        eyebrow="Content"
         title="UI strings"
-        description="Translatable strings shown on the public site. Click any value to edit inline."
-        actions={
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="flex h-9 items-center gap-1.5 bg-slate-900 px-3 text-[13px] font-medium text-white transition-colors hover:bg-slate-800"
-          >
-            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-            New string
-          </button>
-        }
+        description="Translatable labels used across the public site. Changes are live."
       />
       <div className="p-6">
-        <UiStringsTable
-          key={refreshKey}
-          showCreate={showCreate}
-          onCreateClose={(created) => {
-            setShowCreate(false);
-            if (created) setRefreshKey((k) => k + 1);
-          }}
-        />
+        <AdminCard
+          flush
+          title={`${filtered.length} string${filtered.length === 1 ? "" : "s"}`}
+          headerActions={
+            <FilterToolbar
+              searchValue={q}
+              onSearchChange={setQ}
+              searchPlaceholder="Search key or value…"
+              exports={{
+                onCsv: () => items && exportCsv(items.map((s) => ({
+                  key: s.key, value_de: s.value_de, value_en: s.value_en,
+                })), `ui-strings-${new Date().toISOString().slice(0, 10)}.csv`),
+                onJson: () => items && exportJson(items, `ui-strings-${Date.now()}.json`),
+              }}
+            />
+          }
+        >
+          <AdminTable columns={["Key", "DE", "EN", ""]} stickyHeader>
+            {loading ? (
+              <AdminTableEmpty message="Loading…" />
+            ) : filtered.length === 0 ? (
+              <AdminTableEmpty message="No strings found." />
+            ) : (
+              filtered.map((s) => {
+                const draft = drafts[s.id] ?? { de: s.value_de, en: s.value_en };
+                const dirty = draft.de !== s.value_de || draft.en !== s.value_en;
+                return (
+                  <AdminTableRow key={s.id}>
+                    <AdminTableCell>
+                      <p className="font-mono text-[11.5px] text-slate-700">{s.key}</p>
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <input
+                        value={draft.de}
+                        onChange={(e) => setDrafts((p) => ({ ...p, [s.id]: { ...(p[s.id] ?? { de: s.value_de, en: s.value_en }), de: e.target.value } }))}
+                        className="h-7 w-full border border-slate-200 bg-white px-2 text-[12px] text-slate-900 focus:border-slate-900 focus:outline-none"
+                      />
+                    </AdminTableCell>
+                    <AdminTableCell>
+                      <input
+                        value={draft.en}
+                        onChange={(e) => setDrafts((p) => ({ ...p, [s.id]: { ...(p[s.id] ?? { de: s.value_de, en: s.value_en }), en: e.target.value } }))}
+                        className="h-7 w-full border border-slate-200 bg-white px-2 text-[12px] text-slate-900 focus:border-slate-900 focus:outline-none"
+                      />
+                    </AdminTableCell>
+                    <AdminTableCell className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => onSave(s)}
+                        disabled={!dirty || savingId === s.id}
+                        className="inline-flex h-7 items-center gap-1.5 bg-slate-900 px-2.5 text-[11.5px] font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-30"
+                      >
+                        {savingId === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                        Save
+                      </button>
+                    </AdminTableCell>
+                  </AdminTableRow>
+                );
+              })
+            )}
+          </AdminTable>
+        </AdminCard>
       </div>
     </>
   );

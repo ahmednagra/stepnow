@@ -1,4 +1,6 @@
-// src/app/admin/(authed)/pricing/[serviceId]/_item_modal.tsx
+// apps/frontend/src/app/admin/(authed)/pricing/[serviceId]/_item_modal.tsx
+// Modal to create or edit a pricing item (route + price) inside a category.
+
 "use client";
 
 import { useState } from "react";
@@ -46,13 +48,13 @@ function defaults(it: PricingItemAdmin | undefined, nextSortOrder: number): Admi
   };
 }
 
+function FieldErr({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p role="alert" className="text-[11px] font-medium text-rose-700">{msg}</p>;
+}
+
 export function ItemModal({
-  mode,
-  categoryId,
-  item,
-  nextSortOrder,
-  onClose,
-  onSaved,
+  mode, categoryId, item, nextSortOrder, onClose, onSaved,
 }: ItemModalProps) {
   const pushToast = useAdminToast((s) => s.push);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -70,7 +72,6 @@ export function ItemModal({
     setServerError(null);
     const normalizedPrice = normalizeDecimalInput(values.price_eur);
     if (!normalizedPrice) {
-      // Should be caught by Zod, but double-guard
       setServerError("Enter a valid price.");
       return;
     }
@@ -133,19 +134,35 @@ export function ItemModal({
 
           <BilingualField
             label="From"
-            helper="e.g. Stuttgart Hbf, Flughafen Stuttgart"
-            errorDe={errors.from_location_de?.message}
-            errorEn={errors.from_location_en?.message}
-            de={<input className={adminInputClass} {...register("from_location_de")} />}
-            en={<input className={adminInputClass} {...register("from_location_en")} />}
+            hint="e.g. Stuttgart Hbf, Flughafen Stuttgart"
+            de={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("from_location_de")} aria-invalid={errors.from_location_de ? true : undefined} />
+                <FieldErr msg={errors.from_location_de?.message} />
+              </div>
+            }
+            en={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("from_location_en")} aria-invalid={errors.from_location_en ? true : undefined} />
+                <FieldErr msg={errors.from_location_en?.message} />
+              </div>
+            }
           />
 
           <BilingualField
             label="To"
-            errorDe={errors.to_location_de?.message}
-            errorEn={errors.to_location_en?.message}
-            de={<input className={adminInputClass} {...register("to_location_de")} />}
-            en={<input className={adminInputClass} {...register("to_location_en")} />}
+            de={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("to_location_de")} aria-invalid={errors.to_location_de ? true : undefined} />
+                <FieldErr msg={errors.to_location_de?.message} />
+              </div>
+            }
+            en={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("to_location_en")} aria-invalid={errors.to_location_en ? true : undefined} />
+                <FieldErr msg={errors.to_location_en?.message} />
+              </div>
+            }
           />
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -153,7 +170,7 @@ export function ItemModal({
               label="Price (EUR)"
               required
               error={errors.price_eur?.message}
-              helper="e.g. 45.50 or 45,50"
+              hint="e.g. 45.50 or 45,50"
             >
               <input
                 type="text"
@@ -170,11 +187,19 @@ export function ItemModal({
 
           <BilingualField
             label="Note"
-            helper="Optional. Shown next to the price (e.g. 'incl. waiting time')."
-            errorDe={errors.note_de?.message}
-            errorEn={errors.note_en?.message}
-            de={<textarea rows={2} className={adminTextareaClass} {...register("note_de")} />}
-            en={<textarea rows={2} className={adminTextareaClass} {...register("note_en")} />}
+            hint="Optional. Shown next to the price (e.g. 'incl. waiting time')."
+            de={
+              <div className="flex flex-col gap-1">
+                <textarea rows={2} className={adminTextareaClass} {...register("note_de")} aria-invalid={errors.note_de ? true : undefined} />
+                <FieldErr msg={errors.note_de?.message} />
+              </div>
+            }
+            en={
+              <div className="flex flex-col gap-1">
+                <textarea rows={2} className={adminTextareaClass} {...register("note_en")} aria-invalid={errors.note_en ? true : undefined} />
+                <FieldErr msg={errors.note_en?.message} />
+              </div>
+            }
           />
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">

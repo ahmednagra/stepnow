@@ -1,4 +1,7 @@
-// src/app/admin/(authed)/settings/_form.tsx
+// apps/frontend/src/app/admin/(authed)/settings/_form.tsx
+// Site settings: identity, address, contact, legal credentials, opening hours,
+// social links, SEO defaults. PATCHes /admin/settings on save.
+
 "use client";
 
 import { useState } from "react";
@@ -21,6 +24,7 @@ import {
   adminInputClass,
   adminTextareaClass,
 } from "@/components/admin";
+import { uploadAdminFile } from "@/services/uploads/uploads.admin.client";
 
 interface SettingsFormProps {
   initial: SettingsAdmin;
@@ -56,10 +60,6 @@ function defaultValues(s: SettingsAdmin): AdminSettingsInput {
   };
 }
 
-/**
- * Convert form values to the PATCH payload. Empty optional strings are sent
- * as null so the backend clears them; required fields keep their string value.
- */
 function toPatchPayload(values: AdminSettingsInput): SettingsUpdate {
   return {
     business_name: values.business_name,
@@ -90,6 +90,11 @@ function toPatchPayload(values: AdminSettingsInput): SettingsUpdate {
   };
 }
 
+async function uploadHandler(file: File): Promise<string> {
+  const res = await uploadAdminFile(file);
+  return res.url;
+}
+
 export function SettingsForm({ initial }: SettingsFormProps) {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
@@ -110,9 +115,8 @@ export function SettingsForm({ initial }: SettingsFormProps) {
     setServerError(null);
     try {
       const updated = await updateAdminSettings(toPatchPayload(values));
-      reset(defaultValues(updated)); // reset dirty state
+      reset(defaultValues(updated));
       pushToast("success", "Settings saved", "Public site updated.");
-      // Refresh server-rendered surfaces that may cache settings
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -147,10 +151,7 @@ export function SettingsForm({ initial }: SettingsFormProps) {
       </div>
 
       {serverError && (
-        <div
-          role="alert"
-          className="border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"
-        >
+        <div role="alert" className="border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700">
           {serverError}
         </div>
       )}
@@ -158,31 +159,16 @@ export function SettingsForm({ initial }: SettingsFormProps) {
       {/* Identity */}
       <AdminCard title="Identity" description="Legal name shown on invoices and footer.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminFormField
-            label="Business name"
-            htmlFor="business_name"
-            required
-            error={errors.business_name?.message}
-          >
-            <input
-              id="business_name"
-              className={adminInputClass}
-              {...register("business_name")}
-            />
+          <AdminFormField id="business_name" label="Business name" required error={errors.business_name?.message}>
+            <input id="business_name" className={adminInputClass} {...register("business_name")} />
           </AdminFormField>
-          <AdminFormField
-            label="Owner name"
-            htmlFor="owner_name"
-            required
-            error={errors.owner_name?.message}
-          >
+          <AdminFormField id="owner_name" label="Owner name" required error={errors.owner_name?.message}>
             <input id="owner_name" className={adminInputClass} {...register("owner_name")} />
           </AdminFormField>
           <AdminFormField
+            id="legal_form"
             label="Legal form"
-            htmlFor="legal_form"
-            hint="optional"
-            helper="e.g. Einzelunternehmer, GmbH"
+            hint="optional · e.g. Einzelunternehmer, GmbH"
             error={errors.legal_form?.message}
           >
             <input id="legal_form" className={adminInputClass} {...register("legal_form")} />
@@ -194,59 +180,23 @@ export function SettingsForm({ initial }: SettingsFormProps) {
       <AdminCard title="Address">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
           <div className="md:col-span-3">
-            <AdminFormField
-              label="Street"
-              htmlFor="address_street"
-              required
-              error={errors.address_street?.message}
-            >
-              <input
-                id="address_street"
-                className={adminInputClass}
-                {...register("address_street")}
-              />
+            <AdminFormField id="address_street" label="Street" required error={errors.address_street?.message}>
+              <input id="address_street" className={adminInputClass} {...register("address_street")} />
             </AdminFormField>
           </div>
           <div className="md:col-span-1">
-            <AdminFormField
-              label="Postcode"
-              htmlFor="address_postcode"
-              required
-              error={errors.address_postcode?.message}
-            >
-              <input
-                id="address_postcode"
-                className={adminInputClass}
-                {...register("address_postcode")}
-              />
+            <AdminFormField id="address_postcode" label="Postcode" required error={errors.address_postcode?.message}>
+              <input id="address_postcode" className={adminInputClass} {...register("address_postcode")} />
             </AdminFormField>
           </div>
           <div className="md:col-span-1">
-            <AdminFormField
-              label="City"
-              htmlFor="address_city"
-              required
-              error={errors.address_city?.message}
-            >
-              <input
-                id="address_city"
-                className={adminInputClass}
-                {...register("address_city")}
-              />
+            <AdminFormField id="address_city" label="City" required error={errors.address_city?.message}>
+              <input id="address_city" className={adminInputClass} {...register("address_city")} />
             </AdminFormField>
           </div>
           <div className="md:col-span-1">
-            <AdminFormField
-              label="Country"
-              htmlFor="address_country"
-              required
-              error={errors.address_country?.message}
-            >
-              <input
-                id="address_country"
-                className={adminInputClass}
-                {...register("address_country")}
-              />
+            <AdminFormField id="address_country" label="Country" required error={errors.address_country?.message}>
+              <input id="address_country" className={adminInputClass} {...register("address_country")} />
             </AdminFormField>
           </div>
         </div>
@@ -255,41 +205,16 @@ export function SettingsForm({ initial }: SettingsFormProps) {
       {/* Contact */}
       <AdminCard title="Contact">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminFormField
-            label="Phone (landline)"
-            htmlFor="phone"
-            required
-            error={errors.phone?.message}
-          >
+          <AdminFormField id="phone" label="Phone (landline)" required error={errors.phone?.message}>
             <input id="phone" type="tel" className={adminInputClass} {...register("phone")} />
           </AdminFormField>
-          <AdminFormField
-            label="Phone (mobile)"
-            htmlFor="phone_mobile"
-            hint="optional"
-            error={errors.phone_mobile?.message}
-          >
-            <input
-              id="phone_mobile"
-              type="tel"
-              className={adminInputClass}
-              {...register("phone_mobile")}
-            />
+          <AdminFormField id="phone_mobile" label="Phone (mobile)" hint="optional" error={errors.phone_mobile?.message}>
+            <input id="phone_mobile" type="tel" className={adminInputClass} {...register("phone_mobile")} />
           </AdminFormField>
-          <AdminFormField
-            label="Email"
-            htmlFor="email"
-            required
-            error={errors.email?.message}
-          >
+          <AdminFormField id="email" label="Email" required error={errors.email?.message}>
             <input id="email" type="email" className={adminInputClass} {...register("email")} />
           </AdminFormField>
-          <AdminFormField
-            label="WhatsApp URL"
-            htmlFor="whatsapp_url"
-            hint="optional"
-            error={errors.whatsapp_url?.message}
-          >
+          <AdminFormField id="whatsapp_url" label="WhatsApp URL" hint="optional" error={errors.whatsapp_url?.message}>
             <input
               id="whatsapp_url"
               type="url"
@@ -302,97 +227,39 @@ export function SettingsForm({ initial }: SettingsFormProps) {
       </AdminCard>
 
       {/* Legal & credentials */}
-      <AdminCard
-        title="Legal & credentials"
-        description="Tax registrations and the § 49 PBefG concession."
-      >
+      <AdminCard title="Legal & credentials" description="Tax registrations and the § 49 PBefG concession.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminFormField
-            label="Tax number"
-            htmlFor="tax_number"
-            hint="optional"
-            error={errors.tax_number?.message}
-          >
+          <AdminFormField id="tax_number" label="Tax number" hint="optional" error={errors.tax_number?.message}>
             <input id="tax_number" className={adminInputClass} {...register("tax_number")} />
           </AdminFormField>
-          <AdminFormField
-            label="VAT ID"
-            htmlFor="vat_id"
-            hint="optional"
-            error={errors.vat_id?.message}
-          >
+          <AdminFormField id="vat_id" label="VAT ID" hint="optional" error={errors.vat_id?.message}>
             <input id="vat_id" className={adminInputClass} {...register("vat_id")} />
           </AdminFormField>
-          <AdminFormField
-            label="Concession number"
-            htmlFor="concession_number"
-            hint="optional"
-            error={errors.concession_number?.message}
-          >
-            <input
-              id="concession_number"
-              className={adminInputClass}
-              {...register("concession_number")}
-            />
+          <AdminFormField id="concession_number" label="Concession number" hint="optional" error={errors.concession_number?.message}>
+            <input id="concession_number" className={adminInputClass} {...register("concession_number")} />
+          </AdminFormField>
+          <AdminFormField id="concession_authority" label="Concession authority" hint="optional" error={errors.concession_authority?.message}>
+            <input id="concession_authority" className={adminInputClass} {...register("concession_authority")} />
           </AdminFormField>
           <AdminFormField
-            label="Concession authority"
-            htmlFor="concession_authority"
-            hint="optional"
-            error={errors.concession_authority?.message}
-          >
-            <input
-              id="concession_authority"
-              className={adminInputClass}
-              {...register("concession_authority")}
-            />
-          </AdminFormField>
-          <AdminFormField
+            id="concession_date"
             label="Concession date"
-            htmlFor="concession_date"
-            hint="optional"
-            helper="YYYY-MM-DD"
+            hint="optional · YYYY-MM-DD"
             error={errors.concession_date?.message}
           >
-            <input
-              id="concession_date"
-              type="date"
-              className={adminInputClass}
-              {...register("concession_date")}
-            />
+            <input id="concession_date" type="date" className={adminInputClass} {...register("concession_date")} />
           </AdminFormField>
         </div>
       </AdminCard>
 
       {/* Opening hours */}
-      <AdminCard
-        title="Opening hours"
-        description="Free-form text shown in the footer and on the contact page."
-      >
+      <AdminCard title="Opening hours" description="Free-form text shown in the footer and on the contact page.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminFormField
-            label="German (DE)"
-            htmlFor="opening_hours_de"
-            error={errors.opening_hours_de?.message}
-          >
-            <textarea
-              id="opening_hours_de"
-              rows={4}
-              className={adminTextareaClass}
-              {...register("opening_hours_de")}
-            />
+          <AdminFormField id="opening_hours_de" label="German (DE)" error={errors.opening_hours_de?.message}>
+            <textarea id="opening_hours_de" rows={4} className={adminTextareaClass} {...register("opening_hours_de")} />
           </AdminFormField>
-          <AdminFormField
-            label="English (EN)"
-            htmlFor="opening_hours_en"
-            error={errors.opening_hours_en?.message}
-          >
-            <textarea
-              id="opening_hours_en"
-              rows={4}
-              className={adminTextareaClass}
-              {...register("opening_hours_en")}
-            />
+          <AdminFormField id="opening_hours_en" label="English (EN)" error={errors.opening_hours_en?.message}>
+            <textarea id="opening_hours_en" rows={4} className={adminTextareaClass} {...register("opening_hours_en")} />
           </AdminFormField>
         </div>
       </AdminCard>
@@ -400,92 +267,44 @@ export function SettingsForm({ initial }: SettingsFormProps) {
       {/* Social */}
       <AdminCard title="Social links" description="All optional. Leave blank to hide.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminFormField
-            label="Facebook"
-            htmlFor="social_facebook"
-            error={errors.social_facebook?.message}
-          >
-            <input
-              id="social_facebook"
-              type="url"
-              className={adminInputClass}
-              {...register("social_facebook")}
-            />
+          <AdminFormField id="social_facebook" label="Facebook" error={errors.social_facebook?.message}>
+            <input id="social_facebook" type="url" className={adminInputClass} {...register("social_facebook")} />
           </AdminFormField>
-          <AdminFormField
-            label="Instagram"
-            htmlFor="social_instagram"
-            error={errors.social_instagram?.message}
-          >
-            <input
-              id="social_instagram"
-              type="url"
-              className={adminInputClass}
-              {...register("social_instagram")}
-            />
+          <AdminFormField id="social_instagram" label="Instagram" error={errors.social_instagram?.message}>
+            <input id="social_instagram" type="url" className={adminInputClass} {...register("social_instagram")} />
           </AdminFormField>
-          <AdminFormField
-            label="YouTube"
-            htmlFor="social_youtube"
-            error={errors.social_youtube?.message}
-          >
-            <input
-              id="social_youtube"
-              type="url"
-              className={adminInputClass}
-              {...register("social_youtube")}
-            />
+          <AdminFormField id="social_youtube" label="YouTube" error={errors.social_youtube?.message}>
+            <input id="social_youtube" type="url" className={adminInputClass} {...register("social_youtube")} />
           </AdminFormField>
-          <AdminFormField
-            label="TikTok"
-            htmlFor="social_tiktok"
-            error={errors.social_tiktok?.message}
-          >
-            <input
-              id="social_tiktok"
-              type="url"
-              className={adminInputClass}
-              {...register("social_tiktok")}
-            />
+          <AdminFormField id="social_tiktok" label="TikTok" error={errors.social_tiktok?.message}>
+            <input id="social_tiktok" type="url" className={adminInputClass} {...register("social_tiktok")} />
           </AdminFormField>
         </div>
       </AdminCard>
 
       {/* SEO */}
-      <AdminCard
-        title="SEO defaults"
-        description="Used when a page doesn't supply its own meta title or OG image."
-      >
+      <AdminCard title="SEO defaults" description="Used when a page doesn't supply its own meta title or OG image.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <AdminFormField
+            id="default_meta_title_de"
             label="Default meta title (DE)"
-            htmlFor="default_meta_title_de"
             required
             error={errors.default_meta_title_de?.message}
           >
-            <input
-              id="default_meta_title_de"
-              className={adminInputClass}
-              {...register("default_meta_title_de")}
-            />
+            <input id="default_meta_title_de" className={adminInputClass} {...register("default_meta_title_de")} />
           </AdminFormField>
           <AdminFormField
+            id="default_meta_title_en"
             label="Default meta title (EN)"
-            htmlFor="default_meta_title_en"
             required
             error={errors.default_meta_title_en?.message}
           >
-            <input
-              id="default_meta_title_en"
-              className={adminInputClass}
-              {...register("default_meta_title_en")}
-            />
+            <input id="default_meta_title_en" className={adminInputClass} {...register("default_meta_title_en")} />
           </AdminFormField>
           <div className="md:col-span-2">
             <AdminFormField
               label="Default OG image"
-              hint="optional"
-              helper="Used for link previews on social media when a service has no specific OG image."
+              hint="Used for link previews on social media when a service has no specific OG image."
               error={errors.default_og_image_url?.message}
             >
               <Controller
@@ -493,8 +312,10 @@ export function SettingsForm({ initial }: SettingsFormProps) {
                 control={control}
                 render={({ field }) => (
                   <ImageUploadField
-                    value={field.value}
-                    onChange={field.onChange}
+                    label=""
+                    value={field.value ? field.value : null}
+                    onChange={(next) => field.onChange(next ?? "")}
+                    onUpload={uploadHandler}
                   />
                 )}
               />

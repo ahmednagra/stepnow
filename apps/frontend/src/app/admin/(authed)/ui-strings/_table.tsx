@@ -1,4 +1,6 @@
-// src/app/admin/(authed)/ui-strings/_table.tsx
+// apps/frontend/src/app/admin/(authed)/ui-strings/_table.tsx
+// UI strings inline-editable table + create modal.
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -78,7 +80,6 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
     void reload();
   }, [reload]);
 
-  // Compute unique namespaces for the filter dropdown
   const namespaces = items
     ? Array.from(new Set(items.map((s) => s.namespace).filter((n): n is string => !!n))).sort()
     : [];
@@ -88,26 +89,18 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
     field: "value_de" | "value_en",
     newValue: string,
   ) {
-    if (newValue === str[field]) return; // no-op
+    if (newValue === str[field]) return;
     if (newValue.trim().length === 0) {
       pushToast("error", "Empty value", "Use the delete button if you want to remove this string.");
-      // Revert by re-rendering with the original value
       setItems((prev) => (prev ? prev.map((s) => (s.id === str.id ? { ...s } : s)) : prev));
       return;
     }
     try {
       const updated = await updateAdminUiString(str.id, { [field]: newValue });
-      setItems((prev) =>
-        prev ? prev.map((s) => (s.id === updated.id ? updated : s)) : prev,
-      );
+      setItems((prev) => (prev ? prev.map((s) => (s.id === updated.id ? updated : s)) : prev));
       pushToast("success", "Saved", `${str.namespace}.${str.key} (${field.slice(-2)})`);
     } catch (err) {
-      pushToast(
-        "error",
-        "Save failed",
-        err instanceof ApiError ? err.message : "Network error",
-      );
-      // Force a re-render so the cell reverts visually
+      pushToast("error", "Save failed", err instanceof ApiError ? err.message : "Network error");
       setItems((prev) => (prev ? [...prev] : prev));
     }
   }
@@ -118,11 +111,7 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
       pushToast("success", "String deleted");
       void reload();
     } catch (err) {
-      pushToast(
-        "error",
-        "Delete failed",
-        err instanceof ApiError ? err.message : "Network error",
-      );
+      pushToast("error", "Delete failed", err instanceof ApiError ? err.message : "Network error");
     }
   }
 
@@ -132,11 +121,7 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
       pushToast("success", "String restored");
       void reload();
     } catch (err) {
-      pushToast(
-        "error",
-        "Restore failed",
-        err instanceof ApiError ? err.message : "Network error",
-      );
+      pushToast("error", "Restore failed", err instanceof ApiError ? err.message : "Network error");
     }
   }
 
@@ -193,10 +178,7 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
             <AdminTableEmpty message="No UI strings found." />
           ) : (
             items.map((s) => (
-              <AdminTableRow
-                key={s.id}
-                className={s.is_deleted ? "opacity-60" : ""}
-              >
+              <AdminTableRow key={s.id} className={s.is_deleted ? "opacity-60" : ""}>
                 <AdminTableCell className="align-top">
                   <p className="font-mono text-[11px] font-medium text-slate-900">{s.key}</p>
                   <p className="font-mono text-[10px] text-slate-500">{s.namespace}</p>
@@ -265,12 +247,13 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
       <ConfirmDialog
         open={confirmDelete !== null}
         title="Delete this UI string?"
-        body={
+        description={
           confirmDelete
             ? `${confirmDelete.namespace}.${confirmDelete.key} will be soft-deleted. The public site will fall back to the key name until you restore it.`
             : ""
         }
         confirmLabel="Delete"
+        tone="danger"
         onConfirm={() => {
           if (confirmDelete) {
             const target = confirmDelete;
@@ -292,6 +275,10 @@ export function UiStringsTable({ showCreate, onCreateClose }: UiStringsTableProp
   );
 }
 
+// =============================================================================
+// EditableCell
+// =============================================================================
+
 interface EditableCellProps {
   value: string;
   disabled?: boolean;
@@ -303,7 +290,6 @@ function EditableCell({ value, disabled, onSave }: EditableCellProps) {
   const [draft, setDraft] = useState(value);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Sync external value changes back into draft when not editing
   useEffect(() => {
     if (!editing) setDraft(value);
   }, [value, editing]);
@@ -333,7 +319,6 @@ function EditableCell({ value, disabled, onSave }: EditableCellProps) {
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          // Enter (without shift) commits; shift+enter inserts a newline; Esc cancels.
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             commit();
@@ -360,6 +345,10 @@ function EditableCell({ value, disabled, onSave }: EditableCellProps) {
     </button>
   );
 }
+
+// =============================================================================
+// CreateUiStringModal
+// =============================================================================
 
 interface CreateUiStringModalProps {
   onClose: (created: boolean) => void;
@@ -444,7 +433,7 @@ function CreateUiStringModal({ onClose }: CreateUiStringModalProps) {
               label="Key"
               required
               error={errors.key?.message}
-              helper="Lowercase, digits, dots, underscores."
+              hint="Lowercase, digits, dots, underscores."
             >
               <input
                 placeholder="footer.legal_links.privacy"
@@ -456,7 +445,7 @@ function CreateUiStringModal({ onClose }: CreateUiStringModalProps) {
               label="Namespace"
               required
               error={errors.namespace?.message}
-              helper="e.g. common, header, footer, booking"
+              hint="e.g. common, header, footer, booking"
             >
               <input
                 placeholder="common"

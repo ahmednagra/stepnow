@@ -1,39 +1,62 @@
 // apps/frontend/src/components/admin/BookingStatusBadge.tsx
-// Phase 3d polish — refined tone palette matching admin restraint.
+// Status badge for bookings. Tone palette matches admin restraint.
+//
+// The status set MUST stay in sync with `BookingStatus` in `@/types/booking.ts`
+// (the canonical type derived from the FastAPI backend). To keep the build safe
+// even if the backend ever returns an unexpected status, we fall back to a
+// neutral tone instead of crashing on `tone.wrap`.
 
 import { cn } from "@/utils/cn";
+import { type BookingStatus } from "@/types/booking";
 
-export const BOOKING_STATUS_LABELS = {
+export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   new: "Neu",
+  contacted: "Kontaktiert",
+  quoted: "Angebot",
   confirmed: "Bestätigt",
-  in_progress: "Unterwegs",
   completed: "Abgeschlossen",
   cancelled: "Storniert",
-} as const;
-
-export type BookingStatus = keyof typeof BOOKING_STATUS_LABELS;
-
-export const BOOKING_STATUS_TONES: Record<
-  BookingStatus,
-  { wrap: string; dot: string }
-> = {
-  new: { wrap: "bg-amber-50 text-amber-800 border-amber-200", dot: "bg-amber-500" },
-  confirmed: {
-    wrap: "bg-emerald-50 text-emerald-800 border-emerald-200",
-    dot: "bg-emerald-500",
-  },
-  in_progress: { wrap: "bg-sky-50 text-sky-800 border-sky-200", dot: "bg-sky-500" },
-  completed: { wrap: "bg-slate-100 text-slate-700 border-slate-200", dot: "bg-slate-400" },
-  cancelled: { wrap: "bg-rose-50 text-rose-800 border-rose-200", dot: "bg-rose-500" },
 };
 
+interface Tone {
+  wrap: string;
+  dot: string;
+}
+
+export const BOOKING_STATUS_TONES: Record<BookingStatus, Tone> = {
+  new:       { wrap: "bg-amber-50 text-amber-800 border-amber-200",     dot: "bg-amber-500" },
+  contacted: { wrap: "bg-sky-50 text-sky-800 border-sky-200",           dot: "bg-sky-500" },
+  quoted:    { wrap: "bg-indigo-50 text-indigo-800 border-indigo-200",  dot: "bg-indigo-500" },
+  confirmed: { wrap: "bg-emerald-50 text-emerald-800 border-emerald-200", dot: "bg-emerald-500" },
+  completed: { wrap: "bg-slate-100 text-slate-700 border-slate-200",    dot: "bg-slate-400" },
+  cancelled: { wrap: "bg-rose-50 text-rose-800 border-rose-200",        dot: "bg-rose-500" },
+};
+
+// Hard-coded neutral fallback used when an unknown status arrives at runtime.
+// This prevents the "Cannot read properties of undefined (reading 'wrap')" crash.
+const FALLBACK_TONE: Tone = {
+  wrap: "bg-slate-100 text-slate-700 border-slate-200",
+  dot: "bg-slate-400",
+};
+
+// Re-export the canonical type so existing imports
+// (`import type { BookingStatus } from "@/components/admin"`) keep working.
+export type { BookingStatus };
+
 interface BookingStatusBadgeProps {
-  status: BookingStatus;
+  status: BookingStatus | string | null | undefined;
   className?: string;
 }
 
 export function BookingStatusBadge({ status, className }: BookingStatusBadgeProps) {
-  const tone = BOOKING_STATUS_TONES[status];
+  // Resolve tone and label defensively: any unknown / null / undefined value
+  // renders a neutral badge with the raw status text instead of crashing.
+  const tone =
+    (status && (BOOKING_STATUS_TONES as Record<string, Tone>)[status as string]) ?? FALLBACK_TONE;
+  const label =
+    (status && (BOOKING_STATUS_LABELS as Record<string, string>)[status as string]) ??
+    (typeof status === "string" && status.length > 0 ? status : "—");
+
   return (
     <span
       className={cn(
@@ -43,7 +66,7 @@ export function BookingStatusBadge({ status, className }: BookingStatusBadgeProp
       )}
     >
       <span aria-hidden="true" className={cn("inline-block h-1.5 w-1.5 rounded-full", tone.dot)} />
-      {BOOKING_STATUS_LABELS[status]}
+      {label}
     </span>
   );
 }

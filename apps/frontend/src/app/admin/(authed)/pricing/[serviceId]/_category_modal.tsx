@@ -1,4 +1,6 @@
-// src/app/admin/(authed)/pricing/[serviceId]/_category_modal.tsx
+// apps/frontend/src/app/admin/(authed)/pricing/[serviceId]/_category_modal.tsx
+// Modal to create or edit a pricing category for a service.
+
 "use client";
 
 import { useState } from "react";
@@ -16,7 +18,6 @@ import {
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
-  AdminFormField,
   BilingualField,
   adminInputClass,
   adminTextareaClass,
@@ -42,13 +43,13 @@ function defaults(c: PricingCategoryAdmin | undefined, nextSortOrder: number): A
   };
 }
 
+function FieldErr({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p role="alert" className="text-[11px] font-medium text-rose-700">{msg}</p>;
+}
+
 export function CategoryModal({
-  serviceId,
-  mode,
-  category,
-  nextSortOrder,
-  onClose,
-  onSaved,
+  serviceId, mode, category, nextSortOrder, onClose, onSaved,
 }: CategoryModalProps) {
   const pushToast = useAdminToast((s) => s.push);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -76,7 +77,6 @@ export function CategoryModal({
         mode === "create"
           ? await createAdminPricingCategory(serviceId, payload)
           : await updateAdminPricingCategory(category!.id, payload);
-      // Backend's update response may not include `items`. Preserve existing.
       const withItems: PricingCategoryAdmin = {
         ...saved,
         items: (saved as PricingCategoryAdmin).items ?? category?.items ?? [],
@@ -116,10 +116,7 @@ export function CategoryModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 p-5">
           {serverError && (
-            <div
-              role="alert"
-              className="border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700"
-            >
+            <div role="alert" className="border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">
               {serverError}
             </div>
           )}
@@ -127,24 +124,36 @@ export function CategoryModal({
           <BilingualField
             label="Name"
             required
-            errorDe={errors.name_de?.message}
-            errorEn={errors.name_en?.message}
-            de={<input className={adminInputClass} {...register("name_de")} />}
-            en={<input className={adminInputClass} {...register("name_en")} />}
+            de={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("name_de")} aria-invalid={errors.name_de ? true : undefined} />
+                <FieldErr msg={errors.name_de?.message} />
+              </div>
+            }
+            en={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("name_en")} aria-invalid={errors.name_en ? true : undefined} />
+                <FieldErr msg={errors.name_en?.message} />
+              </div>
+            }
           />
 
           <BilingualField
             label="Description"
-            helper="Optional. Shown above the items on the public pricing page."
-            errorDe={errors.description_de?.message}
-            errorEn={errors.description_en?.message}
-            de={<textarea rows={2} className={adminTextareaClass} {...register("description_de")} />}
-            en={<textarea rows={2} className={adminTextareaClass} {...register("description_en")} />}
+            hint="Optional. Shown above the items on the public pricing page."
+            de={
+              <div className="flex flex-col gap-1">
+                <textarea rows={2} className={adminTextareaClass} {...register("description_de")} aria-invalid={errors.description_de ? true : undefined} />
+                <FieldErr msg={errors.description_de?.message} />
+              </div>
+            }
+            en={
+              <div className="flex flex-col gap-1">
+                <textarea rows={2} className={adminTextareaClass} {...register("description_en")} aria-invalid={errors.description_en ? true : undefined} />
+                <FieldErr msg={errors.description_en?.message} />
+              </div>
+            }
           />
-
-          <AdminFormField label="Sort order" error={errors.sort_order?.message} hint="optional">
-            <input type="number" min="0" className={adminInputClass} {...register("sort_order")} />
-          </AdminFormField>
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <button

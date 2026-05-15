@@ -1,4 +1,6 @@
-// src/app/admin/(authed)/legal-pages/[slug]/_editor.tsx
+// apps/frontend/src/app/admin/(authed)/legal-pages/[slug]/_editor.tsx
+// Legal page draft + publish + version history editor.
+
 "use client";
 
 import { useState } from "react";
@@ -38,7 +40,6 @@ interface LegalPageEditorProps {
 type PreviewLocale = "de" | "en";
 
 function pickDraftDefaults(p: LegalPageAdmin): AdminLegalPageDraftInput {
-  // Prefer draft, fall back to published, fall back to empty.
   const src = p.draft_version ?? p.published_version;
   return {
     title_de: src?.title_de ?? "",
@@ -47,6 +48,12 @@ function pickDraftDefaults(p: LegalPageAdmin): AdminLegalPageDraftInput {
     body_en: src?.body_en ?? "",
     changes_summary: "",
   };
+}
+
+// Inline error for slots inside BilingualField (which doesn't accept error props).
+function FieldErr({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p role="alert" className="text-[11px] font-medium text-rose-700">{msg}</p>;
 }
 
 export function LegalPageEditor({ initial, versions: initialVersions }: LegalPageEditorProps) {
@@ -71,7 +78,6 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
     defaultValues: pickDraftDefaults(initial),
   });
 
-  // Watch body for live preview
   const bodyDe = watch("body_de");
   const bodyEn = watch("body_en");
   const liveBody = previewLocale === "de" ? bodyDe : bodyEn;
@@ -81,7 +87,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
       const res = await listAdminLegalPageVersions(initial.slug);
       setVersions(res.items);
     } catch {
-      // Non-fatal — keep showing stale versions.
+      /* non-fatal */
     }
   }
 
@@ -110,7 +116,6 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
     setBusy(true);
     setServerError(null);
     try {
-      // If form is dirty, save the draft first so publish picks up edits.
       const values = watch();
       if (isDirty) {
         await saveAdminLegalPageDraft(initial.slug, {
@@ -125,7 +130,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
         changes_summary: values.changes_summary?.trim() || null,
       });
       reset(pickDraftDefaults(published));
-      pushToast("success", "Published", `Now live on the public site.`);
+      pushToast("success", "Published", "Now live on the public site.");
       void refreshVersions();
       router.refresh();
     } catch (err) {
@@ -192,11 +197,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
               disabled={isSubmitting || busy || !isDirty}
               className="flex h-9 items-center gap-2 border border-slate-300 bg-white px-3 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50"
             >
-              {isSubmitting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
+              {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save draft
             </button>
             <button
@@ -221,10 +222,18 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
           <BilingualField
             label="Title"
             required
-            errorDe={errors.title_de?.message}
-            errorEn={errors.title_en?.message}
-            de={<input className={adminInputClass} {...register("title_de")} />}
-            en={<input className={adminInputClass} {...register("title_en")} />}
+            de={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("title_de")} aria-invalid={errors.title_de ? true : undefined} />
+                <FieldErr msg={errors.title_de?.message} />
+              </div>
+            }
+            en={
+              <div className="flex flex-col gap-1">
+                <input className={adminInputClass} {...register("title_en")} aria-invalid={errors.title_en ? true : undefined} />
+                <FieldErr msg={errors.title_en?.message} />
+              </div>
+            }
           />
         </AdminCard>
 
@@ -278,9 +287,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">
-                  Preview
-                </span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Preview</span>
                 <div className="min-h-[24rem] overflow-y-auto border border-slate-200 bg-white p-4">
                   <AdminMarkdownPreview source={liveBody ?? ""} />
                 </div>
@@ -290,21 +297,27 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
             <BilingualField
               label="Body"
               required
-              errorDe={errors.body_de?.message}
-              errorEn={errors.body_en?.message}
               de={
-                <textarea
-                  rows={20}
-                  className={`${adminTextareaClass} font-mono text-[12px]`}
-                  {...register("body_de")}
-                />
+                <div className="flex flex-col gap-1">
+                  <textarea
+                    rows={20}
+                    className={`${adminTextareaClass} font-mono text-[12px]`}
+                    {...register("body_de")}
+                    aria-invalid={errors.body_de ? true : undefined}
+                  />
+                  <FieldErr msg={errors.body_de?.message} />
+                </div>
               }
               en={
-                <textarea
-                  rows={20}
-                  className={`${adminTextareaClass} font-mono text-[12px]`}
-                  {...register("body_en")}
-                />
+                <div className="flex flex-col gap-1">
+                  <textarea
+                    rows={20}
+                    className={`${adminTextareaClass} font-mono text-[12px]`}
+                    {...register("body_en")}
+                    aria-invalid={errors.body_en ? true : undefined}
+                  />
+                  <FieldErr msg={errors.body_en?.message} />
+                </div>
               }
             />
           )}
@@ -324,13 +337,10 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
           </AdminFormField>
         </AdminCard>
 
-        {/* Version history */}
         <AdminCard
           title="Version history"
           description={`${versions.length} version${versions.length === 1 ? "" : "s"} on record.`}
-          headerActions={
-            <History className="h-3 w-3 text-slate-400" aria-hidden="true" />
-          }
+          headerActions={<History className="h-3 w-3 text-slate-400" aria-hidden="true" />}
         >
           {versions.length === 0 ? (
             <p className="text-[12px] italic text-slate-500">
@@ -342,9 +352,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
                 <li key={v.id} className="flex items-start justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[12px] font-medium text-slate-900">
-                        v{v.version_number}
-                      </span>
+                      <span className="font-mono text-[12px] font-medium text-slate-900">v{v.version_number}</span>
                       {v.is_published ? (
                         <span className="inline-flex items-center bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-700">
                           Published
@@ -360,11 +368,8 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
                         title={v.created_at}
                       >
                         {new Date(v.created_at).toLocaleString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
+                          day: "2-digit", month: "short", year: "numeric",
+                          hour: "2-digit", minute: "2-digit",
                         })}
                       </time>
                     </div>
@@ -393,13 +398,13 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
       <ConfirmDialog
         open={confirmPublish}
         title="Publish this draft?"
-        body={
+        description={
           isDirty
             ? "Your unsaved changes will be saved as a draft and then published. This makes them live on the public site."
             : "This will publish the current draft, making it live on the public site."
         }
         confirmLabel="Publish"
-        destructive={false}
+        tone="primary"
         onConfirm={() => {
           setConfirmPublish(false);
           void onPublish();
@@ -410,9 +415,9 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
       <ConfirmDialog
         open={confirmRollback !== null}
         title={`Rollback to v${confirmRollback?.version_number ?? "?"}?`}
-        body="This will replace the current draft with the content from this version. You'll need to publish afterwards to make it live."
+        description="This will replace the current draft with the content from this version. You'll need to publish afterwards to make it live."
         confirmLabel="Rollback"
-        destructive
+        tone="danger"
         onConfirm={() => {
           if (confirmRollback) {
             const target = confirmRollback;
