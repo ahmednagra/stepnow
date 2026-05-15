@@ -1,3 +1,6 @@
+// apps/frontend/src/app/(public)/page.tsx
+// German homepage: hero + booking widget, trust strip, services grid, how-it-works, why, fleet, testimonials, FAQ teaser.
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Phone } from "lucide-react";
@@ -11,12 +14,7 @@ import { createT } from "@/lib/i18n/t";
 import { buildLocalBusinessJsonLd, buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { toTelHref } from "@/utils/formatters";
-import {
-  ConcessionBadge,
-  Container,
-  MobileStickyBar,
-  ScrollReveal,
-} from "@/components/shared";
+import { ConcessionBadge, Container, MobileStickyBar, ScrollReveal } from "@/components/shared";
 import { Button } from "@/components/ui";
 import {
   FaqTeaser,
@@ -58,16 +56,9 @@ export default async function HomePageDe() {
 
   return (
     <>
-      {/* === 1. Hero — asymmetric 8:4, collapsed bottom to butt against trust strip === */}
       <section className="relative overflow-hidden bg-ink text-cream">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,transparent_30%,rgba(0,0,0,0.55)_100%)]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"
-        />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,transparent_30%,rgba(0,0,0,0.55)_100%)]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         <Container className="relative grid gap-10 pt-section-hero pb-section-hero md:grid-cols-12 md:gap-12 md:pt-section-hero-md md:pb-section-hero-md lg:pt-section-hero-lg lg:pb-section-hero-lg">
           <div className="flex flex-col justify-center gap-5 md:col-span-8">
             <div className="flex items-center gap-3">
@@ -84,70 +75,42 @@ export default async function HomePageDe() {
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               <Link href="/buchen">
-                <Button
-                  size="lg"
-                  variant="inverse"
-                  trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
-                >
+                <Button size="lg" variant="inverse" trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}>
                   {t("home.hero.cta_book")}
                 </Button>
               </Link>
               <a href={toTelHref(settings.phone)}>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  leadingIcon={<Phone className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />}
-                  className="border-cream/40 text-cream hover:bg-cream/5"
-                >
+                <Button size="lg" variant="outline" leadingIcon={<Phone className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />} className="border-cream/40 text-cream hover:bg-cream/5">
                   <span className="tabular-nums">{settings.phone}</span>
                 </Button>
               </a>
             </div>
             <ConcessionBadge settings={settings} tone="dark" className="mt-1" />
           </div>
-          {/* Widget — narrower (4 col), pushed down slightly for editorial asymmetry */}
           <div className="md:col-span-4 md:mt-6 md:flex md:items-start">
             <HeroBookingWidget locale="de" />
           </div>
         </Container>
       </section>
 
-      {/* === 2. Trust strip — adjoins hero directly === */}
       <TrustStrip t={t} />
 
-      {/* === 3. Services grid — tighter header (mb-8) and reduced subhead spacing === */}
       <section className="bg-cream">
         <Container className="py-section">
           <ScrollReveal as="header" className="mb-8 max-w-3xl">
             <p className="label-eyebrow">{t("home.services.pre_heading")}</p>
-            <h2 className="mt-2 font-serif text-section md:text-display-md">
-              {t("home.services.heading")}
-            </h2>
-            <p className="mt-3 max-w-md text-body-lg text-mute">
-              {t("home.services.subheading")}
-            </p>
+            <h2 className="mt-2 font-serif text-section md:text-display-md">{t("home.services.heading")}</h2>
+            <p className="mt-3 max-w-md text-body-lg text-mute">{t("home.services.subheading")}</p>
           </ScrollReveal>
-          <ScrollReveal
-            as="ul"
-            stagger
-            className="grid gap-px overflow-hidden border border-line bg-line md:grid-cols-2"
-          >
+          <ScrollReveal as="ul" stagger className="grid gap-px overflow-hidden border border-line bg-line md:grid-cols-2">
             {services.map((s) => (
               <li key={s.id} className="bg-cream">
-                <Link
-                  href={`/dienstleistungen/${s.slug}`}
-                  className="group relative flex h-full flex-col gap-4 p-8 transition-all duration-base ease-out-premium hover:shadow-ring-ink md:p-10"
-                >
-                  <h3 className="text-[22px] font-semibold tracking-tight text-ink md:text-[24px]">
-                    {s.title}
-                  </h3>
+                <Link href={`/dienstleistungen/${s.slug}`} className="group relative flex h-full flex-col gap-4 p-8 transition-all duration-base ease-out-premium hover:shadow-ring-ink md:p-10">
+                  <h3 className="text-[22px] font-semibold tracking-tight text-ink md:text-[24px]">{s.title}</h3>
                   <p className="max-w-md text-mute">{s.short_description}</p>
                   <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[12px] font-semibold uppercase tracking-[0.18em] text-gold-deep transition-colors duration-base group-hover:text-ink">
                     {t("services.card.learn_more")}
-                    <ArrowUpRight
-                      className="h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                      aria-hidden="true"
-                    />
+                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
                   </span>
                 </Link>
               </li>
@@ -156,67 +119,11 @@ export default async function HomePageDe() {
         </Container>
       </section>
 
-      <ScrollReveal>
-        <HowItWorks t={t} />
-      </ScrollReveal>
-      <ScrollReveal>
-        <WhyStepNow t={t} />
-      </ScrollReveal>
-      <ScrollReveal>
-        <FleetPreview t={t} vehicles={vehicles} />
-      </ScrollReveal>
-      <ScrollReveal>
-        <TestimonialsSection testimonials={testimonials} />
-      </ScrollReveal>
-      <ScrollReveal>
-        <FaqTeaser t={t} faqs={faqs} locale="de" />
-      </ScrollReveal>
-
-      {/* === 9. Final CTA — top padding matches a normal section,
-                bottom trimmed so footer adjoins cleanly === */}
-      <section className="relative overflow-hidden bg-ink text-cream">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"
-        />
-        <Container className="pt-section pb-section text-center md:pt-section-lg md:pb-section">
-          <ScrollReveal>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
-              {t("home.final_cta.pre_heading")}
-            </p>
-            <h2 className="mx-auto mt-3 max-w-3xl font-serif text-section md:text-display-md">
-              {t("home.final_cta.heading")}
-            </h2>
-            <p className="mx-auto mt-4 max-w-md text-body-lg text-cream/65">
-              {t("home.final_cta.subhead")}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <Link href="/buchen">
-                <Button
-                  size="lg"
-                  variant="inverse"
-                  trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
-                >
-                  {t("home.hero.cta_book")}
-                </Button>
-              </Link>
-              <a href={toTelHref(settings.phone)}>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  leadingIcon={<Phone className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />}
-                  className="border-cream/40 text-cream hover:bg-cream/5"
-                >
-                  <span className="tabular-nums">{settings.phone}</span>
-                </Button>
-              </a>
-            </div>
-            <div className="mt-10 flex flex-col items-center gap-3">
-              <ConcessionBadge settings={settings} tone="dark" />
-            </div>
-          </ScrollReveal>
-        </Container>
-      </section>
+      <ScrollReveal><HowItWorks t={t} /></ScrollReveal>
+      <ScrollReveal><WhyStepNow t={t} /></ScrollReveal>
+      <ScrollReveal><FleetPreview t={t} vehicles={vehicles} /></ScrollReveal>
+      <ScrollReveal><TestimonialsSection testimonials={testimonials} /></ScrollReveal>
+      <ScrollReveal><FaqTeaser t={t} faqs={faqs} locale="de" /></ScrollReveal>
 
       <MobileStickyBar settings={settings} />
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />

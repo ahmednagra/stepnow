@@ -253,8 +253,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("footer.legal.impressum", "footer", "Impressum", "Legal notice", "Footer legal link", True),
     ("footer.legal.datenschutz", "footer", "Datenschutz", "Privacy", "Footer legal link", True),
     ("footer.legal.agb", "footer", "AGB", "Terms", "Footer legal link", True),
-    ("footer.copyright", "footer", "© 2026 StepNow Rides & Movers. Alle Rechte vorbehalten.", "© 2026 StepNow Rides & Movers. All rights reserved.", "Footer copyright", False),
-
+    ("footer.rights_reserved", "footer", "Alle Rechte vorbehalten.", "All rights reserved.", "Suffix for the bottom-strip copyright line; year + business name come from the Footer component.", False),
+    
     # === COMMON ===
     ("common.loading", "common", "Lädt…", "Loading…", "Generic loading", True),
     ("common.save", "common", "Speichern", "Save", "Generic save action", False),
