@@ -1,31 +1,23 @@
 // apps/frontend/src/components/features/about/ServiceAreaMap.tsx
-// Option A layout — compact map block for the 5-col right side of Row 2.
-// Renders just the eyebrow + heading + map + coverage line + city list.
-// The parent page (about) wraps it in the layout grid.
-
+// About-page service-area map: Google Maps after consent, OpenStreetMap fallback before.
 "use client";
-
+import { memo, useMemo } from "react";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import type { SettingsPublic } from "@/types";
-import { EmptyState, LeafletMap, type LeafletMarker } from "@/components/shared";
+import { EmptyState, GoogleMapsEmbed } from "@/components/shared";
 import { pickT } from "@/lib/i18n/pick";
 
-interface ServiceAreaMapProps {
-  settings: SettingsPublic;
-}
+interface ServiceAreaMapProps { settings: SettingsPublic }
 
-const CITIES_DE = "Deizisau · Esslingen · Stuttgart · Plochingen · Wendlingen · Kirchheim";
-const CITIES_EN = "Deizisau · Esslingen · Stuttgart · Plochingen · Wendlingen · Kirchheim";
-
-export function ServiceAreaMap({ settings }: ServiceAreaMapProps) {
+function ServiceAreaMapImpl({ settings }: ServiceAreaMapProps) {
   const { t, locale } = useUiStrings();
   const lat = Number(settings.address_lat);
   const lng = Number(settings.address_lng);
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
-
-  const osmHref = hasCoords
-    ? `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=12/${lat}/${lng}`
-    : null;
+  const osmHref = useMemo(
+    () => hasCoords ? `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=12/${lat}/${lng}` : null,
+    [hasCoords, lat, lng],
+  );
 
   return (
     <div>
@@ -38,50 +30,32 @@ export function ServiceAreaMap({ settings }: ServiceAreaMapProps) {
 
       {hasCoords ? (
         <div className="relative h-[240px] border border-line bg-cream">
-          <LeafletMap
-            markers={[{ lat, lng, label: settings.business_name } satisfies LeafletMarker]}
-            center={[lat, lng]}
-            zoom={11}
-            className="h-full"
-          />
+          <GoogleMapsEmbed lat={lat} lng={lng} label={settings.business_name} zoom={12} fallbackZoom={11} className="h-full" />
           {osmHref && (
-            <a
-              href={osmHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-2 left-2 z-[400] bg-ink/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-cream transition-colors duration-base hover:bg-ink"
-            >
+            <a href={osmHref} target="_blank" rel="noopener noreferrer" className="absolute bottom-2 left-2 z-[400] bg-ink/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-cream transition-colors duration-base hover:bg-ink">
               {pickT(t, "about.area.open_external", locale === "de" ? "In Karten öffnen" : "Open in maps")} ↗
             </a>
           )}
         </div>
       ) : (
         <EmptyState
-          title={pickT(
-            t,
-            "about.area.empty.title",
-            locale === "de" ? "Karte nicht verfügbar" : "Map not available",
-          )}
-          description={pickT(
-            t,
-            "about.area.empty.body",
-            locale === "de" ? "Standort wird in Kürze hinterlegt." : "Location will be added soon.",
-          )}
+          title={pickT(t, "about.area.empty.title", locale === "de" ? "Karte nicht verfügbar" : "Map not available")}
+          description={pickT(t, "about.area.empty.body", locale === "de" ? "Standort wird in Kürze hinterlegt." : "Location will be added soon.")}
         />
       )}
 
       <p className="mt-4 text-[13px] leading-relaxed text-mute">
-        {pickT(
-          t,
-          "about.area.body",
-          locale === "de"
-            ? "Sitz in Deizisau · Bedienung im Umkreis von ca. 50 km, mit täglichen Routen zum Stuttgart Flughafen und zu regionalen Kliniken."
-            : "Based in Deizisau · ride coverage within ~50 km, with daily routes to Stuttgart Airport and regional hospitals.",
+        {pickT(t, "about.area.body", locale === "de"
+          ? "Wir fahren in der Region Stuttgart, Esslingen und im mittleren Neckartal."
+          : "We operate in the Stuttgart, Esslingen and central Neckar valley region."
         )}
-      </p>
-      <p className="mt-2 font-serif text-[15px] leading-snug tracking-tight text-ink">
-        {pickT(t, "about.area.cities", locale === "de" ? CITIES_DE : CITIES_EN)}
       </p>
     </div>
   );
 }
+
+export const ServiceAreaMap = memo(ServiceAreaMapImpl, (p, n) =>
+  p.settings.address_lat === n.settings.address_lat &&
+  p.settings.address_lng === n.settings.address_lng &&
+  p.settings.business_name === n.settings.business_name
+);

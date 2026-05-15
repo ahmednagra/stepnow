@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from config.settings import settings
+from config.database import engine
+from app.Models import Base
 from app.Core.Exceptions import AppError
 from app.Utils.Logger import get_logger
 from app.Utils.rate_limit import limiter
@@ -15,9 +17,39 @@ from routes import setup_api_routes
 logger = get_logger("stepnow")
 
 
+def _create_missing_tables() -> None:
+    """
+    Dev-time safety net: create any tables whose models exist but whose
+    tables are missing from the database.
+
+    SQLAlchemy's create_all is non-destructive — it only issues CREATE TABLE
+    for tables that don't already exist. It will NEVER alter existing
+    tables, add new columns, change types, or drop anything. Real schema
+    evolution still goes through Alembic migrations (see alembic/versions/).
+
+    Refuses to run in production. In production, schema is managed
+    exclusively by Alembic — auto-creating tables there would conflict
+    with the migration version tracker and is dangerous.
+    """
+    if settings.ENVIRONMENT == "production":
+        logger.info("Skipping auto-create-tables (ENVIRONMENT=production — use Alembic migrations)")
+        return
+
+    try:
+        inspector_before = set(Base.metadata.tables.keys())
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+        logger.info(
+            f"Auto-create-tables OK — {len(inspector_before)} model(s) registered, "
+            "any missing tables were created (existing tables untouched)"
+        )
+    except Exception:
+        logger.exception("Auto-create-tables failed — continuing startup anyway")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} (env={settings.ENVIRONMENT})")
+    _create_missing_tables()
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 

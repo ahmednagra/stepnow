@@ -1,6 +1,8 @@
 # apps/backend/app/Models/settings.py
+# SQLAlchemy model for the singleton site_settings row (business info + map coords).
 from datetime import date
-from sqlalchemy import CheckConstraint, Date, Integer, String, Text
+from decimal import Decimal
+from sqlalchemy import CheckConstraint, Date, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.Models.base import Base
 from app.Mixins.TimestampMixin import TimestampMixin
@@ -17,6 +19,8 @@ class SiteSettings(Base, TimestampMixin):
     address_postcode: Mapped[str] = mapped_column(String(10), nullable=False)
     address_city: Mapped[str] = mapped_column(String(100), nullable=False)
     address_country: Mapped[str] = mapped_column(String(100), nullable=False, default="Deutschland")
+    address_lat: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
+    address_lng: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
     phone: Mapped[str] = mapped_column(String(50), nullable=False)
     phone_mobile: Mapped[str | None] = mapped_column(String(50), nullable=True)
     email: Mapped[str] = mapped_column(String(200), nullable=False)

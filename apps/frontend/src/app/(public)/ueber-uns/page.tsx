@@ -1,4 +1,5 @@
 // apps/frontend/src/app/(public)/ueber-uns/page.tsx
+// About page (DE) — two-row layout with magazine-grid fleet at the bottom.
 
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
@@ -39,7 +40,6 @@ export default async function AboutPageDe() {
 
   return (
     <>
-      {/* Page header — tightened top padding */}
       <section className="bg-cream">
         <Container className="pt-3 pb-6 md:pt-5 md:pb-8">
           <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between md:gap-6">
@@ -56,7 +56,6 @@ export default async function AboutPageDe() {
         </Container>
       </section>
 
-      {/* ROW 1: Story (7) + Values (5) */}
       <section className="border-t border-line bg-cream">
         <Container className="grid items-start gap-10 py-10 md:grid-cols-12 md:gap-14 md:py-12">
           <div className="md:col-span-7">
@@ -68,7 +67,6 @@ export default async function AboutPageDe() {
         </Container>
       </section>
 
-      {/* ROW 2: Credentials (7) + Service area (5) */}
       <section className="border-t border-line bg-paper">
         <Container className="grid items-start gap-10 py-10 md:grid-cols-12 md:gap-14 md:py-12">
           <div className="md:col-span-7">
@@ -80,10 +78,8 @@ export default async function AboutPageDe() {
         </Container>
       </section>
 
-      {/* ROW 3: Fleet — full width */}
-      <FleetPreview t={t} vehicles={vehicles} />
+      <FleetPreview t={t} vehicles={vehicles} locale="de" />
 
-      {/* Concession badge sits as a quiet trailer above the footer */}
       <section className="border-t border-line bg-cream">
         <Container className="flex justify-center py-6 md:py-8">
           <ConcessionBadge settings={settings} tone="light" />

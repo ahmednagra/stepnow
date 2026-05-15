@@ -1,16 +1,11 @@
 # apps/backend/app/Http/Controllers/PublicController.py
+# Maps SQLAlchemy rows to public Pydantic responses for all /api/v0/public/* endpoints.
 from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError
 from app.Schemas.public import (
-    FaqPublicResponse,
-    LegalPagePublicResponse,
-    PricingCategoryPublicResponse,
-    PricingItemPublicResponse,
-    ServicePublicListItem,
-    ServicePublicResponse,
-    SettingsPublicResponse,
-    TestimonialPublicResponse,
-    UiStringsPublicResponse,
+    FaqPublicResponse, LegalPagePublicResponse, PricingCategoryPublicResponse,
+    PricingItemPublicResponse, ServicePublicListItem, ServicePublicResponse,
+    SettingsPublicResponse, TestimonialPublicResponse, UiStringsPublicResponse,
     VehiclePublicResponse,
 )
 from app.Services.FaqsService import FaqsService
@@ -25,7 +20,6 @@ from app.Utils.i18n import Locale
 
 
 class PublicController:
-
     @staticmethod
     def list_services(db: Session, locale: Locale) -> list[ServicePublicListItem]:
         services = PublicReadService.list_services(db, locale)
@@ -38,8 +32,7 @@ class PublicController:
 
     @staticmethod
     def get_legal_page(db: Session, slug: str, locale: Locale) -> LegalPagePublicResponse:
-        data = LegalPagesService.get_published_for_public(db, slug, locale.value)
-        return LegalPagePublicResponse(**data)
+        return LegalPagePublicResponse(**LegalPagesService.get_published_for_public(db, slug, locale.value))
 
     @staticmethod
     def get_settings(db: Session, locale: Locale) -> SettingsPublicResponse:
@@ -52,6 +45,8 @@ class PublicController:
             address_street=s.address_street,
             address_postcode=s.address_postcode,
             address_city=s.address_city,
+            address_lat=s.address_lat,
+            address_lng=s.address_lng,
             phone=s.phone,
             phone_mobile=s.phone_mobile,
             email=s.email,

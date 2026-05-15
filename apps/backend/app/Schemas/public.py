@@ -1,4 +1,6 @@
 # apps/backend/app/Schemas/public.py
+# Pydantic response models for all unauthenticated /api/v0/public/* endpoints.
+from decimal import Decimal
 from uuid import UUID
 from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict
@@ -41,6 +43,8 @@ class SettingsPublicResponse(BaseModel):
     address_street: str
     address_postcode: str
     address_city: str
+    address_lat: Decimal | None = None
+    address_lng: Decimal | None = None
     phone: str
     phone_mobile: str | None
     email: str

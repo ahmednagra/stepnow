@@ -1,20 +1,14 @@
-// src/schemas/admin-settings.schema.ts
-// Form schema for the admin settings editor. Server-side schema in
-// app/Schemas/admin/settings.py is authoritative — this is for UX only.
-
+// apps/frontend/src/schemas/admin-settings.schema.ts
+// Zod validation schema for the admin /settings form (client-side, mirrors backend).
 import { z } from "zod";
 
 const optionalString = z.string().trim().max(500).optional().or(z.literal(""));
-const optionalUrl = z
-  .string()
-  .trim()
-  .max(500)
-  .optional()
-  .or(z.literal(""))
-  .refine(
-    (v) => !v || /^https?:\/\//i.test(v),
-    "Must start with http:// or https://",
-  );
+const optionalUrl = z.string().trim().max(500).optional().or(z.literal(""))
+  .refine((v) => !v || /^https?:\/\//i.test(v), "Must start with http:// or https://");
+const optionalLat = z.string().trim().optional().or(z.literal(""))
+  .refine((v) => !v || (/^-?\d+(\.\d+)?$/.test(v) && Math.abs(parseFloat(v)) <= 90), "Must be -90 to 90");
+const optionalLng = z.string().trim().optional().or(z.literal(""))
+  .refine((v) => !v || (/^-?\d+(\.\d+)?$/.test(v) && Math.abs(parseFloat(v)) <= 180), "Must be -180 to 180");
 
 export const adminSettingsSchema = z.object({
   business_name: z.string().trim().min(1, "Required").max(200),
@@ -24,6 +18,8 @@ export const adminSettingsSchema = z.object({
   address_postcode: z.string().trim().min(1, "Required").max(10),
   address_city: z.string().trim().min(1, "Required").max(100),
   address_country: z.string().trim().min(1, "Required").max(100),
+  address_lat: optionalLat,
+  address_lng: optionalLng,
   phone: z.string().trim().min(1, "Required").max(50),
   phone_mobile: optionalString,
   email: z.string().trim().min(1, "Required").email("Enter a valid email"),
@@ -32,15 +28,8 @@ export const adminSettingsSchema = z.object({
   vat_id: optionalString,
   concession_number: optionalString,
   concession_authority: optionalString,
-  concession_date: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal(""))
-    .refine(
-      (v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v),
-      "Must be YYYY-MM-DD",
-    ),
+  concession_date: z.string().trim().optional().or(z.literal(""))
+    .refine((v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v), "Must be YYYY-MM-DD"),
   opening_hours_de: z.string().trim().max(1000).optional().or(z.literal("")),
   opening_hours_en: z.string().trim().max(1000).optional().or(z.literal("")),
   social_facebook: optionalUrl,

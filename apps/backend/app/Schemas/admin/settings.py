@@ -1,11 +1,10 @@
 # apps/backend/app/Schemas/admin/settings.py
+# Pydantic request/response models for the admin settings editor (GET/PATCH /admin/settings).
 from datetime import date, datetime
+from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-# Note: no min_length on these fields. Empty-string clears are caught at the
-# service layer by RequiredFieldError, which produces a localized 400 message
-# per architecture §15.3 instead of a generic 422.
 class SettingsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     business_name: str | None = Field(default=None, max_length=200)
@@ -15,6 +14,8 @@ class SettingsUpdate(BaseModel):
     address_postcode: str | None = Field(default=None, max_length=10)
     address_city: str | None = Field(default=None, max_length=100)
     address_country: str | None = Field(default=None, max_length=100)
+    address_lat: Decimal | None = Field(default=None, ge=-90, le=90)
+    address_lng: Decimal | None = Field(default=None, ge=-180, le=180)
     phone: str | None = Field(default=None, max_length=50)
     phone_mobile: str | None = Field(default=None, max_length=50)
     email: EmailStr | None = None
@@ -45,6 +46,8 @@ class SettingsAdminResponse(BaseModel):
     address_postcode: str
     address_city: str
     address_country: str
+    address_lat: Decimal | None
+    address_lng: Decimal | None
     phone: str
     phone_mobile: str | None
     email: str

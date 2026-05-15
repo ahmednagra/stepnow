@@ -1,9 +1,5 @@
 // apps/frontend/src/app/en/about/page.tsx
-// EN mirror of /ueber-uns — Option A two-row layout.
-//
-// 2026-05-12: top padding on the page header section tightened (pt-3 md:pt-5
-// instead of pt-8 md:pt-10) to remove dead vertical space below the global
-// header.
+// About page (EN) — mirror of /ueber-uns with locale="en".
 
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
@@ -82,7 +78,7 @@ export default async function AboutPageEn() {
         </Container>
       </section>
 
-      <FleetPreview t={t} vehicles={vehicles} />
+      <FleetPreview t={t} vehicles={vehicles} locale="en" />
 
       <section className="border-t border-line bg-cream">
         <Container className="flex justify-center py-6 md:py-8">

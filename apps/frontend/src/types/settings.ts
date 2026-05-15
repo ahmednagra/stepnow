@@ -1,5 +1,5 @@
-// src/types/settings.ts
-
+// apps/frontend/src/types/settings.ts
+// TypeScript types for the public and admin site-settings API responses.
 export interface SettingsPublic {
   business_name: string;
   owner_name: string;
@@ -8,6 +8,8 @@ export interface SettingsPublic {
   address_postcode: string;
   address_city: string;
   address_country: string;
+  address_lat: string | null;
+  address_lng: string | null;
   phone: string;
   phone_mobile: string | null;
   email: string;

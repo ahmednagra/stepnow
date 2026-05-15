@@ -8,20 +8,18 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent / "apps" / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 os.chdir(BACKEND_DIR)
 
-# Load .env so SEED_ADMIN_* env vars resolve without exporting them by hand.
+# Load .env early so anything that reads env at import time sees it
 try:
     from dotenv import load_dotenv
     load_dotenv(BACKEND_DIR / ".env", override=False)
 except ImportError:
     pass
 
-from apps.backend.config.database import SessionLocal  # noqa: E402
-from apps.backend.app.Models.admin import AdminUser  # noqa: E402
-from apps.backend.app.Utils.Helpers import hash_password  # noqa: E402
-
+from config.database import SessionLocal
+from app.Models.admin import AdminUser
+from app.Utils.Helpers import hash_password
 
 MIN_PASSWORD_LENGTH = 12
-
 
 def _is_truthy(v: str | None) -> bool:
     return (v or "").strip().lower() in {"1", "true", "yes", "on"}
@@ -69,8 +67,7 @@ def main() -> int:
         print("", file=sys.stderr)
         print("=" * 70, file=sys.stderr)
         print("  WARNING: Weak password override is ACTIVE", file=sys.stderr)
-        print(f"    - Password length: {len(args.password)} chars "
-              f"(minimum without override: {MIN_PASSWORD_LENGTH})", file=sys.stderr)
+        print(f"    - Password length: {len(args.password)} chars (minimum without override: {MIN_PASSWORD_LENGTH})", file=sys.stderr)
         print(f"    - Email:           {args.email}", file=sys.stderr)
         print(f"    - ENVIRONMENT:     {env_name}", file=sys.stderr)
         print("  This is FOR LOCAL DEVELOPMENT ONLY. If you see this on a", file=sys.stderr)
