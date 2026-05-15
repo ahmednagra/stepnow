@@ -1,5 +1,4 @@
 // apps/frontend/src/components/admin/AdminLayout.tsx
-// Phase 3d polish — admin shell stays restrained per design-direction.md §11.6.
 
 import type { ReactNode } from "react";
 import type { CurrentAdmin } from "@/types";
@@ -18,7 +17,7 @@ export function AdminLayout({ admin, children }: AdminLayoutProps) {
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminTopbar admin={admin} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</main>
       </div>
       <ToastHost />
     </div>

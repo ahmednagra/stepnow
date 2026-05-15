@@ -1,5 +1,4 @@
 // apps/frontend/src/app/admin/(authed)/page.tsx
-// Phase 3d polish — admin dashboard with refined KPI tiles and recent activity.
 
 import { Suspense } from "react";
 import { CalendarCheck, Mail, MessageSquareQuote, Briefcase, History } from "lucide-react";
@@ -97,7 +96,12 @@ async function loadDashboardData(): Promise<DashboardData> {
 function fmtTime(iso: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+    return d.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch {
     return iso;
   }
@@ -107,15 +111,17 @@ export default async function DashboardPage() {
   const data = await loadDashboardData();
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <AdminPageHeader
         title="Dashboard"
-        description="Übersicht über aktuelle Aktivität."
+        description="Overview of current activity."
       />
 
-      <div className="p-6">
+      {/* Body — flex column that fills the remaining height on lg+ so the
+          recent-activity card scrolls internally instead of the whole page. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 sm:p-5 lg:gap-5 lg:p-6">
         {/* KPI grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
           <KpiTile
             label="Bookings"
             value={data.totalBookings}
@@ -142,35 +148,38 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Recent activity */}
-        <div className="mt-6">
-          <Suspense
-            fallback={<div className="h-40 animate-pulse border border-slate-200 bg-white" />}
+        {/* Recent activity — fills remaining vertical space, table scrolls inside. */}
+        <Suspense
+          fallback={<div className="h-40 animate-pulse border border-slate-200 bg-white" />}
+        >
+          <AdminCard
+            title="Recent activity"
+            description="Last 10 audit log entries"
+            flush
+            className="flex min-h-0 flex-1 flex-col"
+            headerActions={
+              <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <History className="h-3 w-3" aria-hidden="true" />
+                Read-only
+              </span>
+            }
           >
-            <AdminCard
-              title="Recent activity"
-              description="Last 10 audit log entries"
-              flush
-              headerActions={
-                <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  <History className="h-3 w-3" aria-hidden="true" />
-                  Read-only
-                </span>
-              }
-            >
-              <AdminTable columns={["When", "Who", "Action", "Target"]}>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <AdminTable columns={["When", "Who", "Action", "Target"]} stickyHeader>
                 {data.recentActivity.length === 0 ? (
                   <AdminTableEmpty message="No activity yet." />
                 ) : (
                   data.recentActivity.map((entry) => (
                     <AdminTableRow key={entry.id}>
-                      <AdminTableCell className="tabular-nums">
+                      <AdminTableCell className="whitespace-nowrap tabular-nums">
                         {fmtTime(entry.created_at)}
                       </AdminTableCell>
                       <AdminTableCell>
-                        {entry.actor_email || (
-                          <span className="text-slate-400">system</span>
-                        )}
+                        <span className="block max-w-[200px] truncate sm:max-w-none">
+                          {entry.actor_email || (
+                            <span className="text-slate-400">system</span>
+                          )}
+                        </span>
                       </AdminTableCell>
                       <AdminTableCell>
                         <span className="font-mono text-[11.5px] text-slate-700">
@@ -179,10 +188,10 @@ export default async function DashboardPage() {
                       </AdminTableCell>
                       <AdminTableCell>
                         <span className="text-slate-600">
-                          {entry.resource_type}
-                          {entry.resource_id && (
-                            <span className="ml-1 font-mono text-[11px] text-slate-400">
-                              · {entry.resource_id.slice(0, 8)}
+                          {entry.table_name}
+                          {entry.table_name && (
+                            <span className="ml-1 hidden font-mono text-[11px] text-slate-400 sm:inline">
+                              · {entry.record_id.slice(0, 8)}
                             </span>
                           )}
                         </span>
@@ -191,10 +200,10 @@ export default async function DashboardPage() {
                   ))
                 )}
               </AdminTable>
-            </AdminCard>
-          </Suspense>
-        </div>
+            </div>
+          </AdminCard>
+        </Suspense>
       </div>
-    </>
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { login } from "@/services/auth";
 import { ApiError } from "@/lib/api-errors";
 import { adminLoginSchema, type AdminLoginInput } from "@/schemas/admin-login.schema";
@@ -20,6 +20,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/admin";
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -66,7 +67,7 @@ export function LoginForm() {
           <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
             <AdminFormField
               label="Email"
-              htmlFor="email"
+              id="email"
               required
               error={errors.email?.message}
             >
@@ -83,18 +84,35 @@ export function LoginForm() {
 
             <AdminFormField
               label="Password"
-              htmlFor="password"
+              id="password"
               required
               error={errors.password?.message}
             >
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                className={adminInputClass}
-                disabled={isSubmitting}
-                {...register("password")}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  className={`${adminInputClass} pr-10`}
+                  disabled={isSubmitting}
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  disabled={isSubmitting}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-slate-400 transition-colors hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             </AdminFormField>
 
             {submitError && (
