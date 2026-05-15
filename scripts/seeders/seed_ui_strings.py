@@ -1,14 +1,5 @@
 # scripts/seeders/seed_ui_strings.py
-"""Seed the ui_strings table with all labels the frontend needs.
-
-Organized by namespace (nav, hero, common, errors, booking, footer, ...) so
-admin can filter when editing. Critical strings — those that, if missing,
-break rendering — are marked is_locked=True so they can't be accidentally
-deleted by Naeem in the admin.
-
-Idempotent: each row is keyed by unique 'key' field. Existing rows are
-skipped; only new keys are inserted.
-"""
+# Seed the ui_strings table with every UI string the frontend references via t() or pickT(). Comprehensive DE/EN coverage organized by namespace; idempotent — existing rows skipped, only new keys inserted.
 
 from config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402
@@ -17,92 +8,180 @@ from app.Services.AuditService import AuditService
 
 
 # Format: (key, namespace, value_de, value_en, description, is_locked)
-# is_locked: critical strings the frontend depends on — protect from accidental edit/delete
 UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
 
-    # === NAVIGATION ===
-    ("nav.home", "nav", "Startseite", "Home", "Navigation: home link", True),
-    ("nav.services", "nav", "Dienstleistungen", "Services", "Navigation: services dropdown", True),
-    ("nav.pricing", "nav", "Preise", "Pricing", "Navigation: pricing page", True),
-    ("nav.about", "nav", "Über uns", "About", "Navigation: about page", True),
-    ("nav.contact", "nav", "Kontakt", "Contact", "Navigation: contact page", True),
-    ("nav.book_now", "nav", "Jetzt buchen", "Book now", "Navigation: primary CTA button", True),
-    ("nav.menu", "nav", "Menü", "Menu", "Mobile menu toggle label", False),
+    # ════════════════════════════════════════════════════════════════════
+    # NAVIGATION (Header, mobile drawer, sticky bar)
+    # ════════════════════════════════════════════════════════════════════
+    ("nav.home", "nav", "Startseite", "Home", "Header nav: home link", True),
+    ("nav.services", "nav", "Dienstleistungen", "Services", "Header nav: services link", True),
+    ("nav.pricing", "nav", "Preise", "Pricing", "Header nav: pricing link", True),
+    ("nav.about", "nav", "Über uns", "About", "Header nav: about link", True),
+    ("nav.contact", "nav", "Kontakt", "Contact", "Header nav: contact link", True),
+    ("nav.book_now", "nav", "Jetzt buchen", "Book now", "Header primary CTA button", True),
+    ("nav.menu", "nav", "Menü öffnen", "Open menu", "Mobile drawer open label (ARIA)", False),
+    ("nav.close", "nav", "Menü schließen", "Close menu", "Mobile drawer close label (ARIA)", False),
 
-    # === LANGUAGE SWITCHER (must always work) ===
-    ("language.switch.de", "language", "Deutsch", "German", "Language switcher: DE label", True),
-    ("language.switch.en", "language", "Englisch", "English", "Language switcher: EN label", True),
-    ("language.switch.current", "language", "Aktuelle Sprache", "Current language", "ARIA label for switcher", True),
+    # ════════════════════════════════════════════════════════════════════
+    # LANGUAGE SWITCHER
+    # ════════════════════════════════════════════════════════════════════
+    ("language.switch.de", "language", "Deutsch", "German", "Language switcher: DE option label", True),
+    ("language.switch.en", "language", "Englisch", "English", "Language switcher: EN option label", True),
+    ("language.switch.current", "language", "Sprache wählen", "Choose language", "Language switcher: ARIA label", True),
 
-    # === HERO (homepage) ===
-    ("home.hero.pre_heading", "hero", "IHRE TAXI-ALTERNATIVE", "YOUR TAXI ALTERNATIVE", "Hero pre-heading, small caps", False),
-    ("home.hero.headline", "hero", "Sicher, pünktlich, zum Festpreis.", "Safe, on time, fixed price.", "Hero main headline", False),
-    ("home.hero.subhead", "hero", "Vorbestellte Fahrten in der Region Stuttgart. Konzessioniert nach § 49 PBefG.", "Pre-booked transfers in the Stuttgart region. Licensed under § 49 PBefG.", "Hero subhead", False),
+    # ════════════════════════════════════════════════════════════════════
+    # HOMEPAGE — HERO
+    # ════════════════════════════════════════════════════════════════════
+    ("home.hero.pre_heading", "hero", "IHRE TAXI-ALTERNATIVE", "YOUR TAXI ALTERNATIVE", "Hero eyebrow (small caps above headline)", False),
+    ("home.hero.headline", "hero", "Sicher, pünktlich, zum Festpreis.", "Safe, on time, fixed price.", "Hero main headline (H1)", False),
+    ("home.hero.subhead", "hero", "Vorbestellte Fahrten in der Region Stuttgart. Konzessioniert nach § 49 PBefG.", "Pre-booked transfers in the Stuttgart region. Licensed under § 49 PBefG.", "Hero subhead under H1", False),
     ("home.hero.cta_book", "hero", "Jetzt buchen", "Book now", "Hero primary CTA", True),
-    ("home.hero.cta_call", "hero", "Anrufen", "Call us", "Hero secondary CTA (paired with phone number)", False),
-    # Hero booking widget — caption rendered beneath the inline quick-quote inputs
-    ("hero_widget.note", "hero", "Unverbindliche Anfrage — Festpreis-Angebot innerhalb von 30 Minuten.", "No-obligation request — fixed-price quote within 30 minutes.", "Caption below the hero booking widget inputs", False),
+    ("home.hero.cta_call", "hero", "Anrufen", "Call us", "Hero secondary CTA (icon button paired with phone)", False),
 
-    # === TRUST STRIP ===
-    ("home.trust.licensed", "trust", "Konzessioniert nach PBefG", "Licensed under PBefG", "Trust strip: license credential", False),
-    ("home.trust.fixed_price", "trust", "Festpreis vor Fahrtbeginn", "Fixed price before departure", "Trust strip: pricing", False),
-    ("home.trust.drivers", "trust", "Geprüfte, erfahrene Fahrer", "Verified, experienced drivers", "Trust strip: driver quality", False),
-    ("home.trust.always_available", "trust", "24/7 vorbestellbar", "24/7 pre-bookable", "Trust strip: availability", False),
+    # Hero booking widget (inline quick-quote on homepage hero)
+    ("hero_widget.heading", "hero", "Festpreis anfragen", "Get a fixed price", "Widget eyebrow heading", False),
+    ("hero_widget.from_label", "hero", "Von", "From", "Widget pickup field label", False),
+    ("hero_widget.from_placeholder", "hero", "Abholadresse", "Pickup address", "Widget pickup placeholder", False),
+    ("hero_widget.to_label", "hero", "Nach", "To", "Widget destination field label", False),
+    ("hero_widget.to_placeholder", "hero", "Zieladresse", "Destination address", "Widget destination placeholder", False),
+    ("hero_widget.when_label", "hero", "Wann", "When", "Widget date field label", False),
+    ("hero_widget.cta", "hero", "Festpreis erfragen", "Get fixed price", "Widget submit button", False),
+    ("hero_widget.note", "hero", "Unverbindliche Anfrage — Festpreis-Angebot innerhalb von 30 Minuten.", "Non-binding request — fixed-price quote within 30 minutes.", "Widget caption below inputs", False),
 
-    # === HOMEPAGE SECTION HEADINGS ===
-    ("home.services.heading", "home", "Unsere Leistungen", "Our Services", "Services section heading", False),
-    ("home.services.subheading", "home", "Vier spezialisierte Transportdienstleistungen — alle vorbestellt, alle zum Festpreis.", "Four specialized transport services — all pre-booked, all at a fixed price.", "Services section subheading", False),
-    ("home.how.pre_heading", "home", "Ablauf", "How it works", "How-it-works section eyebrow (small caps above heading)", False),
-    ("home.how.heading", "home", "So einfach geht's", "How it works", "How-it-works section heading", False),
+    # ════════════════════════════════════════════════════════════════════
+    # HOMEPAGE — TRUST STRIP (4 icons under hero)
+    # ════════════════════════════════════════════════════════════════════
+    ("home.trust.licensed", "trust", "Konzessioniert nach § 49 PBefG", "Licensed under § 49 PBefG", "Trust strip: licensing credential", False),
+    ("home.trust.fixed_price", "trust", "Festpreis vor Fahrtbeginn", "Fixed price before departure", "Trust strip: pricing promise", False),
+    ("home.trust.drivers", "trust", "Geprüfte, erfahrene Fahrer", "Vetted, experienced drivers", "Trust strip: driver quality", False),
+    ("home.trust.always_available", "trust", "24/7 vorbestellbar", "Pre-book 24/7", "Trust strip: availability", False),
+
+    # ════════════════════════════════════════════════════════════════════
+    # HOMEPAGE — SECTION HEADERS
+    # ════════════════════════════════════════════════════════════════════
+    # Services grid
+    ("home.services.pre_heading", "home", "UNSERE LEISTUNGEN", "OUR SERVICES", "Services section eyebrow (small caps above heading)", False),
+    ("home.services.heading", "home", "Unsere Leistungen", "Our services", "Services section heading", False),
+    ("home.services.subheading", "home", "Vier spezialisierte Transportdienstleistungen — alle vorbestellt, alle zum Festpreis.", "Four specialised transport services — all pre-booked, all at a fixed price.", "Services section lead paragraph", False),
+
+    # How it works (3 steps)
+    ("home.how.pre_heading", "home", "Ablauf", "How it works", "How-it-works eyebrow", False),
+    ("home.how.heading", "home", "So einfach geht's", "Three simple steps", "How-it-works section heading", False),
     ("home.how.step1.title", "home", "Anfrage senden", "Send your request", "Step 1 title", False),
     ("home.how.step1.body", "home", "Füllen Sie unser kurzes Buchungsformular aus oder rufen Sie uns an.", "Fill out our short booking form or give us a call.", "Step 1 body", False),
-    ("home.how.step2.title", "home", "Festpreis-Bestätigung erhalten", "Receive a fixed-price quote", "Step 2 title", False),
+    ("home.how.step2.title", "home", "Festpreis bestätigen", "Confirm your fixed price", "Step 2 title", False),
     ("home.how.step2.body", "home", "Innerhalb von 30 Minuten erhalten Sie unser verbindliches Festpreis-Angebot.", "Within 30 minutes you receive our binding fixed-price quote.", "Step 2 body", False),
     ("home.how.step3.title", "home", "Entspannt ankommen", "Arrive relaxed", "Step 3 title", False),
     ("home.how.step3.body", "home", "Ihr Fahrer wartet pünktlich am vereinbarten Ort.", "Your driver is waiting on time at the agreed location.", "Step 3 body", False),
-    ("home.why.pre_heading", "home", "Differenzierung", "What sets us apart", "Why-section eyebrow (small caps above heading)", False),
+
+    # Why StepNow
+    ("home.why.pre_heading", "home", "Differenzierung", "What sets us apart", "Why-section eyebrow", False),
     ("home.why.heading", "home", "Warum StepNow?", "Why StepNow?", "Why-section heading", False),
     ("home.why.intro", "home", "Wir sind kein anonymes Callcenter und keine Plattform. Wir sind Ihr regionaler Partner für sichere, vorbestellte Fahrten.", "We're not an anonymous call centre or a platform. We're your regional partner for safe, pre-booked transfers.", "Why-section intro paragraph", False),
-    ("home.why.bullet.fixed_price", "home", "Festpreis statt Taxameter — der Preis steht vor der Fahrt fest", "Fixed price instead of taximeter — the price is set before the ride", "Why bullet", False),
-    ("home.why.bullet.prebooked", "home", "Vorbestellt statt Glücksspiel — Ihr Fahrer wartet bereits auf Sie", "Pre-booked, not a gamble — your driver is already waiting for you", "Why bullet", False),
-    ("home.why.bullet.licensed", "home", "Konzessioniert und versichert — volle Personenbeförderungs-Haftpflicht", "Licensed and insured — full passenger transport liability coverage", "Why bullet", False),
-    ("home.why.bullet.personal", "home", "Persönlicher Service — direkter Kontakt, kein anonymes Callcenter", "Personal service — direct contact, no anonymous call centre", "Why bullet", False),
-    ("home.why.bullet.regional", "home", "Regional verwurzelt — wir kennen die Strecken zwischen Esslingen, Stuttgart und Umgebung", "Regionally rooted — we know the routes between Esslingen, Stuttgart and the surrounding area", "Why bullet", False),
-    ("home.fleet.pre_heading", "home", "Unsere Flotte", "Our fleet", "Fleet section eyebrow (small caps above heading)", False),
-    ("home.fleet.heading", "home", "Unsere Fahrzeuge", "Our Fleet", "Fleet section heading", False),
-    ("home.testimonials.pre_heading", "home", "Stimmen unserer Kunden", "Customer voices", "Testimonials section eyebrow (small caps above heading)", False),
+    ("home.why.bullet.fixed_price", "home", "Festpreis statt Taxameter — der Preis steht vor der Fahrt fest.", "Fixed price instead of taximeter — the price is set before the ride.", "Why bullet 1", False),
+    ("home.why.bullet.prebooked", "home", "Vorbestellt statt Glücksspiel — Ihr Fahrer wartet bereits auf Sie.", "Pre-booked, not a gamble — your driver is already waiting for you.", "Why bullet 2", False),
+    ("home.why.bullet.licensed", "home", "Konzessioniert und versichert — volle Personenbeförderungs-Haftpflicht.", "Licensed and insured — full passenger-transport liability cover.", "Why bullet 3", False),
+    ("home.why.bullet.personal", "home", "Persönlicher Service — direkter Kontakt, kein anonymes Callcenter.", "Personal service — direct contact, no anonymous call centre.", "Why bullet 4", False),
+    ("home.why.bullet.regional", "home", "Regional verwurzelt — wir kennen die Strecken zwischen Esslingen, Stuttgart und Umgebung.", "Regionally rooted — we know the routes between Esslingen, Stuttgart and the surrounding area.", "Why bullet 5", False),
+
+    # Fleet preview
+    ("home.fleet.pre_heading", "home", "Die Flotte", "The fleet", "Fleet section eyebrow", False),
+    ("home.fleet.heading", "home", "Unsere Fahrzeuge", "Our vehicles", "Fleet section heading (legacy, kept for safety)", False),
+    ("home.fleet.heading_count", "home", "Drei Fahrzeuge,", "Three vehicles,", "Fleet heading part 1 (count + comma) — overridden dynamically when vehicle count differs", False),
+    ("home.fleet.heading_standard", "home", "ein Standard.", "one standard.", "Fleet heading part 2 (italic gold accent)", False),
+    ("home.fleet.lead", "home", "Eine kleine, bewusst gewählte Flotte. Jedes Fahrzeug wird einzeln betreut — keine geteilten Schlüssel, keine anonyme Übergabe zwischen Schichten.", "A small, deliberate fleet. Each vehicle is maintained on a single-driver basis — no shared keys, no anonymous handover between shifts.", "Fleet section lead paragraph", False),
+
+    # Testimonials
+    ("home.testimonials.pre_heading", "home", "Kundenstimmen", "Customer voices", "Testimonials section eyebrow", False),
     ("home.testimonials.heading", "home", "Was unsere Kunden sagen", "What our customers say", "Testimonials section heading", False),
-    ("home.faq.pre_heading", "home", "FAQ", "FAQ", "FAQ section eyebrow (small caps above the heading)", False),
-    ("home.faq.heading", "home", "Häufige Fragen", "Frequently Asked Questions", "FAQ section heading", False),
+
+    # FAQ (homepage teaser — SINGULAR "faq")
+    ("home.faq.pre_heading", "home", "FAQ", "FAQ", "FAQ section eyebrow (small caps)", False),
+    ("home.faq.heading", "home", "Häufige Fragen", "Frequently asked questions", "FAQ section heading (homepage)", False),
     ("home.faq.view_all", "home", "Alle Fragen ansehen", "View all questions", "Link to full FAQ", False),
+
+    # FAQ (contact page — PLURAL "faqs", separate key)
+    ("home.faqs.heading", "home", "Antworten auf einen Blick", "Answers at a glance", "FAQ heading on contact page (plural-form key used by /kontakt and /en/contact)", False),
+    ("home.faqs.cta", "home", "Alle Fragen ansehen", "View all questions", "FAQ CTA on contact page (plural-form key)", False),
+
+    # Final CTA (kept even though homepage section was removed — referenced by other places)
+    ("home.final_cta.pre_heading", "home", "BEREIT FÜR IHRE FAHRT", "READY FOR YOUR RIDE", "Final CTA eyebrow (small caps)", False),
     ("home.final_cta.heading", "home", "Bereit für Ihre Fahrt?", "Ready for your ride?", "Final CTA heading", False),
     ("home.final_cta.subhead", "home", "Buchen Sie jetzt oder rufen Sie an — wir melden uns innerhalb von 30 Minuten.", "Book now or give us a call — we'll get back to you within 30 minutes.", "Final CTA subhead", False),
 
-    # === SERVICES LIST PAGE ===
-    ("services.page.title", "services", "Unsere Leistungen", "Our Services", "Services list page title", False),
-    ("services.page.subhead", "services", "Vier spezialisierte Transportdienstleistungen für Privat- und Geschäftskunden im Raum Stuttgart.", "Four specialized transport services for private and business customers in the Stuttgart area.", "Services list page subhead", False),
+    # ════════════════════════════════════════════════════════════════════
+    # SERVICES — LIST PAGE (magazine spread)
+    # ════════════════════════════════════════════════════════════════════
+    ("services.page.title", "services", "Unsere Leistungen", "Our services", "Services list page H1 / metadata", False),
+    ("services.page.subhead", "services", "Vier spezialisierte Transportdienstleistungen für Privat- und Geschäftskunden im Raum Stuttgart.", "Four specialised transport services for private and business customers in the Stuttgart area.", "Services list page subhead", False),
+    ("services.page.eyebrow", "services", "Leistungen", "Services", "Services list page eyebrow above H1", False),
+    ("services.page.heading_part1", "services", "Vier Wege", "Four ways", "Services page H1 part 1 (large display)", False),
+    ("services.page.heading_part2", "services", "ans Ziel.", "to get there.", "Services page H1 part 2 (italic gold accent)", False),
+    ("services.page.region", "services", "Stuttgart · Esslingen · Deizisau", "Stuttgart · Esslingen · Deizisau", "Region label on services page", False),
+
+    # Services index strip (sticky overview row)
+    ("services.index.eyebrow", "services", "Im Überblick", "At a glance", "Services-index strip eyebrow", False),
+
+    # Service card
     ("services.card.learn_more", "services", "Mehr erfahren", "Learn more", "Service card CTA", False),
     ("services.card.book", "services", "Diesen Service buchen", "Book this service", "Service card secondary CTA", False),
 
-    # Service detail page — primary CTA at the bottom of the page
-    ("services.detail.cta_book", "services", "Diesen Service jetzt buchen", "Book this service now", "Service detail page primary CTA button", False),
+    # Service detail page
+    ("services.detail.cta_book", "services", "Diesen Service jetzt buchen", "Book this service now", "Service detail page primary CTA", False),
 
-    # Service detail page — "Related services" section (cross-sell to other services)
-    ("services.related.eyebrow", "services", "Weitere Leistungen", "More services", "Related-services section eyebrow (small caps above heading)", False),
-    ("services.related.heading", "services", "Das könnte Sie auch interessieren", "You might also be interested in", "Related-services section heading", False),
+    # Related services (cross-sell)
+    ("services.related.eyebrow", "services", "Weitere Leistungen", "More services", "Related-services eyebrow", False),
+    ("services.related.heading", "services", "Das könnte Sie auch interessieren", "You might also be interested in", "Related-services heading", False),
 
-    # Short service labels used in Footer + HeroFeatureBlock
-    ("services.flughafentransfer", "services", "Flughafentransfer", "Airport Transfer", "Short service label — footer, hero feature block", True),
-    ("services.krankenhausfahrten", "services", "Krankenhausfahrten", "Hospital Transport", "Short service label — footer, hero feature block", True),
-    ("services.schuelerbefoerderung", "services", "Schülerbeförderung", "School Transport", "Short service label — footer, hero feature block", True),
-    ("services.shuttle", "services", "Shuttle Service", "Shuttle Service", "Short service label — footer, hero feature block", True),
+    # Short service labels (used by Footer + page headings)
+    ("services.flughafentransfer", "services", "Flughafentransfer", "Airport transfer", "Short label — Footer, hero feature block", True),
+    ("services.krankenhausfahrten", "services", "Krankenhausfahrten", "Hospital transport", "Short label — Footer, hero feature block", True),
+    ("services.schuelerbefoerderung", "services", "Schülerbeförderung", "School transport", "Short label — Footer, hero feature block", True),
+    ("services.shuttle", "services", "Shuttle-Service", "Shuttle service", "Short label — Footer, hero feature block", True),
 
-    # === PRICING PAGE ===
-    ("pricing.page.eyebrow", "pricing", "Preise & Tarife", "Pricing & rates", "Pricing page hero eyebrow (small caps above the title)", False),
-    ("pricing.page.title", "pricing", "Transparente Festpreise", "Transparent Fixed Prices", "Pricing page title", False),
-    ("pricing.page.intro", "pricing", "Alle Preise inkl. 19 % MwSt. Der Preis steht vor Fahrtbeginn fest und ändert sich nicht.", "All prices include 19% VAT. The price is set before the ride begins and does not change.", "Pricing page intro", False),
-    ("pricing.disclaimer", "pricing", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung.", "All prices include VAT. Fixed-price guarantee from booking confirmation.", "Pricing page sub-intro disclaimer (also used by PricingSnapshot on service detail)", False),
-    ("pricing.footnote", "pricing", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.", "All prices include VAT. Fixed-price guarantee from booking confirmation. Other routes on request.", "Footnote below each per-service pricing table", False),
+    # Per-service differentiator blocks on the services magazine page
+    ("services.row.flughafentransfer.diff_label", "services", "60 Minuten Wartezeit", "60 minutes waiting included", "Airport transfer — differentiator label (DE slug)", False),
+    ("services.row.flughafentransfer.diff_body", "services", "bei Flughafenabholungen — der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.", "for airport pickups — your driver tracks your flight and adjusts automatically.", "Airport transfer — differentiator body (DE slug)", False),
+    ("services.row.airport-transfer.diff_label", "services", "60 Minuten Wartezeit", "60 minutes waiting included", "Airport transfer — differentiator label (EN slug)", False),
+    ("services.row.airport-transfer.diff_body", "services", "bei Flughafenabholungen — der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.", "for airport pickups — your driver tracks your flight and adjusts automatically.", "Airport transfer — differentiator body (EN slug)", False),
+
+    ("services.row.krankenhausfahrten.diff_label", "services", "Geschult in Begleitung", "Trained for assistance", "Hospital transport — differentiator label (DE slug)", False),
+    ("services.row.krankenhausfahrten.diff_body", "services", "— Tür-zu-Tür-Abholung, Hilfe mit Gepäck und Gehhilfen, optionale Wartezeit bei kurzen Terminen.", "— door-to-door pickup, support with bags and walking aids, optional wait time during short appointments.", "Hospital transport — differentiator body (DE slug)", False),
+    ("services.row.hospital-transport.diff_label", "services", "Geschult in Begleitung", "Trained for assistance", "Hospital transport — differentiator label (EN slug)", False),
+    ("services.row.hospital-transport.diff_body", "services", "— Tür-zu-Tür-Abholung, Hilfe mit Gepäck und Gehhilfen, optionale Wartezeit bei kurzen Terminen.", "— door-to-door pickup, support with bags and walking aids, optional wait time during short appointments.", "Hospital transport — differentiator body (EN slug)", False),
+
+    ("services.row.schuelerbefoerderung.diff_label", "services", "Abonnement verfügbar", "Subscription available", "School transport — differentiator label (DE slug)", False),
+    ("services.row.schuelerbefoerderung.diff_body", "services", "— Mo–Fr-Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.", "— Monday–Friday block bookings with the same driver, billed monthly, paused automatically for school holidays.", "School transport — differentiator body (DE slug)", False),
+    ("services.row.school-transport.diff_label", "services", "Abonnement verfügbar", "Subscription available", "School transport — differentiator label (EN slug)", False),
+    ("services.row.school-transport.diff_body", "services", "— Mo–Fr-Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.", "— Monday–Friday block bookings with the same driver, billed monthly, paused automatically for school holidays.", "School transport — differentiator body (EN slug)", False),
+
+    ("services.row.shuttle-service.diff_label", "services", "Bis zu 8 Fahrgäste", "Up to 8 passengers", "Shuttle service — differentiator label", False),
+    ("services.row.shuttle-service.diff_body", "services", "in einem Fahrzeug. Ein Fahrer koordiniert die gesamte Fahrt — eine Telefonnummer, auch bei mehreren Abholpunkten.", "in one vehicle. Single-driver coordination — one phone number for the whole journey, even with multiple pickups.", "Shuttle service — differentiator body", False),
+
+    # How-it-works beat (dark band on services page)
+    ("services.hiw.eyebrow", "services", "So funktioniert's", "How it works", "Services HIW eyebrow", False),
+    ("services.hiw.heading_part1", "services", "Drei Schritte,", "Three steps,", "Services HIW heading part 1", False),
+    ("services.hiw.heading_part2", "services", "keine Überraschungen.", "no surprises.", "Services HIW heading part 2 (italic gold)", False),
+
+    # Editorial close (bottom of services page)
+    ("services.close.eyebrow", "services", "Vier Services, ein Standard", "Four services, one standard", "Services editorial close eyebrow", False),
+    ("services.close.statement_part1", "services", "Jede Fahrt beginnt mit einem ", "Every ride starts with a ", "Editorial close statement part 1 (note trailing space)", False),
+    ("services.close.statement_accent", "services", "Preis, den Sie sehen", "price you can see", "Editorial close statement accent (gold)", False),
+    ("services.close.statement_part2", "services", ", einem Fahrer, den Sie namentlich kennen, und einer Route, die vor der Abfahrt bestätigt ist.", ", a driver you can name, and a route confirmed before you leave home.", "Editorial close statement part 2", False),
+    ("services.close.attribution", "services", "KONZESSIONIERTER PERSONENVERKEHR · REGION STUTTGART", "LICENSED PASSENGER TRANSPORT · STUTTGART REGION", "Editorial close attribution line", False),
+    ("services.close.followup_lead", "services", "Festpreis-Strecken ansehen?", "Looking for fixed-price routes?", "Editorial close follow-up lead text", False),
+    ("services.close.followup_link", "services", "Vollständige Preise →", "See full pricing →", "Editorial close follow-up link label", False),
+
+    # ════════════════════════════════════════════════════════════════════
+    # PRICING PAGE
+    # ════════════════════════════════════════════════════════════════════
+    ("pricing.page.eyebrow", "pricing", "Preise", "Pricing", "Pricing page eyebrow", False),
+    ("pricing.page.title", "pricing", "Transparente Festpreise", "Transparent fixed prices", "Pricing page H1", False),
+    ("pricing.page.intro", "pricing", "Alle Preise inkl. 19 % MwSt. Der Preis steht vor Fahrtbeginn fest und ändert sich nicht.", "All prices include 19% VAT. The price is fixed before departure and does not change.", "Pricing page intro paragraph", False),
+    ("pricing.disclaimer", "pricing", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung.", "All prices include VAT. Fixed-price guarantee from booking confirmation.", "Pricing page sub-intro (also used by PricingSnapshot)", False),
+    ("pricing.footnote", "pricing", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.", "All prices include VAT. Fixed-price guarantee from booking confirmation. Other routes on request.", "Footnote below per-service pricing table", False),
+
+    # Pricing table column headers
     ("pricing.table.from", "pricing", "Von", "From", "Pricing table column", False),
     ("pricing.table.to", "pricing", "Nach", "To", "Pricing table column", False),
     ("pricing.table.price", "pricing", "Preis", "Price", "Pricing table column", False),
@@ -112,175 +191,347 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("pricing.includes.heading", "pricing", "Im Preis enthalten", "What's included", "Pricing inclusions heading", False),
     ("pricing.excludes.heading", "pricing", "Nicht enthalten", "Not included", "Pricing exclusions heading", False),
 
-    # === ABOUT PAGE — header & values ===
-    ("about.page.title", "about", "Über StepNow", "About StepNow", "About page title", False),
+    # Featured-route hero (dark band at top of pricing page)
+    ("pricing.hero.eyebrow", "pricing", "Beliebteste Strecke", "Most-booked route", "Featured-hero eyebrow", False),
+    ("pricing.hero.proof_1", "pricing", "Festpreis vor der Fahrt", "Fixed price before departure", "Featured-hero proof point 1", False),
+    ("pricing.hero.proof_2", "pricing", "60 Min. Wartezeit inkl.", "60 min waiting included", "Featured-hero proof point 2", False),
+    ("pricing.hero.proof_3", "pricing", "Flugverfolgung inklusive", "Flight tracking included", "Featured-hero proof point 3", False),
+    ("pricing.hero.cta_book", "pricing", "Diese Strecke buchen", "Book this route", "Featured-hero CTA button", False),
+    ("pricing.hero.price_label", "pricing", "Festpreis ab", "Fixed from", "Featured-hero price label (above €amount)", False),
+    ("pricing.hero.price_detail", "pricing", "Pro Fahrzeug · bis zu 4 Personen", "Per vehicle · up to 4 passengers", "Featured-hero price detail (below €amount)", False),
+
+    # Tabbed price list
+    ("pricing.tabs.eyebrow", "pricing", "Vollständige Preisliste", "Complete price list", "Tabbed price list eyebrow", False),
+    ("pricing.tabs.heading", "pricing", "Jede Strecke, jeder Service", "Every route, every service", "Tabbed price list heading", False),
+    ("pricing.tabs.lead", "pricing", "Wählen Sie einen Service, um alle Festpreis-Strecken anzusehen. Andere Strecken erhalten ein Angebot innerhalb von 30 Minuten.", "Choose a service to view all fixed-price routes. Other destinations get a quote within 30 minutes.", "Tabbed price list lead paragraph", False),
+    ("pricing.tabs.aria_label", "pricing", "Preise nach Service", "Pricing by service", "Tab list ARIA label", False),
+
+    # Trust strip (italic serif blockquote between tables and 19% moment)
+    ("pricing.trust.before", "pricing", "Festpreis vor Fahrtbeginn. ", "Fixed price before departure. ", "Trust strip text before accent", False),
+    ("pricing.trust.accent", "pricing", "Keine Taximeter,", "No taximeter,", "Trust strip gold-accented phrase", False),
+    ("pricing.trust.after", "pricing", " keine versteckten Aufschläge, kein Überraschungspreis am Zielort.", " no hidden surcharges, no surprise total at the destination.", "Trust strip text after accent", False),
+    ("pricing.trust.attribution", "pricing", "— UNSERE GARANTIE, GESCHÜTZT DURCH § 49 PBEFG", "— OUR GUARANTEE, BACKED BY § 49 PBEFG", "Trust strip attribution caption", False),
+
+    # 19% included moment
+    ("pricing.included.big_caption", "pricing", "MwSt. · IMMER INKLUDIERT", "VAT · ALWAYS INCLUDED", "19% display caption", False),
+    ("pricing.included.eyebrow", "pricing", "Was Ihr Festpreis abdeckt", "What your fixed price covers", "Included-moment eyebrow", False),
+    ("pricing.included.heading", "pricing", "Der Preis, den Sie sehen, ist der Preis, den Sie zahlen.", "The price you see is the price you pay.", "Included-moment heading", False),
+
+    # Excluded strip (single horizontal "Charged separately" row)
+    ("pricing.excluded.label", "pricing", "Separat berechnet", "Charged separately", "Excluded-items strip label", False),
+    ("pricing.excluded.tolls", "pricing", "Mautgebühren", "Toll charges", "Excluded item", False),
+    ("pricing.excluded.parking", "pricing", "Parkgebühren am Zielort", "Parking fees at destination", "Excluded item", False),
+    ("pricing.excluded.extra_stops", "pricing", "Zusätzliche Zwischenstopps", "Additional intermediate stops", "Excluded item", False),
+    ("pricing.excluded.extended_wait", "pricing", "Wartezeit über 60 Min.", "Waiting time over 60 min", "Excluded item", False),
+
+    # Comparison table (StepNow vs standard taxi)
+    ("pricing.comparison.eyebrow", "pricing", "Gleiche Fahrt — anderes Erlebnis", "Same ride — different experience", "Comparison eyebrow", False),
+    ("pricing.comparison.heading", "pricing", "StepNow vs. ein normales Taxi", "StepNow vs. a standard taxi", "Comparison heading", False),
+    ("pricing.comparison.lead", "pricing", "Der Unterschied liegt in dem, was Sie vor der Fahrt wissen.", "The difference is in what you know before the ride starts.", "Comparison lead paragraph", False),
+    ("pricing.comparison.head_label", "pricing", "Erlebnis", "Experience", "Comparison column header (left)", False),
+    ("pricing.comparison.head_taxi", "pricing", "Normales Taxi", "Standard taxi", "Comparison column header (right)", False),
+
+    ("pricing.comparison.row1.label", "pricing", "Preis Esslingen → STR", "Price for Esslingen → STR", "Comparison row 1 label", False),
+    ("pricing.comparison.row1.stepnow", "pricing", "Festpreis 70 € — bei Buchung bestätigt", "Fixed €70 — confirmed at booking", "Comparison row 1 StepNow", False),
+    ("pricing.comparison.row1.taxi", "pricing", "Taxameter ca. 80–110 €, vom Verkehr abhängig", "Meter-based ≈ €80–110, depends on traffic", "Comparison row 1 taxi", False),
+
+    ("pricing.comparison.row2.label", "pricing", "Zugewiesener Fahrer", "Driver assigned", "Comparison row 2 label", False),
+    ("pricing.comparison.row2.stepnow", "pricing", "Gleiche Nummer, gleicher Fahrer, jedes Mal", "Same number, same driver, every time", "Comparison row 2 StepNow", False),
+    ("pricing.comparison.row2.taxi", "pricing", "Wen auch immer die Zentrale schickt", "Whoever dispatch sends", "Comparison row 2 taxi", False),
+
+    ("pricing.comparison.row3.label", "pricing", "Im Voraus gebucht", "Booked in advance", "Comparison row 3 label", False),
+    ("pricing.comparison.row3.stepnow", "pricing", "Online oder telefonisch vorbestellt", "Pre-booked online or by phone", "Comparison row 3 StepNow", False),
+    ("pricing.comparison.row3.taxi", "pricing", "Am Tag selbst herangerufen, Verfügbarkeit unklar", "Hailed on the day, hope for availability", "Comparison row 3 taxi", False),
+
+    ("pricing.comparison.row4.label", "pricing", "Meet & Greet am Flughafen", "Meet & greet at airport", "Comparison row 4 label", False),
+    ("pricing.comparison.row4.stepnow", "pricing", "Bei Flughafenstrecken inklusive", "Included with airport routes", "Comparison row 4 StepNow", False),
+    ("pricing.comparison.row4.taxi", "pricing", "Zusatzservice falls verfügbar", "Extra service if available", "Comparison row 4 taxi", False),
+
+    ("pricing.comparison.row5.label", "pricing", "Rechnung für Geschäftskunden", "Receipt for business", "Comparison row 5 label", False),
+    ("pricing.comparison.row5.stepnow", "pricing", "Detaillierte Rechnung nach Vereinbarung", "Detailed invoice, by arrangement", "Comparison row 5 StepNow", False),
+    ("pricing.comparison.row5.taxi", "pricing", "Handgeschriebene oder gedruckte Quittung", "Handwritten or printed slip", "Comparison row 5 taxi", False),
+
+    # Payment methods
+    ("pricing.payment.eyebrow", "pricing", "Bezahlung", "Payment", "Payment row eyebrow", False),
+    ("pricing.payment.heading", "pricing", "So zahlen Sie", "How to pay", "Payment row heading", False),
+    ("pricing.payment.cash", "pricing", "Bar", "Cash", "Payment method: cash", False),
+    ("pricing.payment.girocard", "pricing", "Girocard / EC", "Girocard / debit card", "Payment method: girocard", False),
+    ("pricing.payment.invoice", "pricing", "Rechnung (B2B)", "Invoice (B2B)", "Payment method: invoice", False),
+    ("pricing.payment.paypal", "pricing", "PayPal", "PayPal", "Payment method: PayPal", False),
+
+    # Cancellation policy
+    ("pricing.cancellation.eyebrow", "pricing", "Stornierung", "Cancellation", "Cancellation row eyebrow", False),
+    ("pricing.cancellation.heading", "pricing", "Faire Bedingungen", "Flexible policy", "Cancellation row heading", False),
+    ("pricing.cancellation.step1.when", "pricing", "≥ 12 Std. VORHER", "≥ 12 H BEFORE", "Cancellation step 1 timing", False),
+    ("pricing.cancellation.step1.cost", "pricing", "Kostenfrei", "Free of charge", "Cancellation step 1 cost", False),
+    ("pricing.cancellation.step2.when", "pricing", "< 12 Std. VORHER", "< 12 H BEFORE", "Cancellation step 2 timing", False),
+    ("pricing.cancellation.step2.cost", "pricing", "50 % des Fahrpreises", "50% of fare", "Cancellation step 2 cost", False),
+    ("pricing.cancellation.step3.when", "pricing", "NICHT ERSCHIENEN", "NO-SHOW", "Cancellation step 3 timing", False),
+    ("pricing.cancellation.step3.cost", "pricing", "Voller Fahrpreis", "Full fare", "Cancellation step 3 cost", False),
+    ("pricing.cancellation.full_terms", "pricing", "Vollständige AGB ansehen →", "See full terms (AGB) →", "Cancellation full-terms link", False),
+
+    # ════════════════════════════════════════════════════════════════════
+    # ABOUT PAGE
+    # ════════════════════════════════════════════════════════════════════
+    ("about.page.title", "about", "Über StepNow", "About StepNow", "About page H1 / metadata", False),
     ("about.page.subhead", "about", "Ihr regionaler Mobilitätspartner für vorbestellte Fahrten.", "Your regional mobility partner for pre-booked transfers.", "About page subhead", False),
+    ("about.page.eyebrow", "about", "Über uns", "About", "About page eyebrow above H1", False),
 
     # Story section
-    ("about.story.eyebrow", "about", "Die Geschichte", "The story", "Eyebrow above 'Our story' heading", False),
-    ("about.story.heading", "about", "Meine Geschichte", "My Story", "Story section heading", False),
+    ("about.story.eyebrow", "about", "Die Geschichte", "The story", "Story section eyebrow", False),
+    ("about.story.heading", "about", "Meine Geschichte", "My story", "Story section heading", False),
     ("about.story.author", "about", "Naeem Ahmad", "Naeem Ahmad", "Owner name displayed under the portrait", False),
     ("about.story.paragraph_1", "about",
      "Ich bin Naeem Ahmad — Inhaber von StepNow Rides & Movers und seit über zehn Jahren in der Region Stuttgart unterwegs.",
      "I'm Naeem Ahmad — owner of StepNow Rides & Movers and a driver in the Stuttgart region for more than ten years.",
-     "Owner story paragraph 1", False),
+     "Story paragraph 1", False),
     ("about.story.paragraph_2", "about",
      "StepNow ist aus einer einfachen Idee entstanden: Mobilität soll vorhersehbar sein. Festpreise vor der Fahrt, keine Überraschungen am Taxameter und ein Fahrer, der pünktlich am vereinbarten Ort wartet.",
      "StepNow grew from a simple idea: mobility should be predictable. Fixed prices before the ride, no taximeter surprises, and a driver who is on time at the agreed location.",
-     "Owner story paragraph 2", False),
+     "Story paragraph 2", False),
     ("about.story.paragraph_3", "about",
      "Wir sind kein anonymes Callcenter. Wenn Sie bei uns buchen, sprechen Sie direkt mit dem Inhaber — und unser Team kennt die Strecken zwischen Esslingen, Stuttgart und Umgebung wie die eigene Westentasche.",
      "We are not an anonymous call centre. When you book with us, you speak directly with the owner — and our team knows the routes between Esslingen, Stuttgart and the surrounding area like the back of their hand.",
-     "Owner story paragraph 3", False),
+     "Story paragraph 3", False),
     ("about.story.paragraph_4", "about",
      "Ob Flughafentransfer, Krankenfahrt, Schülerbeförderung oder Shuttle — wir behandeln jede Fahrt mit dem Respekt, den sie verdient.",
-     "Whether it's an airport transfer, a hospital ride, a school run, or a shuttle — we treat every trip with the respect it deserves.",
-     "Owner story paragraph 4", False),
+     "Whether it's an airport transfer, a hospital ride, a school run or a shuttle — we treat every trip with the respect it deserves.",
+     "Story paragraph 4", False),
 
     # Values section
-    ("about.values.eyebrow", "about", "Unsere Prinzipien", "Our principles", "Eyebrow above the values grid", False),
-    ("about.values.heading", "about", "Was uns wichtig ist", "What matters to us", "Values section heading", False),
-    ("about.values.reliability.title", "about", "Verlässlichkeit", "Reliability", "Value title", False),
-    ("about.values.reliability.body", "about", "Pünktlich, vorbestellt, bestätigt — keine Überraschungen am Abholtag.", "On time, pre-booked, confirmed — no surprises on pickup day.", "Value body", False),
-    ("about.values.safety.title", "about", "Sicherheit", "Safety", "Value title", False),
-    ("about.values.safety.body", "about", "Geprüfte Fahrer, gewartete Fahrzeuge und volle Haftpflicht.", "Vetted drivers, maintained vehicles, and full liability insurance.", "Value body", False),
-    ("about.values.transparency.title", "about", "Transparenz", "Transparency", "Value title", False),
-    ("about.values.transparency.body", "about", "Festpreise vor der Fahrt. Keine versteckten Aufschläge, keine Taxameter-Überraschungen.", "Fixed prices up front. No hidden surcharges, no meter surprises.", "Value body", False),
-    ("about.values.service.title", "about", "Persönlicher Service", "Personal service", "Value title (4th tile)", False),
-    ("about.values.service.body", "about", "Direkter Kontakt zum Inhaber, kein anonymes Callcenter.", "Direct contact with the owner — no anonymous call center.", "Value body (4th tile)", False),
-    # Legacy alias kept for backwards compatibility
-    ("about.values.personal.title", "about", "Persönlicher Service", "Personal Service", "Alias for about.values.service.title", False),
+    ("about.values.eyebrow", "about", "Unsere Prinzipien", "Our principles", "Values eyebrow", False),
+    ("about.values.heading", "about", "Was uns trägt", "What we stand for", "Values heading", False),
+    ("about.values.reliability.title", "about", "Verlässlichkeit", "Reliability", "Value title 1", False),
+    ("about.values.reliability.body", "about", "Pünktlich, vorbestellt, bestätigt — keine Überraschungen am Abholtag.", "On time, pre-booked, confirmed — no surprises on pickup day.", "Value body 1", False),
+    ("about.values.safety.title", "about", "Sicherheit", "Safety", "Value title 2", False),
+    ("about.values.safety.body", "about", "Geprüfte Fahrer, gewartete Fahrzeuge und volle Haftpflicht.", "Vetted drivers, maintained vehicles and full liability insurance.", "Value body 2", False),
+    ("about.values.transparency.title", "about", "Transparenz", "Transparency", "Value title 3", False),
+    ("about.values.transparency.body", "about", "Festpreise vor der Fahrt. Keine versteckten Aufschläge, keine Taxameter-Überraschungen.", "Fixed prices up front. No hidden surcharges, no meter surprises.", "Value body 3", False),
+    ("about.values.service.title", "about", "Persönlicher Service", "Personal service", "Value title 4", False),
+    ("about.values.service.body", "about", "Direkter Kontakt zum Inhaber, kein anonymes Callcenter.", "Direct contact with the owner — no anonymous call centre.", "Value body 4", False),
+    # Legacy aliases kept for backwards compatibility
+    ("about.values.personal.title", "about", "Persönlicher Service", "Personal service", "Alias for about.values.service.title", False),
     ("about.values.personal.body", "about", "Sie sprechen mit dem Inhaber — nicht mit einem anonymen Callcenter.", "You talk to the owner — not an anonymous call centre.", "Alias for about.values.service.body", False),
 
     # Credentials section
-    ("about.credentials.eyebrow", "about", "Qualifikationen", "Credentials", "Eyebrow above credentials list", False),
-    ("about.credentials.heading", "about", "Qualifikationen & Zulassungen", "Credentials & Licenses", "Credentials heading", False),
-    ("about.credentials.pbefg.title", "about", "Konzession nach § 49 PBefG", "License under § 49 PBefG", "Credential row title — PBefG concession", False),
-    ("about.credentials.pbefg.body", "about", "Lizenziert nach dem deutschen Personenbeförderungsgesetz. Volle Konzessionspflicht erfüllt.", "Licensed under the German Passenger Transport Act. Full concession compliance.", "Credential row body — PBefG concession", False),
-    ("about.credentials.bkrfqg.title", "about", "Berufskraftfahrer-Qualifikation", "Professional driver qualification", "Credential row title — BKrFQG", False),
-    ("about.credentials.bkrfqg.body", "about", "Qualifikation nach BKrFQG mit regelmäßigen Weiterbildungen.", "BKrFQG-certified with regular continuing education.", "Credential row body — BKrFQG", False),
-    ("about.credentials.insurance.title", "about", "Personenbeförderungs-Haftpflicht", "Passenger transport liability", "Credential row title — insurance", False),
-    ("about.credentials.insurance.body", "about", "Volle Personenbeförderungs-Haftpflichtversicherung für alle Fahrten.", "Full passenger transport liability insurance on every ride.", "Credential row body — insurance", False),
-    ("about.credentials.handelsregister.title", "about", "Eintrag im Handelsregister", "Trade register entry", "Credential row title — Handelsregister", False),
-    ("about.credentials.handelsregister.body", "about", "Eingetragenes Unternehmen am Amtsgericht — Geschäftssitz Deizisau.", "Registered business at the local commercial court — based in Deizisau.", "Credential row body — Handelsregister", False),
+    ("about.credentials.eyebrow", "about", "Qualifikationen", "Credentials", "Credentials eyebrow", False),
+    ("about.credentials.heading", "about", "Qualifikationen & Zulassungen", "Credentials & licences", "Credentials heading", False),
+    ("about.credentials.pbefg.title", "about", "Konzession nach § 49 PBefG", "Licence under § 49 PBefG", "Credential 1 title", False),
+    ("about.credentials.pbefg.body", "about", "Lizenziert nach dem deutschen Personenbeförderungsgesetz. Volle Konzessionspflicht erfüllt.", "Licensed under the German Passenger Transport Act. Full concession compliance.", "Credential 1 body", False),
+    ("about.credentials.bkrfqg.title", "about", "Berufskraftfahrer-Qualifikation", "Professional driver qualification", "Credential 2 title", False),
+    ("about.credentials.bkrfqg.body", "about", "Qualifikation nach BKrFQG mit regelmäßigen Weiterbildungen.", "BKrFQG-certified with regular continuing education.", "Credential 2 body", False),
+    ("about.credentials.insurance.title", "about", "Personenbeförderungs-Haftpflicht", "Passenger-transport liability", "Credential 3 title", False),
+    ("about.credentials.insurance.body", "about", "Volle Personenbeförderungs-Haftpflichtversicherung für alle Fahrten.", "Full passenger-transport liability insurance on every ride.", "Credential 3 body", False),
+    ("about.credentials.handelsregister.title", "about", "Eintrag im Handelsregister", "Trade register entry", "Credential 4 title", False),
+    ("about.credentials.handelsregister.body", "about", "Eingetragenes Unternehmen am Amtsgericht — Geschäftssitz Deizisau.", "Registered business at the local commercial court — based in Deizisau.", "Credential 4 body", False),
 
-    # Service-area section (used by ServiceAreaMap on about page)
-    ("about.area.eyebrow", "about", "Einsatzgebiet", "Service area", "Eyebrow above service-area map", False),
-    ("about.area.heading", "about", "Unser Einzugsgebiet", "Our service area", "Service-area section heading", False),
-    ("about.area.body", "about", "Wir bedienen die Region Stuttgart, Esslingen, Deizisau und das gesamte mittlere Neckartal — sowie Fahrten zu allen umliegenden Flughäfen.", "We serve the Stuttgart, Esslingen, Deizisau region and the entire central Neckar valley — plus rides to all surrounding airports.", "Service-area body", False),
-    ("about.area.empty.title", "about", "Karte nicht verfügbar", "Map unavailable", "Empty-state title when settings has no coordinates", False),
-    ("about.area.empty.body", "about", "Standort wird in Kürze hinterlegt.", "Our location will be added shortly.", "Empty-state body when settings has no coordinates", False),
-
-    # Legacy keys kept for backwards compatibility
+    # Service-area section
+    ("about.area.eyebrow", "about", "Einsatzgebiet", "Service area", "Service-area eyebrow", False),
+    ("about.area.heading", "about", "Wo wir fahren", "Where we operate", "Service-area heading", False),
+    ("about.area.body", "about", "Wir fahren in der Region Stuttgart, Esslingen, Deizisau und im mittleren Neckartal — sowie zu allen umliegenden Flughäfen.", "We operate in the Stuttgart, Esslingen, Deizisau region and the central Neckar valley — plus rides to all surrounding airports.", "Service-area body paragraph", False),
+    ("about.area.open_external", "about", "In Karten öffnen", "Open in maps", "Service-area external-map button", False),
+    ("about.area.empty.title", "about", "Karte nicht verfügbar", "Map not available", "Service-area empty-state title", False),
+    ("about.area.empty.body", "about", "Standort wird in Kürze hinterlegt.", "Location will be added shortly.", "Service-area empty-state body", False),
+    # Legacy aliases
     ("about.service_area.heading", "about", "Unser Einzugsgebiet", "Our service area", "Alias for about.area.heading", False),
     ("about.service_area.body", "about", "Wir bedienen die Region Stuttgart, Esslingen, Deizisau und das gesamte mittlere Neckartal — sowie Fahrten zu allen umliegenden Flughäfen.", "We serve the Stuttgart, Esslingen, Deizisau region and the entire central Neckar valley — plus rides to all surrounding airports.", "Alias for about.area.body", False),
 
-    # === CONTACT PAGE ===
-    ("contact.page.title", "contact", "Kontakt", "Contact", "Contact page title", False),
-    ("contact.page.subhead", "contact", "So erreichen Sie uns.", "How to reach us.", "Contact page subhead", False),
+    # ════════════════════════════════════════════════════════════════════
+    # CONTACT PAGE
+    # ════════════════════════════════════════════════════════════════════
+    ("contact.page.title", "contact", "Kontakt", "Contact", "Contact page H1 / metadata", False),
+    ("contact.page.subhead", "contact", "So erreichen Sie uns — Telefon, E-Mail oder direkt vor Ort.", "How to reach us — phone, email or in person.", "Contact page subhead", False),
+    ("contact.page.eyebrow", "contact", "Kontakt", "Contact", "Contact page eyebrow above H1", False),
 
-    # Methods (left column of contact page)
-    ("contact.methods.eyebrow", "contact", "Direkt", "Direct", "Eyebrow above 'How to reach us' column", False),
-    ("contact.methods.heading", "contact", "So erreichen Sie uns", "How to reach us", "Heading above contact methods list", False),
-    ("contact.methods.intro", "contact", "Telefon, E-Mail oder direkt vor Ort — wir antworten innerhalb eines Werktages.", "Phone, email, or in person — we reply within one business day.", "Short intro paragraph above the contact methods list", False),
-    ("contact.method.phone", "contact", "Telefon", "Phone", "Contact method label", False),
-    ("contact.method.email", "contact", "E-Mail", "Email", "Contact method label", False),
-    ("contact.method.address", "contact", "Adresse", "Address", "Contact method label", False),
-    ("contact.method.hours", "contact", "Fahrzeiten", "Operating hours", "Contact method label — opening / ride hours", False),
-    ("contact.method.whatsapp", "contact", "WhatsApp", "WhatsApp", "Contact method label", False),
+    # Methods (sidebar column)
+    ("contact.methods.eyebrow", "contact", "Direkt", "Direct", "Methods column eyebrow", False),
+    ("contact.methods.heading", "contact", "So erreichen Sie uns", "How to reach us", "Methods column heading", False),
+    ("contact.methods.intro", "contact", "Telefon, E-Mail oder direkt vor Ort — wir antworten innerhalb eines Werktages.", "Phone, email or in person — we reply within one business day.", "Methods column intro", False),
+    ("contact.method.phone", "contact", "Telefon", "Phone", "Method label: phone", False),
+    ("contact.method.email", "contact", "E-Mail", "Email", "Method label: email", False),
+    ("contact.method.address", "contact", "Adresse", "Address", "Method label: address", False),
+    ("contact.method.hours", "contact", "Telefonzeiten", "Phone hours", "Method label: opening / phone hours", False),
+    ("contact.method.whatsapp", "contact", "WhatsApp", "WhatsApp", "Method label: WhatsApp", False),
 
-    # Form (right column of contact page)
-    ("contact.form.eyebrow", "contact", "Anfrage", "Inquiry", "Eyebrow above the contact form", False),
-    ("contact.form.heading", "contact", "Schreiben Sie uns", "Write to us", "Contact form heading", False),
-    ("contact.form.intro", "contact", "Schildern Sie uns kurz Ihr Anliegen — wir melden uns mit allen Details.", "Tell us briefly what you need — we'll get back to you with the details.", "Short intro paragraph above the contact form", False),
-    ("contact.form.name", "contact", "Name", "Name", "Form field", False),
-    ("contact.form.email", "contact", "E-Mail", "Email", "Form field", False),
-    ("contact.form.phone", "contact", "Telefon (optional)", "Phone (optional)", "Form field", False),
-    ("contact.form.subject", "contact", "Betreff", "Subject", "Form field", False),
+    # Form (main column)
+    ("contact.form.eyebrow", "contact", "Anfrage", "Inquiry", "Form column eyebrow", False),
+    ("contact.form.heading", "contact", "Schreiben Sie uns", "Write to us", "Form column heading", False),
+    ("contact.form.intro", "contact", "Schildern Sie uns kurz Ihr Anliegen — wir melden uns mit allen Details.", "Tell us briefly what you need — we'll get back to you with the details.", "Form column intro", False),
+    ("contact.form.name", "contact", "Name", "Name", "Form field: name", False),
+    ("contact.form.email", "contact", "E-Mail", "Email", "Form field: email", False),
+    ("contact.form.phone", "contact", "Telefon (optional)", "Phone (optional)", "Form field: phone", False),
+    ("contact.form.subject", "contact", "Betreff", "Subject", "Form field: subject", False),
     ("contact.form.subject.general", "contact", "Allgemeine Anfrage", "General inquiry", "Subject option", False),
     ("contact.form.subject.booking", "contact", "Buchung", "Booking", "Subject option", False),
     ("contact.form.subject.complaint", "contact", "Beschwerde", "Complaint", "Subject option", False),
     ("contact.form.subject.business", "contact", "Geschäftskunde", "Business customer", "Subject option", False),
     ("contact.form.subject.other", "contact", "Sonstiges", "Other", "Subject option", False),
-    ("contact.form.message", "contact", "Nachricht", "Message", "Form field", False),
+    ("contact.form.message", "contact", "Nachricht", "Message", "Form field: message", False),
     ("contact.form.submit", "contact", "Nachricht senden", "Send message", "Form submit button", False),
-    ("contact.form.success", "contact", "Vielen Dank! Wir melden uns innerhalb von 24 Stunden bei Ihnen.", "Thank you! We'll get back to you within 24 hours.", "Form success", False),
+    ("contact.form.success", "contact", "Vielen Dank! Wir melden uns innerhalb von 24 Stunden bei Ihnen.", "Thank you! We'll get back to you within 24 hours.", "Form success heading", False),
     ("contact.form.success.body", "contact", "Wir melden uns innerhalb eines Werktages bei Ihnen.", "We'll get back to you within one business day.", "Form success body", False),
-    # Consent label is split across the privacy-policy link
-    ("contact.form.consent_intro", "contact", "Ich stimme der ", "I agree to the ", "Text before the privacy-policy link in the consent checkbox", True),
-    ("contact.form.consent_zu", "contact", " zu.", ".", "Text after the privacy-policy link in the consent checkbox (German trailing 'zu.', simple period in EN)", True),
+    ("contact.form.consent_intro", "contact", "Ich stimme der ", "I agree to the ", "Consent text before privacy link", True),
+    ("contact.form.consent_zu", "contact", " zu.", ".", "Consent text after privacy link (DE 'zu.', EN period)", True),
 
     # Map section
-    ("contact.map.eyebrow", "contact", "Standort", "Location", "Eyebrow above the map section", False),
-    ("contact.map.heading", "contact", "So finden Sie uns", "Find us", "Heading for the map section on the contact page", False),
-    ("contact.map.empty.title", "contact", "Karte nicht verfügbar", "Map unavailable", "Empty-state title when no coordinates", False),
-    ("contact.map.empty.body", "contact", "Die Standortkoordinaten wurden noch nicht hinterlegt.", "Location coordinates have not been added yet.", "Empty-state body when no coordinates", False),
+    ("contact.map.eyebrow", "contact", "Standort", "Location", "Map section eyebrow", False),
+    ("contact.map.heading", "contact", "So finden Sie uns", "Find us", "Map section heading", False),
+    ("contact.map.open_external", "contact", "In Karten öffnen", "Open in maps", "Map external-link button", False),
+    ("contact.map.empty.title", "contact", "Karte nicht verfügbar", "Map not available", "Map empty-state title", False),
+    ("contact.map.empty.body", "contact", "Die Standortkoordinaten wurden noch nicht hinterlegt.", "Location coordinates have not been added yet.", "Map empty-state body", False),
 
-    # === BOOKING FORM ===
-    ("booking.page.title", "booking", "Fahrt buchen", "Book a ride", "Booking page title", False),
-    ("booking.step.service", "booking", "Service wählen", "Choose service", "Step 1 label", True),
-    ("booking.step.trip", "booking", "Fahrtdetails", "Trip details", "Step 2 label", True),
-    ("booking.step.requirements", "booking", "Besondere Anforderungen", "Special requirements", "Step 3 label", True),
-    ("booking.step.contact", "booking", "Kontaktdaten", "Contact info", "Step 4 label", True),
-    ("booking.field.pickup_address", "booking", "Abholadresse", "Pickup address", "Form field", False),
-    ("booking.field.pickup_postcode", "booking", "PLZ", "Postcode", "Form field", False),
-    ("booking.field.destination_address", "booking", "Zieladresse", "Destination address", "Form field", False),
-    ("booking.field.date", "booking", "Datum", "Date", "Form field", False),
-    ("booking.field.time", "booking", "Uhrzeit", "Time", "Form field", False),
-    ("booking.field.passengers", "booking", "Personen", "Passengers", "Form field", False),
-    ("booking.field.luggage", "booking", "Gepäckstücke", "Luggage pieces", "Form field", False),
-    ("booking.field.requirements", "booking", "Besondere Wünsche", "Special requests", "Form field", False),
-    ("booking.field.is_business", "booking", "Geschäftskunde", "Business customer", "Form field", False),
-    ("booking.field.company_name", "booking", "Firmenname", "Company name", "Form field", False),
-    ("booking.field.company_vatid", "booking", "USt-IdNr.", "VAT ID", "Form field", False),
-    ("booking.field.customer_name", "booking", "Ihr Name", "Your name", "Form field", False),
-    ("booking.field.customer_phone", "booking", "Ihre Telefonnummer", "Your phone number", "Form field", False),
-    ("booking.field.customer_email", "booking", "Ihre E-Mail-Adresse", "Your email address", "Form field", False),
-    ("booking.field.consent_dsgvo", "booking", "Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zu.", "I have read the privacy policy and consent to the processing of my data.", "DSGVO checkbox label", True),
-    ("booking.next", "booking", "Weiter", "Next", "Booking wizard next button", False),
-    ("booking.back", "booking", "Zurück", "Back", "Booking wizard back button", False),
-    ("booking.submit", "booking", "Buchungsanfrage senden", "Submit booking request", "Final submit", False),
-    ("booking.confirmation.heading", "booking", "Vielen Dank! Ihre Anfrage ist eingegangen.", "Thank you! Your request has been received.", "Confirmation heading", True),
+    # ════════════════════════════════════════════════════════════════════
+    # BOOKING WIZARD — full step-by-step coverage
+    # ════════════════════════════════════════════════════════════════════
+    # Page shell
+    ("booking.page.title", "booking", "Fahrt buchen", "Book your ride", "Booking page H1", True),
+    ("booking.page.subhead", "booking", "In wenigen Schritten zur unverbindlichen Buchungsanfrage. Wir melden uns mit Ihrem Festpreis.", "A few steps to your non-binding booking request. We'll get back with your fixed price.", "Booking page subhead", True),
+    ("booking.page.eyebrow", "booking", "Anfrage", "Inquiry", "Booking page eyebrow above H1", False),
+
+    # Progress / step labels
+    ("booking.progress.step_of", "booking", "Schritt {current} von {total}", "Step {current} of {total}", "Progress indicator (uses {current} and {total} placeholders)", True),
+    ("booking.step.service", "booking", "Leistung", "Service", "Step 1 label", True),
+    ("booking.step.route", "booking", "Strecke", "Route", "Step 2 label", True),
+    ("booking.step.details", "booking", "Details", "Details", "Step 3 label", True),
+    ("booking.step.contact", "booking", "Kontakt", "Contact", "Step 4 label", True),
+    ("booking.step.review", "booking", "Bestätigen", "Review", "Step 5 label", True),
+
+    # Step 1 — service
+    ("booking.service.heading", "booking", "Welche Leistung benötigen Sie?", "Which service do you need?", "Step 1 heading", True),
+    ("booking.service.subhead", "booking", "Wählen Sie die Art Ihrer Fahrt und den gewünschten Termin.", "Choose the type of ride and your preferred time.", "Step 1 subhead", True),
+    ("booking.service.date_label", "booking", "Datum", "Date", "Step 1 date input label", True),
+    ("booking.service.time_label", "booking", "Uhrzeit", "Time", "Step 1 time input label", True),
+
+    # Step 2 — route
+    ("booking.route.heading", "booking", "Wo soll die Fahrt beginnen und enden?", "Where does the ride start and end?", "Step 2 heading", True),
+    ("booking.route.subhead", "booking", "Vollständige Adressen helfen uns, den besten Preis zu berechnen.", "Complete addresses help us calculate the best price.", "Step 2 subhead", True),
+    ("booking.route.pickup_label", "booking", "Abholung", "Pickup", "Step 2 pickup fieldset legend", True),
+    ("booking.route.destination_label", "booking", "Ziel", "Destination", "Step 2 destination fieldset legend", True),
+    ("booking.route.address_label", "booking", "Adresse", "Address", "Step 2 address field label", True),
+    ("booking.route.postcode_label", "booking", "PLZ", "Postal code", "Step 2 postcode field label", True),
+    ("booking.route.city_label", "booking", "Ort", "City", "Step 2 city field label", True),
+
+    # Step 3 — details
+    ("booking.details.heading", "booking", "Passagiere & Gepäck", "Passengers & luggage", "Step 3 heading", True),
+    ("booking.details.subhead", "booking", "Wir bringen das passende Fahrzeug. Sonderwünsche bitte unten angeben.", "We'll bring the right vehicle. Note any special requirements below.", "Step 3 subhead", True),
+    ("booking.details.passengers_label", "booking", "Fahrgäste", "Passengers", "Step 3 passengers counter label", True),
+    ("booking.details.luggage_label", "booking", "Gepäckstücke", "Luggage pieces", "Step 3 luggage counter label", True),
+    ("booking.details.notes_label", "booking", "Besondere Hinweise (optional)", "Special requirements (optional)", "Step 3 textarea label", True),
+
+    # Step 4 — contact
+    ("booking.contact.heading", "booking", "Ihre Kontaktdaten", "Your contact details", "Step 4 heading", True),
+    ("booking.contact.subhead", "booking", "Damit wir uns mit Ihrem Festpreis melden können.", "So we can get back to you with your fixed price.", "Step 4 subhead", True),
+    ("booking.contact.name_label", "booking", "Name", "Name", "Step 4 name field label", True),
+    ("booking.contact.phone_label", "booking", "Telefon", "Phone", "Step 4 phone field label", True),
+    ("booking.contact.email_label", "booking", "E-Mail", "Email", "Step 4 email field label", True),
+    ("booking.contact.business_toggle", "booking", "Ich buche als Geschäftskunde", "I'm booking as a business customer", "Step 4 business toggle label", True),
+    ("booking.contact.company_label", "booking", "Firmenname", "Company name", "Step 4 company name field label", True),
+    ("booking.contact.vat_label", "booking", "USt-IdNr.", "VAT ID", "Step 4 VAT ID field label", True),
+
+    # Step 5 — review
+    ("booking.review.heading", "booking", "Bitte prüfen und bestätigen", "Please review and confirm", "Step 5 heading", True),
+    ("booking.review.subhead", "booking", "Buchungsanfrage absenden — wir melden uns mit Ihrem Festpreis innerhalb von 2 Stunden.", "Submit your booking request — we'll come back with a fixed price within 2 hours.", "Step 5 subhead", True),
+    ("booking.review.service", "booking", "Leistung", "Service", "Step 5 review row: service", True),
+    ("booking.review.when", "booking", "Wann", "When", "Step 5 review row: when", True),
+    ("booking.review.consent_intro", "booking", "Ich stimme der ", "I agree to the ", "Step 5 consent text before privacy link", True),
+    ("booking.review.consent_zu", "booking", " zu.", ".", "Step 5 consent text after privacy link", True),
+    ("booking.review.submit", "booking", "Buchungsanfrage absenden", "Submit booking request", "Step 5 submit button", True),
+
+    # Help line below wizard
+    ("booking.help.heading", "booking", "Brauchen Sie Hilfe bei der Buchung?", "Need help with your booking?", "Help line above phone number", False),
+
+    # Confirmation page
+    ("booking.confirmation.heading", "booking", "Buchungsanfrage gesendet", "Booking request received", "Confirmation page heading", True),
     ("booking.confirmation.body", "booking", "Wir melden uns innerhalb von 30 Minuten mit einem verbindlichen Festpreis-Angebot.", "We'll get back to you within 30 minutes with a binding fixed-price quote.", "Confirmation body", True),
     ("booking.confirmation.reference_label", "booking", "Ihre Referenznummer", "Your reference number", "Confirmation reference label", True),
-    ("booking.confirmation.back_home", "booking", "Zurück zur Startseite", "Back to homepage", "Confirmation home link", False),
+    ("booking.confirmation.next_steps_heading", "booking", "Wie es weitergeht", "What happens next", "Confirmation next-steps heading", True),
+    ("booking.confirmation.next_step_1", "booking", "Sie erhalten innerhalb von 2 Stunden eine telefonische Rückmeldung mit Ihrem Festpreis.", "Within 2 hours, we'll call you back with your fixed price.", "Confirmation step 1", True),
+    ("booking.confirmation.next_step_2", "booking", "Nach Ihrer Bestätigung wird die Fahrt fest gebucht.", "Once you confirm, the ride is firmly booked.", "Confirmation step 2", True),
+    ("booking.confirmation.next_step_3", "booking", "Am Tag der Fahrt erhalten Sie eine SMS mit Fahrer- und Fahrzeuginformationen.", "On the day of the ride, you'll receive an SMS with driver and vehicle details.", "Confirmation step 3", True),
+    ("booking.confirmation.urgent_heading", "booking", "Dringend?", "Urgent?", "Confirmation urgent block heading", True),
+    ("booking.confirmation.urgent_body", "booking", "Für kurzfristige Buchungen rufen Sie uns direkt an.", "For short-notice bookings, please call us directly.", "Confirmation urgent block body", True),
+    ("booking.confirmation.cta_home", "booking", "Zur Startseite", "Back to homepage", "Confirmation home CTA", True),
+    ("booking.confirmation.cta_call", "booking", "Jetzt anrufen", "Call now", "Confirmation call CTA", True),
+    ("booking.confirmation.back_home", "booking", "Zurück zur Startseite", "Back to homepage", "Confirmation home link (alias)", False),
 
-    # === FOOTER ===
-    ("footer.col.brand", "footer", "StepNow Rides & Movers", "StepNow Rides & Movers", "Footer brand col", False),
-    ("footer.col.quick_links", "footer", "Schnellzugriff", "Quick Links", "Footer column heading", False),
-    ("footer.col.services", "footer", "Dienstleistungen", "Services", "Footer column heading", False),
-    ("footer.col.contact", "footer", "Kontakt", "Contact", "Footer column heading", False),
-    ("footer.legal.impressum", "footer", "Impressum", "Legal notice", "Footer legal link", True),
-    ("footer.legal.datenschutz", "footer", "Datenschutz", "Privacy", "Footer legal link", True),
-    ("footer.legal.agb", "footer", "AGB", "Terms", "Footer legal link", True),
-    ("footer.rights_reserved", "footer", "Alle Rechte vorbehalten.", "All rights reserved.", "Suffix for the bottom-strip copyright line; year + business name come from the Footer component.", False),
-    
-    # === COMMON ===
+    # ════════════════════════════════════════════════════════════════════
+    # CONSENT BANNER (DSGVO)
+    # ════════════════════════════════════════════════════════════════════
+    ("consent.region", "consent", "Cookie-Einstellungen", "Cookie settings", "Banner region ARIA label", False),
+    ("consent.eyebrow", "consent", "Cookies", "Cookies", "Banner eyebrow", False),
+    ("consent.body", "consent", "Wir nutzen technisch notwendige Cookies. Mit Ihrer Einwilligung binden wir auch Google Maps, Google Fonts und Analytics ein.", "We use technically necessary cookies. With your consent we also embed Google Maps, Google Fonts and Analytics.", "Banner body paragraph", False),
+    ("consent.privacy_link", "consent", "Datenschutz", "Privacy policy", "Banner inline privacy link", False),
+    ("consent.reject_all", "consent", "Alle ablehnen", "Reject all", "Banner: reject all button", False),
+    ("consent.customise", "consent", "Anpassen", "Customise", "Banner: customise button", False),
+    ("consent.accept_all", "consent", "Alle akzeptieren", "Accept all", "Banner: accept all button", False),
+    ("consent.dialog.title", "consent", "Cookie-Einstellungen anpassen", "Customise cookie settings", "Customise dialog title", False),
+    ("consent.dialog.intro", "consent", "Technisch notwendige Cookies sind immer aktiv. Wählen Sie zusätzlich aus:", "Technically necessary cookies are always active. Additionally, choose:", "Customise dialog intro", False),
+    ("consent.dialog.back", "consent", "Zurück", "Back", "Customise dialog back button", False),
+    ("consent.dialog.save", "consent", "Auswahl speichern", "Save selection", "Customise dialog save button", False),
+    ("consent.cat.maps.label", "consent", "Google Maps", "Google Maps", "Category: Google Maps label", False),
+    ("consent.cat.maps.desc", "consent", "Karte auf Kontakt- und Über-uns-Seite. Überträgt Ihre IP-Adresse an Google in den USA.", "Map on contact and about pages. Transmits your IP address to Google in the USA.", "Category: Google Maps description", False),
+    ("consent.cat.fonts.label", "consent", "Google Fonts", "Google Fonts", "Category: Google Fonts label", False),
+    ("consent.cat.fonts.desc", "consent", "Schriftarten von Google-Servern. Ohne Einwilligung nutzen wir selbst gehostete Schriften.", "Fonts loaded from Google servers. Without consent we use self-hosted fonts.", "Category: Google Fonts description", False),
+    ("consent.cat.analytics.label", "consent", "Google Analytics (GA4)", "Google Analytics (GA4)", "Category: Analytics label", False),
+    ("consent.cat.analytics.desc", "consent", "Anonymisierte Reichweitenmessung. Hilft uns, die Seite zu verbessern.", "Anonymised audience measurement. Helps us improve the site.", "Category: Analytics description", False),
+    ("consent.footer_link", "consent", "Cookie-Einstellungen", "Cookie settings", "Footer re-open link", False),
+
+    # ════════════════════════════════════════════════════════════════════
+    # FOOTER
+    # ════════════════════════════════════════════════════════════════════
+    ("footer.col.brand", "footer", "StepNow Rides & Movers — Ihr regionaler Partner für vorbestellte Fahrten in der Region Stuttgart.", "StepNow Rides & Movers — your regional partner for pre-booked transfers in the Stuttgart region.", "Footer brand column tagline", False),
+    ("footer.col.quick_links", "footer", "Schnellzugriff", "Quick links", "Footer column heading: quick links", False),
+    ("footer.col.services", "footer", "Dienstleistungen", "Services", "Footer column heading: services", False),
+    ("footer.col.contact", "footer", "Kontakt", "Contact", "Footer column heading: contact", False),
+    ("footer.legal.impressum", "footer", "Impressum", "Legal notice", "Footer legal link: impressum", True),
+    ("footer.legal.datenschutz", "footer", "Datenschutz", "Privacy", "Footer legal link: privacy", True),
+    ("footer.legal.agb", "footer", "AGB", "Terms", "Footer legal link: AGB / terms", True),
+    ("footer.rights_reserved", "footer", "Alle Rechte vorbehalten.", "All rights reserved.", "Suffix on bottom-strip copyright (year + business name rendered dynamically by Footer)", False),
+    ("footer.cta.eyebrow", "footer", "Bereit, mit uns zu fahren?", "Ready when you are", "Footer CTA eyebrow", False),
+    ("footer.cta.heading", "footer", "Bereit für Ihre Fahrt?", "Ready to ride with us?", "Footer CTA heading", False),
+    ("footer.cta.sub", "footer", "Buchen Sie online oder rufen Sie an — wir melden uns innerhalb von 30 Minuten zu unseren Telefonzeiten.", "Book online or call — we reply within 30 minutes during phone hours.", "Footer CTA subhead", False),
+    ("footer.cta.book", "footer", "Jetzt buchen", "Book now", "Footer CTA book button", False),
+
+    # ════════════════════════════════════════════════════════════════════
+    # COMMON UI
+    # ════════════════════════════════════════════════════════════════════
     ("common.loading", "common", "Lädt…", "Loading…", "Generic loading", True),
-    ("common.save", "common", "Speichern", "Save", "Generic save action", False),
+    ("common.save", "common", "Speichern", "Save", "Generic save", False),
     ("common.cancel", "common", "Abbrechen", "Cancel", "Generic cancel", False),
     ("common.close", "common", "Schließen", "Close", "Generic close", False),
-    ("common.book_now", "common", "Jetzt buchen", "Book now", "Universal CTA", True),
+    ("common.book_now", "common", "Jetzt buchen", "Book now", "Universal book CTA", True),
     ("common.call_us", "common", "Anrufen", "Call us", "Universal phone CTA", False),
+    ("common.back", "common", "Zurück", "Back", "Generic back", True),
+    ("common.continue", "common", "Weiter", "Continue", "Generic continue / next", True),
+    ("common.submit", "common", "Absenden", "Submit", "Generic submit", True),
+    ("common.edit", "common", "Ändern", "Edit", "Generic edit", True),
     ("common.required", "common", "Pflichtfeld", "Required field", "Required indicator label", False),
 
-    # === ERRORS ===
+    # ════════════════════════════════════════════════════════════════════
+    # ERRORS
+    # ════════════════════════════════════════════════════════════════════
     ("errors.generic", "errors", "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.", "An error occurred. Please try again.", "Generic error", True),
-    ("errors.required", "errors", "Dieses Feld ist erforderlich.", "This field is required.", "Required error", True),
-    ("errors.invalid_email", "errors", "Bitte geben Sie eine gültige E-Mail-Adresse ein.", "Please enter a valid email address.", "Email validation error", True),
+    ("errors.required", "errors", "Dieses Feld ist erforderlich.", "This field is required.", "Required-field error", True),
+    ("errors.invalid_email", "errors", "Bitte geben Sie eine gültige E-Mail-Adresse ein.", "Please enter a valid email address.", "Invalid email", True),
     ("errors.email", "errors", "Bitte geben Sie eine gültige E-Mail-Adresse ein.", "Please enter a valid email address.", "Alias for errors.invalid_email used by ContactForm", True),
-    ("errors.invalid_phone", "errors", "Bitte geben Sie eine gültige Telefonnummer ein.", "Please enter a valid phone number.", "Phone validation error", True),
-    ("errors.invalid_postcode", "errors", "Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern).", "Please enter a valid postcode (5 digits).", "Postcode validation error", True),
-    ("errors.date_in_past", "errors", "Bitte wählen Sie ein zukünftiges Datum.", "Please choose a future date.", "Date validation error", True),
+    ("errors.phone", "errors", "Bitte geben Sie eine gültige Telefonnummer ein.", "Please enter a valid phone number.", "Invalid phone", True),
+    ("errors.invalid_phone", "errors", "Bitte geben Sie eine gültige Telefonnummer ein.", "Please enter a valid phone number.", "Alias for errors.phone", True),
+    ("errors.invalid_postcode", "errors", "Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern).", "Please enter a valid postcode (5 digits).", "Invalid postcode", True),
+    ("errors.date_in_past", "errors", "Bitte wählen Sie ein zukünftiges Datum.", "Please choose a future date.", "Date in past", True),
+    ("errors.lead_time", "errors", "Mindestens 60 Minuten Vorlauf erforderlich.", "At least 60 minutes lead time required.", "Booking lead-time error", True),
     ("errors.consent_required", "errors", "Bitte stimmen Sie der Datenschutzerklärung zu, um fortzufahren.", "Please accept the privacy policy to continue.", "DSGVO consent error", True),
-    ("errors.rate_limited", "errors", "Zu viele Anfragen. Bitte versuchen Sie es in einer Minute erneut.", "Too many requests. Please try again in a minute.", "Rate limit error", True),
+    ("errors.rate_limited", "errors", "Zu viele Anfragen. Bitte versuchen Sie es in einer Minute erneut.", "Too many requests. Please try again in a minute.", "Rate-limit error", True),
 
-    # === 404 ===
+    # ════════════════════════════════════════════════════════════════════
+    # 404
+    # ════════════════════════════════════════════════════════════════════
     ("404.heading", "errors", "Seite nicht gefunden", "Page not found", "404 heading", True),
     ("404.body", "errors", "Die gesuchte Seite existiert nicht oder wurde verschoben.", "The page you're looking for doesn't exist or has been moved.", "404 body", True),
     ("404.cta", "errors", "Zur Startseite", "Back to homepage", "404 CTA", True),
 
-    # === LEGAL ===
+    # ════════════════════════════════════════════════════════════════════
+    # LEGAL
+    # ════════════════════════════════════════════════════════════════════
     ("legal.translation_disclaimer", "legal", "Dies ist eine Übersetzung zur Information. Rechtlich verbindlich ist die deutsche Fassung.", "This is a translation for your convenience. The German version is legally binding.", "EN legal page banner", True),
     ("legal.last_updated", "legal", "Stand", "Last updated", "Legal page date label", False),
 ]
