@@ -1,8 +1,5 @@
 // apps/frontend/src/components/features/booking/steps/StepReview.tsx
-// Phase 3d polish — addresses audit H-8.
-//   • Review sections each show an inline "Edit" link to jump back to that step.
-//   • Hairline rhythm, gold-deep section labels.
-//   • DSGVO consent + final submit at the bottom.
+// review + submit. All optional fields use undefined (matches BookingCreate type, not null).
 
 "use client";
 
@@ -10,15 +7,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { Pencil, ArrowRight } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
-import type {
-  BookingSubmitted,
-  Locale,
-  ServicePublic,
-} from "@/types";
+import type { BookingSubmitted, Locale, ServicePublic } from "@/types";
 import type { WizardStep } from "@/types/booking-wizard";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
 import { Button, Checkbox } from "@/components/ui";
-import { submitBooking } from "@/services/booking";
+import { submitBooking } from "@/services/bookings";
 import { pickT } from "@/lib/i18n/pick";
 
 interface StepReviewProps {
@@ -29,13 +22,12 @@ interface StepReviewProps {
   onSubmitted: (result: BookingSubmitted) => void;
 }
 
-export function StepReview({
-  t,
-  locale,
-  services,
-  onJumpTo,
-  onSubmitted,
-}: StepReviewProps) {
+function emptyToUndef(v: string | null | undefined): string | undefined {
+  const trimmed = (v ?? "").trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function StepReview({ t, locale, services, onJumpTo, onSubmitted }: StepReviewProps) {
   const draft = useBookingWizardStore((s) => s.draft);
   const reset = useBookingWizardStore((s) => s.reset);
   const [consent, setConsent] = useState(!!draft.consent_dsgvo);
@@ -61,23 +53,23 @@ export function StepReview({
         `${draft.pickup_date}T${draft.pickup_time}:00`,
       ).toISOString();
       const result = await submitBooking({
-        service_id: draft.service_id ?? null,
+        service_id: emptyToUndef(draft.service_id),
         requested_datetime,
         pickup_address: draft.pickup_address ?? "",
-        pickup_postcode: draft.pickup_postcode || null,
-        pickup_city: draft.pickup_city || null,
+        pickup_postcode: emptyToUndef(draft.pickup_postcode),
+        pickup_city: emptyToUndef(draft.pickup_city),
         destination_address: draft.destination_address ?? "",
-        destination_postcode: draft.destination_postcode || null,
-        destination_city: draft.destination_city || null,
+        destination_postcode: emptyToUndef(draft.destination_postcode),
+        destination_city: emptyToUndef(draft.destination_city),
         passenger_count: draft.passenger_count ?? 1,
         luggage_count: draft.luggage_count ?? 0,
-        special_requirements: draft.special_requirements || null,
+        special_requirements: emptyToUndef(draft.special_requirements),
         customer_name: draft.customer_name ?? "",
         customer_phone: draft.customer_phone ?? "",
         customer_email: draft.customer_email ?? "",
         is_business: !!draft.is_business,
-        company_name: draft.is_business ? draft.company_name || null : null,
-        company_vatid: draft.is_business ? draft.company_vatid || null : null,
+        company_name: draft.is_business ? emptyToUndef(draft.company_name) : undefined,
+        company_vatid: draft.is_business ? emptyToUndef(draft.company_vatid) : undefined,
         consent_dsgvo: true,
         language: locale,
         website: draft.website ?? "",
@@ -101,67 +93,55 @@ export function StepReview({
       <ul className="divide-y divide-line border-y border-line">
         <ReviewSection
           eyebrow={t("booking.step.service")}
+          editLabel={pickT(t, "common.edit", locale === "de" ? "Ändern" : "Edit")}
           onEdit={() => onJumpTo("service")}
         >
-          <ReviewRow label={pickT(t, "booking.review.service", "Leistung")} value={service?.title ?? "—"} />
+          <ReviewRow label={pickT(t, "booking.review.service", locale === "de" ? "Leistung" : "Service")} value={service?.title ?? "—"} />
           <ReviewRow
-            label={pickT(t, "booking.review.when", "Wann")}
-            value={
-              draft.pickup_date && draft.pickup_time
-                ? `${draft.pickup_date} · ${draft.pickup_time}`
-                : "—"
-            }
+            label={pickT(t, "booking.review.when", locale === "de" ? "Wann" : "When")}
+            value={draft.pickup_date && draft.pickup_time ? `${draft.pickup_date} · ${draft.pickup_time}` : "—"}
           />
         </ReviewSection>
 
-        <ReviewSection eyebrow={t("booking.step.route")} onEdit={() => onJumpTo("route")}>
+        <ReviewSection
+          eyebrow={t("booking.step.route")}
+          editLabel={pickT(t, "common.edit", locale === "de" ? "Ändern" : "Edit")}
+          onEdit={() => onJumpTo("route")}
+        >
           <ReviewRow
-            label={pickT(t, "booking.route.pickup_label", "Abholung")}
-            value={[
-              draft.pickup_address,
-              [draft.pickup_postcode, draft.pickup_city].filter(Boolean).join(" "),
-            ]
-              .filter(Boolean)
-              .join(", ")}
+            label={pickT(t, "booking.route.pickup_label", locale === "de" ? "Abholung" : "Pickup")}
+            value={[draft.pickup_address, [draft.pickup_postcode, draft.pickup_city].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
           />
           <ReviewRow
-            label={pickT(t, "booking.route.destination_label", "Ziel")}
-            value={[
-              draft.destination_address,
-              [draft.destination_postcode, draft.destination_city]
-                .filter(Boolean)
-                .join(" "),
-            ]
-              .filter(Boolean)
-              .join(", ")}
+            label={pickT(t, "booking.route.destination_label", locale === "de" ? "Ziel" : "Destination")}
+            value={[draft.destination_address, [draft.destination_postcode, draft.destination_city].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
           />
         </ReviewSection>
 
-        <ReviewSection eyebrow={t("booking.step.details")} onEdit={() => onJumpTo("details")}>
-          <ReviewRow
-            label={pickT(t, "booking.details.passengers_label", "Fahrgäste")}
-            value={String(draft.passenger_count ?? 1)}
-          />
-          <ReviewRow
-            label={pickT(t, "booking.details.luggage_label", "Gepäck")}
-            value={String(draft.luggage_count ?? 0)}
-          />
+        <ReviewSection
+          eyebrow={t("booking.step.details")}
+          editLabel={pickT(t, "common.edit", locale === "de" ? "Ändern" : "Edit")}
+          onEdit={() => onJumpTo("details")}
+        >
+          <ReviewRow label={pickT(t, "booking.details.passengers_label", locale === "de" ? "Fahrgäste" : "Passengers")} value={String(draft.passenger_count ?? 1)} />
+          <ReviewRow label={pickT(t, "booking.details.luggage_label", locale === "de" ? "Gepäck" : "Luggage")} value={String(draft.luggage_count ?? 0)} />
           {draft.special_requirements && (
-            <ReviewRow
-              label={pickT(t, "booking.details.notes_label", "Hinweise")}
-              value={draft.special_requirements}
-            />
+            <ReviewRow label={pickT(t, "booking.details.notes_label", locale === "de" ? "Hinweise" : "Notes")} value={draft.special_requirements} />
           )}
         </ReviewSection>
 
-        <ReviewSection eyebrow={t("booking.step.contact")} onEdit={() => onJumpTo("contact")}>
-          <ReviewRow label="Name" value={draft.customer_name ?? "—"} />
-          <ReviewRow label="Telefon" value={draft.customer_phone ?? "—"} />
-          <ReviewRow label="E-Mail" value={draft.customer_email ?? "—"} />
+        <ReviewSection
+          eyebrow={t("booking.step.contact")}
+          editLabel={pickT(t, "common.edit", locale === "de" ? "Ändern" : "Edit")}
+          onEdit={() => onJumpTo("contact")}
+        >
+          <ReviewRow label={pickT(t, "booking.contact.name_label", "Name")} value={draft.customer_name ?? "—"} />
+          <ReviewRow label={pickT(t, "booking.contact.phone_label", locale === "de" ? "Telefon" : "Phone")} value={draft.customer_phone ?? "—"} />
+          <ReviewRow label={pickT(t, "booking.contact.email_label", locale === "de" ? "E-Mail" : "Email")} value={draft.customer_email ?? "—"} />
           {draft.is_business && (
             <>
-              <ReviewRow label="Firma" value={draft.company_name ?? "—"} />
-              <ReviewRow label="USt-IdNr" value={draft.company_vatid ?? "—"} />
+              <ReviewRow label={pickT(t, "booking.contact.company_label", locale === "de" ? "Firma" : "Company")} value={draft.company_name ?? "—"} />
+              <ReviewRow label={pickT(t, "booking.contact.vat_label", locale === "de" ? "USt-IdNr." : "VAT ID")} value={draft.company_vatid ?? "—"} />
             </>
           )}
         </ReviewSection>
@@ -170,11 +150,11 @@ export function StepReview({
       <Checkbox
         label={
           <>
-            {pickT(t, "booking.review.consent_intro", "Ich stimme der ")}
+            {pickT(t, "booking.review.consent_intro", locale === "de" ? "Ich stimme der " : "I agree to the ")}
             <Link href={privacyHref} className="underline hover:text-gold-deep">
               {t("footer.legal.datenschutz")}
             </Link>{" "}
-            {pickT(t, "booking.review.consent_zu", "zu.")}
+            {pickT(t, "booking.review.consent_zu", locale === "de" ? "zu." : ".")}
           </>
         }
         required
@@ -195,7 +175,7 @@ export function StepReview({
           isLoading={submitting}
           trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         >
-          {pickT(t, "booking.review.submit", "Anfrage absenden")}
+          {pickT(t, "booking.review.submit", locale === "de" ? "Anfrage absenden" : "Submit request")}
         </Button>
       </div>
     </div>
@@ -204,26 +184,26 @@ export function StepReview({
 
 function ReviewSection({
   eyebrow,
+  editLabel,
   onEdit,
   children,
 }: {
   eyebrow: string;
+  editLabel: string;
   onEdit: () => void;
   children: React.ReactNode;
 }) {
   return (
     <li className="flex flex-col gap-3 py-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-          {eyebrow}
-        </p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">{eyebrow}</p>
         <button
           type="button"
           onClick={onEdit}
           className="inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.16em] text-mute transition-colors hover:text-ink"
         >
           <Pencil className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
-          Ändern
+          {editLabel}
         </button>
       </div>
       <dl className="grid grid-cols-1 gap-1.5">{children}</dl>

@@ -162,6 +162,17 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("services.hiw.eyebrow", "services", "So funktioniert's", "How it works", "Services HIW eyebrow", False),
     ("services.hiw.heading_part1", "services", "Drei Schritte,", "Three steps,", "Services HIW heading part 1", False),
     ("services.hiw.heading_part2", "services", "keine Überraschungen.", "no surprises.", "Services HIW heading part 2 (italic gold)", False),
+    ("services.hiw.step1.eyebrow", "services", "Anfrage", "Request", "HIW step 1 eyebrow", False),
+    ("services.hiw.step1.heading", "services", "Route und Datum senden", "Send your route and date", "HIW step 1 heading", False),
+    ("services.hiw.step1.body", "services", "Per Webformular, Telefon oder WhatsApp. Geben Sie Zeit, Abholort und Ziel an — wir kümmern uns um den Rest.", "By web form, phone or WhatsApp. Include the time, the pickup point and the destination — we'll handle the rest.", "HIW step 1 body", False),
+
+    ("services.hiw.step2.eyebrow", "services", "Bestätigung", "Confirmation", "HIW step 2 eyebrow", False),
+    ("services.hiw.step2.heading", "services", "Festpreis innerhalb von 30 Min.", "Fixed price within 30 min", "HIW step 2 heading", False),
+    ("services.hiw.step2.body", "services", "Während der Telefonzeiten bestätigen wir Festpreis, Fahrer und Fahrzeug. Ab diesem Moment ist der Preis fixiert.", "During phone hours we confirm the fixed price, the driver and the vehicle. The price is locked from that moment on.", "HIW step 2 body", False),
+
+    ("services.hiw.step3.eyebrow", "services", "Ankunft", "Arrival", "HIW step 3 eyebrow", False),
+    ("services.hiw.step3.heading", "services", "Der Fahrer ist schon da", "The driver is already there", "HIW step 3 heading", False),
+    ("services.hiw.step3.body", "services", "Kein Heranrufen, keine App-Dispatch, kein Surge. Der bestätigte Festpreis ist der Preis, den Sie zahlen — auch im Stau, auch an Feiertagen.", "No hailing, no app dispatch, no surge. The fixed price you confirmed is the fixed price you pay — same in traffic, same on holidays.", "HIW step 3 body", False),
 
     # Editorial close (bottom of services page)
     ("services.close.eyebrow", "services", "Vier Services, ein Standard", "Four services, one standard", "Services editorial close eyebrow", False),
@@ -216,14 +227,27 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("pricing.included.big_caption", "pricing", "MwSt. · IMMER INKLUDIERT", "VAT · ALWAYS INCLUDED", "19% display caption", False),
     ("pricing.included.eyebrow", "pricing", "Was Ihr Festpreis abdeckt", "What your fixed price covers", "Included-moment eyebrow", False),
     ("pricing.included.heading", "pricing", "Der Preis, den Sie sehen, ist der Preis, den Sie zahlen.", "The price you see is the price you pay.", "Included-moment heading", False),
+    ("pricing.included.lead", "pricing", "Jeder Festpreis enthält die deutsche Mehrwertsteuer, Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage — ohne Aufpreis. Nichts wird am Zielort hinzugefügt.", "Every quote includes German VAT, standard luggage, waiting time at pickup and child seat on request — at no extra charge. Nothing added at the destination.", "Included-moment lead paragraph", False),
+
+    ("pricing.included.luggage.label", "pricing", "Standardgepäck", "Standard luggage", "Included row: luggage label", False),
+    ("pricing.included.luggage.desc", "pricing", "— 1 Koffer + 1 Handgepäck pro Fahrgast.", "— 1 case + 1 cabin bag per passenger.", "Included row: luggage description", False),
+
+    ("pricing.included.waiting.label", "pricing", "15 Minuten Wartezeit", "15 minutes waiting time", "Included row: waiting label", False),
+    ("pricing.included.waiting.desc", "pricing", "— 60 Minuten am Flughafen mit Meet & Greet.", "— 60 minutes for airport meet & greet.", "Included row: waiting description", False),
+
+    ("pricing.included.childseat.label", "pricing", "Kindersitz oder Sitzerhöhung", "Child seat or booster", "Included row: child seat label", False),
+    ("pricing.included.childseat.desc", "pricing", "— auf Anfrage, kostenfrei.", "— on request, free of charge.", "Included row: child seat description", False),
+
+    ("pricing.included.flighttrack.label", "pricing", "Flugverfolgung", "Flight tracking", "Included row: flight tracking label", False),
+    ("pricing.included.flighttrack.desc", "pricing", "— wir passen die Abholzeit bei Verspätungen an.", "— we adjust pickup if your flight is delayed.", "Included row: flight tracking description", False),
 
     # Excluded strip (single horizontal "Charged separately" row)
     ("pricing.excluded.label", "pricing", "Separat berechnet", "Charged separately", "Excluded-items strip label", False),
     ("pricing.excluded.tolls", "pricing", "Mautgebühren", "Toll charges", "Excluded item", False),
     ("pricing.excluded.parking", "pricing", "Parkgebühren am Zielort", "Parking fees at destination", "Excluded item", False),
-    ("pricing.excluded.extra_stops", "pricing", "Zusätzliche Zwischenstopps", "Additional intermediate stops", "Excluded item", False),
-    ("pricing.excluded.extended_wait", "pricing", "Wartezeit über 60 Min.", "Waiting time over 60 min", "Excluded item", False),
-
+    ("pricing.excluded.cleaning", "pricing", "Reinigungszuschlag bei Verschmutzung", "Cleaning surcharge if soiled", "Excluded item: cleaning surcharge", False),
+    ("pricing.excluded.night", "pricing", "Nachtzuschlag 22:00–06:00", "Night surcharge 22:00–06:00", "Excluded item: night surcharge", False),
+    
     # Comparison table (StepNow vs standard taxi)
     ("pricing.comparison.eyebrow", "pricing", "Gleiche Fahrt — anderes Erlebnis", "Same ride — different experience", "Comparison eyebrow", False),
     ("pricing.comparison.heading", "pricing", "StepNow vs. ein normales Taxi", "StepNow vs. a standard taxi", "Comparison heading", False),
@@ -281,6 +305,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("about.story.eyebrow", "about", "Die Geschichte", "The story", "Story section eyebrow", False),
     ("about.story.heading", "about", "Meine Geschichte", "My story", "Story section heading", False),
     ("about.story.author", "about", "Naeem Ahmad", "Naeem Ahmad", "Owner name displayed under the portrait", False),
+    ("about.story.role", "about", "Inhaber", "Owner", "Role label shown next to the owner name in the story section", False),
+    ("about.story.placeholder", "about", "Unsere Geschichte wird in Kürze erzählt.", "Our story will be told shortly.", "Story section placeholder when no paragraphs are seeded", False),
     ("about.story.paragraph_1", "about",
      "Ich bin Naeem Ahmad — Inhaber von StepNow Rides & Movers und seit über zehn Jahren in der Region Stuttgart unterwegs.",
      "I'm Naeem Ahmad — owner of StepNow Rides & Movers and a driver in the Stuttgart region for more than ten years.",
@@ -534,6 +560,11 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     # ════════════════════════════════════════════════════════════════════
     ("legal.translation_disclaimer", "legal", "Dies ist eine Übersetzung zur Information. Rechtlich verbindlich ist die deutsche Fassung.", "This is a translation for your convenience. The German version is legally binding.", "EN legal page banner", True),
     ("legal.last_updated", "legal", "Stand", "Last updated", "Legal page date label", False),
+    
+    
+    ("booking.confirmation.eyebrow", "booking", "Anfrage erhalten", "Request received", "Confirmation page eyebrow above headline", False),
+    ("common.copy", "common", "Kopieren", "Copy", "Generic copy-to-clipboard action", False),
+    ("common.copied", "common", "Kopiert", "Copied", "Generic copy success state", False),
 ]
 
 
