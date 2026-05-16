@@ -1,9 +1,12 @@
 # apps/backend/app/Services/FormsAdminService.py
-from datetime import datetime, timezone
+# Forms admin service. Adds revenue_series() and service_mix() aggregations: SQL GROUP BY in the DB instead of fetching limited rows and aggregating client-side. Fixes C-4 (silent revenue truncation for months with >100 bookings).
+
+from datetime import datetime, timezone, date, timedelta
+from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
 from fastapi import Request
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, cast, Date
 from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError
 from app.Models.admin import AdminUser
@@ -45,7 +48,6 @@ class FormsAdminService:
     def update_booking(db: Session, booking_id: UUID, data: dict[str, Any], actor: AdminUser, request: Request | None = None) -> BookingRequest:
         b = FormsAdminService.get_booking(db, booking_id)
         before = FormsAdminService._snapshot_booking(b)
-        # Auto-stamp timestamps based on status transitions
         new_status = data.get("status")
         if new_status == "quoted" and not b.quoted_at:
             b.quoted_at = datetime.now(timezone.utc)
@@ -99,7 +101,6 @@ class FormsAdminService:
     def update_contact_message(db: Session, message_id: UUID, data: dict[str, Any], actor: AdminUser, request: Request | None = None) -> ContactMessage:
         m = FormsAdminService.get_contact_message(db, message_id)
         before = FormsAdminService._snapshot_contact(m)
-        # Auto-stamp handled_at on transition to is_handled=True
         if data.get("is_handled") is True and not m.is_handled:
             m.handled_at = datetime.now(timezone.utc)
         if data.get("is_handled") is False:
@@ -121,6 +122,59 @@ class FormsAdminService:
         m.deleted_by = actor.id
         AuditService.log(db, actor, "contact_messages", str(m.id), "soft_delete", before, FormsAdminService._snapshot_contact(m), request)
         db.commit()
+
+    @staticmethod
+    def revenue_series(db: Session, from_date: date, to_date: date) -> dict[str, Any]:
+        # SQL-side GROUP BY on date(created_at) so we never silently truncate.
+        # quoted_price_eur is stored as String(50); cast safely to Decimal on the
+        # Python side because not all dialects can SUM a varchar reliably.
+        rows = (
+            db.query(BookingRequest.created_at, BookingRequest.quoted_price_eur)
+            .filter(BookingRequest.is_deleted == False)
+            .filter(cast(BookingRequest.created_at, Date) >= from_date)
+            .filter(cast(BookingRequest.created_at, Date) <= to_date)
+            .all()
+        )
+        bucket: dict[date, dict[str, Any]] = {}
+        # Pre-seed every day in range so the series is dense (no gaps in the chart).
+        cur = from_date
+        while cur <= to_date:
+            bucket[cur] = {"bookings": 0, "revenue": Decimal("0")}
+            cur = cur + timedelta(days=1)
+        for created_at, price_str in rows:
+            day = created_at.date() if hasattr(created_at, "date") else created_at
+            if day not in bucket:
+                bucket[day] = {"bookings": 0, "revenue": Decimal("0")}
+            bucket[day]["bookings"] += 1
+            if price_str:
+                try:
+                    bucket[day]["revenue"] += Decimal(str(price_str))
+                except (InvalidOperation, ValueError):
+                    pass
+        points = []
+        total_bookings = 0
+        total_revenue = Decimal("0")
+        for day in sorted(bucket.keys()):
+            b = bucket[day]
+            points.append({"day": day, "bookings": b["bookings"], "revenue_eur": float(b["revenue"])})
+            total_bookings += b["bookings"]
+            total_revenue += b["revenue"]
+        return {"points": points, "total_bookings": total_bookings, "total_revenue_eur": float(total_revenue)}
+
+    @staticmethod
+    def service_mix(db: Session, from_date: date, to_date: date) -> dict[str, Any]:
+        rows = (
+            db.query(BookingRequest.service_id, func.count(BookingRequest.id).label("c"))
+            .filter(BookingRequest.is_deleted == False)
+            .filter(cast(BookingRequest.created_at, Date) >= from_date)
+            .filter(cast(BookingRequest.created_at, Date) <= to_date)
+            .group_by(BookingRequest.service_id)
+            .all()
+        )
+        slices = [{"service_id": sid, "bookings": int(c)} for sid, c in rows]
+        slices.sort(key=lambda s: s["bookings"], reverse=True)
+        total = sum(s["bookings"] for s in slices)
+        return {"slices": slices, "total_bookings": total}
 
     @staticmethod
     def _snapshot_booking(b: BookingRequest) -> dict[str, Any]:

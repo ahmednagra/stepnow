@@ -1,4 +1,6 @@
 # apps/backend/app/Services/PricingService.py
+# Pricing service. Adds list_public_all_grouped() to return pricing for every active service in one eager-loaded query (kills N+1 from public pricing/services pages).
+
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
@@ -19,7 +21,6 @@ class PricingService:
 
     @staticmethod
     def list_categories_for_service(db: Session, service_id: UUID, include_deleted: bool = False) -> list[PricingCategory]:
-        # Verify service exists
         svc = db.query(Service).filter(Service.id == service_id, Service.is_deleted == False).first()
         if not svc:
             raise NotFoundError("Service not found", service_id=str(service_id))
@@ -89,7 +90,7 @@ class PricingService:
 
     @staticmethod
     def list_items(db: Session, category_id: UUID, include_deleted: bool = False) -> list[PricingItem]:
-        PricingService.get_category(db, category_id, allow_deleted=True)  # ensures category exists
+        PricingService.get_category(db, category_id, allow_deleted=True)
         query = db.query(PricingItem).filter(PricingItem.category_id == category_id)
         if not include_deleted:
             query = query.filter(PricingItem.is_deleted == False)
@@ -177,6 +178,43 @@ class PricingService:
                     "price_eur": str(i.price_eur),
                     "note": i.note_de if is_de else i.note_en,
                 } for i in items],
+            })
+        return result
+
+    @staticmethod
+    def list_public_all_grouped(db: Session, locale: str) -> list[dict[str, Any]]:
+        is_de = locale == "de"
+        services = db.query(Service).filter(Service.active == True, Service.is_deleted == False).order_by(Service.sort_order, Service.created_at).all()
+        if not services:
+            return []
+        service_ids = [s.id for s in services]
+        cats = db.query(PricingCategory).filter(PricingCategory.service_id.in_(service_ids), PricingCategory.is_deleted == False).options(selectinload(PricingCategory.items)).order_by(PricingCategory.sort_order, PricingCategory.created_at).all()
+        cats_by_service: dict[UUID, list[PricingCategory]] = {sid: [] for sid in service_ids}
+        for c in cats:
+            cats_by_service[c.service_id].append(c)
+        result = []
+        for svc in services:
+            svc_cats = cats_by_service.get(svc.id, [])
+            categories_payload = []
+            for c in svc_cats:
+                items = [i for i in c.items if not i.is_deleted]
+                items.sort(key=lambda i: (i.sort_order, i.created_at))
+                categories_payload.append({
+                    "id": c.id,
+                    "name": c.name_de if is_de else c.name_en,
+                    "description": c.description_de if is_de else c.description_en,
+                    "items": [{
+                        "id": i.id,
+                        "from_location": i.from_location_de if is_de else i.from_location_en,
+                        "to_location": i.to_location_de if is_de else i.to_location_en,
+                        "price_eur": str(i.price_eur),
+                        "note": i.note_de if is_de else i.note_en,
+                    } for i in items],
+                })
+            result.append({
+                "service_id": svc.id,
+                "service_slug": svc.slug_de if is_de else svc.slug_en,
+                "categories": categories_payload,
             })
         return result
 

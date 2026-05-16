@@ -1,12 +1,12 @@
 # scripts/seeders/seed_faqs.py
-"""Seed FAQs — real questions German chauffeur customers ask.
+"""Seed FAQs real questions German chauffeur customers ask.
 
 Categories:
-- general — works for the homepage teaser
-- booking — about the booking process
-- pricing — about how prices work
-- airport — specific to airport transfer service
-- hospital — specific to hospital transport service
+- general works for the homepage teaser
+- booking about the booking process
+- pricing about how prices work
+- airport specific to airport transfer service
+- hospital specific to hospital transport service
 
 Idempotent: keyed by question_de exact match.
 """
@@ -21,22 +21,22 @@ FAQS = [
         "sort_order": 10, "category": "general",
         "question_de": "Wie weit im Voraus muss ich buchen?",
         "question_en": "How far in advance do I need to book?",
-        "answer_de": "Wir empfehlen mindestens **24 Stunden** im Voraus, um Ihren Wunschtermin garantiert zu erhalten. Kurzfristige Buchungen sind oft möglich — rufen Sie uns einfach an und wir prüfen die Verfügbarkeit.",
-        "answer_en": "We recommend booking at least **24 hours** in advance to guarantee your preferred time. Short-notice bookings are often possible — just call us and we'll check availability.",
+        "answer_de": "Wir empfehlen mindestens **24 Stunden** im Voraus, um Ihren Wunschtermin garantiert zu erhalten. Kurzfristige Buchungen sind oft möglich rufen Sie uns einfach an und wir prüfen die Verfügbarkeit.",
+        "answer_en": "We recommend booking at least **24 hours** in advance to guarantee your preferred time. Short-notice bookings are often possible just call us and we'll check availability.",
     },
     {
         "sort_order": 20, "category": "general",
         "question_de": "Was unterscheidet Sie von einem Taxi?",
         "question_en": "How are you different from a taxi?",
-        "answer_de": "Wir fahren ausschließlich auf Vorbestellung — kein spontaner Halt auf der Straße. Der Preis steht **vor** der Fahrt fest (Festpreis statt Taxameter). Wir sind ein konzessioniertes Mietwagenunternehmen nach § 49 PBefG, nicht eine Taxi-Konzession. Praktisch bedeutet das: planbar, kalkulierbar, persönlich.",
-        "answer_en": "We operate by pre-booking only — no spontaneous street pickups. The price is set **before** the ride (fixed price instead of taximeter). We are a licensed Mietwagen company under § 49 PBefG, not a taxi license. In practice: predictable, calculable, personal.",
+        "answer_de": "Wir fahren ausschließlich auf Vorbestellung kein spontaner Halt auf der Straße. Der Preis steht **vor** der Fahrt fest (Festpreis statt Taxameter). Wir sind ein konzessioniertes Mietwagenunternehmen nach § 49 PBefG, nicht eine Taxi-Konzession. Praktisch bedeutet das: planbar, kalkulierbar, persönlich.",
+        "answer_en": "We operate by pre-booking only no spontaneous street pickups. The price is set **before** the ride (fixed price instead of taximeter). We are a licensed Mietwagen company under § 49 PBefG, not a taxi license. In practice: predictable, calculable, personal.",
     },
     {
         "sort_order": 30, "category": "general",
         "question_de": "In welcher Region fahren Sie?",
         "question_en": "Which area do you serve?",
         "answer_de": "Unser Hauptgebiet ist die Region Stuttgart, Esslingen, Deizisau und das mittlere Neckartal. Längere Strecken zu Flughäfen (Frankfurt, München) und Reha-Kliniken fahren wir ebenfalls. Bei Fragen zu Ihrer Strecke: einfach anrufen.",
-        "answer_en": "Our main area is the Stuttgart, Esslingen, Deizisau region and the central Neckar valley. We also serve longer routes to airports (Frankfurt, Munich) and rehab clinics. Questions about your specific route — just give us a call.",
+        "answer_en": "Our main area is the Stuttgart, Esslingen, Deizisau region and the central Neckar valley. We also serve longer routes to airports (Frankfurt, Munich) and rehab clinics. Questions about your specific route just give us a call.",
     },
     {
         "sort_order": 40, "category": "general",
@@ -51,8 +51,8 @@ FAQS = [
         "sort_order": 10, "category": "booking",
         "question_de": "Wie buche ich eine Fahrt?",
         "question_en": "How do I book a ride?",
-        "answer_de": "Drei Wege: (1) Online über unser Buchungsformular — innerhalb von 30 Minuten erhalten Sie ein verbindliches Festpreis-Angebot. (2) Telefonisch unter +49 7153 9292841. (3) Per WhatsApp für schnelle Anfragen.",
-        "answer_en": "Three ways: (1) Online via our booking form — within 30 minutes you receive a binding fixed-price quote. (2) By phone at +49 7153 9292841. (3) By WhatsApp for quick inquiries.",
+        "answer_de": "Drei Wege: (1) Online über unser Buchungsformular innerhalb von 30 Minuten erhalten Sie ein verbindliches Festpreis-Angebot. (2) Telefonisch unter +49 7153 9292841. (3) Per WhatsApp für schnelle Anfragen.",
+        "answer_en": "Three ways: (1) Online via our booking form within 30 minutes you receive a binding fixed-price quote. (2) By phone at +49 7153 9292841. (3) By WhatsApp for quick inquiries.",
     },
     {
         "sort_order": 20, "category": "booking",
@@ -81,8 +81,8 @@ FAQS = [
         "sort_order": 20, "category": "pricing",
         "question_de": "Was passiert, wenn die Fahrt länger dauert als geplant?",
         "question_en": "What happens if the trip takes longer than planned?",
-        "answer_de": "Der Festpreis bleibt der Festpreis — Sie zahlen keine Minute mehr, auch wenn wir wegen Stau länger unterwegs sind. Nur wenn **Sie** zusätzliche Stopps oder Wartezeiten wünschen, kann sich der Preis ändern, und das besprechen wir vorher.",
-        "answer_en": "The fixed price stays the fixed price — you don't pay a minute more, even if we take longer because of traffic. Only if **you** request additional stops or waiting times can the price change, and we discuss that beforehand.",
+        "answer_de": "Der Festpreis bleibt der Festpreis Sie zahlen keine Minute mehr, auch wenn wir wegen Stau länger unterwegs sind. Nur wenn **Sie** zusätzliche Stopps oder Wartezeiten wünschen, kann sich der Preis ändern, und das besprechen wir vorher.",
+        "answer_en": "The fixed price stays the fixed price you don't pay a minute more, even if we take longer because of traffic. Only if **you** request additional stops or waiting times can the price change, and we discuss that beforehand.",
     },
     {
         "sort_order": 30, "category": "pricing",
@@ -113,15 +113,15 @@ FAQS = [
         "sort_order": 10, "category": "krankenhausfahrten",
         "question_de": "Können Angehörige mitfahren?",
         "question_en": "Can family members come along?",
-        "answer_de": "Selbstverständlich, eine Begleitperson fährt **kostenfrei** mit. Bei mehreren Personen sprechen Sie uns bitte vorher an — wir setzen dann das passende Fahrzeug ein.",
-        "answer_en": "Of course, one companion travels **free of charge**. For multiple passengers, please let us know in advance — we'll arrange the appropriate vehicle.",
+        "answer_de": "Selbstverständlich, eine Begleitperson fährt **kostenfrei** mit. Bei mehreren Personen sprechen Sie uns bitte vorher an wir setzen dann das passende Fahrzeug ein.",
+        "answer_en": "Of course, one companion travels **free of charge**. For multiple passengers, please let us know in advance we'll arrange the appropriate vehicle.",
     },
     {
         "sort_order": 20, "category": "krankenhausfahrten",
         "question_de": "Sind Ihre Fahrzeuge auch für Rollstuhlfahrer geeignet?",
         "question_en": "Are your vehicles suitable for wheelchair users?",
-        "answer_de": "Unser VW Caddy Maxi ist barrierearm zugänglich, mit Rampe für Rollatoren und faltbare Rollstühle. Für vollelektrische Rollstühle oder schwere medizinische Geräte sprechen Sie uns bitte vorher an — wir koordinieren das individuell.",
-        "answer_en": "Our VW Caddy Maxi is accessibility-friendly, with a ramp for walkers and folding wheelchairs. For powered wheelchairs or heavy medical equipment, please contact us in advance — we coordinate this individually.",
+        "answer_de": "Unser VW Caddy Maxi ist barrierearm zugänglich, mit Rampe für Rollatoren und faltbare Rollstühle. Für vollelektrische Rollstühle oder schwere medizinische Geräte sprechen Sie uns bitte vorher an wir koordinieren das individuell.",
+        "answer_en": "Our VW Caddy Maxi is accessibility-friendly, with a ramp for walkers and folding wheelchairs. For powered wheelchairs or heavy medical equipment, please contact us in advance we coordinate this individually.",
     },
 ]
 

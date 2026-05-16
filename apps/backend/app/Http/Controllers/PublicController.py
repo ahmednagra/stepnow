@@ -1,12 +1,13 @@
 # apps/backend/app/Http/Controllers/PublicController.py
-# Maps SQLAlchemy rows to public Pydantic responses for all /api/v0/public/* endpoints.
+# Maps SQLAlchemy rows to public Pydantic responses for all /api/v0/public/* endpoints. Adds list_pricing_all_grouped() for the batch /pricing route.
+
 from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError
 from app.Schemas.public import (
     FaqPublicResponse, LegalPagePublicResponse, PricingCategoryPublicResponse,
-    PricingItemPublicResponse, ServicePublicListItem, ServicePublicResponse,
-    SettingsPublicResponse, TestimonialPublicResponse, UiStringsPublicResponse,
-    VehiclePublicResponse,
+    PricingGroupedByServicePublic, PricingItemPublicResponse, ServicePublicListItem,
+    ServicePublicResponse, SettingsPublicResponse, TestimonialPublicResponse,
+    UiStringsPublicResponse, VehiclePublicResponse,
 )
 from app.Services.FaqsService import FaqsService
 from app.Services.LegalPagesService import LegalPagesService
@@ -20,6 +21,7 @@ from app.Utils.i18n import Locale
 
 
 class PublicController:
+
     @staticmethod
     def list_services(db: Session, locale: Locale) -> list[ServicePublicListItem]:
         services = PublicReadService.list_services(db, locale)
@@ -114,3 +116,17 @@ class PublicController:
             description=c["description"],
             items=[PricingItemPublicResponse(**i) for i in c["items"]],
         ) for c in cats]
+
+    @staticmethod
+    def list_pricing_all_grouped(db: Session, locale: Locale) -> list[PricingGroupedByServicePublic]:
+        grouped = PricingService.list_public_all_grouped(db, locale.value)
+        return [PricingGroupedByServicePublic(
+            service_id=g["service_id"],
+            service_slug=g["service_slug"],
+            categories=[PricingCategoryPublicResponse(
+                id=c["id"],
+                name=c["name"],
+                description=c["description"],
+                items=[PricingItemPublicResponse(**i) for i in c["items"]],
+            ) for c in g["categories"]],
+        ) for g in grouped]

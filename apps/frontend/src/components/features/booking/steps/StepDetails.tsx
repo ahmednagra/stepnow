@@ -26,7 +26,7 @@ export function StepDetails({ t, registerValidator }: StepDetailsProps) {
   const updateDraft = useBookingWizardStore((s) => s.updateDraft);
 
   useEffect(() => {
-    registerValidator(() => true); // always valid — counters are constrained.
+    registerValidator(() => true); 
   }, [registerValidator]);
 
   return (

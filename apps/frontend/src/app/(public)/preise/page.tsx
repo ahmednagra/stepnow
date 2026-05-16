@@ -1,10 +1,10 @@
 // apps/frontend/src/app/(public)/preise/page.tsx
-// Pricing page (DE). Revalidate 10min; admin-bff invalidates pricing tag on category/item mutation.
+// Pricing page (DE). Uses batch listAllPricingServer to fetch all services' pricing in one call (kills C-3 N+1).
 
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
-import { getPricingForServiceServer } from "@/services/pricing";
+import { listAllPricingServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
@@ -32,18 +32,18 @@ return { item: firstItem, serviceImageUrl: target.service.hero_image_url };
 }
 
 export default async function PricingPageDe() {
-const [stringsRes, services, settings] = await Promise.all([getUiStringsServer("de"), listServicesServer("de"), getSettingsServer("de")]);
+const [stringsRes, services, settings, allPricing] = await Promise.all([
+getUiStringsServer("de"),
+listServicesServer("de"),
+getSettingsServer("de"),
+listAllPricingServer("de"),
+]);
 const t = createT(stringsRes.strings, "de");
-const pricingByService: ServicePricing[] = await Promise.all(
-services.map(async (s) => {
-try {
-const categories = await getPricingForServiceServer(s.slug, "de");
-return { service: s, categories };
-} catch {
-return { service: s, categories: [] as PricingCategoryPublic[] };
-}
-}),
-);
+const pricingByServiceId = new Map(allPricing.map((g) => [g.service_id, g.categories]));
+const pricingByService: ServicePricing[] = services.map((s) => ({
+service: s,
+categories: pricingByServiceId.get(s.id) ?? ([] as PricingCategoryPublic[]),
+}));
 const { item: featuredItem, serviceImageUrl: featuredBackground } = findFeaturedItem(pricingByService);
 
 return (

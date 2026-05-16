@@ -1,5 +1,5 @@
 # apps/backend/routes/api/v0/public.py
-# Public endpoints with ETag/304 short-circuiting on read paths.
+# Public endpoints with ETag/304 short-circuiting on read paths. Adds GET /public/pricing for batch all-services pricing (kills N+1).
 
 import hashlib
 import json
@@ -89,6 +89,11 @@ async def list_faqs(
 @router.get("/testimonials")
 async def list_testimonials(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.list_testimonials(db, locale))
+
+
+@router.get("/pricing")
+async def list_pricing_all(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.list_pricing_all_grouped(db, locale))
 
 
 @router.get("/services/{slug}/pricing")

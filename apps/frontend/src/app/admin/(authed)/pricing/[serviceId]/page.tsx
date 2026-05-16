@@ -26,7 +26,7 @@ async function loadAll(serviceId: string): Promise<{ service: ServiceAdmin | nul
 
 export async function generateMetadata({ params }: { params: { serviceId: string } }) {
   const { service } = await loadAll(params.serviceId);
-  return { title: service ? `Pricing — ${service.title_de} · StepNow Admin` : "Pricing · StepNow Admin" };
+  return { title: service ? `Pricing ${service.title_de} · StepNow Admin` : "Pricing · StepNow Admin" };
 }
 
 export default async function PricingEditorPage({ params }: { params: { serviceId: string } }) {
@@ -51,7 +51,7 @@ export default async function PricingEditorPage({ params }: { params: { serviceI
               <PreviewButton
                 variant="header"
                 url={servicePreviewUrl(service.slug_de, service.slug_en)}
-                title={`Pricing — ${service.title_de}`}
+                title={`Pricing ${service.title_de}`}
                 subtitle={`/dienstleistungen/${service.slug_de}`}
               />
             )}

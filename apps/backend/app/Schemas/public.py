@@ -1,5 +1,6 @@
 # apps/backend/app/Schemas/public.py
-# Pydantic response models for all unauthenticated /api/v0/public/* endpoints.
+# Pydantic response models for all unauthenticated /api/v0/public/* endpoints. Adds PricingGroupedByServicePublic for the batch pricing route.
+
 from decimal import Decimal
 from uuid import UUID
 from datetime import date, datetime
@@ -107,3 +108,9 @@ class PricingCategoryPublicResponse(BaseModel):
     name: str
     description: str | None
     items: list[PricingItemPublicResponse]
+
+
+class PricingGroupedByServicePublic(BaseModel):
+    service_id: UUID
+    service_slug: str
+    categories: list[PricingCategoryPublicResponse]

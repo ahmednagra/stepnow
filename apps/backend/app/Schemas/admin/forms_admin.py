@@ -1,10 +1,11 @@
 # apps/backend/app/Schemas/admin/forms_admin.py
-from datetime import datetime
+# Admin forms schemas. Adds revenue-series + service-mix response models for the dashboard aggregation endpoints (kills client-side truncation bug).
+
+from datetime import datetime, date
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-# Booking statuses follow the architecture's lifecycle.
 _BOOKING_STATUSES = ("new", "contacted", "quoted", "confirmed", "completed", "cancelled")
 
 
@@ -72,3 +73,25 @@ class ContactMessageAdminResponse(BaseModel):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+
+
+class RevenueSeriesPoint(BaseModel):
+    day: date
+    bookings: int
+    revenue_eur: float
+
+
+class RevenueSeriesResponse(BaseModel):
+    points: list[RevenueSeriesPoint]
+    total_bookings: int
+    total_revenue_eur: float
+
+
+class ServiceMixSlice(BaseModel):
+    service_id: UUID | None
+    bookings: int
+
+
+class ServiceMixResponse(BaseModel):
+    slices: list[ServiceMixSlice]
+    total_bookings: int

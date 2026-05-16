@@ -1,10 +1,10 @@
 // apps/frontend/src/app/(public)/dienstleistungen/page.tsx
-// Services magazine spread (DE). Revalidate 30min; admin-bff invalidates services + pricing tags on mutation.
+// Services magazine spread (DE). Uses batch listAllPricingServer to compute lowest-price per service in one call (kills C-3 N+1).
 
 import type { Metadata } from "next";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
-import { getPricingForServiceServer } from "@/services/pricing";
+import { listAllPricingServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata } from "@/lib/seo";
@@ -21,20 +21,20 @@ return buildMetadata({ title: t("services.page.title"), description: t("services
 }
 
 export default async function ServicesListDe() {
-const [stringsRes, services, settings] = await Promise.all([getUiStringsServer("de"), listServicesServer("de"), getSettingsServer("de")]);
+const [stringsRes, services, settings, allPricing] = await Promise.all([
+getUiStringsServer("de"),
+listServicesServer("de"),
+getSettingsServer("de"),
+listAllPricingServer("de"),
+]);
 const t = createT(stringsRes.strings, "de");
+const pricingByServiceId = new Map(allPricing.map((g) => [g.service_id, g.categories]));
 
-const data: ServiceWithPricing[] = await Promise.all(
-services.map(async (s) => {
-try {
-const categories = await getPricingForServiceServer(s.slug, "de");
+const data: ServiceWithPricing[] = services.map((s) => {
+const categories = pricingByServiceId.get(s.id) ?? [];
 const { price, routeLabel } = findLowestPrice(categories);
 return { service: s, lowestPrice: price, lowestRouteLabel: routeLabel };
-} catch {
-return { service: s, lowestPrice: null, lowestRouteLabel: null };
-}
-}),
-);
+});
 
 return (
 <>

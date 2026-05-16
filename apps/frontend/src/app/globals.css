@@ -1,3 +1,6 @@
+/* apps/frontend/src/app/globals.css */
+/* Adds will-change cleanup once reveal animations complete, and hardens the prefers-reduced-motion block to suppress Tailwind animate-fade-* keyframes (M-5). */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -26,10 +29,6 @@
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   }
 
-  /* Serif is reserved for h1/h2 — display-scale headlines only.
-   * h3/h4 use the body sans (Inter) for readability at smaller sizes.
-   * Components that want serif on a smaller heading can still opt in
-   * with `font-serif` inline; we strip those instances in the components. */
   h1, h2 {
     @apply font-serif tracking-tight;
   }
@@ -131,12 +130,17 @@
 }
 
 @layer utilities {
+  /* will-change is only set BEFORE the element becomes visible. Once .is-visible
+     fires, the browser drops the hint — saves a small amount of GPU memory per
+     element on long pages with many reveals. */
   .reveal {
     opacity: 0;
     transform: translateY(20px);
     transition:
       opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
       transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal:not(.is-visible) {
     will-change: opacity, transform;
   }
   .reveal.is-visible {
@@ -150,6 +154,8 @@
     transition:
       opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
       transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .stagger:not(.is-visible) > * {
     will-change: opacity, transform;
   }
   .stagger.is-visible > * {
@@ -165,11 +171,23 @@
 
   .pb-safe { padding-bottom: var(--safe-bottom); }
 
+  /* Reduced-motion: kill all our animations and transitions. The * rule below
+     handles transition-duration / animation-duration. The animation: none rule
+     is added so Tailwind's animate-fade-in / animate-fade-up / animate-fade-up-slow
+     / animate-nudge utilities don't briefly play their keyframes before being
+     shortened. */
   @media (prefers-reduced-motion: reduce) {
     .reveal, .stagger > * {
       opacity: 1;
       transform: none;
       transition: none;
+      will-change: auto;
+    }
+    .animate-fade-in,
+    .animate-fade-up,
+    .animate-fade-up-slow,
+    .animate-nudge {
+      animation: none !important;
     }
     *, *::before, *::after {
       animation-duration: 0.01ms !important;

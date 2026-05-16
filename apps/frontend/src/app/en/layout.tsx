@@ -12,7 +12,7 @@ import { Header, Footer } from "@/components/shared";
 // root layout (src/app/layout.tsx) — don't redeclare them here.
 export const metadata: Metadata = {
   title: {
-    default: "StepNow Rides & Movers — Taxi Alternative in Stuttgart",
+    default: "StepNow Rides & Movers Taxi Alternative in Stuttgart",
     template: "%s · StepNow Rides & Movers",
   },
   description:

@@ -1,5 +1,8 @@
 # apps/backend/app/Http/Controllers/admin/FormsAdminController.py
+# Forms admin controller. Adds revenue_series() and service_mix() for the dashboard aggregation routes.
+
 import math
+from datetime import date
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
@@ -9,6 +12,10 @@ from app.Schemas.admin.forms_admin import (
     BookingStatusUpdate,
     ContactMessageAdminResponse,
     ContactMessageUpdate,
+    RevenueSeriesPoint,
+    RevenueSeriesResponse,
+    ServiceMixResponse,
+    ServiceMixSlice,
 )
 from app.Schemas.common import PaginatedResponse, PaginationInfo
 from app.Services.FormsAdminService import FormsAdminService
@@ -63,3 +70,20 @@ class FormsAdminController:
     @staticmethod
     def delete_contact_message(db: Session, message_id: UUID, actor: AdminUser, request: Request) -> None:
         FormsAdminService.soft_delete_contact_message(db, message_id, actor, request)
+
+    @staticmethod
+    def revenue_series(db: Session, from_date: date, to_date: date) -> RevenueSeriesResponse:
+        data = FormsAdminService.revenue_series(db, from_date, to_date)
+        return RevenueSeriesResponse(
+            points=[RevenueSeriesPoint(**p) for p in data["points"]],
+            total_bookings=data["total_bookings"],
+            total_revenue_eur=data["total_revenue_eur"],
+        )
+
+    @staticmethod
+    def service_mix(db: Session, from_date: date, to_date: date) -> ServiceMixResponse:
+        data = FormsAdminService.service_mix(db, from_date, to_date)
+        return ServiceMixResponse(
+            slices=[ServiceMixSlice(**s) for s in data["slices"]],
+            total_bookings=data["total_bookings"],
+        )
