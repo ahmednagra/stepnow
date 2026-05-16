@@ -1,26 +1,39 @@
 # apps/backend/routes/api/v0/public.py
+# Public endpoints with ETag/304 short-circuiting on read paths.
+
+import hashlib
+import json
 from datetime import datetime, timezone
+from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 from config.database import get_db
 from app.Http.Controllers.FormsController import FormsController
 from app.Http.Controllers.PublicController import PublicController
 from app.Schemas.forms import BookingCreate, BookingSubmitted, ContactCreate, ContactSubmitted
-from app.Schemas.public import (
-    FaqPublicResponse,
-    LegalPagePublicResponse,
-    PricingCategoryPublicResponse,
-    ServicePublicListItem,
-    ServicePublicResponse,
-    SettingsPublicResponse,
-    TestimonialPublicResponse,
-    UiStringsPublicResponse,
-    VehiclePublicResponse,
-)
 from app.Utils.i18n import Locale, get_locale
 from app.Utils.rate_limit import limiter
 
 router = APIRouter(prefix="/public", tags=["public"])
+
+
+def _jsonable(obj: Any) -> Any:
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump(mode="json")
+    if isinstance(obj, list):
+        return [_jsonable(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _jsonable(v) for k, v in obj.items()}
+    return obj
+
+
+def _cached(request: Request, payload: Any, max_age: int = 300) -> Response:
+    body = json.dumps(_jsonable(payload), separators=(",", ":"), default=str).encode("utf-8")
+    etag = '"' + hashlib.md5(body).hexdigest() + '"'
+    headers = {"ETag": etag, "Cache-Control": f"public, max-age={max_age}"}
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers=headers)
+    return Response(content=body, media_type="application/json", headers=headers)
 
 
 @router.get("/health")
@@ -28,68 +41,59 @@ async def health() -> dict:
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
-@router.get("/settings", response_model=SettingsPublicResponse)
-async def get_settings(response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> SettingsPublicResponse:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.get_settings(db, locale)
+@router.get("/settings")
+async def get_settings(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.get_settings(db, locale))
 
 
-@router.get("/ui-strings", response_model=UiStringsPublicResponse)
+@router.get("/ui-strings")
 async def get_ui_strings(
-    response: Response,
+    request: Request,
     db: Session = Depends(get_db),
     locale: Locale = Depends(get_locale),
     namespace: str | None = Query(None, max_length=100),
-) -> UiStringsPublicResponse:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.get_ui_strings(db, locale, namespace)
+) -> Response:
+    return _cached(request, PublicController.get_ui_strings(db, locale, namespace))
 
 
-@router.get("/services", response_model=list[ServicePublicListItem])
-async def list_services(response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> list[ServicePublicListItem]:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.list_services(db, locale)
+@router.get("/services")
+async def list_services(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.list_services(db, locale))
 
 
-@router.get("/services/{slug}", response_model=ServicePublicResponse)
-async def get_service(slug: str, response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> ServicePublicResponse:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.get_service_by_slug(db, slug, locale)
+@router.get("/services/{slug}")
+async def get_service(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.get_service_by_slug(db, slug, locale))
 
 
-@router.get("/legal-pages/{slug}", response_model=LegalPagePublicResponse)
-async def get_legal_page(slug: str, response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> LegalPagePublicResponse:
-    response.headers["Cache-Control"] = "public, max-age=600"
-    return PublicController.get_legal_page(db, slug, locale)
+@router.get("/legal-pages/{slug}")
+async def get_legal_page(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.get_legal_page(db, slug, locale), max_age=600)
 
 
-@router.get("/vehicles", response_model=list[VehiclePublicResponse])
-async def list_vehicles(response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> list[VehiclePublicResponse]:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.list_vehicles(db, locale)
+@router.get("/vehicles")
+async def list_vehicles(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.list_vehicles(db, locale))
 
 
-@router.get("/faqs", response_model=list[FaqPublicResponse])
+@router.get("/faqs")
 async def list_faqs(
-    response: Response,
+    request: Request,
     db: Session = Depends(get_db),
     locale: Locale = Depends(get_locale),
     category: str | None = Query(None, max_length=50),
-) -> list[FaqPublicResponse]:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.list_faqs(db, locale, category)
+) -> Response:
+    return _cached(request, PublicController.list_faqs(db, locale, category))
 
 
-@router.get("/testimonials", response_model=list[TestimonialPublicResponse])
-async def list_testimonials(response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> list[TestimonialPublicResponse]:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.list_testimonials(db, locale)
+@router.get("/testimonials")
+async def list_testimonials(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.list_testimonials(db, locale))
 
 
-@router.get("/services/{slug}/pricing", response_model=list[PricingCategoryPublicResponse])
-async def list_pricing(slug: str, response: Response, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> list[PricingCategoryPublicResponse]:
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return PublicController.list_pricing_for_service(db, slug, locale)
+@router.get("/services/{slug}/pricing")
+async def list_pricing(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+    return _cached(request, PublicController.list_pricing_for_service(db, slug, locale))
 
 
 @router.post("/bookings", response_model=BookingSubmitted, status_code=status.HTTP_201_CREATED)

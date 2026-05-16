@@ -1,7 +1,8 @@
 // apps/frontend/src/app/(public)/page.tsx
-// German homepage: hero + booking widget, trust strip, services grid, how-it-works, why, fleet, testimonials, FAQ teaser.
+// German homepage: hero + above-fold awaited, slow sections streamed via Suspense.
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Phone } from "lucide-react";
 import { getUiStringsServer } from "@/services/uiStrings";
@@ -17,39 +18,45 @@ import { toTelHref } from "@/utils/formatters";
 import { ConcessionBadge, Container, MobileStickyBar, ScrollReveal } from "@/components/shared";
 import { Button } from "@/components/ui";
 import {
-  FaqTeaser,
-  FleetPreview,
-  HeroBookingWidget,
-  HowItWorks,
-  TestimonialsSection,
-  TrustStrip,
-  WhyStepNow,
+  FaqTeaser, FleetPreview, HeroBookingWidget, HowItWorks, TestimonialsSection, TrustStrip, WhyStepNow,
 } from "@/components/features/home";
 
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [stringsRes, settings] = await Promise.all([
-    getUiStringsServer("de"),
-    getSettingsServer("de"),
-  ]);
+  const [stringsRes, settings] = await Promise.all([getUiStringsServer("de"), getSettingsServer("de")]);
   const t = createT(stringsRes.strings, "de");
   return buildMetadata({
     title: settings.default_meta_title || t("home.hero.headline"),
     description: t("home.hero.subhead"),
-    path: "/",
-    locale: "de",
+    path: "/", locale: "de",
     ogImage: settings.default_og_image_url ?? undefined,
   });
 }
 
+const SectionFallback = () => <div className="min-h-[420px] bg-cream" aria-hidden="true" />;
+
+async function DeferredFleet({ locale }: { locale: "de" }) {
+  const [stringsRes, vehicles] = await Promise.all([getUiStringsServer(locale), listVehiclesServer(locale)]);
+  const t = createT(stringsRes.strings, locale);
+  return <ScrollReveal><FleetPreview t={t} vehicles={vehicles} /></ScrollReveal>;
+}
+
+async function DeferredTestimonials({ locale }: { locale: "de" }) {
+  const testimonials = await listTestimonialsServer(locale);
+  return <ScrollReveal><TestimonialsSection testimonials={testimonials} /></ScrollReveal>;
+}
+
+async function DeferredFaq({ locale }: { locale: "de" }) {
+  const [stringsRes, faqs] = await Promise.all([getUiStringsServer(locale), listFaqsServer(locale)]);
+  const t = createT(stringsRes.strings, locale);
+  return <ScrollReveal><FaqTeaser t={t} faqs={faqs} locale={locale} /></ScrollReveal>;
+}
+
 export default async function HomePageDe() {
-  const [stringsRes, services, vehicles, testimonials, faqs, settings] = await Promise.all([
+  const [stringsRes, services, settings] = await Promise.all([
     getUiStringsServer("de"),
     listServicesServer("de"),
-    listVehiclesServer("de"),
-    listTestimonialsServer("de"),
-    listFaqsServer("de"),
     getSettingsServer("de"),
   ]);
   const t = createT(stringsRes.strings, "de");
@@ -121,9 +128,10 @@ export default async function HomePageDe() {
 
       <ScrollReveal><HowItWorks t={t} /></ScrollReveal>
       <ScrollReveal><WhyStepNow t={t} /></ScrollReveal>
-      <ScrollReveal><FleetPreview t={t} vehicles={vehicles} /></ScrollReveal>
-      <ScrollReveal><TestimonialsSection testimonials={testimonials} /></ScrollReveal>
-      <ScrollReveal><FaqTeaser t={t} faqs={faqs} locale="de" /></ScrollReveal>
+
+      <Suspense fallback={<SectionFallback />}><DeferredFleet locale="de" /></Suspense>
+      <Suspense fallback={<SectionFallback />}><DeferredTestimonials locale="de" /></Suspense>
+      <Suspense fallback={<SectionFallback />}><DeferredFaq locale="de" /></Suspense>
 
       <MobileStickyBar settings={settings} />
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />

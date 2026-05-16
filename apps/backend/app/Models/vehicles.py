@@ -1,6 +1,8 @@
 # apps/backend/app/Models/vehicles.py
+# Fleet inventory with composite index for the active+sort_order listing path.
+
 from uuid import UUID, uuid4
-from sqlalchemy import Boolean, Integer, String
+from sqlalchemy import Boolean, Index, Integer, String
 from sqlalchemy.dialects.postgresql import ARRAY, UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 from app.Models.base import Base
@@ -10,6 +12,9 @@ from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
 class Vehicle(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "vehicles"
+    __table_args__ = (
+        Index("ix_vehicles_listing", "active", "is_deleted", "sort_order"),
+    )
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

@@ -1,7 +1,9 @@
 # apps/backend/app/Models/contact.py
+# Contact form messages with composite index for handled+created_at admin queries.
+
 from datetime import datetime
 from uuid import UUID, uuid4
-from sqlalchemy import Boolean, DateTime, String, Text
+from sqlalchemy import Boolean, DateTime, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 from app.Models.base import Base
@@ -11,6 +13,9 @@ from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
 class ContactMessage(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "contact_messages"
+    __table_args__ = (
+        Index("ix_contact_handled_created", "is_handled", "created_at"),
+    )
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     subject_category: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
     name: Mapped[str] = mapped_column(String(200), nullable=False)
