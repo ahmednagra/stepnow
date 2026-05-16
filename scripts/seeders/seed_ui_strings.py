@@ -366,7 +366,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     # CONTACT PAGE
     # ════════════════════════════════════════════════════════════════════
     ("contact.page.title", "contact", "Kontakt", "Contact", "Contact page H1 / metadata", False),
-    ("contact.page.subhead", "contact", "So erreichen Sie uns — Telefon, E-Mail oder direkt vor Ort.", "How to reach us — phone, email or in person.", "Contact page subhead", False),
+    ("contact.page.subhead", "contact", "So erreichen Sie uns Telefon, E-Mail oder direkt vor Ort.", "How to reach us phone, email or in person.", "Contact page subhead", False),
     ("contact.page.eyebrow", "contact", "Kontakt", "Contact", "Contact page eyebrow above H1", False),
 
     # Methods (sidebar column)
