@@ -1,11 +1,5 @@
 // apps/frontend/src/components/admin/BookingStatusBadge.tsx
 // Status badge for bookings. Tone palette matches admin restraint.
-//
-// The status set MUST stay in sync with `BookingStatus` in `@/types/booking.ts`
-// (the canonical type derived from the FastAPI backend). To keep the build safe
-// even if the backend ever returns an unexpected status, we fall back to a
-// neutral tone instead of crashing on `tone.wrap`.
-
 import { cn } from "@/utils/cn";
 import { type BookingStatus } from "@/types/booking";
 
@@ -32,15 +26,11 @@ export const BOOKING_STATUS_TONES: Record<BookingStatus, Tone> = {
   cancelled: { wrap: "bg-rose-50 text-rose-800 border-rose-200",        dot: "bg-rose-500" },
 };
 
-// Hard-coded neutral fallback used when an unknown status arrives at runtime.
-// This prevents the "Cannot read properties of undefined (reading 'wrap')" crash.
 const FALLBACK_TONE: Tone = {
   wrap: "bg-slate-100 text-slate-700 border-slate-200",
   dot: "bg-slate-400",
 };
 
-// Re-export the canonical type so existing imports
-// (`import type { BookingStatus } from "@/components/admin"`) keep working.
 export type { BookingStatus };
 
 interface BookingStatusBadgeProps {
@@ -49,13 +39,15 @@ interface BookingStatusBadgeProps {
 }
 
 export function BookingStatusBadge({ status, className }: BookingStatusBadgeProps) {
-  // Resolve tone and label defensively: any unknown / null / undefined value
-  // renders a neutral badge with the raw status text instead of crashing.
-  const tone =
-    (status && (BOOKING_STATUS_TONES as Record<string, Tone>)[status as string]) ?? FALLBACK_TONE;
-  const label =
-    (status && (BOOKING_STATUS_LABELS as Record<string, string>)[status as string]) ??
-    (typeof status === "string" && status.length > 0 ? status : "—");
+  const key: string | null =
+    typeof status === "string" && status.length > 0 ? status : null;
+
+  const tone: Tone =
+    (key !== null && (BOOKING_STATUS_TONES as Record<string, Tone>)[key]) || FALLBACK_TONE;
+
+  const label: string =
+    (key !== null && (BOOKING_STATUS_LABELS as Record<string, string>)[key]) ||
+    (key ?? "—");
 
   return (
     <span
