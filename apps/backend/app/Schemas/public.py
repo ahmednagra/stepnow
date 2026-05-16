@@ -1,5 +1,5 @@
 # apps/backend/app/Schemas/public.py
-# Pydantic response models for all unauthenticated /api/v0/public/* endpoints. Adds PricingGroupedByServicePublic for the batch pricing route.
+# Pydantic response models for all unauthenticated /api/v0/public/* endpoints.
 
 from decimal import Decimal
 from uuid import UUID
@@ -11,6 +11,8 @@ class ServicePublicListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     slug: str
+    slug_de: str
+    slug_en: str
     icon: str | None
     title: str
     short_description: str | None
@@ -21,6 +23,8 @@ class ServicePublicResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     slug: str
+    slug_de: str
+    slug_en: str
     icon: str | None
     title: str
     short_description: str | None

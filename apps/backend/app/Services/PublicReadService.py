@@ -1,4 +1,5 @@
 # apps/backend/app/Services/PublicReadService.py
+
 from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError
 from app.Models.services import Service
@@ -24,6 +25,8 @@ class PublicReadService:
         return {
             "id": svc.id,
             "slug": svc.slug_de if locale == Locale.DE else svc.slug_en,
+            "slug_de": svc.slug_de,
+            "slug_en": svc.slug_en,
             "icon": svc.icon,
             "title": svc.title_de if locale == Locale.DE else svc.title_en,
             "short_description": svc.short_description_de if locale == Locale.DE else svc.short_description_en,
@@ -36,6 +39,8 @@ class PublicReadService:
         return {
             "id": svc.id,
             "slug": svc.slug_de if is_de else svc.slug_en,
+            "slug_de": svc.slug_de,
+            "slug_en": svc.slug_en,
             "icon": svc.icon,
             "title": svc.title_de if is_de else svc.title_en,
             "short_description": svc.short_description_de if is_de else svc.short_description_en,

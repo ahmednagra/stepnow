@@ -1,7 +1,4 @@
 // src/middleware.ts
-// Detects locale from cookie or Accept-Language and redirects accordingly.
-// Cross-locale redirects use ROUTE_MAP so DE-only paths (/buchen) map to
-// the correct EN equivalent (/en/book), not the naive /en/buchen.
 
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -15,26 +12,25 @@ function isEnglishPath(path: string): boolean {
   return path === "/en" || path.startsWith("/en/");
 }
 
-function deToEn(path: string): string | null {
-  if (ROUTE_MAP[path]) return ROUTE_MAP[path];
-  if (path.startsWith("/dienstleistungen/")) {
-    return path.replace("/dienstleistungen/", "/en/services/");
-  }
-  if (path.startsWith("/buchen/")) {
-    return ROUTE_MAP[path] ?? path.replace("/buchen/", "/en/book/");
-  }
-  return null;
+/**
+ * Return the EN equivalent of a DE path ONLY when it's a known static
+ * route (home, /preise, /kontakt, etc). For dynamic slug routes the
+ * middleware has no way to translate the slug, so it returns null and
+ * the caller passes through.
+ */
+function deToEnStaticOnly(path: string): string | null {
+  return ROUTE_MAP[path] ?? null;
 }
 
-function enToDe(path: string): string | null {
+/**
+ * Mirror of the above, EN → DE for static routes only.
+ */
+function enToDeStaticOnly(path: string): string | null {
   if (REVERSE_ROUTE_MAP[path]) return REVERSE_ROUTE_MAP[path];
-  if (path.startsWith("/en/services/")) {
-    return path.replace("/en/services/", "/dienstleistungen/");
-  }
-  if (path.startsWith("/en/book/")) {
-    return REVERSE_ROUTE_MAP[path] ?? path.replace("/en/book/", "/buchen/");
-  }
-  return path === "/en" ? "/" : path.replace(/^\/en/, "");
+  // /en (home) is a special case: it doesn't appear in REVERSE_ROUTE_MAP
+  // as a key because ROUTE_MAP["/"]="/en" reverses to REVERSE_ROUTE_MAP["/en"]="/"
+  // which IS covered above. No extra branch needed.
+  return null;
 }
 
 export function middleware(request: NextRequest) {
@@ -42,16 +38,20 @@ export function middleware(request: NextRequest) {
   const englishPath = isEnglishPath(path);
   const cookieValue = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
 
+  // Cookie-driven redirect: only for paths that have a known mirror in
+  // the other locale's static route table. Dynamic slug routes fall
+  // through to NextResponse.next() so the page renders in the URL's
+  // locale.
   if (isLocale(cookieValue)) {
     if (cookieValue === "en" && !englishPath) {
-      const target = deToEn(path);
+      const target = deToEnStaticOnly(path);
       if (!target) return NextResponse.next();
       const url = request.nextUrl.clone();
       url.pathname = target;
       return NextResponse.redirect(url);
     }
     if (cookieValue === "de" && englishPath) {
-      const target = enToDe(path);
+      const target = enToDeStaticOnly(path);
       if (!target) return NextResponse.next();
       const url = request.nextUrl.clone();
       url.pathname = target;
@@ -60,12 +60,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // First-visit (no cookie yet): detect from Accept-Language, set the
+  // cookie, and optionally redirect to the EN home for non-German users
+  // landing on the DE root. Same static-only constraint applies.
   const acceptLang = (request.headers.get("accept-language") || "").toLowerCase();
   const prefersGerman = acceptLang.startsWith("de");
 
   let response: NextResponse;
   if (!prefersGerman && !englishPath) {
-    const target = deToEn(path);
+    const target = deToEnStaticOnly(path);
     response = target
       ? NextResponse.redirect(new URL(target, request.url))
       : NextResponse.next();
