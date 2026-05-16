@@ -50,7 +50,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
     (p): p is string => p !== null,
   );
 
-  const portraitUrl = settings.owner_portrait_url ?? null;
+  const portraitUrl: string | null = null;
   const ownerName = settings.owner_name || resolve(t, "about.story.author") || "Naeem Ahmad";
   const eyebrow = resolve(t, "about.story.eyebrow", "Die Geschichte");
   const heading = resolve(t, "about.story.heading", "Unsere Geschichte");
@@ -141,7 +141,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
 
       <p className="mt-5 text-[11px] uppercase tracking-[0.22em] text-mute">
         — {ownerName}
-        {resolve(t, "about.story.role", null) && (
+         {resolve(t, "about.story.role") && (
           <>
             <span className="mx-2 text-line">·</span>
             {resolve(t, "about.story.role", "Gründer")}

@@ -29,7 +29,9 @@ export function exportCsv<T extends Record<string, unknown>>(
     download(filename, "text/csv;charset=utf-8", "");
     return;
   }
-  const cols = columns ?? Object.keys(rows[0]).map((k) => ({ key: k as keyof T & string }));
+  type Col = { key: keyof T & string; label?: string };
+const cols: Col[] =
+  columns ?? Object.keys(rows[0]).map((k): Col => ({ key: k as keyof T & string }));
   const header = cols.map((c) => csvEscape(c.label ?? c.key)).join(",");
   const body = rows.map((r) => cols.map((c) => csvEscape(r[c.key])).join(",")).join("\n");
   download(filename, "text/csv;charset=utf-8", "\ufeff" + header + "\n" + body);

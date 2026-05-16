@@ -8,7 +8,7 @@ import { cn } from "@/utils/cn";
 
 export type AlertTone = "info" | "success" | "warn" | "danger";
 
-interface AlertProps extends HTMLAttributes<HTMLDivElement> {
+interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   tone?: AlertTone;
   title?: ReactNode;
   children?: ReactNode;

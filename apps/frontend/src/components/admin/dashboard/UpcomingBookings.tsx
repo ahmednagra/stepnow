@@ -3,7 +3,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { Plane, PlaneLanding, Building2, School, Briefcase } from "lucide-react";
+import { PlaneLanding, Building2, School, Briefcase } from "lucide-react";
 import { AdminCard } from "../AdminCard";
 import { BookingStatusBadge } from "../BookingStatusBadge";
 import type { BookingAdmin } from "@/types";

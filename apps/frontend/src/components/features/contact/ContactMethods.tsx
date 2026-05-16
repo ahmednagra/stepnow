@@ -1,7 +1,4 @@
 // apps/frontend/src/components/features/contact/ContactMethods.tsx
-// Option A layout — compact sidebar tile stack. Phone shows opening hours
-// inline below the number; address tile gets a compact two-line form.
-// Height-tuned to match form on right-column desktop layout.
 
 import { Phone, Mail, MapPin } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
@@ -33,9 +30,9 @@ export function ContactMethods({ t, settings }: ContactMethodsProps) {
             <p className="mt-0.5 font-serif text-[16px] leading-snug tracking-tight tabular-nums text-ink">
               {settings.phone}
             </p>
-            {settings.opening_hours_phone && (
+            {settings.opening_hours && (
               <p className="mt-0.5 text-[11.5px] leading-tight text-mute">
-                {settings.opening_hours_phone}
+                {settings.opening_hours}
               </p>
             )}
           </div>

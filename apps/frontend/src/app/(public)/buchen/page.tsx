@@ -1,8 +1,7 @@
 // apps/frontend/src/app/(public)/buchen/page.tsx
-// Phase 3d polish — German booking page hosts the WizardShell. The shell
-// receives settings so the help line at the bottom can show the phone.
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { getSettingsServer } from "@/services/settings";
@@ -30,11 +29,13 @@ export default async function BookingPageDe() {
   ]);
 
   return (
-    <WizardShell
-      locale="de"
-      services={services}
-      confirmationPath="/buchen/bestaetigung"
-      settings={settings}
-    />
+    <Suspense fallback={null}>
+      <WizardShell
+        locale="de"
+        services={services}
+        confirmationPath="/buchen/bestaetigung"
+        settings={settings}
+      />
+    </Suspense>
   );
 }

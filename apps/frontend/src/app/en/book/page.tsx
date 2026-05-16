@@ -1,7 +1,7 @@
 // apps/frontend/src/app/en/book/page.tsx
-// Phase 3d polish — English booking page mirror.
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { getSettingsServer } from "@/services/settings";
@@ -29,11 +29,13 @@ export default async function BookingPageEn() {
   ]);
 
   return (
-    <WizardShell
-      locale="en"
-      services={services}
-      confirmationPath="/en/book/confirmation"
-      settings={settings}
-    />
+    <Suspense fallback={null}>
+      <WizardShell
+        locale="en"
+        services={services}
+        confirmationPath="/en/book/confirmation"
+        settings={settings}
+      />
+    </Suspense>
   );
 }
