@@ -1,5 +1,5 @@
 # apps/backend/routes/api/v0/public.py
-# Public endpoints with ETag/304 short-circuiting on read paths. Adds GET /public/pricing for batch all-services pricing (kills N+1).
+# Public endpoints with ETag/304 short-circuiting on read paths. Tightens rate limits on submit_booking and submit_contact: 5/minute -> 3/minute;10/hour. The compound limit (slowapi/limits library: semicolon-separated rules) blocks both burst floods (3/min) and sustained low-rate abuse (10/hour).
 
 import hashlib
 import json
@@ -102,12 +102,12 @@ async def list_pricing(slug: str, request: Request, db: Session = Depends(get_db
 
 
 @router.post("/bookings", response_model=BookingSubmitted, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit("3/minute;10/hour")
 async def submit_booking(request: Request, payload: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> BookingSubmitted:
     return FormsController.submit_booking(db, payload, request, background_tasks)
 
 
 @router.post("/contact", response_model=ContactSubmitted, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit("3/minute;10/hour")
 async def submit_contact(request: Request, payload: ContactCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ContactSubmitted:
     return FormsController.submit_contact(db, payload, request, background_tasks)
