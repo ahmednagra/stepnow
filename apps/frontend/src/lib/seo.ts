@@ -10,13 +10,10 @@ import type { FaqPublic, Locale, ServicePublic, SettingsPublic } from "@/types";
 interface BuildMetadataInput {
   title: string;
   description: string;
-  /** Path of the current page (e.g. "/dienstleistungen"). */
   path: string;
   locale: Locale;
-  /** Optional override for the alternate-locale path (for dynamic routes). */
   alternatePath?: string;
   ogImage?: string;
-  /** Mark a page as noindex (e.g., booking confirmations). Default false. */
   noindex?: boolean;
 }
 

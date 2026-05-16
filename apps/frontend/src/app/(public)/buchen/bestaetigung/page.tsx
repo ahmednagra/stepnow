@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("booking.confirmation.body"),
     path: "/buchen/bestaetigung",
     locale: "de",
-    robots: { index: false, follow: true },
+    noindex: true,
   });
 }
 
