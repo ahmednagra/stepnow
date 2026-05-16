@@ -1,5 +1,5 @@
 // apps/frontend/src/services/api/endpoints.ts
-// Backend path constants used by serverApiClient and BFF route handlers. Adds PRICING_ALL plus admin booking aggregation paths.
+// Backend path constants. Adds DASHBOARD_TOTALS, BOOKINGS_HEATMAP, BOOKINGS_UPCOMING for the new aggregation endpoints used by the dashboard SSR pass (M-3).
 
 export const ENDPOINTS = {
 PUBLIC: {
@@ -57,9 +57,12 @@ BOOKINGS: "/admin/bookings",
 BOOKING_BY_ID: (id: string) => `/admin/bookings/${id}`,
 BOOKINGS_REVENUE_SERIES: "/admin/bookings/revenue-series",
 BOOKINGS_SERVICE_MIX: "/admin/bookings/service-mix",
+BOOKINGS_HEATMAP: "/admin/bookings/heatmap",
+BOOKINGS_UPCOMING: "/admin/bookings/upcoming",
 CONTACT_MESSAGES: "/admin/contact-messages",
 CONTACT_MESSAGE_BY_ID: (id: string) => `/admin/contact-messages/${id}`,
 AUDIT_LOG: "/admin/audit-log",
 AUDIT_LOG_BY_ID: (id: string) => `/admin/audit-log/${id}`,
+DASHBOARD_TOTALS: "/admin/dashboard/totals",
 },
 } as const;
