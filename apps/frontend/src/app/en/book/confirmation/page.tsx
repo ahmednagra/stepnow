@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("booking.confirmation.body"),
     path: "/en/book/confirmation",
     locale: "en",
-    robots: { index: false, follow: true },
+    noindex: true,
   });
 }
 
