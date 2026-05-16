@@ -61,7 +61,7 @@ export function NewLegalPageForm() {
           label="Slug"
           required
           error={errors.slug?.message}
-          helper="Lowercase letters, digits and hyphens. Will be visible in the URL, e.g. /legal/impressum"
+          hint="Lowercase letters, digits and hyphens. Will be visible in the URL, e.g. /legal/impressum"
         >
           <input
             placeholder="impressum"
