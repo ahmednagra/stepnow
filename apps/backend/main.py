@@ -1,5 +1,5 @@
 # apps/backend/main.py
-# FastAPI app factory: lifespan creates missing tables and (opt-in) runs idempotent seeders; CORS + rate-limit middleware; centralized error envelope.
+# FastAPI app factory: lifespan creates missing tables (no Alembic — models ARE the schema) and (opt-in) runs idempotent seeders; CORS + rate-limit middleware; centralized error envelope.
 
 import time
 from contextlib import asynccontextmanager
@@ -25,16 +25,13 @@ _seeded_this_process: bool = False
 
 
 def _create_missing_tables() -> None:
-    # Non-destructive dev safety net: SQLAlchemy create_all only adds missing tables, never alters existing schema. Production uses Alembic exclusively.
-    if settings.ENVIRONMENT == "production":
-        logger.info("Skipping auto-create-tables (ENVIRONMENT=production — use Alembic migrations)")
-        return
+    # Models ARE the schema source while the project is pre-launch. SQLAlchemy create_all is non-destructive (checkfirst=True): only creates tables that don't exist, never alters/drops. Runs in every environment, including production — on first deploy this builds the schema; on subsequent deploys it's a no-op. Reintroduce Alembic before going live with real customer data so you can evolve columns/indexes safely.
     try:
         registered = set(Base.metadata.tables.keys())
         Base.metadata.create_all(bind=engine, checkfirst=True)
-        logger.info(f"Auto-create-tables OK — {len(registered)} model(s) registered, missing tables created (existing untouched)")
+        logger.info(f"create_missing_tables OK — {len(registered)} model(s) registered, missing tables created (existing untouched)")
     except Exception:
-        logger.exception("Auto-create-tables failed — continuing startup anyway")
+        logger.exception("create_missing_tables failed — continuing startup anyway")
 
 
 def _run_seeders_if_enabled() -> None:
