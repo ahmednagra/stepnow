@@ -52,8 +52,6 @@ apps/backend/parts/
 .venv/
 venv/
 ENV/
-env/
-.env-*/
 apps/backend/.venv/
 apps/backend/venv/
 
@@ -202,9 +200,6 @@ apps/backend/tmp/emails/
 .snyk
 
 # ---------- IDE and editor ----------
-.vscode/
-!.vscode/settings.json.example
-!.vscode/extensions.json
 .idea/
 *.iml
 *.swp

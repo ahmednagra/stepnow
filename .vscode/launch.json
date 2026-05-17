@@ -1,0 +1,76 @@
+{
+  // -----------------------------------------------------------------------------------
+  // StepNow — One-click Full Stack Launcher
+  // -----------------------------------------------------------------------------------
+  // FOR THE DEVELOPER USING THIS:
+  //   1. Open the project folder in VS Code.
+  //   2. Click the "Run and Debug" icon on the left sidebar (▷ with a small bug).
+  //   3. From the dropdown at the top, pick "🚀 Run Full Stack (Frontend + Backend)".
+  //   4. Click the green ▶ button.
+  //   5. Open http://localhost:3000 in your browser.
+  //
+  // What happens on first run:
+  //   - .vscode/scripts/setup.js creates apps/backend/.env from .env.example
+  //   - .vscode/scripts/setup.js creates apps/frontend/.env.local from .env.example
+  //   - .vscode/scripts/setup.js runs `npm install` in apps/frontend
+  //   - tasks.json runs `python -m pip install -r requirements.txt` (global Python)
+  //   - Backend starts on http://localhost:8000
+  //   - Frontend starts on http://localhost:3000
+  //
+  // ON THE VERY FIRST RUN the backend will crash because apps/backend/.env has
+  // placeholder values. Open it, fill in DATABASE_URL, JWT_SECRET_KEY, EMAIL_API_KEY
+  // (ask the project lead for the real values), then click ▶ again.
+  //
+  // REQUIREMENTS the developer's machine must have (install these manually, once):
+  //   - Python 3.10+ on PATH         (https://www.python.org/downloads/)
+  //   - Node.js 20+ on PATH          (https://nodejs.org/)
+  // -----------------------------------------------------------------------------------
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend (FastAPI)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000",
+        "--reload"
+      ],
+      "cwd": "${workspaceFolder}/apps/backend",
+      "envFile": "${workspaceFolder}/apps/backend/.env",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      // Runs setup before launching. Idempotent — fast no-op when nothing's missing.
+      "preLaunchTask": "setup: prepare full stack"
+    },
+    {
+      "name": "Frontend (Next.js)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/apps/frontend",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+      // No preLaunchTask here — the backend's preLaunchTask already prepares
+      // both apps. Putting it on both would run the setup twice.
+    }
+  ],
+  "compounds": [
+    {
+      // 👇 PICK THIS in the Run & Debug dropdown for one-click full-stack startup.
+      "name": "🚀 Run Full Stack (Frontend + Backend)",
+      "configurations": ["Backend (FastAPI)", "Frontend (Next.js)"],
+      "stopAll": true,
+      "presentation": {
+        "hidden": false,
+        "group": "1_fullstack",
+        "order": 1
+      }
+    }
+  ]
+}

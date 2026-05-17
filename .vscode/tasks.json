@@ -1,0 +1,69 @@
+{
+  // -----------------------------------------------------------------------------------
+  // StepNow — Pre-launch tasks
+  // -----------------------------------------------------------------------------------
+  // Two simple tasks, both shell-agnostic (no quoting hazards):
+  //   1. Run .vscode/scripts/setup.js  → handles env files + npm install
+  //   2. Run `python -m pip install -r requirements.txt` → backend Python deps
+  //
+  // Both run in parallel via the aggregator task `setup: prepare full stack`,
+  // which is what launch.json calls as preLaunchTask.
+  // -----------------------------------------------------------------------------------
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Node-based setup: env files + frontend npm install.
+      // Reads from a file (no `-e` inline script), so PowerShell quote-mangling
+      // doesn't apply. Works identically on Windows, macOS, Linux.
+      "label": "setup: env files + npm install",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/scripts/setup.js"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "close": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      // Backend Python deps installed into the GLOBAL interpreter (no venv).
+      // `python -m pip` works even if pip isn't on PATH directly.
+      // --quiet keeps the terminal clean when nothing changes.
+      "label": "setup: pip install",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "requirements.txt",
+        "--quiet",
+        "--disable-pip-version-check"
+      ],
+      "options": { "cwd": "${workspaceFolder}/apps/backend" },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "close": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      // Aggregator — this is what launch.json calls. Runs both setup tasks
+      // in parallel. If either fails, the launch is aborted.
+      "label": "setup: prepare full stack",
+      "dependsOn": [
+        "setup: env files + npm install",
+        "setup: pip install"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}
