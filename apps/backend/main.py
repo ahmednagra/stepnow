@@ -1,9 +1,13 @@
 # apps/backend/main.py
+# FastAPI app factory: lifespan creates missing tables and (opt-in) runs idempotent seeders; CORS + rate-limit middleware; centralized error envelope.
+
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from config.settings import settings
@@ -16,40 +20,53 @@ from routes import setup_api_routes
 
 logger = get_logger("stepnow")
 
+# Belt-and-suspenders: ensure auto-seed runs at most once per Python process even if lifespan ever fires twice.
+_seeded_this_process: bool = False
+
 
 def _create_missing_tables() -> None:
-    """
-    Dev-time safety net: create any tables whose models exist but whose
-    tables are missing from the database.
-
-    SQLAlchemy's create_all is non-destructive — it only issues CREATE TABLE
-    for tables that don't already exist. It will NEVER alter existing
-    tables, add new columns, change types, or drop anything. Real schema
-    evolution still goes through Alembic migrations (see alembic/versions/).
-
-    Refuses to run in production. In production, schema is managed
-    exclusively by Alembic — auto-creating tables there would conflict
-    with the migration version tracker and is dangerous.
-    """
+    # Non-destructive dev safety net: SQLAlchemy create_all only adds missing tables, never alters existing schema. Production uses Alembic exclusively.
     if settings.ENVIRONMENT == "production":
         logger.info("Skipping auto-create-tables (ENVIRONMENT=production — use Alembic migrations)")
         return
-
     try:
-        inspector_before = set(Base.metadata.tables.keys())
+        registered = set(Base.metadata.tables.keys())
         Base.metadata.create_all(bind=engine, checkfirst=True)
-        logger.info(
-            f"Auto-create-tables OK — {len(inspector_before)} model(s) registered, "
-            "any missing tables were created (existing tables untouched)"
-        )
+        logger.info(f"Auto-create-tables OK — {len(registered)} model(s) registered, missing tables created (existing untouched)")
     except Exception:
         logger.exception("Auto-create-tables failed — continuing startup anyway")
+
+
+def _run_seeders_if_enabled() -> None:
+    # Opt-in via AUTO_SEED_ON_STARTUP=true. Hard-refused in production; per-process guarded; failure is logged but never blocks API startup.
+    global _seeded_this_process
+    if not settings.AUTO_SEED_ON_STARTUP:
+        return
+    if settings.ENVIRONMENT == "production":
+        logger.warning("AUTO_SEED_ON_STARTUP=true IGNORED because ENVIRONMENT=production. Seeders must never run on a production server.")
+        return
+    if _seeded_this_process:
+        logger.debug("Auto-seed already ran in this process — skipping")
+        return
+    logger.info("AUTO_SEED_ON_STARTUP=true — running idempotent seeders")
+    try:
+        from scripts.seed import run_all
+        failures = run_all()
+        if failures:
+            logger.warning(f"Auto-seed completed with {len(failures)} failing seeder(s): {', '.join(failures)}. API startup continues.")
+        else:
+            logger.info("Auto-seed completed successfully")
+    except Exception:
+        logger.exception("Auto-seed failed — continuing startup anyway")
+    finally:
+        _seeded_this_process = True
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} (env={settings.ENVIRONMENT})")
     _create_missing_tables()
+    _run_seeders_if_enabled()
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
@@ -62,7 +79,6 @@ app = FastAPI(
     openapi_url="/api/v0/openapi.json" if settings.ENVIRONMENT != "production" else None,
     lifespan=lifespan,
 )
-
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
@@ -95,44 +111,26 @@ async def request_logging(request: Request, call_next):
         return JSONResponse(status_code=500, content={"error": {"code": "INTERNAL_ERROR", "message": "An internal error occurred", "extra": {}}})
 
 
-# Architecture §14: Services raise AppError. These handlers shape the JSON envelope when an exception escapes the middleware.
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": {"code": exc.error_code, "message": exc.message, "extra": exc.extra}},
-    )
+    return JSONResponse(status_code=exc.status_code, content={"error": {"code": exc.error_code, "message": exc.message, "extra": exc.extra}})
 
 
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={"error": {"code": "RATE_LIMITED", "message": "Too many requests", "extra": {}}},
-    )
+    return JSONResponse(status_code=429, content={"error": {"code": "RATE_LIMITED", "message": "Too many requests", "extra": {}}})
 
 
 @app.exception_handler(Exception)
 async def unhandled_handler(request: Request, exc: Exception):
     logger.exception(f"Unhandled exception on {request.method} {request.url.path}")
-    return JSONResponse(
-        status_code=500,
-        content={"error": {"code": "INTERNAL_ERROR", "message": "An internal error occurred", "extra": {}}},
-    )
+    return JSONResponse(status_code=500, content={"error": {"code": "INTERNAL_ERROR", "message": "An internal error occurred", "extra": {}}})
 
-
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 
 setup_api_routes(app)
 
-# Mount /uploads for dev. In production nginx aliases this path directly
-# to UPLOAD_DIR with proper cache headers and bypasses FastAPI.
+# Mount /uploads for dev; in production nginx serves UPLOAD_DIR directly.
 if settings.ENVIRONMENT != "production":
     _upload_path = Path(settings.UPLOAD_DIR).resolve()
     _upload_path.mkdir(parents=True, exist_ok=True)
-    app.mount(
-        settings.UPLOAD_PUBLIC_URL_PREFIX,
-        StaticFiles(directory=str(_upload_path)),
-        name="uploads",
-    )
+    app.mount(settings.UPLOAD_PUBLIC_URL_PREFIX, StaticFiles(directory=str(_upload_path)), name="uploads")

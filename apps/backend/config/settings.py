@@ -1,4 +1,6 @@
 # apps/backend/config/settings.py
+# Pydantic Settings: loads .env and exposes typed config including AUTO_SEED_ON_STARTUP for dev seed-on-boot.
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -28,10 +30,12 @@ class Settings(BaseSettings):
     BACKUP_RETENTION_DAYS: int = 30
     UPLOAD_DIR: str = "./uploads"
     UPLOAD_PUBLIC_URL_PREFIX: str = "/uploads"
-    UPLOAD_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+    UPLOAD_MAX_SIZE_BYTES: int = 10 * 1024 * 1024
     UPLOAD_MIN_DIMENSION: int = 100
     UPLOAD_MAX_DIMENSION: int = 8000
     LOG_LEVEL: str = "INFO"
+    # Dev-only: when true, lifespan runs scripts/seed.py after creating missing tables. Hard-refused in production.
+    AUTO_SEED_ON_STARTUP: bool = False
 
 
 settings = Settings()
