@@ -31,12 +31,12 @@ export function PricingSnapshot({
 
   if (allItems.length === 0) {
     return (
-      <section className="border-t border-line bg-paper">
+      <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
         <Container className="py-section">
           <header className="mb-8 max-w-3xl">
-            <p className="label-eyebrow">{pickT(t, "pricing.page.eyebrow", "Preise")}</p>
-            <h2 className="mt-3 font-serif text-section">{t("pricing.empty.heading")}</h2>
-            <p className="mt-4 text-body-lg text-mute">{t("pricing.empty.body")}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">{pickT(t, "pricing.page.eyebrow", "Preise")}</p>
+            <h2 className="mt-3 font-serif text-section text-[var(--color-text-primary)]">{t("pricing.empty.heading")}</h2>
+            <p className="mt-4 text-body-lg text-[var(--color-text-secondary)]">{t("pricing.empty.body")}</p>
           </header>
           <Link href={bookingHref}>
             <Button size="lg">{t("pricing.empty.cta")}</Button>
@@ -49,42 +49,42 @@ export function PricingSnapshot({
   const items = allItems.slice(0, 6);
 
   return (
-    <section className="border-t border-line bg-paper">
+    <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
       <Container className="py-section">
         <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="label-eyebrow">{pickT(t, "pricing.page.eyebrow", "Preise")}</p>
-            <h2 className="mt-3 font-serif text-section">{t("pricing.page.title")}</h2>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">{pickT(t, "pricing.page.eyebrow", "Preise")}</p>
+            <h2 className="mt-3 font-serif text-section text-[var(--color-text-primary)]">{t("pricing.page.title")}</h2>
           </div>
           <Link
             href={pricingHref}
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-gold-deep transition-colors duration-base hover:text-ink"
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)] transition-colors duration-base hover:text-[var(--color-text-primary)]"
           >
             {locale === "de" ? "Alle Preise" : "View full pricing"}
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </header>
-        <p className="mb-10 max-w-prose text-mute">{t("pricing.page.intro")}</p>
-        <ul className="divide-y divide-line border-y border-line">
+        <p className="mb-10 max-w-prose text-[var(--color-text-secondary)]">{t("pricing.page.intro")}</p>
+        <ul className="divide-y divide-[color:var(--color-border-soft)] border-y border-[color:var(--color-border-soft)]">
           {items.map((item) => (
             <li
               key={item.id}
               className="flex flex-wrap items-baseline justify-between gap-4 py-5"
             >
-              <span className="text-[15px] tracking-tight text-ink">
+              <span className="text-[15px] tracking-tight text-[var(--color-text-primary)]">
                 {item.from_location}{" "}
-                <span className="text-mute" aria-hidden="true">
+                <span className="text-[var(--color-text-secondary)]" aria-hidden="true">
                   →
                 </span>{" "}
                 {item.to_location}
               </span>
-              <span className="font-serif text-xl tabular-nums text-gold-deep">
+              <span className="font-serif text-xl tabular-nums text-[var(--color-accent-primary)]">
                 {formatPrice(item.price_eur, locale)}
               </span>
             </li>
           ))}
         </ul>
-        <p className="mt-6 text-[12.5px] text-mute">
+        <p className="mt-6 text-[12.5px] text-[var(--color-text-secondary)]">
           {pickT(t, "pricing.disclaimer", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung.")}
         </p>
       </Container>

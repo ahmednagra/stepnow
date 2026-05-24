@@ -95,11 +95,11 @@ setSubmitting(false);
 return (
 <div className="flex flex-col gap-10">
 <div>
-<h2 className="font-serif text-2xl tracking-tight">{t("booking.review.heading")}</h2>
-<p className="mt-2 text-mute">{t("booking.review.subhead")}</p>
+<h2 className="font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">{t("booking.review.heading")}</h2>
+<p className="mt-2 text-[var(--color-text-secondary)]">{t("booking.review.subhead")}</p>
 </div>
 
-<ul className="divide-y divide-line border-y border-line">
+<ul className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
 <ReviewSection
 eyebrow={t("booking.step.service")}
 editLabel={pickT(t, "common.edit", locale === "de" ? "Ändern" : "Edit")}
@@ -160,7 +160,7 @@ onEdit={() => onJumpTo("contact")}
 label={
 <>
 {pickT(t, "booking.review.consent_intro", locale === "de" ? "Ich stimme der " : "I agree to the ")}
-<Link href={privacyHref} className="underline hover:text-gold-deep">
+<Link href={privacyHref} className="underline transition-colors hover:text-[var(--color-accent-primary)]">
 {t("footer.legal.datenschutz")}
 </Link>{" "}
 {pickT(t, "booking.review.consent_zu", locale === "de" ? "zu." : ".")}
@@ -172,7 +172,7 @@ onChange={(e) => setConsent(e.target.checked)}
 />
 
 {error && (
-<p role="alert" className="text-[13px] font-medium text-danger">
+<p role="alert" className="text-[13px] font-medium text-[var(--color-accent-warm)]">
 {error}
 </p>
 )}
@@ -203,13 +203,13 @@ onEdit: () => void;
 children: React.ReactNode;
 }) {
 return (
-<li className="flex flex-col gap-3 py-5">
+<li className="flex flex-col gap-3 bg-[var(--color-bg-page)] p-5 md:p-6">
 <div className="flex items-center justify-between gap-3">
-<p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">{eyebrow}</p>
+<p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]">{eyebrow}</p>
 <button
 type="button"
 onClick={onEdit}
-className="inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.16em] text-mute transition-colors hover:text-ink"
+className="inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
 >
 <Pencil className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
 {editLabel}
@@ -223,8 +223,8 @@ className="inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tr
 function ReviewRow({ label, value }: { label: string; value: string }) {
 return (
 <div className="flex flex-wrap items-baseline gap-x-4 text-[14px]">
-<dt className="text-mute">{label}</dt>
-<dd className="font-medium text-ink">{value || "—"}</dd>
+<dt className="text-[var(--color-text-secondary)]">{label}</dt>
+<dd className="font-medium text-[var(--color-text-primary)]">{value || "—"}</dd>
 </div>
 );
 }

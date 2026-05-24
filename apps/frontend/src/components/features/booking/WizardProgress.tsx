@@ -22,7 +22,7 @@ export function WizardProgress({ t, currentStep }: WizardProgressProps) {
   return (
     <div className="flex flex-col gap-4">
       <p
-        className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep"
+        className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]"
         aria-live="polite"
       >
         {t("booking.progress.step_of", { current: currentIdx + 1, total })}
@@ -40,17 +40,17 @@ export function WizardProgress({ t, currentStep }: WizardProgressProps) {
               <span
                 className={cn(
                   "h-[2px] w-full transition-all duration-base ease-out-premium",
-                  isCurrent ? "bg-gold" : isPast ? "bg-ink" : "bg-line-soft",
+                  isCurrent ? "bg-[var(--color-accent-primary)]" : isPast ? "bg-[var(--color-text-primary)]" : "bg-[color:var(--color-border-soft)]",
                 )}
               />
               <span
                 className={cn(
                   "hidden whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[0.16em] md:inline",
                   isCurrent
-                    ? "text-ink"
+                    ? "text-[var(--color-text-primary)]"
                     : isPast
-                      ? "text-mute"
-                      : "text-mute-soft",
+                      ? "text-[var(--color-text-secondary)]"
+                      : "text-[color:rgba(102,115,90,0.72)]",
                 )}
               >
                 {t(s.label)}

@@ -6,8 +6,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminToken } from "@/lib/admin-bff";
 import { ApiError } from "@/lib/api-errors";
 
-const BACKEND_API_URL =
-  process.env.BACKEND_API_URL || "http://localhost:8000/api/v0";
+function getBackendApiUrl(): string {
+  const rawBase =
+    process.env.BACKEND_API_URL ??
+    process.env.INTERNAL_API_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    "http://localhost:8000";
+
+  return rawBase.endsWith("/api/v0") ? rawBase : `${rawBase.replace(/\/$/, "")}/api/v0`;
+}
+
+const BACKEND_API_URL = getBackendApiUrl();
 
 export async function POST(request: NextRequest) {
   let token: string;

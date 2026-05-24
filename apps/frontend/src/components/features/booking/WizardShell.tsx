@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Phone } from "lucide-react";
+import { Phone, CheckCircle2 } from "lucide-react";
 import type { BookingSubmitted, Locale, ServicePublic, SettingsPublic } from "@/types";
 import { useBookingWizardStore } from "@/stores/useBookingWizardStore";
 import { useUiStrings } from "@/hooks/useUiStrings";
@@ -48,10 +48,16 @@ export function WizardShell({
   const hydratePartial = useBookingWizardStore((s) => s.hydratePartial);
   const draft = useBookingWizardStore((s) => s.draft);
   const [mounted, setMounted] = useState(false);
+  const formCardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [mounted, step]);
 
   const hydratedRef = useRef(false);
   useEffect(() => {
@@ -94,13 +100,9 @@ export function WizardShell({
   if (!mounted) {
     return (
       <Container className="py-section">
-        <div className="mx-auto max-w-2xl">
-          <header className="mb-12 flex flex-col gap-4">
-            <p className="label-eyebrow">{pickT(t, "booking.page.eyebrow", "Anfrage")}</p>
-            <h1 className="font-serif text-section md:text-hero">{t("booking.page.title")}</h1>
-            <p className="text-body-lg text-mute">{t("booking.page.subhead")}</p>
-          </header>
-          <div className="h-96 animate-pulse bg-line-soft" aria-hidden="true" />
+        <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
+          <div className="h-[680px] animate-pulse border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]" aria-hidden="true" />
+          <div className="hidden lg:block h-[680px] animate-pulse border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]" aria-hidden="true" />
         </div>
       </Container>
     );
@@ -110,88 +112,143 @@ export function WizardShell({
 
   return (
     <Container className="py-section">
-      <div className="mx-auto max-w-2xl">
-        <header className="mb-12 flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="block h-px w-8 bg-gold" />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
-              {pickT(t, "booking.page.eyebrow", "Anfrage")}
-            </p>
+      <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
+        <div ref={formCardRef} className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
+          <div className="border-b border-[color:var(--color-border-soft)] px-6 py-7 md:px-8 md:py-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
+                  {pickT(t, "booking.page.eyebrow", "Anfrage")}
+                </p>
+                <h2 className="mt-2 font-serif text-[30px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[34px]">
+                  {pickT(t, "booking.wizard.heading", locale === "de" ? "Buchungsdetails" : "Booking details")}
+                </h2>
+              </div>
+              <p className="max-w-sm text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:text-right">
+                {pickT(
+                  t,
+                  "booking.wizard.summary",
+                  locale === "de"
+                    ? "In wenigen Schritten zur klaren Anfrage. Wir bestätigen anschliessend persoenlich."
+                    : "A clear booking request in a few steps. We follow up personally after submission.",
+                )}
+              </p>
+            </div>
+            <div className="mt-7">
+              <WizardProgress t={t} currentStep={step} />
+            </div>
           </div>
-          <h1 className="font-serif text-section md:text-hero">{t("booking.page.title")}</h1>
-          <p className="max-w-prose text-body-lg text-mute">{t("booking.page.subhead")}</p>
-        </header>
 
-        <div className="mb-12">
-          <WizardProgress t={t} currentStep={step} />
+          <div className="px-6 py-7 md:px-8 md:py-8">
+            <div key={step} className="animate-fade-in">
+              {step === "service" && (
+                <StepService
+                  t={t}
+                  locale={locale}
+                  services={services}
+                  onValidated={goNext}
+                  registerValidator={registerValidator}
+                />
+              )}
+              {step === "route" && <StepRoute t={t} registerValidator={registerValidator} />}
+              {step === "details" && <StepDetails t={t} registerValidator={registerValidator} />}
+              {step === "contact" && <StepContact t={t} registerValidator={registerValidator} />}
+              {step === "review" && (
+                <StepReview
+                  t={t}
+                  locale={locale}
+                  services={services}
+                  onJumpTo={(s: WizardStep) => setStep(s)}
+                  onSubmitted={handleSubmitted}
+                />
+              )}
+            </div>
+
+            {step !== "review" && (
+              <div className="mt-12 border-t border-[color:var(--color-border-soft)] pt-6">
+                <WizardNavigation
+                  t={t}
+                  canGoBack={step !== "service"}
+                  showContinue={true}
+                  onBack={goPrevious}
+                  onContinue={handleContinue}
+                />
+              </div>
+            )}
+
+            {step === "review" && (
+              <div className="mt-8 border-t border-[color:var(--color-border-soft)] pt-6">
+                <WizardNavigation
+                  t={t}
+                  canGoBack={true}
+                  showContinue={false}
+                  onBack={goPrevious}
+                  onContinue={() => undefined}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        <div key={step} className="animate-fade-in">
-          {step === "service" && (
-            <StepService
-              t={t}
-              locale={locale}
-              services={services}
-              onValidated={goNext}
-              registerValidator={registerValidator}
-            />
-          )}
-          {step === "route" && <StepRoute t={t} registerValidator={registerValidator} />}
-          {step === "details" && <StepDetails t={t} registerValidator={registerValidator} />}
-          {step === "contact" && <StepContact t={t} registerValidator={registerValidator} />}
-          {step === "review" && (
-            <StepReview
-              t={t}
-              locale={locale}
-              services={services}
-              onJumpTo={(s: WizardStep) => setStep(s)}
-              onSubmitted={handleSubmitted}
-            />
-          )}
-        </div>
-
-        {step !== "review" && (
-          <div className="mt-12">
-            <WizardNavigation
-              t={t}
-              canGoBack={step !== "service"}
-              showContinue={true}
-              onBack={goPrevious}
-              onContinue={handleContinue}
-            />
-          </div>
-        )}
-
-        {step === "review" && (
-          <div className="mt-8">
-            <WizardNavigation
-              t={t}
-              canGoBack={true}
-              showContinue={false}
-              onBack={goPrevious}
-              onContinue={() => undefined}
-            />
-          </div>
-        )}
-
-        {/* Help line — fall-back path for hesitant users */}
-        {settings?.phone && (
-          <div className="mt-16 border-t border-line pt-8 text-center">
-            <p className="text-[13px] text-mute">
-              {pickT(t, "booking.help.heading", "Brauchen Sie Hilfe bei der Buchung?")}
+        <aside className="flex flex-col gap-6">
+          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
+              {pickT(t, "booking.sidebar.eyebrow", locale === "de" ? "Warum StepNow" : "Why StepNow")}
             </p>
-            <a
-              href={toTelHref(settings.phone)}
-              className="mt-2 inline-flex items-center gap-2 text-[15px] font-medium text-ink transition-colors hover:text-gold-deep"
-            >
-              <Phone className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
-              <span className="tabular-nums">{settings.phone}</span>
-            </a>
+            <h2 className="mt-2 font-serif text-[28px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[32px]">
+              {pickT(t, "booking.sidebar.heading", locale === "de" ? "Klare Anfrage statt offener Fahrt" : "A clear request instead of an uncertain ride")}
+            </h2>
+            <ul className="mt-6 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
+              {[
+                pickT(t, "booking.sidebar.point_1", locale === "de" ? "Festpreis und persoenliche Rueckmeldung statt unklarer Verfuegbarkeit." : "Fixed-price follow-up instead of uncertain availability."),
+                pickT(t, "booking.sidebar.point_2", locale === "de" ? "Vorbestellung fuer Flughafentransfer, Krankenfahrten und private Strecken." : "Advance booking for airport transfers, hospital rides, and private routes."),
+                pickT(t, "booking.sidebar.point_3", locale === "de" ? "Direkter Kontakt, falls Details vor der Fahrt abgestimmt werden muessen." : "Direct contact if details need to be clarified before the ride."),
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-3 bg-[var(--color-bg-page)] p-4">
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-accent-primary)]">
+                    <CheckCircle2 className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
+                  </span>
+                  <p className="text-[13.5px] leading-relaxed text-[var(--color-text-secondary)]">{point}</p>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
 
-        <span className="sr-only">{draft ? "" : ""}</span>
+          {settings?.phone && (
+            <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
+                {pickT(t, "booking.help.eyebrow", locale === "de" ? "Direkte Hilfe" : "Direct help")}
+              </p>
+              <h2 className="mt-2 font-serif text-[26px] leading-tight tracking-tight text-[var(--color-text-primary)]">
+                {pickT(t, "booking.help.heading", locale === "de" ? "Brauchen Sie Hilfe bei der Buchung?" : "Need help with your booking?")}
+              </h2>
+              <p className="mt-3 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
+                {pickT(
+                  t,
+                  "booking.help.body",
+                  locale === "de"
+                    ? "Wenn die Fahrt kurzfristig ist oder besondere Anforderungen hat, rufen Sie uns direkt an."
+                    : "If the ride is short notice or has special requirements, call us directly.",
+                )}
+              </p>
+              <a
+                href={toTelHref(settings.phone)}
+                className="mt-6 inline-flex items-center gap-2 border-b border-[rgba(85,133,24,0.3)] pb-0.5 text-[15px] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]"
+              >
+                <Phone className="h-4 w-4 text-[var(--color-accent-primary)]" aria-hidden="true" strokeWidth={1.5} />
+                <span className="tabular-nums">{settings.phone}</span>
+              </a>
+              {settings.opening_hours && (
+                <p className="mt-3 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
+                  {settings.opening_hours}
+                </p>
+              )}
+            </div>
+          )}
+        </aside>
       </div>
+
+      <span className="sr-only">{draft ? "" : ""}</span>
     </Container>
   );
 }

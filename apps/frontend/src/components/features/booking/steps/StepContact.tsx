@@ -43,8 +43,8 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h2 className="font-serif text-2xl tracking-tight">{t("booking.contact.heading")}</h2>
-        <p className="mt-2 text-mute">{t("booking.contact.subhead")}</p>
+        <h2 className="font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">{t("booking.contact.heading")}</h2>
+        <p className="mt-2 text-[var(--color-text-secondary)]">{t("booking.contact.subhead")}</p>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -84,7 +84,7 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
         />
 
         {draft.is_business && (
-          <div className="grid gap-5 border-l-2 border-gold/50 pl-6 md:grid-cols-2">
+          <div className="grid gap-5 border-l-2 border-[rgba(85,133,24,0.3)] pl-6 md:grid-cols-2">
             <Input
               label={pickT(t, "booking.contact.company_label", "Firmenname")}
               value={draft.company_name ?? ""}

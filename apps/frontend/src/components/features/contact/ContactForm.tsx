@@ -77,14 +77,14 @@ setServerError(t("errors.generic"));
 
 if (submitted) {
 return (
-<div className="border border-gold/30 bg-paper p-8">
-<div className="inline-flex h-12 w-12 items-center justify-center border border-gold/40 text-gold-deep">
+<div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-8">
+<div className="inline-flex h-12 w-12 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
 <Check className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
 </div>
-<p className="mt-6 font-serif text-2xl tracking-tight text-ink">
+<p className="mt-6 font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">
 {pickT(t, "contact.form.success.heading", "Vielen Dank!")}
 </p>
-<p className="mt-3 text-mute">
+<p className="mt-3 text-[var(--color-text-secondary)]">
 {pickT(t, "contact.form.success.body", "Wir melden uns innerhalb eines Werktages bei Ihnen.")}
 </p>
 </div>
@@ -152,7 +152,7 @@ value={messageValue}
 label={
 <>
 {pickT(t, "contact.form.consent_intro", "Ich stimme der ")}
-<Link href={privacyHref} className="underline hover:text-gold-deep">
+<Link href={privacyHref} className="underline transition-colors hover:text-[var(--color-accent-primary)]">
 {t("footer.legal.datenschutz")}
 </Link>{" "}
 {pickT(t, "contact.form.consent_zu", "zu.")}
@@ -163,7 +163,7 @@ error={errors.consent_dsgvo && t("errors.consent_required")}
 {...register("consent_dsgvo")}
 />
 {serverError && (
-<p role="alert" className="text-[13px] font-medium text-danger">
+<p role="alert" className="text-[13px] font-medium text-[var(--color-accent-warm)]">
 {serverError}
 </p>
 )}

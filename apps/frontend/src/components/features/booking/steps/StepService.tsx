@@ -67,18 +67,18 @@ export function StepService({
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h2 className="font-serif text-2xl tracking-tight">{t("booking.service.heading")}</h2>
-        <p className="mt-2 text-mute">{t("booking.service.subhead")}</p>
+        <h2 className="font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">{t("booking.service.heading")}</h2>
+        <p className="mt-2 text-[var(--color-text-secondary)]">{t("booking.service.subhead")}</p>
       </div>
 
       {/* Service grid */}
       <fieldset>
         <legend className="sr-only">{t("booking.service.heading")}</legend>
-        <ul className="grid gap-px bg-line md:grid-cols-2">
+        <ul className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] md:grid-cols-2">
           {services.map((s) => {
             const isSelected = draft.service_id === s.id;
             return (
-              <li key={s.id} className="bg-cream">
+              <li key={s.id} className="bg-[var(--color-bg-surface)]">
                 <button
                   type="button"
                   onClick={() => updateDraft({ service_id: s.id })}
@@ -86,22 +86,24 @@ export function StepService({
                   className={cn(
                     "flex h-full w-full flex-col items-start gap-2 p-6 text-left transition-all duration-base ease-out-premium",
                     isSelected
-                      ? "bg-paper shadow-ring-ink"
-                      : "hover:shadow-ring-ink",
+                      ? "bg-[var(--color-bg-page)]"
+                      : "hover:bg-[var(--color-bg-page)]",
                   )}
                 >
                   <span
                     className={cn(
                       "text-[10.5px] font-semibold uppercase tracking-[0.20em]",
-                      isSelected ? "text-gold-deep" : "text-mute",
+                      isSelected ? "text-[var(--color-accent-primary)]" : "text-[var(--color-text-secondary)]",
                     )}
                   >
-                    {isSelected ? "Ausgewählt" : "Auswählen"}
+                    {isSelected
+                      ? pickT(t, "booking.service.selected", "Ausgewaehlt")
+                      : pickT(t, "booking.service.select", "Auswaehlen")}
                   </span>
-                  <span className="font-serif text-xl tracking-tight text-ink">
+                  <span className="font-serif text-xl tracking-tight text-[var(--color-text-primary)]">
                     {s.title}
                   </span>
-                  <span className="line-clamp-2 text-[13.5px] leading-relaxed text-mute">
+                  <span className="line-clamp-2 text-[13.5px] leading-relaxed text-[var(--color-text-secondary)]">
                     {s.short_description}
                   </span>
                 </button>
@@ -110,7 +112,7 @@ export function StepService({
           })}
         </ul>
         {errors.service && (
-          <p role="alert" className="mt-2 text-xs font-medium text-danger">
+          <p role="alert" className="mt-2 text-xs font-medium text-[var(--color-accent-warm)]">
             {errors.service}
           </p>
         )}

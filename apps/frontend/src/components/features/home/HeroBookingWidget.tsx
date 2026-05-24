@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import type { Locale } from "@/types";
 import { Button } from "@/components/ui";
@@ -49,11 +49,17 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 border border-cream/15 bg-charcoal/50 p-7 backdrop-blur-sm md:p-8">
-      <div className="flex items-center gap-3">
-        <span aria-hidden="true" className="block h-px w-8 bg-gold" />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+    <div className="flex flex-col gap-6 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-7">
+      <div className="border-b border-[color:var(--color-border-soft)] pb-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
           {t("hero_widget.heading")}
+        </p>
+        <p className="mt-2 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
+          {pickT(
+            t,
+            "hero_widget.note",
+            "Share your route and date. We prepare the booking flow with your details.",
+          )}
         </p>
       </div>
 
@@ -73,32 +79,44 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
           icon
         />
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.18em] text-cream/60">
+          <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
             {t("hero_widget.when_label")}
           </label>
-          <input
-            type="date"
-            min={bounds?.min}
-            max={bounds?.max}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="h-11 w-full border border-cream/20 bg-transparent px-3 text-[14px] text-cream transition-colors duration-base focus:border-gold focus:outline-none"
-          />
+          <div className="relative">
+            <CalendarDays
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-secondary)]/65"
+              aria-hidden="true"
+              strokeWidth={1.5}
+            />
+            <input
+              type="date"
+              min={bounds?.min}
+              max={bounds?.max}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="h-11 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] pl-9 pr-3 text-[14px] text-[var(--color-text-primary)] transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
       <Button
         size="lg"
-        variant="inverse"
+        variant="primary"
         onClick={submit}
         trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         fullWidth
+        className="text-[12px] uppercase tracking-[0.16em]"
       >
         {t("hero_widget.cta")}
       </Button>
 
-      <p className="text-[11px] leading-relaxed text-cream/50">
-        {pickT(t, "hero_widget.note", "Festpreis-Antwort innerhalb von 30 Minuten.")}
+      <p className="border-t border-[color:var(--color-border-soft)] pt-4 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
+        {pickT(
+          t,
+          "hero_widget.note",
+          "Fixed-price reply during our service hours.",
+        )}
       </p>
     </div>
   );
@@ -115,13 +133,13 @@ interface WidgetFieldProps {
 function WidgetField({ label, placeholder, value, onChange, icon }: WidgetFieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-medium uppercase tracking-[0.18em] text-cream/60">
+      <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
         {label}
       </label>
       <div className="relative">
         {icon && (
           <MapPin
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cream/35"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-secondary)]/65"
             aria-hidden="true"
             strokeWidth={1.5}
           />
@@ -131,7 +149,7 @@ function WidgetField({ label, placeholder, value, onChange, icon }: WidgetFieldP
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className={`h-11 w-full border border-cream/20 bg-transparent text-[14px] text-cream placeholder:text-cream/40 transition-colors duration-base focus:border-gold focus:outline-none ${
+          className={`h-11 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none ${
             icon ? "pl-9 pr-3" : "px-3"
           }`}
         />

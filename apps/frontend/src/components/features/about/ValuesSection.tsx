@@ -67,30 +67,30 @@ export function ValuesSection({ t, locale = "de" }: ValuesSectionProps) {
 
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
         {eyebrow}
       </p>
-      <h2 className="mt-1 mb-4 font-serif text-[24px] leading-tight tracking-tight md:text-[26px]">
+      <h2 className="mt-2 font-serif text-[30px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
         {heading}
       </h2>
-      <ul className="border-y border-line">
+      <ul className="mt-6 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
         {VALUES.map((v, idx) => {
           const title = pickT(t, v.titleKey, v.defaults[locale].title);
           const body = pickT(t, v.bodyKey, v.defaults[locale].body);
           return (
             <li
               key={v.titleKey}
-              className="flex items-start gap-4 border-b border-line py-3.5 last:border-b-0"
+              className="flex items-start gap-4 bg-[var(--color-bg-page)] p-5"
             >
               <span
                 aria-hidden="true"
-                className="min-w-[28px] font-serif text-[20px] leading-none tabular-nums text-gold-deep"
+                className="min-w-[34px] font-serif text-[24px] leading-none tabular-nums text-[color:rgba(85,133,24,0.34)]"
               >
                 {String(idx + 1).padStart(2, "0")}
               </span>
               <div className="flex-1">
-                <p className="text-[14.5px] font-medium tracking-tight text-ink">{title}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-mute">{body}</p>
+                <p className="text-[15px] font-medium tracking-tight text-[var(--color-text-primary)]">{title}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">{body}</p>
               </div>
             </li>
           );

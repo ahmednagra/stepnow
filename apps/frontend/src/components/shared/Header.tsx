@@ -1,21 +1,13 @@
-// apps/frontend/src/components/shared/Header.tsx
-// Phase 3d polish — addresses audit F-2 (mobile phone CTA visible).
-//   • Adds a one-tap call icon button in the right cluster on < lg viewports
-//     so mobile users never need to open the drawer just to call.
-//   • Refines hover (text-ink/75 → text-ink with subtle gold accent on CTA).
-//   • Hides the wordmark on the smallest mobile widths so the call icon never
-//     gets cramped.
-
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Menu, X, Phone } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronRight, MapPin, Menu, Phone, X } from "lucide-react";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import { Logo } from "./Logo";
 import { Container } from "./Container";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { Button } from "@/components/ui";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
@@ -38,30 +30,42 @@ const NAV_ITEMS: NavItem[] = [
   { key: "nav.contact", hrefDe: "/kontakt", hrefEn: "/en/contact" },
 ];
 
-/**
- * Strip the seeded "(Dev)" suffix from the business name for display.
- */
 function cleanBusinessName(name: string): string {
   return name.replace(/\s*\(Dev\)\s*$/i, "").trim();
 }
 
+function isNavActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (href === "/en") return pathname === "/en";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function Header({ settings }: HeaderProps) {
   const { t, locale } = useUiStrings();
+  const pathname = usePathname() ?? (locale === "de" ? "/" : "/en");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const bookingHref = locale === "de" ? "/buchen" : "/en/book";
   const displayName = cleanBusinessName(settings.business_name);
+  const homeHref = locale === "de" ? "/" : "/en";
+  const bookingHref = locale === "de" ? "/buchen" : "/en/book";
+  const navItems = useMemo(
+    () =>
+      NAV_ITEMS.map((item) => ({
+        ...item,
+        href: locale === "de" ? item.hrefDe : item.hrefEn,
+      })),
+    [locale],
+  );
 
   useEffect(() => {
     function handleScroll() {
-      setScrolled(window.scrollY > 8);
+      setScrolled(window.scrollY > 10);
     }
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Lock body scroll when the mobile drawer is open.
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -70,121 +74,218 @@ export function Header({ settings }: HeaderProps) {
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 bg-cream/95 backdrop-blur transition-all duration-base ease-out-premium",
-        scrolled
-          ? "border-b border-line shadow-premium-sm"
-          : "border-b border-transparent",
-      )}
-    >
-      <Container
-        as="div"
-        className="flex h-[3.75rem] items-center justify-between gap-4 md:h-[4rem]"
-      >
-        {/* Wordmark */}
-        <Link
-          href={locale === "de" ? "/" : "/en"}
-          aria-label={displayName}
-          className="flex items-center transition-opacity duration-base hover:opacity-80"
+    <>
+      <div className="hidden border-b border-[color:var(--color-border-soft)] lg:block">
+        <Container
+          as="div"
+          className="flex h-10 items-center justify-between text-[11px] font-medium tracking-[0.05em] text-[var(--color-text-secondary)]"
         >
-          <Logo height={32} priority />
-        </Link>
-
-        {/* Primary nav — desktop only */}
-        <nav aria-label="Primary" className="hidden lg:flex lg:items-center lg:gap-9">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.key}
-              href={locale === "de" ? item.hrefDe : item.hrefEn}
-              className="text-[13px] font-medium tracking-tight text-ink/70 transition-colors duration-base hover:text-ink"
-            >
-              {t(item.key)}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Right cluster — desktop */}
-        <div className="hidden items-center gap-6 lg:flex">
-          <a
-            href={toTelHref(settings.phone)}
-            className="inline-flex items-center gap-2 text-[13px] text-ink/75 transition-colors duration-base hover:text-ink"
-            aria-label={t("contact.method.phone")}
-          >
-            <Phone className="h-3.5 w-3.5 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
-            <span className="font-medium tracking-tight tabular-nums">{settings.phone}</span>
-          </a>
-          <LanguageSwitcher />
-          <Link href={bookingHref}>
-            <Button size="sm" variant="secondary">
-              {t("nav.book_now")}
-            </Button>
-          </Link>
-        </div>
-
-        {/* Right cluster — mobile (Phone icon + drawer toggle) */}
-        <div className="flex items-center gap-1 lg:hidden">
-          <a
-            href={toTelHref(settings.phone)}
-            aria-label={`${t("contact.method.phone")}: ${settings.phone}`}
-            className="inline-flex h-10 w-10 items-center justify-center text-ink transition-colors hover:text-gold-deep"
-          >
-            <Phone className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
-          </a>
-          <button
-            type="button"
-            aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((v) => !v)}
-            className="inline-flex h-10 w-10 items-center justify-center text-ink"
-          >
-            {mobileOpen ? (
-              <X className="h-6 w-6" aria-hidden="true" />
-            ) : (
-              <Menu className="h-6 w-6" aria-hidden="true" />
-            )}
-          </button>
-        </div>
-      </Container>
-
-      {/* Mobile drawer */}
-      <div
-        className={cn(
-          "border-t border-line bg-cream lg:hidden",
-          mobileOpen ? "block" : "hidden",
-        )}
-      >
-        <Container as="div" className="flex flex-col gap-6 py-8">
-          <nav aria-label="Mobile" className="flex flex-col gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.key}
-                href={locale === "de" ? item.hrefDe : item.hrefEn}
-                onClick={() => setMobileOpen(false)}
-                className="border-b border-line-soft py-3 font-serif text-xl tracking-tight text-ink transition-colors hover:text-gold-deep"
-              >
-                {t(item.key)}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex flex-col gap-4 pt-2">
+          <div className="flex items-center gap-5">
+            <span className="inline-flex items-center gap-2">
+              <MapPin
+                className="h-3.5 w-3.5 text-[var(--color-accent-primary)]"
+                strokeWidth={1.6}
+                aria-hidden="true"
+              />
+              <span>{settings.address_city}</span>
+            </span>
             <a
               href={toTelHref(settings.phone)}
-              className="flex items-center gap-2 text-base text-ink"
+              className="inline-flex items-center gap-2 transition-colors duration-base hover:text-[var(--color-text-primary)]"
             >
-              <Phone className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
-              <span className="font-medium tracking-tight tabular-nums">{settings.phone}</span>
+              <Phone
+                className="h-3.5 w-3.5 text-[var(--color-accent-primary)]"
+                strokeWidth={1.6}
+                aria-hidden="true"
+              />
+              <span className="tabular-nums">{settings.phone}</span>
             </a>
-            <LanguageSwitcher />
-            <Link href={bookingHref} onClick={() => setMobileOpen(false)}>
-              <Button fullWidth size="lg">
-                {t("nav.book_now")}
-              </Button>
-            </Link>
           </div>
+          <LanguageSwitcher className="text-[var(--color-text-secondary)]" />
         </Container>
       </div>
-    </header>
+
+      <header
+        className={cn(
+          "sticky top-0 z-40 transition-all duration-base ease-out-premium",
+          "bg-[color:rgba(247,244,234,0.92)] backdrop-blur",
+          scrolled
+            ? "border-b border-[color:var(--color-border-soft)] shadow-[0_4px_14px_rgba(47,58,31,0.06)]"
+            : "border-b border-transparent",
+        )}
+      >
+        <Container
+          as="div"
+          className="flex h-[4.5rem] items-center justify-between gap-5 lg:h-[5.25rem]"
+        >
+          <Link
+            href={homeHref}
+            aria-label={displayName}
+            className="flex shrink-0 items-center transition-opacity duration-base hover:opacity-85"
+          >
+            <Logo height={48} priority />
+          </Link>
+
+          <nav
+            aria-label="Primary"
+            className="hidden lg:flex lg:items-center lg:justify-center lg:gap-8"
+          >
+            {navItems.map((item) => {
+              const active = isNavActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={cn(
+                    "relative py-2 text-[14px] font-semibold tracking-[0.02em] transition-colors duration-base",
+                    active
+                      ? "text-[var(--color-text-primary)]"
+                      : "text-[color:rgba(47,58,31,0.72)] hover:text-[var(--color-text-primary)]",
+                  )}
+                >
+                  {t(item.key)}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "absolute inset-x-0 -bottom-[10px] h-px origin-left transition-transform duration-base ease-out-premium",
+                      "bg-[var(--color-accent-primary)]",
+                      active ? "scale-x-100" : "scale-x-0",
+                    )}
+                  />
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Link
+              href={bookingHref}
+              className={cn(
+                "group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
+                "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "transition-all duration-base ease-out-premium hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base before:ease-out-premium hover:before:scale-x-100",
+              )}
+            >
+              <span className="relative z-10">{t("nav.book_now")}</span>
+              <ChevronRight className="relative z-10 h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5" strokeWidth={1.7} aria-hidden="true" />
+            </Link>
+          </div>
+ 
+          <div className="flex items-center gap-2 lg:hidden">
+            <a
+              href={toTelHref(settings.phone)}
+              aria-label={`${t("contact.method.phone")}: ${settings.phone}`}
+              className={cn(
+                "inline-flex h-10 w-10 items-center justify-center border transition-colors duration-base",
+                "border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-text-primary)]",
+                "hover:border-[color:var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]",
+              )}
+            >
+              <Phone className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.7} />
+            </a>
+            <button
+              type="button"
+              aria-label={mobileOpen ? t("nav.close") : t("nav.menu")}
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen((value) => !value)}
+              className={cn(
+                "inline-flex h-10 w-10 items-center justify-center border transition-colors duration-base",
+                "border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-text-primary)]",
+                "hover:border-[color:var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]",
+              )}
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5" aria-hidden="true" strokeWidth={1.7} />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={1.7} />
+              )}
+            </button>
+          </div>
+        </Container>
+
+        <div
+          className={cn(
+            "border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] lg:hidden",
+            mobileOpen ? "block" : "hidden",
+          )}
+        >
+          <Container as="div" className="flex flex-col gap-6 py-6">
+            <div className="rounded-[6px] border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
+                    {displayName}
+                  </p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+                    {settings.address_street}
+                    <br />
+                    {settings.address_postcode} {settings.address_city}
+                  </p>
+                </div>
+                <LanguageSwitcher className="text-[var(--color-text-secondary)]" />
+              </div>
+              <a
+                href={toTelHref(settings.phone)}
+                className="mt-4 inline-flex items-center gap-2 text-[13px] font-medium text-[var(--color-text-primary)]"
+              >
+                <Phone
+                  className="h-4 w-4 text-[var(--color-accent-primary)]"
+                  strokeWidth={1.6}
+                  aria-hidden="true"
+                />
+                <span className="tabular-nums">{settings.phone}</span>
+              </a>
+            </div>
+
+            <nav aria-label="Mobile" className="flex flex-col border-y border-[color:var(--color-border-soft)]">
+              {navItems.map((item) => {
+                const active = isNavActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-between border-b border-[color:var(--color-border-soft)] py-4 text-[17px] tracking-tight last:border-b-0",
+                      active
+                        ? "font-medium text-[var(--color-text-primary)]"
+                        : "text-[var(--color-text-secondary)]",
+                    )}
+                  >
+                    <span>{t(item.key)}</span>
+                    <ChevronRight
+                      className={cn(
+                        "h-4 w-4",
+                        active ? "text-[var(--color-accent-primary)]" : "text-[var(--color-text-secondary)]",
+                      )}
+                      strokeWidth={1.7}
+                      aria-hidden="true"
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <Link
+              href={bookingHref}
+              className={cn(
+                "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
+                "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "transition-all duration-base ease-out-premium hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base before:ease-out-premium hover:before:scale-x-100",
+              )}
+            >
+              <span className="relative z-10">{t("nav.book_now")}</span>
+              <ChevronRight className="relative z-10 h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5" strokeWidth={1.7} aria-hidden="true" />
+            </Link>
+          </Container>
+        </div>
+      </header>
+    </>
   );
 }

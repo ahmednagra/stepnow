@@ -1,5 +1,3 @@
-// apps/frontend/src/components/shared/Footer.tsx
-// Site footer with CTA/standard layouts; bottom strip shows year + business name + locale-aware "rights reserved" suffix.
 "use client";
 
 import Link from "next/link";
@@ -8,13 +6,21 @@ import { ArrowRight, Phone } from "lucide-react";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import { Container } from "./Container";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { Logo } from "./Logo";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
-import { Logo } from "./Logo";
+import { cn } from "@/utils/cn";
 
-interface FooterProps { settings: SettingsPublic }
-interface FooterLink { key: string; hrefDe: string; hrefEn: string }
+interface FooterProps {
+  settings: SettingsPublic;
+}
+
+interface FooterLink {
+  key: string;
+  hrefDe: string;
+  hrefEn: string;
+}
 
 const QUICK_LINKS: FooterLink[] = [
   { key: "nav.home", hrefDe: "/", hrefEn: "/en" },
@@ -61,115 +67,180 @@ export function Footer({ settings }: FooterProps) {
   const displayName = cleanBusinessName(settings.business_name);
   const bookHref = locale === "de" ? "/buchen" : "/en/book";
   const year = new Date().getFullYear();
-  const rightsReserved = pickT(t, "footer.rights_reserved", locale === "de" ? "Alle Rechte vorbehalten." : "All rights reserved.");
+  const rightsReserved = pickT(
+    t,
+    "footer.rights_reserved",
+    locale === "de" ? "Alle Rechte vorbehalten." : "All rights reserved.",
+  );
 
   return (
-    <footer className="bg-ink text-cream">
-      <Container as="div" className={showCta ? "py-14 md:py-16" : "py-12 md:py-14"}>
-        {showCta ? (
-          <div className="grid gap-10 md:grid-cols-12 md:gap-14">
-            <div className="md:col-span-7">
-              <div className="grid gap-10 md:grid-cols-12 md:gap-8">
-                <div className="md:col-span-5">
-                  <BrandBlock t={t} settings={settings} displayName={displayName} />
+    <footer className="bg-[var(--color-bg-footer)] text-[var(--color-text-footer)]">
+      <div className="border-t border-[var(--color-border-footer)]">
+        {showCta && (
+          <Container as="div" className="py-10 md:py-12">
+            <section className="border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-surface)]">
+              <div className="flex flex-col gap-6 p-6 md:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:p-10">
+                <div className="max-w-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-secondary)]">
+                    {pickT(t, "footer.cta.eyebrow", locale === "de" ? "Direkt erreichbar" : "Directly reachable")}
+                  </p>
+                  <h2 className="mt-3 max-w-xl font-serif text-[30px] leading-[1.08] tracking-tight md:text-[36px]">
+                    {pickT(t, "footer.cta.heading", locale === "de" ? "Bereit fuer Ihre naechste Fahrt?" : "Ready for your next ride?")}
+                  </h2>
+                  <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--color-text-footer-muted)]">
+                    {pickT(
+                      t,
+                      "footer.cta.sub",
+                      locale === "de"
+                        ? "Buchen Sie online oder sprechen Sie direkt mit uns. Klare Antworten, feste Planung und eine schnelle Rueckmeldung innerhalb unserer Telefonzeiten."
+                        : "Book online or speak with us directly. Clear answers, structured planning, and a fast reply during phone hours.",
+                    )}
+                  </p>
                 </div>
-                <div className="md:col-span-7">
-                  <div className="grid grid-cols-2 gap-8">
-                    <LinkColumn heading={t("footer.col.quick_links")} items={QUICK_LINKS} hrefFor={hrefFor} t={t} />
-                    <LinkColumn heading={t("footer.col.services")} items={SERVICE_LINKS} hrefFor={hrefFor} t={t} />
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="md:col-span-5 md:border-l md:border-cream/10 md:pl-10 lg:pl-14">
-              <div className="flex h-full flex-col justify-center">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold">
-                  {pickT(t, "footer.cta.eyebrow", locale === "de" ? "Bereit, mit uns zu fahren?" : "Ready when you are")}
-                </p>
-                <h2 className="mt-2 font-serif text-[26px] leading-[1.1] tracking-tight text-cream md:text-[30px]">
-                  {pickT(t, "footer.cta.heading", locale === "de" ? "Bereit für Ihre Fahrt?" : "Ready to ride with us?")}
-                </h2>
-                <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-cream/65">
-                  {pickT(t, "footer.cta.sub", locale === "de"
-                    ? "Buchen Sie online oder rufen Sie an — wir melden uns innerhalb von 30 Minuten."
-                    : "Book online or call — we reply within 30 minutes during phone hours."
-                  )}
-                </p>
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <Link href={bookHref} className="inline-flex items-center gap-2 bg-cream px-5 py-3 text-[12.5px] font-medium tracking-tight text-ink transition-colors duration-base hover:bg-white">
-                    {pickT(t, "footer.cta.book", locale === "de" ? "Jetzt buchen" : "Book now")}
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+                <div className="flex flex-col gap-3 sm:flex-row lg:items-center lg:justify-end">
+                  <Link
+                    href={bookHref}
+                    className={cn(
+                      "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
+                      "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                      "transition-all duration-base ease-out-premium hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                      "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base before:ease-out-premium hover:before:scale-x-100",
+                    )}
+                  >
+                    <span className="relative z-10">{pickT(t, "footer.cta.book", locale === "de" ? "Jetzt buchen" : "Book now")}</span>
+                    <ArrowRight className="relative z-10 h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5" strokeWidth={1.7} aria-hidden="true" />
                   </Link>
-                  <a href={toTelHref(settings.phone)} className="inline-flex items-center gap-2 border border-cream/40 px-5 py-3 text-[12.5px] font-medium tabular-nums tracking-tight text-cream transition-colors duration-base hover:bg-cream/5">
-                    <Phone className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
-                    <span>{settings.phone}</span>
+                  <a
+                    href={toTelHref(settings.phone)}
+                    className="inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-border-footer)] bg-transparent px-5 text-[12px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-footer)] transition-colors duration-base hover:border-[var(--color-accent-secondary)] hover:text-[var(--color-accent-secondary)]"
+                  >
+                    <Phone className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden="true" />
+                    <span className="tabular-nums normal-case tracking-[0.04em]">{settings.phone}</span>
                   </a>
                 </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-10 md:grid-cols-12 md:gap-10">
-            <div className="md:col-span-4"><BrandBlock t={t} settings={settings} displayName={displayName} /></div>
-            <div className="md:col-span-2"><LinkColumn heading={t("footer.col.quick_links")} items={QUICK_LINKS} hrefFor={hrefFor} t={t} /></div>
-            <div className="md:col-span-3"><LinkColumn heading={t("footer.col.services")} items={SERVICE_LINKS} hrefFor={hrefFor} t={t} /></div>
-            <div className="md:col-span-3"><ContactColumn heading={t("footer.col.contact")} settings={settings} /></div>
-          </div>
+            </section>
+          </Container>
         )}
-      </Container>
 
-      <div className="border-t border-cream/10">
-        <Container as="div" className="flex flex-col items-start justify-between gap-4 py-5 md:flex-row md:items-center">
-          <p className="flex items-center gap-3 text-[11px] tracking-wide text-cream/45">
-            <span>© {year} {displayName}. {rightsReserved}</span>
-            <span aria-hidden="true" className="text-cream/20">·</span>
-            <Link href={ADMIN_LINK.href} className="text-cream/40 transition-colors duration-base hover:text-cream/70">
-              {ADMIN_LINK.label}
-            </Link>
-          </p>
-          <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {LEGAL_LINKS.map((item) => (
-              <li key={item.key}>
-                <Link href={hrefFor(item)} className="text-[11px] tracking-wide text-cream/55 transition-colors duration-base hover:text-gold">
-                  {t(item.key)}
+        <div className={cn(showCta && "border-t border-[var(--color-border-footer)]")}>
+          <Container as="div" className="py-12 md:py-14">
+            <div className="grid gap-8 md:grid-cols-12 md:gap-6 lg:gap-10">
+              <div className="md:col-span-4 lg:col-span-5">
+                <div className="inline-flex border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-surface)] px-4 py-3">
+                  <Logo height={42} tone="light" />
+                </div>
+                <p className="mt-5 max-w-md text-[14px] leading-relaxed text-[var(--color-text-footer-muted)]">
+                  {t("footer.col.brand")}
+                </p>
+                {settings.concession_number && (
+                  <p className="mt-5 inline-flex items-center border-t border-[var(--color-border-footer)] pt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-secondary)]">
+                    § 49 PBefG · {settings.concession_number}
+                  </p>
+                )}
+                <span className="sr-only">{displayName}</span>
+              </div>
+
+              <div className="md:col-span-2">
+                <LinkColumn
+                  heading={t("footer.col.quick_links")}
+                  items={QUICK_LINKS}
+                  hrefFor={hrefFor}
+                  t={t}
+                  dark
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <LinkColumn
+                  heading={t("footer.col.services")}
+                  items={SERVICE_LINKS}
+                  hrefFor={hrefFor}
+                  t={t}
+                  dark
+                />
+              </div>
+
+              <div className="md:col-span-3 lg:col-span-2">
+                <ContactColumn heading={t("footer.col.contact")} settings={settings} dark />
+              </div>
+            </div>
+          </Container>
+
+          <div className="border-t border-[var(--color-border-footer)]">
+            <Container as="div" className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.04em] text-[color:rgba(190,199,177,0.82)]">
+                <span>© {year} {displayName}. {rightsReserved}</span>
+                <span aria-hidden="true" className="text-[var(--color-border-footer)]">·</span>
+                <Link
+                  href={ADMIN_LINK.href}
+                  className="transition-colors duration-base hover:text-[var(--color-text-footer)]"
+                >
+                  {ADMIN_LINK.label}
                 </Link>
-              </li>
-            ))}
-          </ul>
-          <LanguageSwitcher className="text-cream" />
-        </Container>
+              </p>
+
+              <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                {LEGAL_LINKS.map((item) => (
+                  <li key={item.key}>
+                    <Link
+                      href={hrefFor(item)}
+                      className="text-[11px] tracking-[0.04em] text-[color:rgba(190,199,177,0.86)] transition-colors duration-base hover:text-[var(--color-accent-secondary)]"
+                    >
+                      {t(item.key)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <LanguageSwitcher className="text-[var(--color-text-footer-muted)]" />
+            </Container>
+          </div>
+        </div>
       </div>
     </footer>
   );
 }
 
-interface BrandBlockProps { t: ReturnType<typeof useUiStrings>["t"]; settings: SettingsPublic; displayName: string }
-function BrandBlock({ t, settings, displayName }: BrandBlockProps) {
-  return (
-    <>
-      <div className="inline-flex items-center bg-cream px-4 py-3"><Logo height={40} /></div>
-      <p className="mt-5 max-w-xs text-[13.5px] leading-relaxed text-cream/60">{t("footer.col.brand")}</p>
-      {settings.concession_number && (
-        <p className="mt-4 inline-block border-t border-gold/30 pt-3 text-[11px] uppercase tracking-[0.22em] text-gold">
-          § 49 PBefG · {settings.concession_number}
-        </p>
-      )}
-      <span className="sr-only">{displayName}</span>
-    </>
-  );
+interface LinkColumnProps {
+  heading: string;
+  items: FooterLink[];
+  hrefFor: (item: FooterLink) => string;
+  t: ReturnType<typeof useUiStrings>["t"];
+  dark?: boolean;
 }
 
-interface LinkColumnProps { heading: string; items: FooterLink[]; hrefFor: (item: FooterLink) => string; t: ReturnType<typeof useUiStrings>["t"] }
-function LinkColumn({ heading, items, hrefFor, t }: LinkColumnProps) {
+function LinkColumn({ heading, items, hrefFor, t, dark = false }: LinkColumnProps) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">{heading}</p>
-      <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
-      <ul className="mt-4 space-y-2">
+      <p
+        className={cn(
+          "text-[10px] font-semibold uppercase tracking-[0.18em]",
+          dark ? "text-[var(--color-accent-secondary)]" : "text-[var(--color-accent-primary)]",
+        )}
+      >
+        {heading}
+      </p>
+      <span
+        className={cn(
+          "mt-2 block h-px w-8",
+          dark ? "bg-[var(--color-border-footer)]" : "bg-[var(--color-border-soft)]",
+        )}
+        aria-hidden="true"
+      />
+      <ul className="mt-4 space-y-2.5">
         {items.map((item) => (
           <li key={item.key}>
-            <Link href={hrefFor(item)} className="text-[13px] text-cream/75 transition-colors duration-base hover:text-gold">
+            <Link
+              href={hrefFor(item)}
+              className={cn(
+                "text-[14px] transition-colors duration-base",
+                dark
+                  ? "text-[var(--color-text-footer-muted)] hover:text-[var(--color-text-footer)]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
+              )}
+            >
               {t(item.key)}
             </Link>
           </li>
@@ -179,20 +250,63 @@ function LinkColumn({ heading, items, hrefFor, t }: LinkColumnProps) {
   );
 }
 
-interface ContactColumnProps { heading: string; settings: SettingsPublic }
-function ContactColumn({ heading, settings }: ContactColumnProps) {
+interface ContactColumnProps {
+  heading: string;
+  settings: SettingsPublic;
+  dark?: boolean;
+}
+
+function ContactColumn({ heading, settings, dark = false }: ContactColumnProps) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">{heading}</p>
-      <span className="mt-2 block h-px w-6 bg-gold/40" aria-hidden="true" />
-      <address className="mt-4 space-y-1 not-italic text-[13px] leading-relaxed text-cream/75">
+      <p
+        className={cn(
+          "text-[10px] font-semibold uppercase tracking-[0.18em]",
+          dark ? "text-[var(--color-accent-secondary)]" : "text-[var(--color-accent-primary)]",
+        )}
+      >
+        {heading}
+      </p>
+      <span
+        className={cn(
+          "mt-2 block h-px w-8",
+          dark ? "bg-[var(--color-border-footer)]" : "bg-[var(--color-border-soft)]",
+        )}
+        aria-hidden="true"
+      />
+      <address
+        className={cn(
+          "mt-4 space-y-2.5 not-italic text-[14px] leading-relaxed",
+          dark ? "text-[var(--color-text-footer-muted)]" : "text-[var(--color-text-secondary)]",
+        )}
+      >
         <p>{settings.address_street}</p>
         <p>{settings.address_postcode} {settings.address_city}</p>
-        <p className="mt-3">
-          <a href={toTelHref(settings.phone)} className="tabular-nums transition-colors duration-base hover:text-gold">{settings.phone}</a>
+        <p className="pt-1">
+          <a
+            href={toTelHref(settings.phone)}
+            className={cn(
+              "tabular-nums transition-colors duration-base",
+              dark
+                ? "hover:text-[var(--color-text-footer)]"
+                : "hover:text-[var(--color-text-primary)]",
+            )}
+          >
+            {settings.phone}
+          </a>
         </p>
         <p>
-          <a href={`mailto:${settings.email}`} className="transition-colors duration-base hover:text-gold">{settings.email}</a>
+          <a
+            href={`mailto:${settings.email}`}
+            className={cn(
+              "transition-colors duration-base",
+              dark
+                ? "hover:text-[var(--color-text-footer)]"
+                : "hover:text-[var(--color-text-primary)]",
+            )}
+          >
+            {settings.email}
+          </a>
         </p>
       </address>
     </div>

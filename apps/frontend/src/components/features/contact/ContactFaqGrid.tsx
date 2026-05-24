@@ -17,25 +17,28 @@ export function ContactFaqGrid({ faqs }: ContactFaqGridProps) {
   if (faqs.length === 0) return null;
 
   return (
-    <ul className="grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+    <ul className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-2 lg:grid-cols-4">
       {faqs.map((faq, idx) => (
         <li
           key={faq.id}
-          className="flex flex-col gap-3 bg-cream p-5 md:p-6"
+          className="flex flex-col gap-4 bg-[var(--color-bg-surface)] p-5 transition-colors duration-base hover:bg-[var(--color-bg-page)] md:p-6"
         >
-          <span
-            aria-hidden="true"
-            className="font-serif text-[28px] leading-none tabular-nums text-gold"
-          >
-            {String(idx + 1).padStart(2, "0")}
-          </span>
-          <h3 className="text-[14px] font-medium leading-snug tracking-tight text-ink">
+          <div className="flex items-center justify-between gap-3">
+            <span
+              aria-hidden="true"
+              className="font-serif text-[28px] leading-none tabular-nums text-[color:rgba(85,133,24,0.30)]"
+            >
+              {String(idx + 1).padStart(2, "0")}
+            </span>
+            <span className="inline-flex h-2.5 w-2.5 shrink-0 bg-[var(--color-accent-primary)]" aria-hidden="true" />
+          </div>
+          <h3 className="text-[14px] font-medium leading-snug tracking-tight text-[var(--color-text-primary)]">
             {faq.question}
           </h3>
           <div className="mt-auto">
             <Markdown
               source={faq.answer}
-              className="text-[12.5px] leading-[1.55] text-mute"
+              className="text-[12.5px] leading-[1.55] text-[var(--color-text-secondary)]"
             />
           </div>
         </li>

@@ -6,3 +6,5 @@ export { FleetPreview } from "./FleetPreview";
 export { TestimonialsSection } from "./TestimonialsSection";
 export { FaqTeaser } from "./FaqTeaser";
 export { HeroBookingWidget } from "./HeroBookingWidget";
+export { HeroHomeSection } from "./HeroHomeSection";
+export { HomeServicesSection } from "./HomeServicesSection";

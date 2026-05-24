@@ -60,10 +60,10 @@ export function LanguageSwitcher({ className, dynamicSlugMap }: LanguageSwitcher
   const deHref = isEn ? alt : pathname;
   const enHref = isEn ? pathname : alt;
 
-  // Active state: thin gold underline with generous offset so it doesn't
+  // Active state: thin accent underline with generous offset so it doesn't
   // crowd the small-caps glyphs. Works on both light and dark surfaces.
   const activeStyles =
-    "text-current underline decoration-gold decoration-[1.5px] underline-offset-[6px]";
+    "text-current underline decoration-[var(--color-accent-primary)] decoration-[1.5px] underline-offset-[6px]";
   const inactiveStyles = "text-current/55 hover:text-current";
 
   return (

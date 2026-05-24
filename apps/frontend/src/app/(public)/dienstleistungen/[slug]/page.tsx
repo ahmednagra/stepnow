@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Phone } from "lucide-react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { getServiceBySlugServer, listServicesServer } from "@/services/services";
 import { getPricingForServiceServer } from "@/services/pricing";
@@ -10,20 +10,19 @@ import { ApiError } from "@/lib/api-errors";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildServiceJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
-import { toTelHref } from "@/utils/formatters";
 import {
-  ConcessionBadge,
   Container,
   Markdown,
   ScrollReveal,
   SlugMapBridge,
 } from "@/components/shared";
-import { Button } from "@/components/ui";
 import {
   PricingSnapshot,
   RelatedServices,
   ServiceDetailHeader,
 } from "@/components/features/services";
+import { pickT } from "@/lib/i18n/pick";
+import { getServiceHeroImage } from "@/components/features/pricing/PricingSections";
 
 export const revalidate = 300;
 
@@ -88,6 +87,7 @@ export default async function ServiceDetailDe({ params }: PageParams) {
 
   const t = createT(stringsRes.strings, "de");
   const others = allServices.filter((s) => s.id !== service.id);
+  const heroImage = getServiceHeroImage(service.slug, service.hero_image_url);
 
   return (
     <>
@@ -96,12 +96,40 @@ export default async function ServiceDetailDe({ params }: PageParams) {
           [`/dienstleistungen/${service.slug_de}`]: `/en/services/${service.slug_en}`,
         }}
       />
+      <section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
+        <div className="absolute inset-0">
+          <Image src={heroImage} alt={service.title} fill sizes="100vw" className="object-cover" priority />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.84),rgba(24,26,23,0.58))]" />
+        </div>
+        <Container className="relative py-16 md:py-20">
+          <nav aria-label="Breadcrumb" className="mb-8">
+            <ol className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(247,244,234,0.72)]">
+              <li><Link href="/" className="transition-colors duration-base hover:text-[var(--color-text-on-strong)]">{pickT(t, "nav.home", "Startseite")}</Link></li>
+              <li aria-hidden="true">/</li>
+              <li><Link href="/dienstleistungen" className="transition-colors duration-base hover:text-[var(--color-text-on-strong)]">{t("services.page.title")}</Link></li>
+              <li aria-hidden="true">/</li>
+              <li className="text-[var(--color-text-on-strong)]">{service.title}</li>
+            </ol>
+          </nav>
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-secondary)]">
+              {pickT(t, "services.page.eyebrow", "Leistungen")}
+            </p>
+            <h1 className="mt-3 font-serif text-[42px] leading-[0.98] tracking-tight text-[var(--color-text-on-strong)] md:text-[60px]">
+              {service.title}
+            </h1>
+            <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[rgba(247,244,234,0.84)] md:text-[16px]">
+              {service.short_description}
+            </p>
+          </div>
+        </Container>
+      </section>
       <ServiceDetailHeader t={t} service={service} bookingPath="/buchen" />
       {service.long_description && (
-        <section className="bg-cream">
+        <section className="bg-[var(--color-bg-page)]">
           <Container className="py-section">
             <ScrollReveal>
-              <div className="prose-base drop-cap text-[17px] leading-[1.75] text-ink/90">
+              <div className="prose-base drop-cap text-[17px] leading-[1.75] text-[var(--color-text-secondary)]">
                 <Markdown source={service.long_description} />
               </div>
             </ScrollReveal>
@@ -116,44 +144,6 @@ export default async function ServiceDetailDe({ params }: PageParams) {
         locale="de"
       />
       <RelatedServices t={t} services={others} hrefBase="/dienstleistungen" />
-      <section className="relative overflow-hidden bg-ink text-cream">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent"
-        />
-        <Container className="py-section text-center md:py-section-lg">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
-            {service.title}
-          </p>
-          <h2 className="mx-auto mt-3 max-w-3xl font-serif text-section md:text-display-md">
-            {t("home.final_cta.heading")}
-          </h2>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link href={`/buchen?service=${service.slug}`}>
-              <Button
-                size="lg"
-                variant="inverse"
-                trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
-              >
-                {t("home.hero.cta_book")}
-              </Button>
-            </Link>
-            <a href={toTelHref(settings.phone)}>
-              <Button
-                size="lg"
-                variant="outline"
-                leadingIcon={<Phone className="h-4 w-4" aria-hidden="true" strokeWidth={1.5} />}
-                className="border-cream/40 text-cream hover:bg-cream/5"
-              >
-                <span className="tabular-nums">{settings.phone}</span>
-              </Button>
-            </a>
-          </div>
-          <div className="mt-10 flex justify-center">
-            <ConcessionBadge settings={settings} tone="dark" />
-          </div>
-        </Container>
-      </section>
       <JsonLd data={buildServiceJsonLd(service, settings, `/dienstleistungen/${service.slug}`)} />
     </>
   );

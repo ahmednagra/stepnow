@@ -1,14 +1,12 @@
-// apps/frontend/src/components/features/home/FaqTeaser.tsx
-// Native-details accordion with gold chevron — top-5 general FAQs.
-
+import Image from "next/image";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { FaqPublic, Locale } from "@/types";
-import { Container, Markdown } from "@/components/shared";
+import { Container } from "@/components/shared";
 import { buildFaqPageJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { pickT } from "@/lib/i18n/pick";
+import { FaqTeaserAccordion } from "./FaqTeaserAccordion";
 
 interface FaqTeaserProps {
   t: TFunction;
@@ -16,50 +14,53 @@ interface FaqTeaserProps {
   locale: Locale;
 }
 
+const FAQ_IMAGE =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
+
 export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
-  if (faqs.length === 0) return null;
   const items = faqs.filter((f) => f.category === "general").slice(0, 5);
   if (items.length === 0) return null;
 
   const allFaqHref = locale === "de" ? "/kontakt#faq" : "/en/contact#faq";
 
   return (
-    <section className="bg-paper">
+    <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
       <Container className="py-section">
-        <header className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="label-eyebrow">{pickT(t, "home.faq.pre_heading", "FAQ")}</p>
-            <h2 className="mt-2 font-serif text-section">{t("home.faq.heading")}</h2>
+        <header className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
+              {pickT(t, "home.faq.pre_heading", "FAQ")}
+            </p>
+            <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
+              {t("home.faq.heading")}
+            </h2>
           </div>
-          <Link
-            href={allFaqHref}
-            className="text-[13px] font-medium uppercase tracking-[0.18em] text-gold-deep transition-colors duration-base hover:text-ink"
-          >
-            {t("home.faq.view_all")} →
-          </Link>
+          <div className="md:text-right">
+            <Link
+              href={allFaqHref}
+              className="inline-flex text-[13px] font-medium uppercase tracking-[0.18em] text-[var(--color-accent-primary)] transition-colors duration-base hover:text-[var(--color-text-primary)]"
+            >
+              {t("home.faq.view_all")} →
+            </Link>
+          </div>
         </header>
-        <ul className="divide-y divide-line border-y border-line">
-          {items.map((faq) => (
-            <li key={faq.id}>
-              <details className="group">
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left text-ink">
-                  <span className="text-[16px] font-semibold leading-snug tracking-tight md:text-[17px]">
-                    {faq.question}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center border border-line text-mute transition-all duration-base ease-out-premium group-open:rotate-45 group-open:border-gold group-open:text-gold-deep"
-                  >
-                    <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  </span>
-                </summary>
-                <div className="prose-faq pb-5 pr-12 text-mute">
-                  <Markdown source={faq.answer} />
-                </div>
-              </details>
-            </li>
-          ))}
-        </ul>
+
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
+            <FaqTeaserAccordion items={items} />
+          </div>
+
+          <div className="relative min-h-[340px] overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] lg:min-h-full">
+            <Image
+              src={FAQ_IMAGE}
+              alt="Customer support conversation"
+              fill
+              sizes="(max-width: 1024px) 100vw, 40vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(47,58,31,0.08),rgba(47,58,31,0.48))]" />
+          </div>
+        </div>
       </Container>
       <JsonLd data={buildFaqPageJsonLd(items)} />
     </section>

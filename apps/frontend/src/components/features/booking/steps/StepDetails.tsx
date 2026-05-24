@@ -32,8 +32,8 @@ export function StepDetails({ t, registerValidator }: StepDetailsProps) {
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h2 className="font-serif text-2xl tracking-tight">{t("booking.details.heading")}</h2>
-        <p className="mt-2 text-mute">{t("booking.details.subhead")}</p>
+        <h2 className="font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">{t("booking.details.heading")}</h2>
+        <p className="mt-2 text-[var(--color-text-secondary)]">{t("booking.details.subhead")}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -82,18 +82,18 @@ function Counter({
   const canInc = value < max;
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-medium tracking-tight text-ink">{label}</span>
-      <div className="flex items-center border border-line bg-cream">
+      <span className="text-[13px] font-medium tracking-tight text-[var(--color-text-primary)]">{label}</span>
+      <div className="flex items-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
         <button
           type="button"
           onClick={() => canDec && onChange(value - 1)}
           aria-label="Decrease"
           disabled={!canDec}
-          className="inline-flex h-11 w-11 items-center justify-center text-mute transition-colors hover:text-ink disabled:opacity-30"
+          className="inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] disabled:opacity-30"
         >
           <Minus className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
         </button>
-        <span className="flex-1 text-center font-serif text-xl tabular-nums text-ink">
+        <span className="flex-1 text-center font-serif text-xl tabular-nums text-[var(--color-text-primary)]">
           {value}
         </span>
         <button
@@ -101,7 +101,7 @@ function Counter({
           onClick={() => canInc && onChange(value + 1)}
           aria-label="Increase"
           disabled={!canInc}
-          className="inline-flex h-11 w-11 items-center justify-center text-mute transition-colors hover:text-ink disabled:opacity-30"
+          className="inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] disabled:opacity-30"
         >
           <Plus className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
         </button>

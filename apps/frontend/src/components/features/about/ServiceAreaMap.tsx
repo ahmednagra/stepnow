@@ -21,18 +21,18 @@ function ServiceAreaMapImpl({ settings }: ServiceAreaMapProps) {
 
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
         {pickT(t, "about.area.eyebrow", locale === "de" ? "Einsatzgebiet" : "Service area")}
       </p>
-      <h2 className="mt-1 mb-4 font-serif text-[24px] leading-tight tracking-tight md:text-[26px]">
+      <h2 className="mt-2 font-serif text-[30px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
         {pickT(t, "about.area.heading", locale === "de" ? "Wo wir fahren" : "Where we operate")}
       </h2>
 
       {hasCoords ? (
-        <div className="relative h-[240px] border border-line bg-cream">
+        <div className="relative mt-6 h-[260px] border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
           <GoogleMapsEmbed lat={lat} lng={lng} label={settings.business_name} zoom={12} fallbackZoom={11} className="h-full" />
           {osmHref && (
-            <a href={osmHref} target="_blank" rel="noopener noreferrer" className="absolute bottom-2 left-2 z-[400] bg-ink/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-cream transition-colors duration-base hover:bg-ink">
+            <a href={osmHref} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 left-3 z-[400] border border-[color:var(--color-border-soft)] bg-[color:rgba(255,253,248,0.94)] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-primary)] transition-colors duration-base hover:text-[var(--color-accent-primary)]">
               {pickT(t, "about.area.open_external", locale === "de" ? "In Karten öffnen" : "Open in maps")} ↗
             </a>
           )}
@@ -44,7 +44,7 @@ function ServiceAreaMapImpl({ settings }: ServiceAreaMapProps) {
         />
       )}
 
-      <p className="mt-4 text-[13px] leading-relaxed text-mute">
+      <p className="mt-4 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
         {pickT(t, "about.area.body", locale === "de"
           ? "Wir fahren in der Region Stuttgart, Esslingen und im mittleren Neckartal."
           : "We operate in the Stuttgart, Esslingen and central Neckar valley region."

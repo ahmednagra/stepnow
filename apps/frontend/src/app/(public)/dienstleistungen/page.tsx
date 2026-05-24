@@ -2,6 +2,8 @@
 // Services magazine spread (DE). Uses batch listAllPricingServer to compute lowest-price per service in one call (kills C-3 N+1).
 
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { listAllPricingServer } from "@/services/pricing";
@@ -11,6 +13,9 @@ import { buildMetadata } from "@/lib/seo";
 import { ConcessionBadge, Container } from "@/components/shared";
 import { ServicesIndex, ServiceRichRow, HowItWorksBeat, ServicesEditorialClose, findLowestPrice, type ServiceWithPricing } from "@/components/features/services";
 import { pickT } from "@/lib/i18n/pick";
+
+const SERVICES_BANNER_IMAGE =
+  "https://images.unsplash.com/photo-1686199948265-ddc4ebb1cc92?auto=format&fit=crop&w=2000&q=80";
 
 export const revalidate = 1800;
 
@@ -38,24 +43,33 @@ return { service: s, lowestPrice: price, lowestRouteLabel: routeLabel };
 
 return (
 <>
-<section className="bg-cream">
-<Container className="pt-8 pb-7 md:pt-10 md:pb-9">
-<div className="grid items-end gap-10 md:grid-cols-[1.4fr_1fr] md:gap-14">
-<div>
-<p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">{pickT(t, "services.page.eyebrow", "Leistungen")}</p>
-<h1 className="mt-2 font-serif text-[44px] leading-[0.98] tracking-tight md:text-[64px]">
+<section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
+<div className="absolute inset-0">
+<Image src={SERVICES_BANNER_IMAGE} alt="Professional transport services" fill sizes="100vw" className="object-cover" priority />
+<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.84),rgba(24,26,23,0.58))]" />
+</div>
+<Container className="relative py-16 md:py-20">
+<nav aria-label="Breadcrumb" className="mb-8">
+<ol className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(247,244,234,0.72)]">
+<li><Link href="/" className="transition-colors duration-base hover:text-[var(--color-text-on-strong)]">{pickT(t, "nav.home", "Startseite")}</Link></li>
+<li aria-hidden="true">/</li>
+<li className="text-[var(--color-text-on-strong)]">{t("services.page.title")}</li>
+</ol>
+</nav>
+<div className="max-w-3xl">
+<p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-secondary)]">{pickT(t, "services.page.eyebrow", "Leistungen")}</p>
+<h1 className="mt-3 font-serif text-[42px] leading-[0.98] tracking-tight text-[var(--color-text-on-strong)] md:text-[60px]">
 {pickT(t, "services.page.heading_part1", "Vier Wege,")}
 <br />
-<span className="italic text-gold-deep">{pickT(t, "services.page.heading_part2", "anzukommen.")}</span>
+<span className="italic text-[var(--color-accent-secondary)]">{pickT(t, "services.page.heading_part2", "anzukommen.")}</span>
 </h1>
-<div className="mt-5"><ConcessionBadge settings={settings} tone="light" /></div>
-</div>
-<div className="md:text-right">
-<p className="text-[15.5px] leading-relaxed text-mute md:ml-auto md:max-w-sm">{t("services.page.subhead")}</p>
-<p className="mt-3 text-[11.5px] uppercase tracking-[0.18em] text-mute-soft">{pickT(t, "services.page.region", "Stuttgart · Esslingen · Deizisau")}</p>
-</div>
+<p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[rgba(247,244,234,0.84)] md:text-[16px]">{t("services.page.subhead")}</p>
+<p className="mt-4 text-[11.5px] uppercase tracking-[0.18em] text-[rgba(247,244,234,0.68)]">{pickT(t, "services.page.region", "Stuttgart · Esslingen · Deizisau")}</p>
 </div>
 </Container>
+</section>
+<section className="bg-[var(--color-bg-page)]">
+<Container className="pt-8 pb-0 md:pt-10"><ConcessionBadge settings={settings} tone="light" /></Container>
 </section>
 <ServicesIndex t={t} locale="de" data={data} />
 {data.slice(0, 2).map(({ service, lowestPrice, lowestRouteLabel }, idx) => (

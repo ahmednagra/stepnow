@@ -52,7 +52,7 @@ pickT(t, "pricing.hero.proof_3", locale === "de" ? "Flugverfolgung" : "Flight tr
 ];
 
 return (
-<section className="relative overflow-hidden bg-ink text-cream">
+<section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)] text-[var(--color-text-on-strong)]">
 <Image
 src={imageUrl}
 alt=""
@@ -63,47 +63,47 @@ sizes="100vw"
 quality={80}
 className="absolute inset-0 h-full w-full object-cover object-[center_60%]"
 />
-<div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/60 to-ink/40" />
-<div aria-hidden="true" className="absolute right-[-100px] bottom-[-100px] h-[500px] w-[700px] opacity-70 blur-sm" style={{ background: "radial-gradient(circle at 80% 30%, rgba(168, 134, 90, 0.22), transparent 50%)" }} />
+<div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.82),rgba(24,26,23,0.56))]" />
+<div aria-hidden="true" className="absolute right-[-100px] bottom-[-100px] h-[500px] w-[700px] opacity-70 blur-sm" style={{ background: "radial-gradient(circle at 80% 30%, rgba(167, 201, 87, 0.18), transparent 50%)" }} />
 <Container className="relative z-10 py-14 md:py-20">
 <div className="grid items-center gap-10 md:grid-cols-[1.4fr_1fr] md:gap-14">
 <div>
-<span className="inline-flex items-center gap-2.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold">
-<span aria-hidden="true" className="block h-px w-6 bg-gold" />
+<span className="inline-flex items-center gap-2.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-secondary)]">
+<span aria-hidden="true" className="block h-px w-6 bg-[var(--color-accent-secondary)]" />
 {pickT(t, "pricing.hero.eyebrow", locale === "de" ? "Beliebteste Strecke" : "Most booked route")}
 </span>
-<h2 className="mt-3 font-serif text-[36px] leading-[1.02] tracking-tight text-cream md:text-[52px]">
+<h2 className="mt-3 font-serif text-[36px] leading-[1.02] tracking-tight text-[var(--color-text-on-strong)] md:text-[52px]">
 {featuredItem.from_location}
-<span className="mx-3 text-gold md:mx-4">→</span>
+<span className="mx-3 text-[var(--color-accent-secondary)] md:mx-4">→</span>
 {featuredItem.to_location}
 </h2>
 <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 md:mt-7">
 {proofPoints.map((p) => (
-<li key={p} className="flex items-center gap-2 text-[13px] text-cream/80">
-<Check className="h-3.5 w-3.5 text-gold" strokeWidth={2} aria-hidden="true" />
+<li key={p} className="flex items-center gap-2 text-[13px] text-[rgba(247,244,234,0.82)]">
+<Check className="h-3.5 w-3.5 text-[var(--color-accent-secondary)]" strokeWidth={2} aria-hidden="true" />
 <span>{p}</span>
 </li>
 ))}
 </ul>
 <div className="mt-7 flex flex-wrap items-center gap-5 md:mt-8">
-<Link href={bookingHref} className="inline-flex items-center gap-2 bg-cream px-6 py-3.5 text-[13px] font-medium tracking-tight text-ink transition-colors duration-base hover:bg-paper">
+<Link href={bookingHref} className="inline-flex items-center gap-2 border border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] px-6 py-3.5 text-[13px] font-medium tracking-tight text-[var(--color-text-on-strong)] transition-colors duration-base hover:bg-[var(--color-bg-strong-hover)] hover:border-[var(--color-bg-strong-hover)]">
 {pickT(t, "pricing.hero.cta_book", locale === "de" ? "Diese Strecke buchen" : "Book this route")}
 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
 </Link>
-<a href={toTelHref(settings.phone)} className="border-b border-cream/30 pb-0.5 text-[13.5px] tabular-nums text-cream transition-colors hover:border-cream">
+<a href={toTelHref(settings.phone)} className="border-b border-[rgba(247,244,234,0.3)] pb-0.5 text-[13.5px] tabular-nums text-[var(--color-text-on-strong)] transition-colors hover:border-[var(--color-text-on-strong)]">
 {locale === "de" ? "oder anrufen" : "or call"} {settings.phone}
 </a>
 </div>
 </div>
 <div className="text-left md:text-right">
-<p className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-gold/85">
+<p className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-[rgba(167,201,87,0.86)]">
 {pickT(t, "pricing.hero.price_label", locale === "de" ? "Festpreis ab" : "Fixed from")}
 </p>
-<p className="my-2 block font-serif text-[110px] leading-none tracking-[-0.04em] text-cream md:text-[140px]">
-<span className="text-gold align-[0.18em] text-[0.65em] mr-1">€</span>
+<p className="my-2 block font-serif text-[110px] leading-none tracking-[-0.04em] text-[var(--color-text-on-strong)] md:text-[140px]">
+<span className="mr-1 align-[0.18em] text-[0.65em] text-[var(--color-accent-secondary)]">€</span>
 {Math.round(priceNumeric)}
 </p>
-<p className="text-[11.5px] uppercase tracking-[0.18em] text-cream/55">
+<p className="text-[11.5px] uppercase tracking-[0.18em] text-[rgba(247,244,234,0.58)]">
 {pickT(t, "pricing.hero.price_detail", locale === "de" ? "Pro Fahrzeug · bis zu 4 Personen" : "Per vehicle · up to 4 pax")}
 </p>
 </div>
@@ -122,14 +122,14 @@ const after = pickT(t, "pricing.trust.after", locale === "de" ? " keine versteck
 const attribution = pickT(t, "pricing.trust.attribution", locale === "de" ? "— UNSERE GARANTIE, GESCHÜTZT DURCH § 49 PBEFG" : "— OUR GUARANTEE, BACKED BY § 49 PBEFG");
 
 return (
-<section className="relative overflow-hidden bg-ink text-cream">
-<div aria-hidden="true" className="absolute inset-0" style={{ background: "radial-gradient(circle at center, rgba(168, 134, 90, 0.12), transparent 70%)" }} />
+<section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-accent-soft)] text-[var(--color-text-primary)]">
+<div aria-hidden="true" className="absolute inset-0" style={{ background: "radial-gradient(circle at center, rgba(167, 201, 87, 0.14), transparent 70%)" }} />
 <Container className="relative z-10 py-20 text-center md:py-24">
-<span aria-hidden="true" className="mx-auto mb-7 block h-px w-11 bg-gold" />
-<blockquote className="mx-auto max-w-3xl font-serif text-[28px] italic leading-[1.18] tracking-tight text-cream md:text-[44px]">
-“{before}<span className="not-italic text-gold">{accent}</span>{after}”
+<span aria-hidden="true" className="mx-auto mb-7 block h-px w-11 bg-[var(--color-accent-primary)]" />
+<blockquote className="mx-auto max-w-3xl font-serif text-[28px] italic leading-[1.18] tracking-tight text-[var(--color-text-primary)] md:text-[44px]">
+“{before}<span className="not-italic text-[var(--color-accent-primary)]">{accent}</span>{after}”
 </blockquote>
-<p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.28em] text-gold/85">{attribution}</p>
+<p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--color-text-secondary)]">{attribution}</p>
 </Container>
 </section>
 );
@@ -151,23 +151,23 @@ interface PricingIncludedMomentProps { t: TFunction; locale: Locale; }
 
 export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps) {
 return (
-<section className="border-b border-line bg-paper">
+<section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
 <Container className="grid items-center gap-10 py-14 md:grid-cols-[5fr_7fr] md:gap-16 md:py-16">
 <div className="text-center md:text-left">
-<p aria-hidden="true" className="font-serif font-medium leading-[0.85] tracking-[-0.04em] text-gold-deep text-[160px] md:text-[220px]">19%</p>
-<span aria-hidden="true" className="my-3.5 mx-auto block h-0.5 w-20 bg-gold md:mx-0" />
-<p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-deep">
+<p aria-hidden="true" className="font-serif font-medium leading-[0.85] tracking-[-0.04em] text-[color:rgba(85,133,24,0.28)] text-[160px] md:text-[220px]">19%</p>
+<span aria-hidden="true" className="my-3.5 mx-auto block h-0.5 w-20 bg-[var(--color-accent-primary)] md:mx-0" />
+<p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-primary)]">
 {pickT(t, "pricing.included.big_caption", locale === "de" ? "MwSt. · IMMER INKLUDIERT" : "VAT · ALWAYS INCLUDED")}
 </p>
 </div>
 <div>
-<p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+<p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]">
 {pickT(t, "pricing.included.eyebrow", locale === "de" ? "Was Ihr Festpreis abdeckt" : "What your fixed price covers")}
 </p>
-<h2 className="mt-2 font-serif text-[30px] leading-tight tracking-tight md:text-[36px]">
+<h2 className="mt-2 font-serif text-[30px] leading-tight tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
 {pickT(t, "pricing.included.heading", locale === "de" ? "Der Preis, den Sie sehen, ist der Preis, den Sie zahlen." : "The price you see is the price you pay.")}
 </h2>
-<p className="mt-3 max-w-xl text-[15.5px] leading-relaxed text-mute md:mt-4 md:text-[16px]">
+<p className="mt-3 max-w-xl text-[15.5px] leading-relaxed text-[var(--color-text-secondary)] md:mt-4 md:text-[16px]">
 {pickT(t, "pricing.included.lead", locale === "de" ? "Jeder Festpreis enthält die deutsche Mehrwertsteuer, Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage — ohne Aufpreis. Nichts wird am Zielort hinzugefügt." : "Every quote includes German VAT, standard luggage, waiting time at pickup, and child seat on request — at no extra charge. Nothing added at the destination.")}
 </p>
 <ul className="mt-6 flex flex-col gap-3 md:gap-3.5">
@@ -176,10 +176,10 @@ const label = pickT(t, `pricing.included.${row.key}.label`, row.defaults[locale]
 const desc = pickT(t, `pricing.included.${row.key}.desc`, row.defaults[locale].desc);
 return (
 <li key={row.key} className="flex items-start gap-3 text-[14px]">
-<Check className="mt-1 h-3.5 w-3.5 shrink-0 text-success" strokeWidth={2.5} aria-hidden="true" />
+<Check className="mt-1 h-3.5 w-3.5 shrink-0 text-[var(--color-accent-primary)]" strokeWidth={2.5} aria-hidden="true" />
 <span>
-<span className="font-medium text-ink">{label} </span>
-<span className="text-[13.5px] text-mute">{desc}</span>
+<span className="font-medium text-[var(--color-text-primary)]">{label} </span>
+<span className="text-[13.5px] text-[var(--color-text-secondary)]">{desc}</span>
 </span>
 </li>
 );
@@ -203,16 +203,16 @@ interface PricingExcludedStripProps { t: TFunction; locale: Locale; }
 export function PricingExcludedStrip({ t, locale }: PricingExcludedStripProps) {
 const label = pickT(t, "pricing.excluded.label", locale === "de" ? "Separat berechnet" : "Charged separately");
 return (
-<section className="border-b border-line bg-cream">
+<section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
 <Container className="flex flex-wrap items-center gap-x-9 gap-y-3 py-9">
-<span className="inline-flex shrink-0 items-center gap-2.5 text-[10.5px] font-semibold uppercase tracking-[0.22em] text-danger">
-<span aria-hidden="true" className="block h-px w-5 bg-danger" />
+<span className="inline-flex shrink-0 items-center gap-2.5 text-[10.5px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-warm)]">
+<span aria-hidden="true" className="block h-px w-5 bg-[var(--color-accent-warm)]" />
 {label}
 </span>
 <ul className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-2">
 {EXCLUDED_ITEMS.map((item, idx) => (
-<li key={item.key} className="relative text-[13.5px] text-mute">
-{idx > 0 && (<span aria-hidden="true" className="absolute -left-4 top-1/2 -translate-y-1/2 text-line">·</span>)}
+<li key={item.key} className="relative text-[13.5px] text-[var(--color-text-secondary)]">
+{idx > 0 && (<span aria-hidden="true" className="absolute -left-4 top-1/2 -translate-y-1/2 text-[color:var(--color-border-soft)]">·</span>)}
 {pickT(t, `pricing.excluded.${item.key}`, item.defaults[locale])}
 </li>
 ))}
@@ -242,23 +242,23 @@ const headLabel = pickT(t, "pricing.comparison.head_label", locale === "de" ? "E
 const headTaxi = pickT(t, "pricing.comparison.head_taxi", locale === "de" ? "Normales Taxi" : "Standard taxi");
 
 return (
-<section className="bg-cream">
+<section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
 <Container className="py-14 md:py-16">
 <div className="mb-8 text-center md:mb-10">
-<p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+<p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]">
 {pickT(t, "pricing.comparison.eyebrow", locale === "de" ? "Gleiche Fahrt — anderes Erlebnis" : "Same ride — different experience")}
 </p>
-<h2 className="mt-2 font-serif text-[32px] leading-tight tracking-tight md:text-[38px]">
+<h2 className="mt-2 font-serif text-[32px] leading-tight tracking-tight text-[var(--color-text-primary)] md:text-[38px]">
 {pickT(t, "pricing.comparison.heading", locale === "de" ? "StepNow vs. ein normales Taxi" : "StepNow vs. a standard taxi")}
 </h2>
-<p className="mx-auto mt-3 max-w-md text-[14px] text-mute">
+<p className="mx-auto mt-3 max-w-md text-[14px] text-[var(--color-text-secondary)]">
 {pickT(t, "pricing.comparison.lead", locale === "de" ? "Der Unterschied liegt in dem, was Sie vor der Fahrt wissen." : "The difference is in what you know before the ride starts.")}
 </p>
 </div>
-<div className="grid grid-cols-1 border border-line bg-paper md:grid-cols-3">
-<div className="border-b border-line bg-paper px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-mute-soft md:px-6">{headLabel}</div>
-<div className="border-b border-cream/10 bg-ink px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-gold md:px-6">StepNow</div>
-<div className="border-b border-line bg-paper px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-mute-soft md:px-6">{headTaxi}</div>
+<div className="grid grid-cols-1 border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] md:grid-cols-3">
+<div className="border-b border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)] md:px-6">{headLabel}</div>
+<div className="border-b border-[rgba(247,244,234,0.12)] bg-[var(--color-text-primary)] px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-accent-secondary)] md:px-6">StepNow</div>
+<div className="border-b border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)] md:px-6">{headTaxi}</div>
 {COMPARISON_ROWS.map((row, idx) => {
 const isLast = idx === COMPARISON_ROWS.length - 1;
 const labelText = pickT(t, `pricing.comparison.${row.key}.label`, row.defaults[locale].label);
@@ -266,14 +266,14 @@ const stepnowText = pickT(t, `pricing.comparison.${row.key}.stepnow`, row.defaul
 const taxiText = pickT(t, `pricing.comparison.${row.key}.taxi`, row.defaults[locale].taxi);
 return (
 <div key={row.key} className="contents">
-<div className={`bg-paper px-5 py-4 text-[13.5px] text-ink md:px-6 ${isLast ? "" : "border-b border-line"}`}>{labelText}</div>
-<div className={`bg-ink px-5 py-4 text-[13.5px] text-cream md:px-6 ${isLast ? "" : "border-b border-cream/10"}`}>
+<div className={`bg-[var(--color-bg-surface)] px-5 py-4 text-[13.5px] text-[var(--color-text-primary)] md:px-6 ${isLast ? "" : "border-b border-[color:var(--color-border-soft)]"}`}>{labelText}</div>
+<div className={`bg-[var(--color-text-primary)] px-5 py-4 text-[13.5px] text-[var(--color-text-on-strong)] md:px-6 ${isLast ? "" : "border-b border-[rgba(247,244,234,0.12)]"}`}>
 <span className="flex items-start gap-2.5">
-<Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" strokeWidth={2.5} aria-hidden="true" />
+<Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-accent-secondary)]" strokeWidth={2.5} aria-hidden="true" />
 <span>{stepnowText}</span>
 </span>
 </div>
-<div className={`bg-paper px-5 py-4 text-[13.5px] text-mute md:px-6 ${isLast ? "" : "border-b border-line"}`}>{taxiText}</div>
+<div className={`bg-[var(--color-bg-surface)] px-5 py-4 text-[13.5px] text-[var(--color-text-secondary)] md:px-6 ${isLast ? "" : "border-b border-[color:var(--color-border-soft)]"}`}>{taxiText}</div>
 </div>
 );
 })}
@@ -294,21 +294,21 @@ interface PricingPaymentCancellationProps { t: TFunction; locale: Locale; agbHre
 
 export function PricingPaymentCancellation({ t, locale, agbHref }: PricingPaymentCancellationProps) {
 return (
-<section className="border-t border-line bg-paper">
+<section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
 <Container className="grid items-start gap-7 py-10 md:grid-cols-[5fr_7fr] md:gap-14">
 <div className="flex flex-col items-start gap-3 md:flex-row md:gap-6">
 <div className="md:min-w-[140px] md:shrink-0">
-<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-deep">
+<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
 {pickT(t, "pricing.payment.eyebrow", locale === "de" ? "Bezahlung" : "Payment")}
 </p>
-<h3 className="mt-1 font-serif text-[19px] font-medium leading-tight tracking-tight">
+<h3 className="mt-1 font-serif text-[19px] font-medium leading-tight tracking-tight text-[var(--color-text-primary)]">
 {pickT(t, "pricing.payment.heading", locale === "de" ? "So zahlen Sie" : "How to pay")}
 </h3>
 </div>
 <div className="flex flex-1 flex-wrap gap-2">
 {PAYMENT_METHODS.map(({ Icon, key, defaults }) => (
-<span key={key} className="inline-flex items-center gap-1.5 border border-line bg-cream px-3 py-1.5 text-[12.5px] font-medium text-ink">
-<Icon className="h-3.5 w-3.5 text-gold-deep" strokeWidth={1.5} aria-hidden="true" />
+<span key={key} className="inline-flex items-center gap-1.5 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] px-3 py-1.5 text-[12.5px] font-medium text-[var(--color-text-primary)]">
+<Icon className="h-3.5 w-3.5 text-[var(--color-accent-primary)]" strokeWidth={1.5} aria-hidden="true" />
 {pickT(t, `pricing.payment.${key}`, defaults[locale])}
 </span>
 ))}
@@ -316,20 +316,20 @@ return (
 </div>
 <div className="flex flex-col items-start gap-3 md:flex-row md:gap-6">
 <div className="md:min-w-[140px] md:shrink-0">
-<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-deep">
+<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
 {pickT(t, "pricing.cancellation.eyebrow", locale === "de" ? "Stornierung" : "Cancellation")}
 </p>
-<h3 className="mt-1 font-serif text-[19px] font-medium leading-tight tracking-tight">
+<h3 className="mt-1 font-serif text-[19px] font-medium leading-tight tracking-tight text-[var(--color-text-primary)]">
 {pickT(t, "pricing.cancellation.heading", locale === "de" ? "Flexible Bedingungen" : "Flexible policy")}
 </h3>
 </div>
-<div className="flex-1 text-[13px] leading-relaxed text-mute">
+<div className="flex-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
 <div className="mb-2.5 flex flex-wrap gap-x-7 gap-y-3">
-<CancelStep whenText={pickT(t, "pricing.cancellation.step1.when", locale === "de" ? "≥ 12 Std. VORHER" : "≥ 12 H BEFORE")} costText={pickT(t, "pricing.cancellation.step1.cost", locale === "de" ? "Kostenfrei" : "Free")} costClass="text-success" />
+<CancelStep whenText={pickT(t, "pricing.cancellation.step1.when", locale === "de" ? "≥ 12 Std. VORHER" : "≥ 12 H BEFORE")} costText={pickT(t, "pricing.cancellation.step1.cost", locale === "de" ? "Kostenfrei" : "Free")} costClass="text-[var(--color-accent-primary)]" />
 <CancelStep whenText={pickT(t, "pricing.cancellation.step2.when", locale === "de" ? "< 12 Std. VORHER" : "< 12 H BEFORE")} costText={pickT(t, "pricing.cancellation.step2.cost", locale === "de" ? "50% des Fahrpreises" : "50% of fare")} />
 <CancelStep whenText={pickT(t, "pricing.cancellation.step3.when", locale === "de" ? "NICHT ERSCHIENEN" : "NO-SHOW")} costText={pickT(t, "pricing.cancellation.step3.cost", locale === "de" ? "Voller Fahrpreis" : "Full fare")} />
 </div>
-<Link href={agbHref} className="inline-block border-b border-gold/40 pb-0.5 text-[11.5px] font-medium text-gold-deep transition-colors hover:border-ink hover:text-ink">
+<Link href={agbHref} className="inline-block border-b border-[rgba(85,133,24,0.32)] pb-0.5 text-[11.5px] font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]">
 {pickT(t, "pricing.cancellation.full_terms", locale === "de" ? "Vollständige AGB ansehen →" : "See full terms (AGB) →")}
 </Link>
 </div>
@@ -339,11 +339,11 @@ return (
 );
 }
 
-function CancelStep({ whenText, costText, costClass = "text-ink" }: { whenText: string; costText: string; costClass?: string }) {
+function CancelStep({ whenText, costText, costClass = "text-[var(--color-text-primary)]" }: { whenText: string; costText: string; costClass?: string }) {
 return (
 <div className="flex flex-col gap-1">
-<span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-mute-soft">{whenText}</span>
-<span className={`font-serif text-[18px] font-medium ${costClass}`}>{costText}</span>
+<span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-secondary)]">{whenText}</span>
+<span className={`font-serif text-[18px] font-medium text-[var(--color-text-primary)] ${costClass}`}>{costText}</span>
 </div>
 );
 }

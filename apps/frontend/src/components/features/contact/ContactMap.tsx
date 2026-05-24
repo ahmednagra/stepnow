@@ -30,10 +30,10 @@ function ContactMapImpl({ settings, compact = false }: ContactMapProps) {
 
   if (compact) {
     return (
-      <div className="relative h-[175px] border border-line bg-cream">
+      <div className="relative h-[240px] border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
         <GoogleMapsEmbed lat={lat} lng={lng} label={settings.business_name} zoom={14} fallbackZoom={14} className="h-full" />
         {osmHref && (
-          <a href={osmHref} target="_blank" rel="noopener noreferrer" className="absolute bottom-2 left-2 z-[400] bg-ink/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-cream transition-colors duration-base hover:bg-ink">
+          <a href={osmHref} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 left-3 z-[400] border border-[color:var(--color-border-soft)] bg-[color:rgba(255,253,248,0.94)] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-primary)] transition-colors duration-base hover:text-[var(--color-accent-primary)]">
             {pickT(t, "contact.map.open_external", "In Karten öffnen")} ↗
           </a>
         )}
@@ -42,11 +42,11 @@ function ContactMapImpl({ settings, compact = false }: ContactMapProps) {
   }
 
   return (
-    <div className="border border-line bg-cream">
+    <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
       <div className="h-[420px] w-full">
         <GoogleMapsEmbed lat={lat} lng={lng} label={settings.business_name} zoom={15} fallbackZoom={14} className="h-full" />
       </div>
-      <div className="border-t border-line px-6 py-4 text-[13px] text-mute">
+      <div className="border-t border-[color:var(--color-border-soft)] px-6 py-4 text-[13px] text-[var(--color-text-secondary)]">
         <address className="not-italic">{settings.address_street}, {settings.address_postcode} {settings.address_city}</address>
       </div>
     </div>

@@ -27,22 +27,25 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: cn(
-    "bg-gold text-ink shadow-premium-sm",
-    "hover:bg-gold-light hover:shadow-premium",
-    "active:translate-y-px active:shadow-premium-sm",
-    "disabled:bg-line disabled:text-mute disabled:shadow-none",
+    "border border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "before:bg-[var(--color-bg-strong-hover)] before:opacity-100",
+    "hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)]",
+    "active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "disabled:border-[color:var(--color-border-soft)] disabled:bg-[var(--color-border-soft)] disabled:text-[var(--color-text-secondary)] disabled:shadow-none",
   ),
   secondary: cn(
-    "bg-ink text-cream shadow-premium-sm",
-    "hover:bg-charcoal hover:shadow-premium",
-    "active:translate-y-px active:shadow-premium-sm",
-    "disabled:bg-mute disabled:text-line disabled:shadow-none",
+    "border border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "before:bg-[#243017]",
+    "hover:border-[#243017] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)]",
+    "active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "disabled:border-[color:var(--color-text-secondary)] disabled:bg-[var(--color-text-secondary)] disabled:text-[var(--color-bg-page)] disabled:shadow-none",
   ),
   inverse: cn(
-    "bg-cream text-ink shadow-premium-sm",
-    "hover:bg-paper hover:shadow-premium-dark",
-    "active:translate-y-px active:shadow-premium-sm",
-    "disabled:bg-mute disabled:text-line disabled:shadow-none",
+    "border border-[color:var(--color-bg-page)] bg-[var(--color-bg-page)] text-[var(--color-text-primary)] shadow-[0_2px_8px_rgba(15,23,42,0.10)]",
+    "before:bg-[var(--color-bg-surface)]",
+    "hover:border-[color:var(--color-bg-surface)] hover:shadow-[0_6px_16px_rgba(15,23,42,0.14)]",
+    "active:translate-y-px active:shadow-[0_2px_8px_rgba(15,23,42,0.10)]",
+    "disabled:border-[color:var(--color-text-secondary)] disabled:bg-[var(--color-text-secondary)] disabled:text-[var(--color-bg-page)] disabled:shadow-none",
   ),
   outline: cn(
     "border border-current text-current bg-transparent",
@@ -87,10 +90,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={isDisabled}
       aria-busy={isLoading || undefined}
       className={cn(
-        "group inline-flex select-none items-center justify-center gap-2.5",
+        "group relative inline-flex select-none items-center justify-center gap-2.5 overflow-hidden",
         "rounded-none font-medium tracking-tight",
         "transition-all duration-base ease-out-premium",
+        "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:transition-transform before:duration-base before:ease-out-premium",
+        "hover:before:scale-x-100",
         "disabled:cursor-not-allowed",
+        "disabled:before:scale-x-0",
         VARIANTS[variant],
         SIZES[size],
         fullWidth && "w-full",
@@ -99,9 +105,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...rest}
     >
       {isLoading ? (
-        <Spinner />
+        <span className="relative z-10">
+          <Spinner />
+        </span>
       ) : (
-        <>
+        <span className="relative z-10 inline-flex items-center justify-center gap-2.5">
           {leadingIcon && (
             <span
               aria-hidden="true"
@@ -119,7 +127,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
               {trailingIcon}
             </span>
           )}
-        </>
+        </span>
       )}
     </button>
   );

@@ -36,13 +36,13 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h2 className="font-serif text-2xl tracking-tight">{t("booking.route.heading")}</h2>
-        <p className="mt-2 text-mute">{t("booking.route.subhead")}</p>
+        <h2 className="font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">{t("booking.route.heading")}</h2>
+        <p className="mt-2 text-[var(--color-text-secondary)]">{t("booking.route.subhead")}</p>
       </div>
 
       {/* Pickup */}
-      <fieldset className="flex flex-col gap-4">
-        <legend className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+      <fieldset className="flex flex-col gap-4 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] p-5 md:p-6">
+        <legend className="px-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]">
           {pickT(t, "booking.route.pickup_label", "Abholung")}
         </legend>
         <Input
@@ -73,8 +73,8 @@ export function StepRoute({ t, registerValidator }: StepRouteProps) {
       </fieldset>
 
       {/* Destination */}
-      <fieldset className="flex flex-col gap-4">
-        <legend className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+      <fieldset className="flex flex-col gap-4 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] p-5 md:p-6">
+        <legend className="px-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]">
           {pickT(t, "booking.route.destination_label", "Ziel")}
         </legend>
         <Input

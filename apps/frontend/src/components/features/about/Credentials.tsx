@@ -81,31 +81,31 @@ export function Credentials({ t, settings, locale }: CredentialsProps) {
 
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-deep">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
         {pickT(t, "about.credentials.eyebrow", locale === "de" ? "Qualifikationen" : "Credentials")}
       </p>
-      <h2 className="mt-1 mb-4 font-serif text-[24px] leading-tight tracking-tight md:text-[26px]">
+      <h2 className="mt-2 font-serif text-[30px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
         {pickT(
           t,
           "about.credentials.heading",
           locale === "de" ? "Qualifikationen & Lizenzen" : "Credentials & licenses",
         )}
       </h2>
-      <ul className="border-y border-line">
+      <ul className="mt-6 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
         {ITEMS.map((it) => {
           const title = pickT(t, it.titleKey, it.defaults[locale].title);
           const body = it.bodyOverride ?? pickT(t, it.bodyKey, it.defaults[locale].body);
           return (
             <li
               key={it.titleKey}
-              className="flex items-start gap-4 border-b border-line py-3.5 last:border-b-0"
+              className="flex items-start gap-4 bg-[var(--color-bg-page)] p-5"
             >
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-gold/30 text-gold-deep">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-accent-primary)]">
                 <it.Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
               </span>
               <div className="flex-1">
-                <p className="text-[14.5px] font-semibold tracking-tight text-ink">{title}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-mute">{body}</p>
+                <p className="text-[15px] font-semibold tracking-tight text-[var(--color-text-primary)]">{title}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">{body}</p>
               </div>
             </li>
           );
