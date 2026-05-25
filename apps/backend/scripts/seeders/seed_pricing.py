@@ -1,7 +1,7 @@
 # scripts/seeders/seed_pricing.py
 """Seed pricing categories and items for each service.
 
-Real Stuttgart-area routes with realistic prices (Festpreis incl. 19% MwSt).
+Real Stuttgart-area routes with realistic prices (Preis incl. MwSt).
 - Airport: STR, FRA, MUC, FMM, FKB
 - Hospital: Klinikum Esslingen, Klinikum Stuttgart, Marienhospital, etc.
 - School: Stuttgart Gymnasien from suburban towns
@@ -132,8 +132,8 @@ PRICING_DATA = {
             "description_de": "Festpreise für den Hochzeitstag",
             "description_en": "Fixed prices for the wedding day",
             "items": [
-                {"sort_order": 10, "from_de": "Halbtages-Paket", "from_en": "Half-day package", "to_de": "4 Stunden, ein Fahrzeug", "to_en": "4 hours, one vehicle", "price": "320.00", "note_de": "Festpreis, inkl. 19% MwSt", "note_en": "Fixed price, incl. VAT"},
-                {"sort_order": 20, "from_de": "Tages-Paket", "from_en": "Full-day package", "to_de": "8 Stunden, ein Fahrzeug", "to_en": "8 hours, one vehicle", "price": "580.00", "note_de": "Festpreis, inkl. 19% MwSt", "note_en": "Fixed price, incl. VAT"},
+                {"sort_order": 10, "from_de": "Halbtages-Paket", "from_en": "Half-day package", "to_de": "4 Stunden, ein Fahrzeug", "to_en": "4 hours, one vehicle", "price": "320.00", "note_de": "Festpreis, inkl. MwSt", "note_en": "Fixed price, incl. VAT"},
+                {"sort_order": 20, "from_de": "Tages-Paket", "from_en": "Full-day package", "to_de": "8 Stunden, ein Fahrzeug", "to_en": "8 hours, one vehicle", "price": "580.00", "note_de": "Festpreis, inkl. MwSt", "note_en": "Fixed price, incl. VAT"},
             ],
         },
     ],

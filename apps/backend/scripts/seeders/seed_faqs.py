@@ -88,8 +88,8 @@ FAQS = [
         "sort_order": 30, "category": "pricing",
         "question_de": "Sind die Preise inklusive Mehrwertsteuer?",
         "question_en": "Are prices including VAT?",
-        "answer_de": "Ja, alle ausgewiesenen Preise sind Endpreise inklusive 19% Mehrwertsteuer. Für Geschäftskunden weisen wir die MwSt selbstverständlich auf der Rechnung separat aus.",
-        "answer_en": "Yes, all displayed prices are final prices including 19% VAT. For business customers we naturally show VAT separately on the invoice.",
+        "answer_de": "Ja, alle ausgewiesenen Preise sind Endpreise inklusive Mehrwertsteuer. Für Geschäftskunden weisen wir die MwSt selbstverständlich auf der Rechnung separat aus.",
+        "answer_en": "Yes, all displayed prices are final prices including VAT. For business customers we naturally show VAT separately on the invoice.",
     },
 
     # === AIRPORT-specific (category matches service slug for the service detail page) ===

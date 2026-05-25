@@ -1,0 +1,200 @@
+{
+  "fileId": "STEPNOW-K911",
+  "entries": [
+    {
+      "id": 1,
+      "typ": "Ausgabe",
+      "dat": "2026-04-01",
+      "bel": "A 011426",
+      "bsch": "Agip - Esslingen",
+      "net": 29.15,
+      "mwstR": 0.19,
+      "mwstB": 5.5385,
+      "brutto": 34.6885,
+      "fzName": "SN 9889",
+      "fzTyp": "firm",
+      "stat": "Bezahlt",
+      "kat": "kraftstoff",
+      "katLabel": "⛽ Kraftstoff",
+      "katVst": true,
+      "vorsteuer": 5.5385,
+      "geo": 0,
+      "bes": 0,
+      "leer": 0,
+      "zz": 0,
+      "faellig": "",
+      "pkm": 0,
+      "erstelltAm": "2026-04-03"
+    },
+    {
+      "id": 2,
+      "typ": "Ausgabe",
+      "dat": "2026-04-01",
+      "bel": "A 021426",
+      "bsch": "Aral Stuttgart",
+      "net": 12.97,
+      "mwstR": 0.19,
+      "mwstB": 2.4643,
+      "brutto": 15.4343,
+      "fzName": "SN 9889",
+      "fzTyp": "firm",
+      "stat": "Bezahlt",
+      "kat": "kraftstoff",
+      "katLabel": "⛽ Kraftstoff",
+      "katVst": true,
+      "vorsteuer": 2.4643,
+      "geo": 0,
+      "bes": 0,
+      "leer": 0,
+      "zz": 0,
+      "faellig": "",
+      "pkm": 0,
+      "erstelltAm": "2026-04-03"
+    }
+  ],
+  "auftraege": [],
+  "rechnungen": [],
+  "customers": [],
+  "fahrzeuge": [
+    {
+      "name": "SN 1122",
+      "typ": "firm"
+    },
+    {
+      "name": "SN 9889",
+      "typ": "firm"
+    },
+    {
+      "name": "SN 924",
+      "typ": "firm"
+    },
+    {
+      "name": "Ersatzwagen",
+      "typ": "priv"
+    }
+  ],
+  "fixkosten": [
+    {
+      "desc": "Rückzahlung (Darlehen)",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Versicherungen",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Kfz-Steuer",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Leasing/Afa",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Telefon & Internet",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Buchhaltung & Recht",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Marketing",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Apps & Website",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Miete/Stellplatz",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Bankgebühren",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Gehalt/Löhne",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Arbeitgeberanteil SV",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "desc": "Sonstiges",
+      "fz": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "nextId": 3,
+  "nextAId": 1,
+  "nextCustId": 1,
+  "adminPw": "StepNow@911",
+  "ts": "2026-04-03T21:55:29.827Z"
+}

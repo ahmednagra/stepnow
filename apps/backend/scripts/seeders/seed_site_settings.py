@@ -7,7 +7,7 @@ from scripts.seeders._base import get_system_actor, log_section, log_create, log
 
 
 SETTINGS_DATA = {
-    "business_name": "StepNow Rides & Movers (Dev)",
+    "business_name": "StepNow Rides & Movers",
     "owner_name": "Naeem Ahmad",
     "legal_form": "Einzelunternehmen",
     "address_street": "Blumenstraße 8",
@@ -17,9 +17,9 @@ SETTINGS_DATA = {
     "address_lat": Decimal("48.715500"),
     "address_lng": Decimal("9.373500"),
     "phone": "+49 7153 9292841",
-    "phone_mobile": "+49 159 01225856",
+    "phone_mobile": "+49 159 01225850",
     "email": "info@step-now.de",
-    "whatsapp_url": "https://wa.me/4915901225856",
+    "whatsapp_url": "https://wa.me/4915901225850",
     "tax_number": None,
     "vat_id": None,
     "concession_number": "GE-2026-001",
@@ -50,6 +50,7 @@ def run() -> None:
     db = SessionLocal()
     try:
         from app.Models.settings import SiteSettings
+
         existing = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
         if existing:
             log_skip("site_settings", f"id=1, business_name='{existing.business_name}'")
@@ -60,10 +61,16 @@ def run() -> None:
         db.commit()
         db.refresh(settings)
         from app.Services.AuditService import AuditService
+
         snapshot = {k: _serialize(v) for k, v in SETTINGS_DATA.items()}
-        AuditService.log(db, actor, "site_settings", str(settings.id), "create", None, snapshot, None)
+        AuditService.log(
+            db, actor, "site_settings", str(settings.id), "create", None, snapshot, None
+        )
         db.commit()
-        log_create("site_settings", f"business='{settings.business_name}', concession={settings.concession_number}")
+        log_create(
+            "site_settings",
+            f"business='{settings.business_name}', concession={settings.concession_number}",
+        )
     finally:
         db.close()
 
