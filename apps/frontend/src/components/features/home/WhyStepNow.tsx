@@ -22,7 +22,7 @@ const BENEFITS: Benefit[] = [
 ];
 
 const WHY_IMAGE =
-  "https://images.unsplash.com/photo-1511527844068-006b95d162c2?auto=format&fit=crop&w=1600&q=80";
+  "/others/whyus.avif";
 
 export function WhyStepNow({ t }: WhyStepNowProps) {
   return (

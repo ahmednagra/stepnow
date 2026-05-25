@@ -13,7 +13,7 @@ import { BookingConfirmation } from "@/components/features/booking/BookingConfir
 import { pickT } from "@/lib/i18n/pick";
 
 const BOOKING_CONFIRMATION_BANNER_IMAGE =
-  "https://images.unsplash.com/photo-1686199948265-ddc4ebb1cc92?auto=format&fit=crop&w=2000&q=80";
+  "/others/breadcrumb.jpg";
 
 export const dynamic = "force-dynamic";
 

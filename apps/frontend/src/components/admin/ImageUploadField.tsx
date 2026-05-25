@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, X } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { resolveMediaUrl } from "@/utils/media-url";
 
 interface ImageUploadFieldProps {
   label: string;
@@ -33,6 +34,7 @@ export function ImageUploadField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const previewUrl = resolveMediaUrl(value);
 
   async function pickFile(file: File) {
     setErr(null);
@@ -51,9 +53,9 @@ export function ImageUploadField({
     <div className={cn("flex flex-col gap-2", className)}>
       <span className="text-[12px] font-medium tracking-tight text-slate-700">{label}</span>
       <div className="relative">
-        {value ? (
+        {previewUrl ? (
           <div className={cn("relative w-full overflow-hidden border border-slate-200 bg-slate-100", aspect)}>
-            <Image src={value} alt="" fill className="object-cover" sizes="(min-width: 768px) 30vw, 90vw" />
+            <Image src={previewUrl} alt="" fill className="object-cover" sizes="(min-width: 768px) 30vw, 90vw" />
             <button
               type="button"
               onClick={() => onChange(null)}
@@ -91,7 +93,7 @@ export function ImageUploadField({
       />
       {hint && !err && <p className="text-[11.5px] text-slate-500">{hint}</p>}
       {err && <p className="text-[11.5px] font-medium text-rose-700">{err}</p>}
-      {value && (
+      {previewUrl && (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}

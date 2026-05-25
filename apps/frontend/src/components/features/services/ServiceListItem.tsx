@@ -10,6 +10,7 @@ import type { TFunction } from "@/lib/i18n/t";
 import type { ServicePublic } from "@/types";
 import { Container } from "@/components/shared";
 import { cn } from "@/utils/cn";
+import { resolveMediaUrl } from "@/utils/media-url";
 
 interface ServiceListItemProps {
   t: TFunction;
@@ -47,7 +48,7 @@ export function ServiceListItem({ t, service, detailHref, index }: ServiceListIt
           {service.hero_image_url ? (
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-line-soft">
               <Image
-                src={service.hero_image_url}
+                src={resolveMediaUrl(service.hero_image_url)}
                 alt=""
                 fill
                 sizes="(min-width: 768px) 40vw, 100vw"

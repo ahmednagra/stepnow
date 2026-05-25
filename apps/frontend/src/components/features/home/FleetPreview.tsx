@@ -5,6 +5,7 @@ import type { Locale, VehiclePublic } from "@/types";
 import { Container } from "@/components/shared";
 import { cn } from "@/utils/cn";
 import { pickT } from "@/lib/i18n/pick";
+import { resolveMediaUrl } from "@/utils/media-url";
 
 interface FleetPreviewProps {
   t: TFunction;
@@ -24,16 +25,35 @@ const VEHICLE_FALLBACK_BY_CATEGORY: Record<string, string> = {
   crossover: "https://images.unsplash.com/photo-1700884520248-92092bd21e63?w=1400&q=80&auto=format&fit=crop",
 };
 
-const TYPOGRAPHIC_CATEGORIES = new Set(["van", "minivan", "minibus", "bus", "shuttle", "transporter"]);
+const VEHICLE_FALLBACK_BY_NAME: Record<string, string> = {
+  "mercedes-benz-e-class": "/vehicle/mercedes-benz-e-class.webp",
+  "mercedes-benz-e-klasse": "/vehicle/mercedes-benz-e-class.webp",
+  "mercedes-benz-v-class":
+    "/vehicle/mercedes-benz-v-class.jpg",
+  "mercedes-benz-v-klasse":
+    "/vehicle/mercedes-benz-v-class.jpg",
+  "vw-caddy-max": "/vehicle/vw-caddy-max.webp",
+  "vw-caddy-maxi": "/vehicle/vw-caddy-max.webp",
+};
 
 function normalizeCategory(category: string | null | undefined): string {
   return (category ?? "").trim().toLowerCase();
 }
 
+function normalizeName(name: string | null | undefined): string {
+  return (name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+}
+
 function resolveImageStrategy(vehicle: VehiclePublic): { kind: "image"; url: string } | { kind: "typographic" } {
-  if (vehicle.image_url && vehicle.image_url.trim()) return { kind: "image", url: vehicle.image_url };
+  if (vehicle.image_url && vehicle.image_url.trim()) {
+    return { kind: "image", url: resolveMediaUrl(vehicle.image_url) };
+  }
+  const name = normalizeName(vehicle.name);
+  if (VEHICLE_FALLBACK_BY_NAME[name]) return { kind: "image", url: VEHICLE_FALLBACK_BY_NAME[name] };
   const cat = normalizeCategory(vehicle.category);
-  if (TYPOGRAPHIC_CATEGORIES.has(cat)) return { kind: "typographic" };
   return { kind: "image", url: VEHICLE_FALLBACK_BY_CATEGORY[cat] ?? VEHICLE_FALLBACK_URL_DEFAULT };
 }
 

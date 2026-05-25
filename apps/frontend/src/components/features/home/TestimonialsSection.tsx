@@ -14,7 +14,7 @@ interface TestimonialsSectionProps {
 }
 
 const SECTION_IMAGE =
-  "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1600&q=80";
+  "/others/testimonial.avif";
 
 const PORTRAIT_FALLBACKS = [
   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",

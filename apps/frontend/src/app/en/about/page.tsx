@@ -12,7 +12,7 @@ import { FleetPreview } from "@/components/features/home";
 import { pickT } from "@/lib/i18n/pick";
 
 const ABOUT_IMAGE =
-  "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2000&q=80";
+  "/others/breadcrumb.jpg";
 
 export const revalidate = 3600;
 

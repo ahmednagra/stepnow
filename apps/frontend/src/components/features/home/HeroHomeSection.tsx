@@ -15,7 +15,7 @@ interface HeroHomeSectionProps {
 }
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1686199948265-ddc4ebb1cc92?auto=format&fit=crop&w=1800&q=80";
+  "/others/hero.jpg";
 
 export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
   const bookingHref = locale === "de" ? "/buchen" : "/en/book";

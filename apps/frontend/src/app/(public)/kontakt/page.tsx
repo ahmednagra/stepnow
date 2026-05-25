@@ -18,7 +18,7 @@ import {
 import { pickT } from "@/lib/i18n/pick";
 
 const CONTACT_IMAGE =
-  "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1800&q=80";
+  "/others/contact.avif";
 
 export const revalidate = 300;
 

@@ -15,7 +15,7 @@ interface FaqTeaserProps {
 }
 
 const FAQ_IMAGE =
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
+  "/others/faq.avif";
 
 export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   const items = faqs.filter((f) => f.category === "general").slice(0, 5);

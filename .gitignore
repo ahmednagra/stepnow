@@ -264,3 +264,7 @@ docs/.docusaurus/
 # Local infrastructure overrides
 infra/docker-compose.override.yml
 infra/*.local.conf
+
+.codex
+.agents
+AI-Notes

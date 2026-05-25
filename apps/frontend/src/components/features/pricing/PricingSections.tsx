@@ -9,6 +9,7 @@ import type { Locale, PricingItemPublic, SettingsPublic } from "@/types";
 import { Container } from "@/components/shared";
 import { toTelHref } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
+import { resolveMediaUrl } from "@/utils/media-url";
 
 const PRICING_HERO_FALLBACK_URL = "https://images.unsplash.com/photo-1686199948265-ddc4ebb1cc92?w=1800&q=80&auto=format&fit=crop";
 
@@ -23,7 +24,7 @@ schuelerbefoerderung: "https://images.unsplash.com/photo-1471174617910-3e9c04f58
 };
 
 export function getServiceHeroImage(slug: string, databaseUrl: string | null | undefined): string {
-if (databaseUrl && databaseUrl.trim()) return databaseUrl;
+if (databaseUrl && databaseUrl.trim()) return resolveMediaUrl(databaseUrl);
 return SERVICE_HERO_FALLBACKS[slug] ?? PRICING_HERO_FALLBACK_URL;
 }
 

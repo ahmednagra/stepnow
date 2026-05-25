@@ -13,7 +13,7 @@ interface HomeServicesSectionProps {
 }
 
 const SERVICES_IMAGE =
-  "https://images.unsplash.com/photo-1620227134464-f879b1b93807?auto=format&fit=crop&w=1600&q=80";
+  "/others/services.avif";
 
 export function HomeServicesSection({ t, locale, services }: HomeServicesSectionProps) {
   return (

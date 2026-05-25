@@ -13,6 +13,7 @@ import type { VehicleAdmin } from "@/types";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { vehiclesPreviewUrl } from "@/utils/preview-urls";
 import { exportCsv, exportJson } from "@/utils/exporters";
+import { resolveMediaUrl } from "@/utils/media-url";
 
 type ListFilter = "active" | "deleted" | "all";
 
@@ -119,7 +120,7 @@ items.map((v) => (
 <div className="flex items-center gap-3">
 {v.image_url ? (
 // eslint-disable-next-line @next/next/no-img-element
-<img src={v.image_url} alt="" className="h-10 w-14 shrink-0 object-cover bg-slate-100" loading="lazy" />
+<img src={resolveMediaUrl(v.image_url)} alt="" className="h-10 w-14 shrink-0 object-cover bg-slate-100" loading="lazy" />
 ) : (
 <div className="h-10 w-14 shrink-0 bg-slate-100" aria-hidden="true" />
 )}
