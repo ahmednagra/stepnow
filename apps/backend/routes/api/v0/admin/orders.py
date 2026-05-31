@@ -3,7 +3,9 @@
 # payments ledger. Register AFTER admin_forms_router in routes/__init__.py.
 
 from uuid import UUID
+from pathlib import Path
 from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from config.database import get_db
 from app.Http.Controllers.admin.OrdersController import OrdersController
@@ -74,3 +76,10 @@ async def list_payments(order_id: UUID, db: Session = Depends(get_db), actor: Ad
 @router.post("/admin/orders/{order_id}/payments", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 async def record_payment(request: Request, order_id: UUID, payload: PaymentCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> PaymentResponse:
     return OrdersController.record_payment(db, order_id, payload, actor, request)
+
+
+# ── Invoice PDF (authenticated stream — invoices hold personal data) ──
+@router.get("/admin/orders/{order_id}/invoice/pdf")
+async def invoice_pdf(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
+    path = OrdersController.invoice_pdf_path(db, order_id)
+    return FileResponse(path, media_type="application/pdf", filename=Path(path).name)

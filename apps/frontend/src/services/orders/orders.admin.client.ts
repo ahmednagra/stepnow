@@ -132,3 +132,22 @@ export async function listOrderPayments(orderId: string): Promise<PaymentAdmin[]
 export async function recordOrderPayment(orderId: string, payload: RecordPaymentInput): Promise<PaymentAdmin> {
   return nextjsApiClient.post<PaymentAdmin>(`/admin/orders/${orderId}/payments`, payload);
 }
+
+/**
+ * Authenticated download of the invoice PDF (it streams behind get_current_admin).
+ * Goes through the Next BFF with the session cookie. If your nextjsApiClient uses a base
+ * other than "/api", change the prefix below to match.
+ */
+export async function downloadInvoicePdf(orderId: string, invoiceNumber?: string): Promise<void> {
+  const res = await fetch(`/api/admin/orders/${orderId}/invoice/pdf`, { credentials: "include" });
+  if (!res.ok) throw new Error("PDF download failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${invoiceNumber ?? "invoice"}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

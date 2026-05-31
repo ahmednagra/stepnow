@@ -6,12 +6,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, FileText, Plus } from "lucide-react";
+import { Loader2, Save, FileText, Plus, Download } from "lucide-react";
 import { AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
 import { OrderStatusBadge, type OrderStatus } from "@/components/admin/OrderStatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import {
-  getAdminOrder, updateAdminOrder, createOrderInvoice, recordOrderPayment,
+  getAdminOrder, updateAdminOrder, createOrderInvoice, recordOrderPayment, downloadInvoicePdf,
   type OrderDetail, type PaymentMethod,
 } from "@/services/orders";
 import { ApiError } from "@/lib/api-errors";
@@ -123,11 +123,23 @@ export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
           headerActions={order.invoice ? <Badge tone="gold">{order.invoice.status}</Badge> : undefined}
         >
           {order.invoice ? (
-            <dl className="space-y-2 text-[13px]">
-              <Field label="Invoice-No." value={order.invoice.invoice_number} mono />
-              <Field label="Issued" value={order.invoice.issue_date} />
-              <Field label="Gross" value={formatPriceEur(order.invoice.gross_amount)} strong />
-            </dl>
+            <div className="space-y-3">
+              <dl className="space-y-2 text-[13px]">
+                <Field label="Invoice-No." value={order.invoice.invoice_number} mono />
+                <Field label="Issued" value={order.invoice.issue_date} />
+                <Field label="Gross" value={formatPriceEur(order.invoice.gross_amount)} strong />
+              </dl>
+              <button
+                type="button"
+                onClick={async () => {
+                  try { await downloadInvoicePdf(order.id, order.invoice!.invoice_number); }
+                  catch { pushToast("error", "PDF download failed"); }
+                }}
+                className="flex h-9 w-full items-center justify-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <Download className="h-3.5 w-3.5" strokeWidth={1.5} /> Download PDF
+              </button>
+            </div>
           ) : (
             <button
               type="button" onClick={createInvoice} disabled={busy}

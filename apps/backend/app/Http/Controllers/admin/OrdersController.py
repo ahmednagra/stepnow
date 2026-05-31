@@ -1,12 +1,13 @@
 # apps/backend/app/Http/Controllers/admin/OrdersController.py
-# Thin controller for the whole order bounded context (orders + optional invoices + payments),
-# mirroring how PricingController covers categories+items. Returns response models; all
-# business logic lives in the services.
+# Thin controller for the order bounded context (orders + optional invoices + payments + PDF),
+# mirroring how PricingController covers categories+items. Logic lives in the services.
 
 import math
+from pathlib import Path
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
+from app.Core.Exceptions import NotFoundError
 from app.Models.admin import AdminUser
 from app.Schemas.common import PaginatedResponse, PaginationInfo
 from app.Schemas.admin.orders_admin import (
@@ -22,6 +23,7 @@ from app.Schemas.admin.orders_admin import (
 from app.Services.OrdersService import OrdersService
 from app.Services.InvoicesService import InvoicesService
 from app.Services.PaymentsService import PaymentsService
+from app.Services.InvoicePdfService import InvoicePdfService
 
 
 class OrdersController:
@@ -58,7 +60,26 @@ class OrdersController:
     @staticmethod
     def create_invoice(db: Session, order_id: UUID, payload: InvoiceCreateFromOrder, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
         invoice = InvoicesService.create_from_order(db, order_id, payload, actor, request)
+        # Render the PDF immediately and store its (non-public) path.
+        invoice.pdf_url = InvoicePdfService.render(db, invoice)
+        db.commit()
+        db.refresh(invoice)
         return InvoiceAdminResponse.model_validate(invoice)
+
+    @staticmethod
+    def invoice_pdf_path(db: Session, order_id: UUID) -> str:
+        """Absolute path to the invoice PDF for this order — (re)generates if missing."""
+        order = OrdersService.get(db, order_id)
+        inv = order.invoice
+        if not inv:
+            raise NotFoundError("Order has no invoice", order_id=str(order_id))
+        path = inv.pdf_url
+        if not path or not Path(path).exists():
+            inv.pdf_url = InvoicePdfService.render(db, inv)
+            db.commit()
+            db.refresh(inv)
+            path = inv.pdf_url
+        return str(Path(path).resolve())
 
     # ── Payments ────────────────────────────────────────────
     @staticmethod
