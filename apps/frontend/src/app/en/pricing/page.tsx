@@ -20,8 +20,7 @@ import {
 import type { PricingCategoryPublic } from "@/types";
 import { pickT } from "@/lib/i18n/pick";
 
-const PRICING_BANNER_IMAGE =
-  "/others/breadcrumb.jpg";
+const PRICING_BANNER_IMAGE = "/others/breadcrumb.jpg";
 
 export const revalidate = 600;
 
@@ -67,7 +66,10 @@ export default async function PricingPageEn() {
           <nav aria-label="Breadcrumb" className="mb-8">
             <ol className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(247,244,234,0.72)]">
               <li>
-                <Link href="/en" className="transition-colors duration-base hover:text-[var(--color-text-on-strong)]">
+                <Link
+                  href="/en"
+                  className="transition-colors duration-base hover:text-[var(--color-text-on-strong)]"
+                >
                   {pickT(t, "nav.home", "Home")}
                 </Link>
               </li>
@@ -94,7 +96,7 @@ export default async function PricingPageEn() {
       </section>
 
       <section className="bg-[var(--color-bg-page)]">
-        <Container className="pt-8 pb-section md:pt-10">
+        <Container className="pb-section pt-8 md:pt-10">
           <ConcessionBadge settings={settings} tone="light" />
           <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
             <div className="max-w-2xl">
@@ -109,7 +111,7 @@ export default async function PricingPageEn() {
               {pickT(
                 t,
                 "pricing.tabs.lead",
-                "Select a service to browse all available fixed-price routes. Custom destinations get a quote within 30 minutes.",
+                "Select a service to browse all available routes and prices. Custom destinations get a quote within 30 minutes.",
               )}
             </p>
           </div>

@@ -935,7 +935,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "pricing.page.intro",
         "pricing",
         "Der Preis steht vor Fahrtbeginn fest und ändert sich nicht.",
-        "The price is fixed before departure and does not change.",
+        "The price is set before departure and does not change.",
         "Pricing page intro paragraph",
         False,
     ),

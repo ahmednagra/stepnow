@@ -606,7 +606,7 @@ export function ServicesEditorialClose({
             t,
             "services.close.attribution",
             locale === "de"
-              ? "KONZESSIONIERTER PERSONENVERKEHR · REGION STUTTGART"
+              ? "KONZESSIONIERTER PERSONENVERKEHR · PLOCHINGEN/ESSLINGEN"
               : "LICENSED PASSENGER TRANSPORT · Plochingen/Esslingen",
           )}
         </p>
@@ -614,7 +614,7 @@ export function ServicesEditorialClose({
           {pickT(
             t,
             "services.close.followup_lead",
-            locale === "de" ? "Pauschalpreis ansehen?" : "Looking for fixed-price routes?",
+            locale === "de" ? "Pauschalpreis ansehen?" : "Looking for our prices?",
           )}{" "}
           <Link
             href={pricingHref}

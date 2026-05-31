@@ -147,7 +147,7 @@ className="object-cover"
 </div>
 ))}
 <div className="mt-6 border-l-2 border-[var(--color-accent-primary)] bg-[var(--color-bg-accent-soft)] px-4 py-3 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
-{pickT(t, "pricing.footnote", locale === "de" ? "Preise gelten für Einzelfahrten mit bis zu 4 Fahrgästen. Größere Gruppen, Rückfahrten und Nachtzuschläge (22:00–06:00) auf Anfrage. Andere Strecken — Pauschalpreis-Angebot innerhalb von 30 Minuten während der Telefonzeiten." : "Prices valid for one-way bookings with up to 4 passengers. Larger groups, return trips, and night surcharges (22:00–06:00) on request. Other routes — fixed-price quote within 30 minutes during phone hours.")}
+{pickT(t, "pricing.footnote", locale === "de" ? "Preise gelten für Einzelfahrten mit bis zu 4 Fahrgästen. Größere Gruppen, Rückfahrten und Nachtzuschläge (22:00–06:00) auf Anfrage. Andere Strecken — Pauschalpreis-Angebot innerhalb von 30 Minuten während der Telefonzeiten." : "Prices valid for one-way bookings with up to 4 passengers. Larger groups, return trips, and night surcharges (22:00–06:00) on request. Other routes — price quote within 30 minutes during phone hours.")}
 </div>
 </>
 )}
