@@ -2,7 +2,7 @@
 # Seed the ui_strings table with every UI string the frontend references via t() or pickT(). Comprehensive DE/EN coverage organized by namespace; idempotent — existing rows skipped, only new keys inserted.
 
 from config.database import SessionLocal  # noqa: E402
-from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402
+from scripts.seeders._base import get_system_actor, log_section
 from app.Models.ui_strings import UiString
 from app.Services.AuditService import AuditService
 

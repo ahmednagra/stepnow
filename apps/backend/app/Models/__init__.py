@@ -11,6 +11,9 @@ from app.Models.faqs import Faq
 from app.Models.testimonials import Testimonial
 from app.Models.legal_pages import LegalPage, LegalPageVersion
 from app.Models.bookings import BookingRequest
+from app.Models.orders import Order
+from app.Models.invoices import Invoice
+from app.Models.payments import Payment
 from app.Models.contact import ContactMessage
 from app.Models.email_logs import EmailLog
 
@@ -30,6 +33,9 @@ __all__ = [
     "LegalPage",
     "LegalPageVersion",
     "BookingRequest",
+    "Order",
+    "Invoice",
+    "Payment",
     "ContactMessage",
     "EmailLog",
 ]
