@@ -1,5 +1,5 @@
 # apps/backend/app/Models/invoices.py
-
+# Optional billing document generated from an Order (Naeem: "...and optional billing").
 # One invoice per order (unique order_id); relax to one-to-many later if credit notes /
 # partial invoices are ever needed. All money is Numeric. invoice_number is unique and
 # sequential (§14 UStG), generated server-side in InvoicesService.
@@ -8,15 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 from sqlalchemy import (
-    Date,
-    DateTime,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    String,
-    Text,
-    UniqueConstraint,
+    Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -32,22 +24,11 @@ class Invoice(Base, TimestampMixin, SoftDeleteMixin):
         Index("ix_invoices_status_issue", "status", "issue_date"),
     )
 
-    id: Mapped[UUID] = mapped_column(
-        PgUUID(as_uuid=True), primary_key=True, default=uuid4
-    )
-    invoice_number: Mapped[str] = mapped_column(
-        String(30), unique=True, nullable=False, index=True
-    )
-    order_id: Mapped[UUID] = mapped_column(
-        PgUUID(as_uuid=True),
-        ForeignKey("orders.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
+    invoice_number: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)
+    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="draft", index=True
-    )  # draft | issued | paid | cancelled
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)  # draft | issued | paid | cancelled
     issue_date: Mapped[date] = mapped_column(Date, nullable=False)
 
     # Recipient block (multi-line: name / z.Hd. / street / PLZ Ort) snapshotted at issue time.
@@ -56,9 +37,7 @@ class Invoice(Base, TimestampMixin, SoftDeleteMixin):
 
     # ── Money ──
     net_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
-    vat_rate: Mapped[Decimal] = mapped_column(
-        Numeric(5, 4), nullable=False, default=Decimal("0.0700")
-    )
+    vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False, default=Decimal("0.0700"))
     vat_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     gross_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
@@ -71,9 +50,7 @@ class Invoice(Base, TimestampMixin, SoftDeleteMixin):
     # Payment terms
     payment_due_days: Mapped[int] = mapped_column(Integer, nullable=False, default=14)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    paid_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Where the rendered PDF lives once generated (uploads/storage path or URL).
     pdf_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

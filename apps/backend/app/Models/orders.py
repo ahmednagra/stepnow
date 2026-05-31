@@ -10,15 +10,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 from sqlalchemy import (
-    Boolean,
-    Date,
-    DateTime,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    String,
-    Text,
+    Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
@@ -36,29 +28,16 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
         Index("ix_orders_scheduled", "scheduled_datetime"),
     )
 
-    id: Mapped[UUID] = mapped_column(
-        PgUUID(as_uuid=True), primary_key=True, default=uuid4
-    )
-    order_number: Mapped[str] = mapped_column(
-        String(30), unique=True, nullable=False, index=True
-    )
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
+    # Gapless per-year sequence ("2026-00001"), generated server-side inside the conversion
+    # transaction. Required for a clean Rechnungsnummer chain (§14 UStG).
+    order_number: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)
 
-    booking_id: Mapped[UUID | None] = mapped_column(
-        PgUUID(as_uuid=True),
-        ForeignKey("booking_requests.id"),
-        nullable=True,
-        index=True,
-    )
-    service_id: Mapped[UUID | None] = mapped_column(
-        PgUUID(as_uuid=True), ForeignKey("services.id"), nullable=True, index=True
-    )
-    vehicle_id: Mapped[UUID | None] = mapped_column(
-        PgUUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True, index=True
-    )
+    booking_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("booking_requests.id"), nullable=True, index=True)
+    service_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("services.id"), nullable=True, index=True)
+    vehicle_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True, index=True)
 
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="open", index=True
-    )  # open | completed | cancelled
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open", index=True)  # open | completed | cancelled
 
     # ── Customer snapshot (copied at conversion, immutable afterward) ──
     customer_name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -75,9 +54,7 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     destination_address: Mapped[str] = mapped_column(String(500), nullable=False)
     destination_postcode: Mapped[str | None] = mapped_column(String(10), nullable=True)
     destination_city: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    scheduled_datetime: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    scheduled_datetime: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     passenger_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     luggage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     distance_km: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
@@ -85,10 +62,11 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     driver_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     service_description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # ── Money (Numeric, never float/String). vat_rate defaults to the reduced 7% rate for
+    #    short-distance licensed passenger transport (PBefG); override per order for courier /
+    #    special transport, which is usually 19%. Confirm rates with the tax advisor. ──
     net_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
-    vat_rate: Mapped[Decimal] = mapped_column(
-        Numeric(5, 4), nullable=False, default=Decimal("0.0700")
-    )
+    vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False, default=Decimal("0.0700"))
     vat_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     gross_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
@@ -96,19 +74,11 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     payment_due_days: Mapped[int] = mapped_column(Integer, nullable=False, default=14)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    cancelled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     internal_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Optional billing — at most one invoice per order.
-    invoice: Mapped["Invoice | None"] = relationship(
-        back_populates="order", uselist=False, cascade="all, delete-orphan"
-    )
+    invoice: Mapped["Invoice | None"] = relationship(back_populates="order", uselist=False, cascade="all, delete-orphan")
     # Payment ledger — paid-status/balance are DERIVED from these, never stored as a flag.
-    payments: Mapped[list["Payment"]] = relationship(
-        back_populates="order", cascade="all, delete-orphan"
-    )
+    payments: Mapped[list["Payment"]] = relationship(back_populates="order", cascade="all, delete-orphan")

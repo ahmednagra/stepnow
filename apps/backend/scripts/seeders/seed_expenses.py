@@ -1,5 +1,5 @@
 # apps/backend/scripts/seeders/seed_expenses.py
-
+# Imports the legacy Buchhaltung expenses from StepNow_Data.json — values copied VERBATIM,
 # nothing changed. Follows the project seeder pattern: idempotent run(), SessionLocal,
 # log helpers. Categories keyed by `code`; expenses keyed by `legacy_id` (the JSON "id").
 
@@ -82,11 +82,7 @@ def run() -> None:
         # 1) Categories first (FK target for expenses.category_code).
         c_created = c_skipped = 0
         for c in CATEGORIES:
-            if (
-                db.query(ExpenseCategory)
-                .filter(ExpenseCategory.code == c["code"])
-                .first()
-            ):
+            if db.query(ExpenseCategory).filter(ExpenseCategory.code == c["code"]).first():
                 log_skip(f"category '{c['code']}'")
                 c_skipped += 1
                 continue
@@ -103,17 +99,12 @@ def run() -> None:
                 e_skipped += 1
                 continue
             db.add(Expense(**e))
-            log_create(
-                f"expense '{e['receipt_no']}'",
-                f"{e['gross_amount']} € — {e['description']}",
-            )
+            log_create(f"expense '{e['receipt_no']}'", f"{e['gross_amount']} € — {e['description']}")
             e_created += 1
         db.commit()
 
-        print(
-            f"  [done] categories: {c_created} created / {c_skipped} skipped; "
-            f"expenses: {e_created} created / {e_skipped} skipped"
-        )
+        print(f"  [done] categories: {c_created} created / {c_skipped} skipped; "
+              f"expenses: {e_created} created / {e_skipped} skipped")
     finally:
         db.close()
 
