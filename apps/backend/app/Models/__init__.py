@@ -16,6 +16,8 @@ from app.Models.invoices import Invoice
 from app.Models.payments import Payment
 from app.Models.contact import ContactMessage
 from app.Models.email_logs import EmailLog
+from app.Models.expense_categories import ExpenseCategory
+from app.Models.expenses import Expense
 
 __all__ = [
     "Base",
@@ -36,6 +38,8 @@ __all__ = [
     "Order",
     "Invoice",
     "Payment",
+    "ExpenseCategory",
+    "Expense",
     "ContactMessage",
     "EmailLog",
 ]
