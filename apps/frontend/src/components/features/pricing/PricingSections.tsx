@@ -64,7 +64,7 @@ export function PricingFeaturedHero({
     pickT(
       t,
       "pricing.hero.proof_1",
-      locale === "de" ? "Pauschalpreis vor der Fahrt" : "Fixed price before departure",
+      locale === "de" ? "Pauschalpreis vor der Fahrt" : "Price before departure",
     ),
     pickT(
       t,
@@ -157,7 +157,7 @@ export function PricingFeaturedHero({
               {pickT(
                 t,
                 "pricing.hero.price_label",
-                locale === "de" ? "Pauschalpreis ab" : "Fixed from",
+                locale === "de" ? "Pauschalpreis ab" : "Price from",
               )}
             </p>
             <p className="my-2 block font-serif text-[110px] leading-none tracking-[-0.04em] text-[var(--color-text-on-strong)] md:text-[140px]">
@@ -189,19 +189,19 @@ export function PricingTrustStrip({ t, locale }: PricingTrustStripProps) {
   const accent = pickT(
     t,
     "pricing.trust.accent",
-    locale === "de" ? "Keine Taximeter," : "No taximeter,",
+    locale === "de" ? "Keine versteckten Aufschläge," : "No hidden surcharges,",
   );
   const before = pickT(
     t,
     "pricing.trust.before",
-    locale === "de" ? "Pauschalpreis vor Fahrtbeginn. " : "Fixed price before departure. ",
+    locale === "de" ? "Pauschalpreis vor Fahrtbeginn. " : "Price before departure. ",
   );
   const after = pickT(
     t,
     "pricing.trust.after",
     locale === "de"
-      ? " keine versteckten Aufschläge, kein Überraschungspreis am Zielort."
-      : " no hidden surcharges, no surprise total at the destination.",
+      ? " kein Überraschungspreis am Zielort."
+      : " no surprise total at the destination.",
   );
   const attribution = pickT(
     t,
@@ -306,7 +306,7 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
             {pickT(
               t,
               "pricing.included.eyebrow",
-              locale === "de" ? "Was Ihr Pauschalpreis abdeckt" : "What your fixed price covers",
+              locale === "de" ? "Was Ihr Pauschalpreis abdeckt" : "What your price covers",
             )}
           </p>
           <h2 className="mt-2 font-serif text-[30px] leading-tight tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
@@ -430,13 +430,13 @@ const COMPARISON_ROWS: ComparisonRow[] = [
     defaults: {
       de: {
         label: "Preis Esslingen → STR",
-        stepnow: "Pauschalpreis €70 — bei Buchung bestätigt",
-        taxi: "Taxameter ca. €80–110, vom Verkehr abhängig",
+        stepnow: "Pauschalpreis 70 € — bei Buchung bestätigt",
+        taxi: "Taxameter ca. 80–110 €, vom Verkehr abhängig",
       },
       en: {
         label: "Price for Esslingen → STR",
-        stepnow: "Fixed €70 — confirmed at booking",
-        taxi: "Meter-based ≈ €80–110, depends on traffic",
+        stepnow: "Price 70 € — confirmed at booking",
+        taxi: "Meter-based ≈ 80–110 €, depends on traffic",
       },
     },
   },
