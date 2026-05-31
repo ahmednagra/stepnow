@@ -17,9 +17,11 @@ _ENV_PATH = _BACKEND_DIR / ".env"
 if _ENV_PATH.exists():
     try:
         from dotenv import load_dotenv
+
         load_dotenv(_ENV_PATH, override=False)
     except ImportError:
         import os as _os
+
         for _line in _ENV_PATH.read_text().splitlines():
             _line = _line.strip()
             if not _line or _line.startswith("#") or "=" not in _line:
@@ -43,6 +45,7 @@ SEEDERS_IN_ORDER = [
     ("legal_pages", "scripts.seeders.seed_legal_pages"),
     ("bookings", "scripts.seeders.seed_bookings"),
     ("contact_messages", "scripts.seeders.seed_contact_messages"),
+    ("expenses", "scripts.seeders.seed_expenses"),
 ]
 
 
@@ -52,7 +55,10 @@ def run_all(only: set[str] | None = None) -> list[str]:
     if only is not None:
         unknown = only - available
         if unknown:
-            print(f"ERROR: unknown seeder(s): {', '.join(sorted(unknown))}\nAvailable: {', '.join(sorted(available))}", file=sys.stderr)
+            print(
+                f"ERROR: unknown seeder(s): {', '.join(sorted(unknown))}\nAvailable: {', '.join(sorted(available))}",
+                file=sys.stderr,
+            )
             return ["__unknown_seeder_names__"]
         to_run = [(n, m) for n, m in SEEDERS_IN_ORDER if n in only]
     else:
@@ -70,7 +76,11 @@ def run_all(only: set[str] | None = None) -> list[str]:
             traceback.print_exc()
             failures.append(name)
     print("\n" + "=" * 60)
-    print(f"  FAILED: {len(failures)} seeder(s) — {', '.join(failures)}" if failures else f"  SUCCESS: all {len(to_run)} seeder(s) completed")
+    print(
+        f"  FAILED: {len(failures)} seeder(s) — {', '.join(failures)}"
+        if failures
+        else f"  SUCCESS: all {len(to_run)} seeder(s) completed"
+    )
     print("=" * 60)
     return failures
 
@@ -78,8 +88,15 @@ def run_all(only: set[str] | None = None) -> list[str]:
 def main() -> int:
     # CLI entry. --list prints seeders in order; --only=a,b runs a subset. Returns non-zero exit code if any seeder failed.
     parser = argparse.ArgumentParser(description="Run all dev seeders for StepNow.")
-    parser.add_argument("--only", type=str, default=None, help="Comma-separated seeder names (e.g. 'ui_strings,services')")
-    parser.add_argument("--list", action="store_true", help="List available seeders and exit")
+    parser.add_argument(
+        "--only",
+        type=str,
+        default=None,
+        help="Comma-separated seeder names (e.g. 'ui_strings,services')",
+    )
+    parser.add_argument(
+        "--list", action="store_true", help="List available seeders and exit"
+    )
     args = parser.parse_args()
     if args.list:
         print("Available seeders (in run order):")
