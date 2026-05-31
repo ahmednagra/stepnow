@@ -5,6 +5,7 @@ Useful for admin demo: shows the list with filters working, mix of states.
 
 Idempotent: keyed by email + first 30 chars of message.
 """
+
 from datetime import datetime, timedelta, timezone
 
 from config.database import SessionLocal  # noqa: E402
@@ -72,7 +73,7 @@ SAMPLE_MESSAGES = [
             "I'll be flying into Stuttgart Airport on the 18th for a business trip. "
             "Could you arrange a transfer to the Mercedes-Benz Museum where I have a meeting, "
             "and then later to my hotel near Stuttgart Hauptbahnhof? "
-            "What would the fixed price be?\n\nBest,\nJohn"
+            "What would the price be?\n\nBest,\nJohn"
         ),
         "language": "en",
     },
@@ -86,13 +87,19 @@ def run() -> None:
         from app.Models.contact import ContactMessage
         from app.Services.FormsService import FormsService
         from app.Services.FormsAdminService import FormsAdminService
+
         actor = get_system_actor(db)
 
-        existing_seeded = db.query(ContactMessage).filter(
-            ContactMessage.email.in_([m["email"] for m in SAMPLE_MESSAGES])
-        ).count()
+        existing_seeded = (
+            db.query(ContactMessage)
+            .filter(ContactMessage.email.in_([m["email"] for m in SAMPLE_MESSAGES]))
+            .count()
+        )
         if existing_seeded > 0:
-            log_skip(f"sample contact messages", f"{existing_seeded} already seeded — re-run after manual cleanup if needed")
+            log_skip(
+                f"sample contact messages",
+                f"{existing_seeded} already seeded — re-run after manual cleanup if needed",
+            )
             return
 
         created = 0
@@ -110,9 +117,14 @@ def run() -> None:
                 update_data = {"is_handled": True}
                 if internal_notes:
                     update_data["internal_notes"] = internal_notes
-                FormsAdminService.update_contact_message(db, message.id, update_data, actor, request=None)
+                FormsAdminService.update_contact_message(
+                    db, message.id, update_data, actor, request=None
+                )
 
-            log_create(f"contact msg from '{message.name}'", f"category={message.subject_category}, handled={handled}")
+            log_create(
+                f"contact msg from '{message.name}'",
+                f"category={message.subject_category}, handled={handled}",
+            )
             created += 1
         print(f"  [done] {created} contact messages created")
     finally:

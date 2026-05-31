@@ -1,5 +1,5 @@
 # scripts/seeders/seed_services.py
-"""Seed the four StepNow services with realistic bilingual content.
+"""Seed the five StepNow services with realistic bilingual content.
 
 Each service has:
 - Bilingual slugs (DE/EN)
@@ -24,7 +24,7 @@ SERVICES = [
         "title_de": "Flughafentransfer",
         "title_en": "Airport Transfer",
         "short_description_de": "Pünktlich zum Flieger, entspannt nach Hause. Pauschalpreis mit Flugverfolgung und Wartezeit inklusive.",
-        "short_description_en": "Punctual to the airport, relaxed back home. Fixed price including flight tracking and waiting time.",
+        "short_description_en": "Punctual to the airport, relaxed back home. Price including flight tracking and waiting time.",
         "long_description_de": (
             "## Flughafentransfer — komfortabel und zuverlässig\n\n"
             "Ob geschäftlich nach Frankfurt oder privat nach Mallorca: Unser Flughafentransfer bringt Sie sicher und pünktlich "
@@ -58,9 +58,9 @@ SERVICES = [
         "hero_image_url": None,
         "og_image_url": None,
         "meta_title_de": "Flughafentransfer Stuttgart — Pauschalpreis, vorgebucht — StepNow Rides",
-        "meta_title_en": "Airport Transfer Stuttgart — Price, Pre booked — StepNow Rides",
+        "meta_title_en": "Airport Transfer Stuttgart — Price, Pre-booked — StepNow Rides",
         "meta_description_de": "Zuverlässiger Flughafentransfer zum/vom Flughafen Stuttgart und allen Flughäfen der Region. Pauschalpreis-Garantie, Meet & Greet, Flugverfolgung. Konzessioniert nach PBefG.",
-        "meta_description_en": "Reliable airport transfer to/from Stuttgart Airport and all airports in the region. Fixed-price guarantee, meet & greet, flight tracking. Licensed under PBefG.",
+        "meta_description_en": "Reliable airport transfer to/from Stuttgart Airport and all airports in the region. Price guarantee, meet & greet, flight tracking. Licensed under PBefG.",
     },
     {
         "sort_order": 20,
@@ -106,8 +106,8 @@ SERVICES = [
         "og_image_url": None,
         "meta_title_de": "Krankenhausfahrten Stuttgart Esslingen — Sicher und würdevoll — StepNow Rides",
         "meta_title_en": "Hospital Transport Stuttgart Esslingen — Safe and Dignified — StepNow Rides",
-        "meta_description_de": "Würdevoller Transport zu Krankenhäusern und Reha-Einrichtungen in der Plochingen/Esslingen. Geduldig, pünktlich, Tür-zu-Tür-Service. Konzessioniert nach PBefG.",
-        "meta_description_en": "Dignified transport to hospitals and rehab facilities in the Plochingen/Esslingen. Patient, punctual, door-to-door service. Licensed under PBefG.",
+        "meta_description_de": "Würdevoller Transport zu Krankenhäusern und Reha-Einrichtungen in Plochingen/Esslingen. Geduldig, pünktlich, Tür-zu-Tür-Service. Konzessioniert nach PBefG.",
+        "meta_description_en": "Dignified transport to hospitals and rehab facilities in Plochingen/Esslingen. Patient, punctual, door-to-door service. Licensed under PBefG.",
     },
     {
         "sort_order": 30,
@@ -153,8 +153,8 @@ SERVICES = [
         "og_image_url": None,
         "meta_title_de": "Schülerbeförderung Stuttgart — Verlässlich, sicher, persönlich — StepNow Rides",
         "meta_title_en": "School Transport Stuttgart — Reliable, Safe, Personal — StepNow Rides",
-        "meta_description_de": "Regelmäßige, verlässliche Schülerbeförderung in der Plochingen/Esslingen. Derselbe Fahrer, Kindersitze, WhatsApp-Updates. Konzessioniert nach PBefG.",
-        "meta_description_en": "Regular, reliable school transport in the Plochingen/Esslingen. Same driver, child seats, WhatsApp updates. Licensed under PBefG.",
+        "meta_description_de": "Regelmäßige, verlässliche Schülerbeförderung in Plochingen/Esslingen. Derselbe Fahrer, Kindersitze, WhatsApp-Updates. Konzessioniert nach PBefG.",
+        "meta_description_en": "Regular, reliable school transport in Plochingen/Esslingen. Same driver, child seats, WhatsApp updates. Licensed under PBefG.",
     },
     {
         "sort_order": 40,
@@ -173,9 +173,9 @@ SERVICES = [
             "### Was wir koordinieren\n\n"
             "- **Mehrere Abholpunkte, ein Ziel** — Gäste werden eingesammelt und gemeinsam gebracht\n"
             "- **Hin- und Rückfahrt** — auch zu späten Stunden, auch am Wochenende\n"
-            "- **Bis zu 8 Personen pro Fahrzeug** — Mercedes V-Klasse mit voller Ausstattung\n"
+            "- **Bis zu 8 Personen pro Fahrzeug** — geräumiger Van mit voller Ausstattung\n"
             "- **Mehrere Fahrzeuge möglich** — größere Gruppen kein Problem\n"
-            "- **Pauschalpreis pro Gruppe** — kein Taxameter-Risiko\n\n"
+            "- **Pauschalpreis pro Gruppe** — der Preis steht vorab fest\n\n"
             "### Typische Anlässe\n\n"
             "Hochzeiten (Brautpaar und Gäste, Wechsel zwischen Standesamt, Kirche, Restaurant). "
             "Firmenfeiern (Sammeltransport vom Büro zum Veranstaltungsort und zurück). "
@@ -189,9 +189,9 @@ SERVICES = [
             "### What we coordinate\n\n"
             "- **Multiple pickup points, one destination** — guests are collected and brought together\n"
             "- **Outbound and return** — including late evening, including weekends\n"
-            "- **Up to 8 passengers per vehicle** — Mercedes V-Class fully equipped\n"
+            "- **Up to 8 passengers per vehicle** — spacious van, fully equipped\n"
             "- **Multiple vehicles possible** — larger groups no problem\n"
-            "- **Fixed price per group** — no taximeter risk\n\n"
+            "- **Price per group** — the price is set in advance\n\n"
             "### Typical occasions\n\n"
             "Weddings (couple and guests, transitions between registry office, church, restaurant). "
             "Company events (collective transport from office to venue and back). "
@@ -202,8 +202,8 @@ SERVICES = [
         "og_image_url": None,
         "meta_title_de": "Shuttle Service Stuttgart — Gruppentransport für Events — StepNow Rides",
         "meta_title_en": "Shuttle Service Stuttgart — Group Transport for Events — StepNow Rides",
-        "meta_description_de": "Gruppentransport für Hochzeiten, Firmenfeiern, Konferenzen und Tagungen in der Plochingen/Esslingen. Pauschalpreis, mehrere Abholpunkte, bis 8 Personen pro Fahrzeug.",
-        "meta_description_en": "Group transport for weddings, company events, conferences and meetings in the Plochingen/Esslingen. Fixed price, multiple pickups, up to 8 passengers per vehicle.",
+        "meta_description_de": "Gruppentransport für Hochzeiten, Firmenfeiern, Konferenzen und Tagungen in Plochingen/Esslingen. Pauschalpreis, mehrere Abholpunkte, bis 8 Personen pro Fahrzeug.",
+        "meta_description_en": "Group transport for weddings, company events, conferences and meetings in Plochingen/Esslingen. Price, multiple pickups, up to 8 passengers per vehicle.",
     },
     {
         "sort_order": 50,
@@ -215,8 +215,32 @@ SERVICES = [
         "title_en": "Courier / Special Transport",
         "short_description_de": "Schnelle Kurier- und Sonderfahrten für Dokumente, Pakete und zeitkritische Sendungen.",
         "short_description_en": "Fast courier and special transport for documents, parcels and time-critical shipments.",
-        "long_description_de": "## Kurier-/Sondertransport\n\n<Inhalt folgt — bitte finalen Text liefern.>",
-        "long_description_en": "## Courier / Special Transport\n\n<Content to follow — please provide final copy.>",
+        "long_description_de": (
+            "## Kurier-/Sondertransport — schnell, sicher, termintreu\n\n"
+            "Wenn ein Dokument, ein Paket oder eine zeitkritische Sendung zuverlässig ankommen muss, übernehmen wir "
+            "den direkten Transport — ohne Umwege, ohne Sammeltour.\n\n"
+            "### Was uns auszeichnet\n\n"
+            "- **Direktfahrt** — Ihre Sendung fährt allein, ohne Zwischenstopps\n"
+            "- **Pauschalpreis** — der Preis steht vor Abfahrt fest\n"
+            "- **Termintreue** — feste Abhol- und Lieferzeiten\n"
+            "- **Persönliche Übergabe** — direkter Kontakt, kein anonymes Depot\n\n"
+            "### Wofür wir fahren\n\n"
+            "Dokumente und Verträge, Ersatzteile, Apotheken- und Laborproben, vergessene Gepäckstücke und andere "
+            "Sonderfahrten auf Anfrage."
+        ),
+        "long_description_en": (
+            "## Courier / Special Transport — fast, secure, on schedule\n\n"
+            "When a document, parcel or time-critical shipment has to arrive reliably, we handle the direct transport — "
+            "no detours, no shared route.\n\n"
+            "### What sets us apart\n\n"
+            "- **Direct trip** — your shipment travels on its own, no intermediate stops\n"
+            "- **Price** — the price is set before departure\n"
+            "- **On schedule** — agreed pickup and delivery times\n"
+            "- **Personal handover** — direct contact, no anonymous depot\n\n"
+            "### What we carry\n\n"
+            "Documents and contracts, spare parts, pharmacy and lab samples, forgotten luggage and other special "
+            "trips on request."
+        ),
         "hero_image_url": None,
         "og_image_url": None,
         "meta_title_de": "Kurier-/Sondertransport Plochingen/Esslingen — StepNow Rides",

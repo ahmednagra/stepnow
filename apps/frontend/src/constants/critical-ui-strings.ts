@@ -46,7 +46,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.page.title": { de: "Fahrt buchen", en: "Book your ride" },
   "booking.page.subhead": {
     de: "In wenigen Schritten zur unverbindlichen Buchungsanfrage. Wir melden uns mit Ihrem Pauschalpreis.",
-    en: "A few steps to your non-binding booking request. We'll get back with your fixed price.",
+    en: "A few steps to your non-binding booking request. We'll get back with your price.",
   },
   "booking.step.service": { de: "Leistung", en: "Service" },
   "booking.step.route": { de: "Strecke", en: "Route" },
@@ -112,15 +112,15 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.details.luggage_label": { de: "Gepäckstücke", en: "Luggage" },
   "booking.details.special_label": { de: "Besondere Wünsche", en: "Special requirements" },
   "booking.details.special_placeholder": {
-    de: "z.B. Kindersitz, Rollstuhl, sehr großes Gepäck …",
-    en: "e.g. child seat, wheelchair, oversized luggage …",
+    de: "z.B. Kindersitz, zusätzlicher Halt, sehr großes Gepäck …",
+    en: "e.g. child seat, extra stop, oversized luggage …",
   },
 
   // Step 4 — contact
   "booking.contact.heading": { de: "Ihre Kontaktdaten", en: "Your contact details" },
   "booking.contact.subhead": {
     de: "Damit wir uns mit Ihrem Pauschalpreis melden können.",
-    en: "So we can get back to you with your fixed price.",
+    en: "So we can get back to you with your price.",
   },
   "booking.contact.name_label": { de: "Name", en: "Name" },
   "booking.contact.phone_label": { de: "Telefon", en: "Phone" },
@@ -136,7 +136,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.review.heading": { de: "Bitte prüfen und bestätigen", en: "Please review and confirm" },
   "booking.review.subhead": {
     de: "Buchungsanfrage absenden — wir melden uns mit Ihrem Pauschalpreis innerhalb von 2 Stunden.",
-    en: "Submit your booking request — we'll come back with a fixed price within 2 hours.",
+    en: "Submit your booking request — we'll come back with a price within 2 hours.",
   },
   "booking.review.section.service": { de: "Leistung & Termin", en: "Service & time" },
   "booking.review.section.route": { de: "Strecke", en: "Route" },
@@ -150,7 +150,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.review.submit": { de: "Buchungsanfrage absenden", en: "Submit booking request" },
   "booking.review.submit_note": {
     de: "Mit dem Absenden bestätigen Sie Ihre Buchungsanfrage. Wir melden uns mit Ihrem Pauschalpreis.",
-    en: "By submitting, you confirm your booking request. We'll get back with your fixed price.",
+    en: "By submitting, you confirm your booking request. We'll get back with your price.",
   },
 
   // Confirmation page
@@ -165,7 +165,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.confirmation.next_steps_heading": { de: "Wie es weitergeht", en: "What happens next" },
   "booking.confirmation.next_step_1": {
     de: "Sie erhalten innerhalb von 2 Stunden eine telefonische Rückmeldung mit Ihrem Pauschalpreis.",
-    en: "Within 2 hours, we'll call you back with your fixed price.",
+    en: "Within 2 hours, we'll call you back with your price.",
   },
   "booking.confirmation.next_step_2": {
     de: "Nach Ihrer Bestätigung wird die Fahrt fest gebucht.",
@@ -184,11 +184,11 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.confirmation.cta_call": { de: "Jetzt anrufen", en: "Call now" },
 
   // Hero widget (homepage)
-  "hero_widget.heading": { de: "Pauschalpreis-Anfrage", en: "Get a fixed price" },
+  "hero_widget.heading": { de: "Pauschalpreis-Anfrage", en: "Get a price" },
   "hero_widget.from_label": { de: "Von", en: "From" },
   "hero_widget.from_placeholder": { de: "Abholadresse", en: "Pickup address" },
   "hero_widget.to_label": { de: "Nach", en: "To" },
   "hero_widget.to_placeholder": { de: "Zieladresse", en: "Destination" },
   "hero_widget.when_label": { de: "Wann", en: "When" },
-  "hero_widget.cta": { de: "Pauschalpreis erfragen", en: "Continue" },
+  "hero_widget.cta": { de: "Pauschalpreis erfragen", en: "Get your price" },
 };
