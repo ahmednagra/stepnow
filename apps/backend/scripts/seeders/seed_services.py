@@ -49,7 +49,7 @@ SERVICES = [
             "- **Real-time flight tracking** — if your flight is delayed, we wait at no extra cost\n"
             "- **Meet & Greet at the terminal** — on request we pick you up directly at the gate\n"
             "- **Luggage assistance** — naturally also for multiple suitcases\n"
-            "- **Fixed-price guarantee** — the price is set before departure\n"
+            "- **Price guarantee** — the price is set before departure\n"
             "- **60 minutes free waiting time** — for international flights\n\n"
             "### Who is this service for?\n\n"
             "Private travellers who want to arrive relaxed. Business travellers who need punctuality. Families needing child seats. "
@@ -58,7 +58,7 @@ SERVICES = [
         "hero_image_url": None,
         "og_image_url": None,
         "meta_title_de": "Flughafentransfer Stuttgart — Pauschalpreis, vorgebucht — StepNow Rides",
-        "meta_title_en": "Airport Transfer Stuttgart — Fixed Price, Pre-booked — StepNow Rides",
+        "meta_title_en": "Airport Transfer Stuttgart — Price, Pre booked — StepNow Rides",
         "meta_description_de": "Zuverlässiger Flughafentransfer zum/vom Flughafen Stuttgart und allen Flughäfen der Region. Pauschalpreis-Garantie, Meet & Greet, Flugverfolgung. Konzessioniert nach PBefG.",
         "meta_description_en": "Reliable airport transfer to/from Stuttgart Airport and all airports in the region. Fixed-price guarantee, meet & greet, flight tracking. Licensed under PBefG.",
     },
@@ -106,7 +106,7 @@ SERVICES = [
         "og_image_url": None,
         "meta_title_de": "Krankenhausfahrten Stuttgart Esslingen — Sicher und würdevoll — StepNow Rides",
         "meta_title_en": "Hospital Transport Stuttgart Esslingen — Safe and Dignified — StepNow Rides",
-        "meta_description_de": "Würdevoller Transport zu Krankenhäusern und Reha-Einrichtungen in der Region Stuttgart. Geduldig, pünktlich, Tür-zu-Tür-Service. Konzessioniert nach PBefG.",
+        "meta_description_de": "Würdevoller Transport zu Krankenhäusern und Reha-Einrichtungen in der Plochingen/Esslingen. Geduldig, pünktlich, Tür-zu-Tür-Service. Konzessioniert nach PBefG.",
         "meta_description_en": "Dignified transport to hospitals and rehab facilities in the Plochingen/Esslingen. Patient, punctual, door-to-door service. Licensed under PBefG.",
     },
     {
@@ -153,7 +153,7 @@ SERVICES = [
         "og_image_url": None,
         "meta_title_de": "Schülerbeförderung Stuttgart — Verlässlich, sicher, persönlich — StepNow Rides",
         "meta_title_en": "School Transport Stuttgart — Reliable, Safe, Personal — StepNow Rides",
-        "meta_description_de": "Regelmäßige, verlässliche Schülerbeförderung in der Region Stuttgart. Derselbe Fahrer, Kindersitze, WhatsApp-Updates. Konzessioniert nach PBefG.",
+        "meta_description_de": "Regelmäßige, verlässliche Schülerbeförderung in der Plochingen/Esslingen. Derselbe Fahrer, Kindersitze, WhatsApp-Updates. Konzessioniert nach PBefG.",
         "meta_description_en": "Regular, reliable school transport in the Plochingen/Esslingen. Same driver, child seats, WhatsApp updates. Licensed under PBefG.",
     },
     {
@@ -202,7 +202,7 @@ SERVICES = [
         "og_image_url": None,
         "meta_title_de": "Shuttle Service Stuttgart — Gruppentransport für Events — StepNow Rides",
         "meta_title_en": "Shuttle Service Stuttgart — Group Transport for Events — StepNow Rides",
-        "meta_description_de": "Gruppentransport für Hochzeiten, Firmenfeiern, Konferenzen und Tagungen in der Region Stuttgart. Pauschalpreis, mehrere Abholpunkte, bis 8 Personen pro Fahrzeug.",
+        "meta_description_de": "Gruppentransport für Hochzeiten, Firmenfeiern, Konferenzen und Tagungen in der Plochingen/Esslingen. Pauschalpreis, mehrere Abholpunkte, bis 8 Personen pro Fahrzeug.",
         "meta_description_en": "Group transport for weddings, company events, conferences and meetings in the Plochingen/Esslingen. Fixed price, multiple pickups, up to 8 passengers per vehicle.",
     },
     {

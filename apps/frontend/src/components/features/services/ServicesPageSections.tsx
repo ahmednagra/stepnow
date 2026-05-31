@@ -573,7 +573,7 @@ export function ServicesEditorialClose({
           {pickT(
             t,
             "services.close.eyebrow",
-            locale === "de" ? "Vier Services, ein Standard" : "Four services, one standard",
+            locale === "de" ? "Fünf Services, ein Standard" : "Five services, one standard",
           )}
         </p>
         <p className="mx-auto mt-4 max-w-3xl font-serif text-[26px] italic leading-[1.18] tracking-tight text-[var(--color-text-primary)] md:text-[34px]">

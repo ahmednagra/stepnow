@@ -161,10 +161,10 @@ export function PricingFeaturedHero({
               )}
             </p>
             <p className="my-2 block font-serif text-[110px] leading-none tracking-[-0.04em] text-[var(--color-text-on-strong)] md:text-[140px]">
-              <span className="mr-1 align-[0.18em] text-[0.65em] text-[var(--color-accent-secondary)]">
+              {Math.round(priceNumeric)}
+              <span className="ml-1 align-[0.18em] text-[0.65em] text-[var(--color-accent-secondary)]">
                 €
               </span>
-              {Math.round(priceNumeric)}
             </p>
             <p className="text-[11.5px] uppercase tracking-[0.18em] text-[rgba(247,244,234,0.58)]">
               {pickT(
