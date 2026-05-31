@@ -12,7 +12,7 @@ default: "StepNow Rides & Movers",
 template: "%s · StepNow Rides & Movers",
 },
 description:
-"Vorbestellte Fahrten in der Region Stuttgart. Festpreis. Konzessioniert nach § 49 PBefG.",
+"Vorbestellte Fahrten in der Region Stuttgart. Pauschalpreis. Konzessioniert nach § 49 PBefG.",
 metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://step-now.de"),
 icons: {
 icon: [

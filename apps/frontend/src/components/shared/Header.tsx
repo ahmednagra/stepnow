@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "nav.services", hrefDe: "/dienstleistungen", hrefEn: "/en/services" },
   { key: "nav.pricing", hrefDe: "/preise", hrefEn: "/en/pricing" },
   { key: "nav.about", hrefDe: "/ueber-uns", hrefEn: "/en/about" },
+  { key: "footer.legal.impressum", hrefDe: "/impressum", hrefEn: "/en/legal-notice" },
   { key: "nav.contact", hrefDe: "/kontakt", hrefEn: "/en/contact" },
 ];
 
@@ -112,7 +113,7 @@ export function Header({ settings }: HeaderProps) {
 
       <header
         className={cn(
-          "sticky top-0 z-40 transition-all duration-base ease-out-premium",
+          "ease-out-premium sticky top-0 z-40 transition-all duration-base",
           "bg-[color:rgba(247,244,234,0.92)] backdrop-blur",
           scrolled
             ? "border-b border-[color:var(--color-border-soft)] shadow-[0_4px_14px_rgba(47,58,31,0.06)]"
@@ -152,7 +153,7 @@ export function Header({ settings }: HeaderProps) {
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "absolute inset-x-0 -bottom-[10px] h-px origin-left transition-transform duration-base ease-out-premium",
+                      "ease-out-premium absolute inset-x-0 -bottom-[10px] h-px origin-left transition-transform duration-base",
                       "bg-[var(--color-accent-primary)]",
                       active ? "scale-x-100" : "scale-x-0",
                     )}
@@ -168,15 +169,19 @@ export function Header({ settings }: HeaderProps) {
               className={cn(
                 "group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
                 "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                "transition-all duration-base ease-out-premium hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base before:ease-out-premium hover:before:scale-x-100",
+                "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
               )}
             >
               <span className="relative z-10">{t("nav.book_now")}</span>
-              <ChevronRight className="relative z-10 h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5" strokeWidth={1.7} aria-hidden="true" />
+              <ChevronRight
+                className="ease-out-premium relative z-10 h-3.5 w-3.5 transition-transform duration-base group-hover:translate-x-0.5"
+                strokeWidth={1.7}
+                aria-hidden="true"
+              />
             </Link>
           </div>
- 
+
           <div className="flex items-center gap-2 lg:hidden">
             <a
               href={toTelHref(settings.phone)}
@@ -243,7 +248,10 @@ export function Header({ settings }: HeaderProps) {
               </a>
             </div>
 
-            <nav aria-label="Mobile" className="flex flex-col border-y border-[color:var(--color-border-soft)]">
+            <nav
+              aria-label="Mobile"
+              className="flex flex-col border-y border-[color:var(--color-border-soft)]"
+            >
               {navItems.map((item) => {
                 const active = isNavActive(pathname, item.href);
                 return (
@@ -261,7 +269,9 @@ export function Header({ settings }: HeaderProps) {
                     <ChevronRight
                       className={cn(
                         "h-4 w-4",
-                        active ? "text-[var(--color-accent-primary)]" : "text-[var(--color-text-secondary)]",
+                        active
+                          ? "text-[var(--color-accent-primary)]"
+                          : "text-[var(--color-text-secondary)]",
                       )}
                       strokeWidth={1.7}
                       aria-hidden="true"
@@ -276,12 +286,16 @@ export function Header({ settings }: HeaderProps) {
               className={cn(
                 "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
                 "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                "transition-all duration-base ease-out-premium hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base before:ease-out-premium hover:before:scale-x-100",
+                "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
               )}
             >
               <span className="relative z-10">{t("nav.book_now")}</span>
-              <ChevronRight className="relative z-10 h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5" strokeWidth={1.7} aria-hidden="true" />
+              <ChevronRight
+                className="ease-out-premium relative z-10 h-3.5 w-3.5 transition-transform duration-base group-hover:translate-x-0.5"
+                strokeWidth={1.7}
+                aria-hidden="true"
+              />
             </Link>
           </Container>
         </div>

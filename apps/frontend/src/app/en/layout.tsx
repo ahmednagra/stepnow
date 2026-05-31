@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · StepNow Rides & Movers",
   },
   description:
-    "Pre-booked transfers in the Stuttgart region. Fixed prices. Licensed under § 49 PBefG.",
+    "Pre-booked transfers in the Plochingen/Esslingen. Fixed prices. Licensed under § 49 PBefG.",
   openGraph: {
     locale: "en_US",
     type: "website",

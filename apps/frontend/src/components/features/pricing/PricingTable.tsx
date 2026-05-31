@@ -84,7 +84,7 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
                 </div>
               ))}
             <p className="text-[12.5px] text-mute">
-              {pickT(t, "pricing.footnote", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.")}
+              {pickT(t, "pricing.footnote", "Alle Preise inkl. MwSt. Pauschalpreis-Garantie ab Buchungsbestätigung. Andere Strecken auf Anfrage.")}
             </p>
           </div>
         )}

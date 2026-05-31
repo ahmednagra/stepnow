@@ -200,7 +200,7 @@ export function WizardShell({
             </h2>
             <ul className="mt-6 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
               {[
-                pickT(t, "booking.sidebar.point_1", locale === "de" ? "Festpreis und persoenliche Rueckmeldung statt unklarer Verfuegbarkeit." : "Fixed-price follow-up instead of uncertain availability."),
+                pickT(t, "booking.sidebar.point_1", locale === "de" ? "Pauschalpreis und persoenliche Rueckmeldung statt unklarer Verfuegbarkeit." : "Fixed-price follow-up instead of uncertain availability."),
                 pickT(t, "booking.sidebar.point_2", locale === "de" ? "Vorbestellung fuer Flughafentransfer, Krankenfahrten und private Strecken." : "Advance booking for airport transfers, hospital rides, and private routes."),
                 pickT(t, "booking.sidebar.point_3", locale === "de" ? "Direkter Kontakt, falls Details vor der Fahrt abgestimmt werden muessen." : "Direct contact if details need to be clarified before the ride."),
               ].map((point) => (

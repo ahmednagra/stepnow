@@ -39,7 +39,7 @@ const VALUES: ValueEntry[] = [
     titleKey: "about.values.transparency.title",
     bodyKey: "about.values.transparency.body",
     defaults: {
-      de: { title: "Transparenz", body: "Festpreise vor der Fahrt. Keine versteckten Aufschläge, keine Taxameter-Überraschungen." },
+      de: { title: "Transparenz", body: "Pauschalpreis vor der Fahrt. Keine versteckten Aufschläge, keine Taxameter-Überraschungen." },
       en: { title: "Transparency", body: "Fixed prices up front. No hidden surcharges, no meter surprises." },
     },
   },

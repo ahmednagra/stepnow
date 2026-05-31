@@ -45,7 +45,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   // Page / shell
   "booking.page.title": { de: "Fahrt buchen", en: "Book your ride" },
   "booking.page.subhead": {
-    de: "In wenigen Schritten zur unverbindlichen Buchungsanfrage. Wir melden uns mit Ihrem Festpreis.",
+    de: "In wenigen Schritten zur unverbindlichen Buchungsanfrage. Wir melden uns mit Ihrem Pauschalpreis.",
     en: "A few steps to your non-binding booking request. We'll get back with your fixed price.",
   },
   "booking.step.service": { de: "Leistung", en: "Service" },
@@ -59,13 +59,19 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   },
 
   // Step 1 — service
-  "booking.service.heading": { de: "Welche Leistung benötigen Sie?", en: "Which service do you need?" },
+  "booking.service.heading": {
+    de: "Welche Leistung benötigen Sie?",
+    en: "Which service do you need?",
+  },
   "booking.service.subhead": {
     de: "Wählen Sie die Art Ihrer Fahrt und den gewünschten Termin.",
     en: "Choose the type of ride and your preferred time.",
   },
   "booking.service.label": { de: "Leistung", en: "Service" },
-  "booking.datetime.heading": { de: "Wann benötigen Sie die Fahrt?", en: "When do you need the ride?" },
+  "booking.datetime.heading": {
+    de: "Wann benötigen Sie die Fahrt?",
+    en: "When do you need the ride?",
+  },
   "booking.datetime.date_label": { de: "Datum", en: "Date" },
   "booking.datetime.time_label": { de: "Uhrzeit", en: "Time" },
   "booking.datetime.hint": {
@@ -82,7 +88,10 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   },
 
   // Step 2 — route
-  "booking.route.heading": { de: "Wo soll die Fahrt beginnen und enden?", en: "Where does the ride start and end?" },
+  "booking.route.heading": {
+    de: "Wo soll die Fahrt beginnen und enden?",
+    en: "Where does the ride start and end?",
+  },
   "booking.route.subhead": {
     de: "Vollständige Adressen helfen uns, den besten Preis zu berechnen.",
     en: "Complete addresses help us calculate the best price.",
@@ -110,7 +119,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   // Step 4 — contact
   "booking.contact.heading": { de: "Ihre Kontaktdaten", en: "Your contact details" },
   "booking.contact.subhead": {
-    de: "Damit wir uns mit Ihrem Festpreis melden können.",
+    de: "Damit wir uns mit Ihrem Pauschalpreis melden können.",
     en: "So we can get back to you with your fixed price.",
   },
   "booking.contact.name_label": { de: "Name", en: "Name" },
@@ -126,7 +135,7 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   // Step 5 — review
   "booking.review.heading": { de: "Bitte prüfen und bestätigen", en: "Please review and confirm" },
   "booking.review.subhead": {
-    de: "Buchungsanfrage absenden — wir melden uns mit Ihrem Festpreis innerhalb von 2 Stunden.",
+    de: "Buchungsanfrage absenden — wir melden uns mit Ihrem Pauschalpreis innerhalb von 2 Stunden.",
     en: "Submit your booking request — we'll come back with a fixed price within 2 hours.",
   },
   "booking.review.section.service": { de: "Leistung & Termin", en: "Service & time" },
@@ -140,16 +149,22 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.review.consent_link": { de: "Datenschutzerklärung", en: "Privacy policy" },
   "booking.review.submit": { de: "Buchungsanfrage absenden", en: "Submit booking request" },
   "booking.review.submit_note": {
-    de: "Mit dem Absenden bestätigen Sie Ihre Buchungsanfrage. Wir melden uns mit Ihrem Festpreis.",
+    de: "Mit dem Absenden bestätigen Sie Ihre Buchungsanfrage. Wir melden uns mit Ihrem Pauschalpreis.",
     en: "By submitting, you confirm your booking request. We'll get back with your fixed price.",
   },
 
   // Confirmation page
-  "booking.confirmation.heading": { de: "Buchungsanfrage gesendet", en: "Booking request received" },
-  "booking.confirmation.reference_label": { de: "Ihre Referenznummer", en: "Your reference number" },
+  "booking.confirmation.heading": {
+    de: "Buchungsanfrage gesendet",
+    en: "Booking request received",
+  },
+  "booking.confirmation.reference_label": {
+    de: "Ihre Referenznummer",
+    en: "Your reference number",
+  },
   "booking.confirmation.next_steps_heading": { de: "Wie es weitergeht", en: "What happens next" },
   "booking.confirmation.next_step_1": {
-    de: "Sie erhalten innerhalb von 2 Stunden eine telefonische Rückmeldung mit Ihrem Festpreis.",
+    de: "Sie erhalten innerhalb von 2 Stunden eine telefonische Rückmeldung mit Ihrem Pauschalpreis.",
     en: "Within 2 hours, we'll call you back with your fixed price.",
   },
   "booking.confirmation.next_step_2": {
@@ -169,11 +184,11 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "booking.confirmation.cta_call": { de: "Jetzt anrufen", en: "Call now" },
 
   // Hero widget (homepage)
-  "hero_widget.heading": { de: "Festpreis-Anfrage", en: "Get a fixed price" },
+  "hero_widget.heading": { de: "Pauschalpreis-Anfrage", en: "Get a fixed price" },
   "hero_widget.from_label": { de: "Von", en: "From" },
   "hero_widget.from_placeholder": { de: "Abholadresse", en: "Pickup address" },
   "hero_widget.to_label": { de: "Nach", en: "To" },
   "hero_widget.to_placeholder": { de: "Zieladresse", en: "Destination" },
   "hero_widget.when_label": { de: "Wann", en: "When" },
-  "hero_widget.cta": { de: "Festpreis erfragen", en: "Continue" },
+  "hero_widget.cta": { de: "Pauschalpreis erfragen", en: "Continue" },
 };

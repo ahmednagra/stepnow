@@ -25,15 +25,37 @@ interface FooterLink {
 const QUICK_LINKS: FooterLink[] = [
   { key: "nav.home", hrefDe: "/", hrefEn: "/en" },
   { key: "nav.about", hrefDe: "/ueber-uns", hrefEn: "/en/about" },
+  { key: "footer.legal.impressum", hrefDe: "/impressum", hrefEn: "/en/legal-notice" },
   { key: "nav.pricing", hrefDe: "/preise", hrefEn: "/en/pricing" },
   { key: "nav.contact", hrefDe: "/kontakt", hrefEn: "/en/contact" },
 ];
 
 const SERVICE_LINKS: FooterLink[] = [
-  { key: "services.flughafentransfer", hrefDe: "/dienstleistungen/flughafentransfer", hrefEn: "/en/services/airport-transfer" },
-  { key: "services.krankenhausfahrten", hrefDe: "/dienstleistungen/krankenhausfahrten", hrefEn: "/en/services/hospital-transport" },
-  { key: "services.schuelerbefoerderung", hrefDe: "/dienstleistungen/schuelerbefoerderung", hrefEn: "/en/services/school-transport" },
-  { key: "services.shuttle", hrefDe: "/dienstleistungen/shuttle-service", hrefEn: "/en/services/shuttle-service" },
+  {
+    key: "services.flughafentransfer",
+    hrefDe: "/dienstleistungen/flughafentransfer",
+    hrefEn: "/en/services/airport-transfer",
+  },
+  {
+    key: "services.krankenhausfahrten",
+    hrefDe: "/dienstleistungen/krankenhausfahrten",
+    hrefEn: "/en/services/hospital-transport",
+  },
+  {
+    key: "services.schuelerbefoerderung",
+    hrefDe: "/dienstleistungen/schuelerbefoerderung",
+    hrefEn: "/en/services/school-transport",
+  },
+  {
+    key: "services.shuttle",
+    hrefDe: "/dienstleistungen/shuttle-service",
+    hrefEn: "/en/services/shuttle-service",
+  },
+  {
+    key: "services.courier",
+    hrefDe: "/dienstleistungen/kurier-sondertransport",
+    hrefEn: "/en/services/courier-transport",
+  },
 ];
 
 const LEGAL_LINKS: FooterLink[] = [
@@ -45,8 +67,16 @@ const LEGAL_LINKS: FooterLink[] = [
 const ADMIN_LINK = { href: "/admin/login", label: "Admin" };
 
 const NO_CTA_PREFIXES = [
-  "/kontakt", "/buchen", "/impressum", "/datenschutz", "/agb",
-  "/en/contact", "/en/book", "/en/legal-notice", "/en/privacy", "/en/terms",
+  "/kontakt",
+  "/buchen",
+  "/impressum",
+  "/datenschutz",
+  "/agb",
+  "/en/contact",
+  "/en/book",
+  "/en/legal-notice",
+  "/en/privacy",
+  "/en/terms",
   "/admin",
 ];
 
@@ -82,10 +112,20 @@ export function Footer({ settings }: FooterProps) {
               <div className="flex flex-col gap-6 p-6 md:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:p-10">
                 <div className="max-w-2xl">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-secondary)]">
-                    {pickT(t, "footer.cta.eyebrow", locale === "de" ? "Direkt erreichbar" : "Directly reachable")}
+                    {pickT(
+                      t,
+                      "footer.cta.eyebrow",
+                      locale === "de" ? "Direkt erreichbar" : "Directly reachable",
+                    )}
                   </p>
                   <h2 className="mt-3 max-w-xl font-serif text-[30px] leading-[1.08] tracking-tight md:text-[36px]">
-                    {pickT(t, "footer.cta.heading", locale === "de" ? "Bereit fuer Ihre naechste Fahrt?" : "Ready for your next ride?")}
+                    {pickT(
+                      t,
+                      "footer.cta.heading",
+                      locale === "de"
+                        ? "Bereit fuer Ihre naechste Fahrt?"
+                        : "Ready for your next ride?",
+                    )}
                   </h2>
                   <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--color-text-footer-muted)]">
                     {pickT(
@@ -104,19 +144,27 @@ export function Footer({ settings }: FooterProps) {
                     className={cn(
                       "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
                       "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                      "transition-all duration-base ease-out-premium hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                      "before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base before:ease-out-premium hover:before:scale-x-100",
+                      "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                      "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
                     )}
                   >
-                    <span className="relative z-10">{pickT(t, "footer.cta.book", locale === "de" ? "Jetzt buchen" : "Book now")}</span>
-                    <ArrowRight className="relative z-10 h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5" strokeWidth={1.7} aria-hidden="true" />
+                    <span className="relative z-10">
+                      {pickT(t, "footer.cta.book", locale === "de" ? "Jetzt buchen" : "Book now")}
+                    </span>
+                    <ArrowRight
+                      className="ease-out-premium relative z-10 h-3.5 w-3.5 transition-transform duration-base group-hover:translate-x-0.5"
+                      strokeWidth={1.7}
+                      aria-hidden="true"
+                    />
                   </Link>
                   <a
                     href={toTelHref(settings.phone)}
                     className="inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-border-footer)] bg-transparent px-5 text-[12px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-footer)] transition-colors duration-base hover:border-[var(--color-accent-secondary)] hover:text-[var(--color-accent-secondary)]"
                   >
                     <Phone className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden="true" />
-                    <span className="tabular-nums normal-case tracking-[0.04em]">{settings.phone}</span>
+                    <span className="normal-case tabular-nums tracking-[0.04em]">
+                      {settings.phone}
+                    </span>
                   </a>
                 </div>
               </div>
@@ -169,10 +217,17 @@ export function Footer({ settings }: FooterProps) {
           </Container>
 
           <div className="border-t border-[var(--color-border-footer)]">
-            <Container as="div" className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+            <Container
+              as="div"
+              className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between"
+            >
               <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.04em] text-[color:rgba(190,199,177,0.82)]">
-                <span>© {year} {displayName}. {rightsReserved}</span>
-                <span aria-hidden="true" className="text-[var(--color-border-footer)]">·</span>
+                <span>
+                  © {year} {displayName}. {rightsReserved}
+                </span>
+                <span aria-hidden="true" className="text-[var(--color-border-footer)]">
+                  ·
+                </span>
                 <Link
                   href={ADMIN_LINK.href}
                   className="transition-colors duration-base hover:text-[var(--color-text-footer)]"
@@ -276,12 +331,14 @@ function ContactColumn({ heading, settings, dark = false }: ContactColumnProps) 
       />
       <address
         className={cn(
-          "mt-4 space-y-2.5 not-italic text-[14px] leading-relaxed",
+          "mt-4 space-y-2.5 text-[14px] not-italic leading-relaxed",
           dark ? "text-[var(--color-text-footer-muted)]" : "text-[var(--color-text-secondary)]",
         )}
       >
         <p>{settings.address_street}</p>
-        <p>{settings.address_postcode} {settings.address_city}</p>
+        <p>
+          {settings.address_postcode} {settings.address_city}
+        </p>
         <p className="pt-1">
           <a
             href={toTelHref(settings.phone)}

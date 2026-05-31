@@ -64,7 +64,7 @@ export function PricingFeaturedHero({
     pickT(
       t,
       "pricing.hero.proof_1",
-      locale === "de" ? "Festpreis vor der Fahrt" : "Fixed price before departure",
+      locale === "de" ? "Pauschalpreis vor der Fahrt" : "Fixed price before departure",
     ),
     pickT(
       t,
@@ -157,7 +157,7 @@ export function PricingFeaturedHero({
               {pickT(
                 t,
                 "pricing.hero.price_label",
-                locale === "de" ? "Festpreis ab" : "Fixed from",
+                locale === "de" ? "Pauschalpreis ab" : "Fixed from",
               )}
             </p>
             <p className="my-2 block font-serif text-[110px] leading-none tracking-[-0.04em] text-[var(--color-text-on-strong)] md:text-[140px]">
@@ -194,7 +194,7 @@ export function PricingTrustStrip({ t, locale }: PricingTrustStripProps) {
   const before = pickT(
     t,
     "pricing.trust.before",
-    locale === "de" ? "Festpreis vor Fahrtbeginn. " : "Fixed price before departure. ",
+    locale === "de" ? "Pauschalpreis vor Fahrtbeginn. " : "Fixed price before departure. ",
   );
   const after = pickT(
     t,
@@ -306,7 +306,7 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
             {pickT(
               t,
               "pricing.included.eyebrow",
-              locale === "de" ? "Was Ihr Festpreis abdeckt" : "What your fixed price covers",
+              locale === "de" ? "Was Ihr Pauschalpreis abdeckt" : "What your fixed price covers",
             )}
           </p>
           <h2 className="mt-2 font-serif text-[30px] leading-tight tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
@@ -323,7 +323,7 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
               t,
               "pricing.included.lead",
               locale === "de"
-                ? "Jeder Festpreis enthält die deutsche Mehrwertsteuer, Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage — ohne Aufpreis. Nichts wird am Zielort hinzugefügt."
+                ? "Jeder Pauschalpreis enthält die deutsche Mehrwertsteuer, Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage — ohne Aufpreis. Nichts wird am Zielort hinzugefügt."
                 : "Every quote includes German VAT, standard luggage, waiting time at pickup, and child seat on request — at no extra charge. Nothing added at the destination.",
             )}
           </p>
@@ -430,7 +430,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
     defaults: {
       de: {
         label: "Preis Esslingen → STR",
-        stepnow: "Festpreis €70 — bei Buchung bestätigt",
+        stepnow: "Pauschalpreis €70 — bei Buchung bestätigt",
         taxi: "Taxameter ca. €80–110, vom Verkehr abhängig",
       },
       en: {

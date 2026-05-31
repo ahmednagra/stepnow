@@ -28,7 +28,7 @@ FAQS = [
         "sort_order": 20, "category": "general",
         "question_de": "Was unterscheidet Sie von einem Taxi?",
         "question_en": "How are you different from a taxi?",
-        "answer_de": "Wir fahren ausschließlich auf Vorbestellung kein spontaner Halt auf der Straße. Der Preis steht **vor** der Fahrt fest (Festpreis statt Taxameter). Wir sind ein konzessioniertes Mietwagenunternehmen nach § 49 PBefG, nicht eine Taxi-Konzession. Praktisch bedeutet das: planbar, kalkulierbar, persönlich.",
+        "answer_de": "Wir fahren ausschließlich auf Vorbestellung kein spontaner Halt auf der Straße. Der Preis steht **vor** der Fahrt fest (Pauschalpreis statt Taxameter). Wir sind ein konzessioniertes Mietwagenunternehmen nach § 49 PBefG, nicht eine Taxi-Konzession. Praktisch bedeutet das: planbar, kalkulierbar, persönlich.",
         "answer_en": "We operate by pre-booking only no spontaneous street pickups. The price is set **before** the ride (fixed price instead of taximeter). We are a licensed Mietwagen company under § 49 PBefG, not a taxi license. In practice: predictable, calculable, personal.",
     },
     {
@@ -51,21 +51,21 @@ FAQS = [
         "sort_order": 10, "category": "booking",
         "question_de": "Wie buche ich eine Fahrt?",
         "question_en": "How do I book a ride?",
-        "answer_de": "Drei Wege: (1) Online über unser Buchungsformular innerhalb von 30 Minuten erhalten Sie ein verbindliches Festpreis-Angebot. (2) Telefonisch unter +49 7153 9292841. (3) Per WhatsApp für schnelle Anfragen.",
+        "answer_de": "Drei Wege: (1) Online über unser Buchungsformular innerhalb von 30 Minuten erhalten Sie ein verbindliches Pauschalpreis-Angebot. (2) Telefonisch unter +49 7153 9292841. (3) Per WhatsApp für schnelle Anfragen.",
         "answer_en": "Three ways: (1) Online via our booking form within 30 minutes you receive a binding fixed-price quote. (2) By phone at +49 7153 9292841. (3) By WhatsApp for quick inquiries.",
     },
     {
         "sort_order": 20, "category": "booking",
         "question_de": "Kann ich eine Buchung stornieren?",
         "question_en": "Can I cancel a booking?",
-        "answer_de": "Stornierungen bis **24 Stunden vor Fahrtbeginn** sind kostenfrei. Danach berechnen wir 50% des vereinbarten Festpreises, bei Nichterscheinen den vollen Preis. Bei Krankenhausfahrten und medizinischen Notfällen gelten kulante Sonderregelungen.",
+        "answer_de": "Stornierungen bis **24 Stunden vor Fahrtbeginn** sind kostenfrei. Danach berechnen wir 50% des vereinbarten Pauschalpreis, bei Nichterscheinen den vollen Preis. Bei Krankenhausfahrten und medizinischen Notfällen gelten kulante Sonderregelungen.",
         "answer_en": "Cancellations up to **24 hours before departure** are free. After that we charge 50% of the agreed fixed price, or the full price for no-shows. For hospital transport and medical emergencies, we apply lenient special rules.",
     },
     {
         "sort_order": 30, "category": "booking",
         "question_de": "Bekomme ich eine Bestätigung?",
         "question_en": "Will I receive a confirmation?",
-        "answer_de": "Ja, sofort nach Buchung erhalten Sie eine E-Mail mit Ihrer Referenznummer (Format: SN-JJJJMMTT-XXXXXX) und allen Details. Sobald wir den Festpreis bestätigt haben, schicken wir Ihnen die endgültige Buchungsbestätigung.",
+        "answer_de": "Ja, sofort nach Buchung erhalten Sie eine E-Mail mit Ihrer Referenznummer (Format: SN-JJJJMMTT-XXXXXX) und allen Details. Sobald wir den Pauschalpreis bestätigt haben, schicken wir Ihnen die endgültige Buchungsbestätigung.",
         "answer_en": "Yes, immediately after booking you receive an email with your reference number (format: SN-YYYYMMDD-XXXXXX) and all details. Once we've confirmed the fixed price, we send you the final booking confirmation.",
     },
 
@@ -81,7 +81,7 @@ FAQS = [
         "sort_order": 20, "category": "pricing",
         "question_de": "Was passiert, wenn die Fahrt länger dauert als geplant?",
         "question_en": "What happens if the trip takes longer than planned?",
-        "answer_de": "Der Festpreis bleibt der Festpreis Sie zahlen keine Minute mehr, auch wenn wir wegen Stau länger unterwegs sind. Nur wenn **Sie** zusätzliche Stopps oder Wartezeiten wünschen, kann sich der Preis ändern, und das besprechen wir vorher.",
+        "answer_de": "Der Pauschalpreis bleibt der Pauschalpreis Sie zahlen keine Minute mehr, auch wenn wir wegen Stau länger unterwegs sind. Nur wenn **Sie** zusätzliche Stopps oder Wartezeiten wünschen, kann sich der Preis ändern, und das besprechen wir vorher.",
         "answer_en": "The fixed price stays the fixed price you don't pay a minute more, even if we take longer because of traffic. Only if **you** request additional stops or waiting times can the price change, and we discuss that beforehand.",
     },
     {

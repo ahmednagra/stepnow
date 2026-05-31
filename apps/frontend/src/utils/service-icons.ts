@@ -1,6 +1,7 @@
 import {
   GraduationCap,
   HeartPulse,
+  Package,
   Plane,
   ShieldCheck,
   Users,
@@ -28,12 +29,18 @@ const ICON_BY_KEY: Record<string, LucideIcon> = {
   shuttle: Users,
   group: Users,
   users: Users,
+  courier: Package,
+  "courier-transport": Package,
+  "kurier-sondertransport": Package,
   default: ShieldCheck,
 };
 
 function normalizeKey(value: string | null | undefined): string | null {
   if (!value) return null;
-  return value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
 }
 
 export function getServiceIcon(

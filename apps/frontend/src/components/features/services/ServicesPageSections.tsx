@@ -445,8 +445,8 @@ const HIW_STEPS: HiwStep[] = [
     Icon: Check,
     defaults: {
       de: {
-        heading: "Festpreis innerhalb von 30 Min",
-        body: "Während der Telefonzeiten bestätigen wir den Festpreis, den Fahrer und das Fahrzeug. Ab diesem Moment ist der Preis fixiert.",
+        heading: "Pauschalpreis innerhalb von 30 Min",
+        body: "Während der Telefonzeiten bestätigen wir den Pauschalpreis, den Fahrer und das Fahrzeug. Ab diesem Moment ist der Preis fixiert.",
       },
       en: {
         heading: "Fixed price within 30 min",
@@ -462,11 +462,11 @@ const HIW_STEPS: HiwStep[] = [
     defaults: {
       de: {
         heading: "Der Fahrer ist schon da",
-        body: "Kein Heranrufen, keine App-Dispatch, kein Surge. Der bestätigte Festpreis ist der Preis, den Sie zahlen — auch im Stau, auch an Feiertagen.",
+        body: "Kein Heranrufen, keine App-Dispatch, kein Surge. Der bestätigte Pauschalpreis ist der Preis, den Sie zahlen — auch im Stau, auch an Feiertagen.",
       },
       en: {
         heading: "The driver is already there",
-        body: "No hailing, no app dispatch, no surge. The Festpreis you confirmed is the Festpreis you pay — same in traffic, same on holidays.",
+        body: "No hailing, no app dispatch, no surge. The Pauschalpreis you confirmed is the Pauschalpreis you pay — same in traffic, same on holidays.",
       },
     },
   },
@@ -607,14 +607,14 @@ export function ServicesEditorialClose({
             "services.close.attribution",
             locale === "de"
               ? "KONZESSIONIERTER PERSONENVERKEHR · REGION STUTTGART"
-              : "LICENSED PASSENGER TRANSPORT · STUTTGART REGION",
+              : "LICENSED PASSENGER TRANSPORT · Plochingen/Esslingen",
           )}
         </p>
         <p className="mt-7 text-[13px] text-[var(--color-text-secondary)]">
           {pickT(
             t,
             "services.close.followup_lead",
-            locale === "de" ? "Festpreis-Strecken ansehen?" : "Looking for fixed-price routes?",
+            locale === "de" ? "Pauschalpreis ansehen?" : "Looking for fixed-price routes?",
           )}{" "}
           <Link
             href={pricingHref}

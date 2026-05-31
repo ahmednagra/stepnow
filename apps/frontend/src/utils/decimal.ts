@@ -49,17 +49,14 @@ export function formatDecimalForInput(value: string | null | undefined): string 
 
 /**
  * Format a decimal string as a EUR amount for display in lists.
- *   "45.50"  -> "€45.50"
- *   "45"     -> "€45.00"
  */
 export function formatPriceEur(value: string | null | undefined): string {
   if (value == null) return "—";
   const num = Number(value);
   if (Number.isNaN(num)) return value;
-  return new Intl.NumberFormat("en-IE", {
-    style: "currency",
-    currency: "EUR",
+  const amount = new Intl.NumberFormat("en-IE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(num);
+  return `${amount} €`; // symbol on the right
 }

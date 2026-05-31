@@ -109,7 +109,7 @@ export default async function PricingPageDe() {
               {pickT(
                 t,
                 "pricing.tabs.lead",
-                "Waehlen Sie einen Service, um alle Festpreis-Strecken anzusehen. Andere Strecken erhalten ein Angebot innerhalb von 30 Minuten.",
+                "Waehlen Sie einen Service, um alle Pauschalpreis anzusehen. Andere Strecken erhalten ein Angebot innerhalb von 30 Minuten.",
               )}
             </p>
           </div>

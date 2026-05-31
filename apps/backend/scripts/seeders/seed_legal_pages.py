@@ -339,17 +339,17 @@ Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge über die Bef
 
 ## 2. Vertragsschluss
 
-Die Darstellung der Leistungen auf der Website stellt kein verbindliches Angebot dar. Mit Absenden des Buchungsformulars oder telefonischer Anfrage gibt der Kunde ein Angebot zum Vertragsschluss ab. Der Vertrag kommt durch eine Bestätigungs-E-Mail oder mündliche Bestätigung des Anbieters mit dem verbindlichen Festpreis zustande.
+Die Darstellung der Leistungen auf der Website stellt kein verbindliches Angebot dar. Mit Absenden des Buchungsformulars oder telefonischer Anfrage gibt der Kunde ein Angebot zum Vertragsschluss ab. Der Vertrag kommt durch eine Bestätigungs-E-Mail oder mündliche Bestätigung des Anbieters mit dem verbindlichen Pauschalpreis zustande.
 
-## 3. Festpreis-Garantie
+## 3. Pauschalpreis-Garantie
 
-Der bei Buchungsbestätigung mitgeteilte Festpreis ist verbindlich und ändert sich nicht durch verkehrsbedingte Verzögerungen oder kürzere/längere Fahrtdauer. Änderungen entstehen nur, wenn der Kunde zusätzliche Strecken, Stopps oder Wartezeiten verlangt; in diesem Fall wird vor der Änderung ein neuer Festpreis vereinbart.
+Der bei Buchungsbestätigung mitgeteilte Pauschalpreis ist verbindlich und ändert sich nicht durch verkehrsbedingte Verzögerungen oder kürzere/längere Fahrtdauer. Änderungen entstehen nur, wenn der Kunde zusätzliche Strecken, Stopps oder Wartezeiten verlangt; in diesem Fall wird vor der Änderung ein neuer Pauschalpreis vereinbart.
 
 ## 4. Stornierungsbedingungen
 
 - Bis **24 Stunden** vor Fahrtbeginn: kostenfreie Stornierung
-- Bis **2 Stunden** vor Fahrtbeginn: 50 % des Festpreises
-- Weniger als 2 Stunden oder Nichterscheinen: 100 % des Festpreises
+- Bis **2 Stunden** vor Fahrtbeginn: 50 % des Pauschalpreis
+- Weniger als 2 Stunden oder Nichterscheinen: 100 % des Pauschalpreis
 - Bei medizinisch begründeten Notfällen kann die Stornogebühr im Einzelfall reduziert werden
 
 ## 5. Pünktlichkeit & Verspätungen

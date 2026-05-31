@@ -1,6 +1,6 @@
 // apps/frontend/src/components/features/services/PricingSnapshot.tsx
 // Phase 3d polish — refined hairline rhythm, tabular-nums prices, gold
-// price color when present, and a clearer empty-state with "Festpreis-
+// price color when present, and a clearer empty-state with "Pauschalpreis-
 // Angebot auf Anfrage" copy (per audit §13.2).
 
 import Link from "next/link";
@@ -85,7 +85,7 @@ export function PricingSnapshot({
           ))}
         </ul>
         <p className="mt-6 text-[12.5px] text-[var(--color-text-secondary)]">
-          {pickT(t, "pricing.disclaimer", "Alle Preise inkl. MwSt. Festpreis-Garantie ab Buchungsbestätigung.")}
+          {pickT(t, "pricing.disclaimer", "Alle Preise inkl. MwSt. Pauschalpreis-Garantie ab Buchungsbestätigung.")}
         </p>
       </Container>
     </section>

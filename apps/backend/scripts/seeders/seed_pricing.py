@@ -27,7 +27,7 @@ PRICING_DATA = {
             "description_de": "Fahrten von/zum Flughafen Stuttgart aus dem Umland",
             "description_en": "Transfers to/from Stuttgart Airport from the surrounding area",
             "items": [
-                {"sort_order": 10, "from_de": "Stuttgart Hauptbahnhof", "from_en": "Stuttgart Main Station", "to_de": "Flughafen Stuttgart", "to_en": "Stuttgart Airport", "price": "39.00", "note_de": "Festpreis inkl. MwSt.", "note_en": "Fixed price incl. VAT"},
+                {"sort_order": 10, "from_de": "Stuttgart Hauptbahnhof", "from_en": "Stuttgart Main Station", "to_de": "Flughafen Stuttgart", "to_en": "Stuttgart Airport", "price": "39.00", "note_de": "Pauschalpreis inkl. MwSt.", "note_en": "Fixed price incl. VAT"},
                 {"sort_order": 20, "from_de": "Esslingen", "from_en": "Esslingen", "to_de": "Flughafen Stuttgart", "to_en": "Stuttgart Airport", "price": "45.00", "note_de": None, "note_en": None},
                 {"sort_order": 30, "from_de": "Deizisau", "from_en": "Deizisau", "to_de": "Flughafen Stuttgart", "to_en": "Stuttgart Airport", "price": "49.00", "note_de": None, "note_en": None},
                 {"sort_order": 40, "from_de": "Plochingen", "from_en": "Plochingen", "to_de": "Flughafen Stuttgart", "to_en": "Stuttgart Airport", "price": "55.00", "note_de": None, "note_en": None},
@@ -129,11 +129,11 @@ PRICING_DATA = {
             "sort_order": 20,
             "name_de": "Hochzeits-Pakete",
             "name_en": "Wedding Packages",
-            "description_de": "Festpreise für den Hochzeitstag",
+            "description_de": "Pauschalpreis für den Hochzeitstag",
             "description_en": "Fixed prices for the wedding day",
             "items": [
-                {"sort_order": 10, "from_de": "Halbtages-Paket", "from_en": "Half-day package", "to_de": "4 Stunden, ein Fahrzeug", "to_en": "4 hours, one vehicle", "price": "320.00", "note_de": "Festpreis, inkl. MwSt", "note_en": "Fixed price, incl. VAT"},
-                {"sort_order": 20, "from_de": "Tages-Paket", "from_en": "Full-day package", "to_de": "8 Stunden, ein Fahrzeug", "to_en": "8 hours, one vehicle", "price": "580.00", "note_de": "Festpreis, inkl. MwSt", "note_en": "Fixed price, incl. VAT"},
+                {"sort_order": 10, "from_de": "Halbtages-Paket", "from_en": "Half-day package", "to_de": "4 Stunden, ein Fahrzeug", "to_en": "4 hours, one vehicle", "price": "320.00", "note_de": "Pauschalpreis, inkl. MwSt", "note_en": "Fixed price, incl. VAT"},
+                {"sort_order": 20, "from_de": "Tages-Paket", "from_en": "Full-day package", "to_de": "8 Stunden, ein Fahrzeug", "to_en": "8 hours, one vehicle", "price": "580.00", "note_de": "Pauschalpreis, inkl. MwSt", "note_en": "Fixed price, incl. VAT"},
             ],
         },
     ],

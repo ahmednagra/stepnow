@@ -71,7 +71,7 @@ SAMPLE_BOOKINGS = [
     },
     {
         "_target_status": "quoted",
-        "_internal_notes": "Festpreis 320 € für Frankfurt Airport bestätigt. Wartet auf Bestätigung des Kunden.",
+        "_internal_notes": "Pauschalpreis 320 € für Frankfurt Airport bestätigt. Wartet auf Bestätigung des Kunden.",
         "_quoted_price": "320.00",
         "service_slug": "flughafentransfer",
         "pickup_address": "Stuttgart Hauptbahnhof, Arnulf-Klett-Platz 2",

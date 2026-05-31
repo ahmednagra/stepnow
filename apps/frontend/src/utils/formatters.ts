@@ -10,12 +10,11 @@ const LOCALE_MAP: Record<Locale, string> = { de: "de-DE", en: "en-GB" };
 export function formatPrice(value: string | number, locale: Locale = "de"): string {
   const n = typeof value === "string" ? Number(value) : value;
   if (Number.isNaN(n)) return "—";
-  return new Intl.NumberFormat(LOCALE_MAP[locale], {
-    style: "currency",
-    currency: "EUR",
+  const amount = new Intl.NumberFormat(LOCALE_MAP[locale], {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
+  return `${amount} €`; // symbol on the right, e.g. "39,00 €" (de) / "39.00 €" (en)
 }
 
 /** Format an ISO date string ("2026-01-15") as a localized date. */

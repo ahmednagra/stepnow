@@ -83,7 +83,7 @@ export default async function BookingConfirmationDe({ searchParams }: PageProps)
               {pickT(
                 t,
                 "booking.confirmation.body",
-                "Wir melden uns innerhalb von 30 Minuten mit einem Festpreis-Angebot.",
+                "Wir melden uns innerhalb von 30 Minuten mit einem Pauschalpreis-Angebot.",
               )}
             </p>
           </div>

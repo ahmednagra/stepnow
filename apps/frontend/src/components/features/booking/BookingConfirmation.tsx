@@ -62,7 +62,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
                 </h2>
                 <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
                   {pickT(t, "booking.confirmation.body", locale === "de"
-                    ? "Wir melden uns innerhalb von 30 Minuten mit einem Festpreis-Angebot."
+                    ? "Wir melden uns innerhalb von 30 Minuten mit einem Pauschalpreis-Angebot."
                     : "We'll get back to you within 30 minutes with a fixed-price quote."
                   )}
                 </p>
