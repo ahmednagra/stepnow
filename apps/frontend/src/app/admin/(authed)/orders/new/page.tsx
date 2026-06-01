@@ -1,17 +1,21 @@
 // app/admin/(authed)/orders/new/page.tsx
-// New Parcel Order console. Client island (mirrors orders/[id]/_detail.tsx state pattern):
-// debounced customer search (name/phone), driver assignment, manual delivery lifecycle,
-// driver-slip download (no price) + send-to-driver, optional invoice email to customer.
+// New Parcel Order console. Two-pane builder (customer · parcel/route · driver/price) with a
+// live driver-slip / customer-invoice preview, manual delivery lifecycle, and a sticky action
+// bar. Built entirely on the admin design system (AdminPageHeader / AdminCard / AdminFormField
+// + Tailwind tokens) — no page-local CSS. Wired to the real courier/customer/driver services.
 
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Save, FileDown, Send, Search, X, ArrowRight, Check } from "lucide-react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  User, Mail, Phone, Package, MapPin, ArrowRight, ArrowLeft, Boxes, Scale, CalendarDays,
+  UserCheck, Truck, Building2, Receipt, Check, X, Eye, EyeOff, Save, FileDown, Send, Loader2,
+} from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
-import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { ApiError } from "@/lib/api-errors";
+import { cn } from "@/utils/cn";
 import { normalizeDecimalInput, formatPriceEur } from "@/utils/decimal";
 import { searchCustomers, type CustomerAdmin } from "@/services/customers";
 import { listAdminDrivers, type DriverAdmin } from "@/services/drivers";
@@ -20,12 +24,47 @@ import {
   type CourierOrder, type DeliveryStatus, type ParcelOrderInput,
 } from "@/services/courier";
 
-const VAT_PRESETS = ["0.07", "0.19", "0"];
+const VAT_PRESETS = ["0", "0.07", "0.19"];
 const TERM_PRESETS = [14, 30, 45];
 const FLOW: DeliveryStatus[] = ["draft", "dispatched", "picked_up", "delivered"];
+const STEP_LABEL: Record<DeliveryStatus, string> = {
+  draft: "Draft", dispatched: "Dispatched", picked_up: "Picked up", delivered: "Delivered",
+};
+// Display-only issuer block for the live preview. The stored PDFs are rendered server-side
+// from SiteSettings — these strings never reach the actual document.
+const ISSUER = {
+  name: "StepNow Rides & Movers",
+  sub: "Naeem Ahmad e.K. · Plochingen/Esslingen",
+  sender: "StepNow Rides & Movers — Naeem Ahmad e.K. · Blumenstraße 8 · 73779 Deizisau",
+  steuer: "Steuer-Nr. 59500/72609",
+  bank: "IBAN DE12 6005 0101 0001 2345 67 · BIC SOLADEST600 · Kreissparkasse Esslingen",
+  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · info@step-now.de",
+};
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const deDate = (iso: string) =>
+  iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+const addDaysDE = (iso: string, d: number | string) => {
+  const dt = new Date(iso); dt.setDate(dt.getDate() + (Number(d) || 0));
+  return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
+/** Unit-suffixed numeric input matching the admin field styling. */
+function AffixInput({ unit, ...props }: { unit: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex">
+      <input
+        {...props}
+        className="h-9 w-full border border-r-0 border-slate-300 bg-white px-3 text-[13px] tabular-nums text-slate-900 transition-colors placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+      />
+      <span className="flex items-center border border-slate-300 bg-slate-50 px-2.5 text-[11px] font-medium text-slate-500">
+        {unit}
+      </span>
+    </div>
+  );
+}
 
 export default function NewParcelOrderPage() {
-  const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
 
   // customer
@@ -39,18 +78,18 @@ export default function NewParcelOrderPage() {
   const [vatId, setVatId] = useState("");
   const [linkedId, setLinkedId] = useState<string | null>(null);
   const [results, setResults] = useState<CustomerAdmin[]>([]);
-  const [showSug, setShowSug] = useState(false);
+  const [showNameSug, setShowNameSug] = useState(false);
+  const [showPhoneSug, setShowPhoneSug] = useState(false);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // parcel + route
   const [pickup, setPickup] = useState("");
-  const [pickupCity, setPickupCity] = useState("");
   const [dropoff, setDropoff] = useState("");
-  const [dropoffCity, setDropoffCity] = useState("");
   const [consignee, setConsignee] = useState("");
   const [parcelDesc, setParcelDesc] = useState("");
   const [qty, setQty] = useState("1");
   const [weight, setWeight] = useState("");
+  const [pickDate, setPickDate] = useState(todayISO());
 
   // driver + price
   const [drivers, setDrivers] = useState<DriverAdmin[]>([]);
@@ -59,12 +98,16 @@ export default function NewParcelOrderPage() {
   const [vat, setVat] = useState("0.07");
   const [term, setTerm] = useState("14");
 
-  // persisted order
+  // persisted order + ui
   const [order, setOrder] = useState<CourierOrder | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [ccCustomer, setCcCustomer] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [previewMode, setPreviewMode] = useState<"driver" | "customer">("driver");
 
-  useEffect(() => { listAdminDrivers({ active_only: true, size: 100 }).then((r) => setDrivers(r.items)).catch(() => {}); }, []);
+  useEffect(() => {
+    listAdminDrivers({ active_only: true, size: 100 }).then((r) => setDrivers(r.items)).catch(() => {});
+  }, []);
 
   const runSearch = useCallback((q: string) => {
     if (debounce.current) clearTimeout(debounce.current);
@@ -76,7 +119,7 @@ export default function NewParcelOrderPage() {
     setFirst(c.first_name); setLast(c.last_name);
     setStreet(c.street ?? ""); setPlz(c.plz ?? ""); setOrt(c.ort ?? "");
     setEmail(c.email ?? ""); setPhone(c.phone ?? ""); setVatId(c.company_vatid ?? "");
-    setLinkedId(c.id); setShowSug(false); setResults([]);
+    setLinkedId(c.id); setShowNameSug(false); setShowPhoneSug(false); setResults([]);
   }
   function clearCustomer() {
     setFirst(""); setLast(""); setStreet(""); setPlz(""); setOrt("");
@@ -93,12 +136,13 @@ export default function NewParcelOrderPage() {
         ? { customer_id: linkedId }
         : { customer: { first_name: first, last_name: last, street, plz, ort, email: email || null, phone: phone || null, company_vatid: vatId || null, is_business: !!vatId } }),
       driver_id: driverId || null,
-      pickup_address: pickup, pickup_city: pickupCity || null,
-      destination_address: dropoff, destination_city: dropoffCity || null,
+      pickup_address: pickup, pickup_city: null,
+      destination_address: dropoff, destination_city: null,
       consignee: consignee || null,
       parcel_description: parcelDesc || null,
       parcel_quantity: Number(qty) || 1,
       parcel_weight_kg: weight ? normalizeDecimalInput(weight) : null,
+      scheduled_datetime: pickDate ? `${pickDate}T00:00:00` : null,
       net_amount: netNorm,
       vat_rate: vat,
       payment_due_days: Number(term) || 14,
@@ -127,135 +171,458 @@ export default function NewParcelOrderPage() {
     const updated = await sendDocuments(o.id, to); setOrder(updated);
     pushToast("success", `Driver slip sent${ccCustomer && email ? " · invoice queued to customer" : ""}`);
   });
-  const onAdvance = () => wrap("adv", async () => {
-    if (!order) return;
-    const next = FLOW[Math.min(FLOW.indexOf(order.delivery_status) + 1, FLOW.length - 1)];
-    const updated = await setDeliveryStatus(order.id, next); setOrder(updated);
-    pushToast("success", `Marked ${next.replace("_", " ")}`);
+  const goToStage = (stage: DeliveryStatus) => wrap("stage", async () => {
+    if (!order || stage === order.delivery_status) return;
+    const updated = await setDeliveryStatus(order.id, stage); setOrder(updated);
+    pushToast("success", `Marked ${STEP_LABEL[stage].toLowerCase()}`);
   });
 
-  const ds = order?.delivery_status ?? "draft";
-  const grossPreview = (() => {
-    const n = Number(normalizeDecimalInput(net) || "0"); const r = Number(vat || "0");
-    return formatPriceEur(String(n + n * r));
-  })();
+  // derived
+  const ds: DeliveryStatus = order?.delivery_status ?? "draft";
+  const stepIdx = FLOW.indexOf(ds);
+  const driver = drivers.find((d) => d.id === driverId) || null;
+  const fullName = `${first} ${last}`.trim();
+  const netNum = Number(normalizeDecimalInput(net) || "0");
+  const rate = Number(vat) || 0;
+  const vatAmt = netNum * rate;
+  const brutto = netNum + vatAmt;
+  const vatPct = Math.round(rate * 100);
+  const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
+  const ccNoEmail = ccCustomer && !email;
+
+  const chip = (active: boolean) =>
+    cn(
+      "flex-1 border px-2 py-1 text-[11px] font-semibold transition-colors",
+      active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-600 hover:border-slate-400",
+    );
+
+  const sugList = (
+    <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden border border-slate-200 bg-white shadow-lg">
+      {results.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onMouseDown={() => pickCustomer(c)}
+          className="flex w-full flex-col items-start gap-0.5 border-b border-slate-100 px-3 py-2 text-left last:border-b-0 hover:bg-slate-50"
+        >
+          <span className="text-[12.5px] font-medium text-slate-900">{c.first_name} {c.last_name}</span>
+          <span className="text-[11px] text-slate-500">
+            {[c.phone, [c.plz, c.ort].filter(Boolean).join(" "), c.company_vatid].filter(Boolean).join(" · ")}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <>
-      <AdminPageHeader eyebrow="Operations" title="New Parcel Order" description="Create a courier job, dispatch it to a driver, and bill the customer." />
-      <div className="space-y-4 p-6">
-        <div className="flex items-center gap-2">
-          {order && <span className="font-mono text-sm text-slate-600">{order.order_number}</span>}
-          <DeliveryStatusBadge status={ds} />
-          {order && ds !== "delivered" && (
-            <button onClick={onAdvance} disabled={!!busy} className="inline-flex items-center gap-1 rounded-lg border border-emerald-600 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-600 hover:text-white">
-              {ds === "draft" ? "Dispatch" : ds === "dispatched" ? "Mark picked up" : "Mark delivered"} <ArrowRight size={12} />
+      <AdminPageHeader
+        eyebrow="Operations"
+        title="New Parcel Order"
+        description="Create a courier job, dispatch it to a driver, and bill the customer."
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen((v) => !v)}
+              className="flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {previewOpen ? <EyeOff className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Eye className="h-3.5 w-3.5" strokeWidth={1.5} />}
+              {previewOpen ? "Hide preview" : "Show preview"}
             </button>
+            <Link
+              href="/admin/orders"
+              className="flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+              All orders
+            </Link>
+          </>
+        }
+      />
+
+      <div className="space-y-4 p-6">
+        {/* Status strip + delivery stepper */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border border-slate-200 bg-white px-4 py-3">
+          {order ? (
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 text-[11.5px] font-medium text-emerald-700">
+              <Check className="h-3 w-3" strokeWidth={3} /> Saved · <span className="font-mono text-slate-700">{order.order_number}</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-400">
+              Not saved yet — order number assigned on save
+            </span>
+          )}
+          <ol className="ml-auto flex min-w-[280px] flex-1 items-center gap-2">
+            {FLOW.map((s, i) => (
+              <Fragment key={s}>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => goToStage(s)}
+                    disabled={!order || !!busy}
+                    title={order ? `Mark as ${STEP_LABEL[s]}` : "Save the order first"}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full py-0.5 pr-1.5 transition-colors",
+                      order && "hover:bg-slate-50",
+                      !order && "cursor-not-allowed",
+                    )}
+                  >
+                    <span className={cn(
+                      "grid h-5 w-5 place-items-center rounded-full text-[10px] font-semibold tabular-nums transition-colors",
+                      i < stepIdx ? "bg-emerald-600 text-white"
+                        : i === stepIdx ? "bg-slate-900 text-white ring-2 ring-slate-900/15"
+                          : "bg-slate-200 text-slate-500",
+                    )}>
+                      {i < stepIdx ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
+                    </span>
+                    <span className={cn("text-[11px] font-semibold", i <= stepIdx ? "text-slate-900" : "text-slate-400")}>
+                      {STEP_LABEL[s]}
+                    </span>
+                  </button>
+                </li>
+                {i < FLOW.length - 1 && <span className={cn("h-px flex-1", i < stepIdx ? "bg-emerald-500" : "bg-slate-200")} />}
+              </Fragment>
+            ))}
+          </ol>
+        </div>
+        {order && (
+          <p className="-mt-2 px-1 text-[11px] text-slate-400">
+            Tip: dispatching happens automatically when you send to the driver. Click any step above to mark a stage manually.
+          </p>
+        )}
+
+        {/* Two-pane: builder + live preview */}
+        <div className={cn("grid grid-cols-1 gap-4", previewOpen && "xl:grid-cols-[1.35fr_1fr]")}>
+          {/* BUILDER */}
+          <div className="space-y-4">
+            {/* Customer */}
+            <AdminCard
+              title={<span className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Sender / Customer</span>}
+              description="Search a saved customer by name or phone, or type a new one."
+              headerActions={linkedId ? (
+                <span className="inline-flex items-center gap-1.5 bg-emerald-50 px-2 py-1 text-[10.5px] font-semibold text-emerald-700">
+                  <Check className="h-3 w-3" strokeWidth={3} /> Saved customer
+                  <button type="button" onClick={clearCustomer} title="Unlink / new" className="ml-0.5 text-emerald-700 hover:text-emerald-900">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ) : undefined}
+            >
+              <div className="space-y-3">
+                <div className="relative grid gap-3 sm:grid-cols-2">
+                  <AdminFormField label="First name" required>
+                    <input
+                      className={adminInputClass}
+                      value={first}
+                      placeholder="Type to search or add new…"
+                      onChange={(e) => { setFirst(e.target.value); setLinkedId(null); setShowNameSug(true); runSearch(`${e.target.value} ${last}`.trim()); }}
+                      onFocus={() => setShowNameSug(true)}
+                      onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
+                    />
+                  </AdminFormField>
+                  <AdminFormField label="Last name" required>
+                    <input
+                      className={adminInputClass}
+                      value={last}
+                      placeholder="Last"
+                      onChange={(e) => { setLast(e.target.value); setLinkedId(null); setShowNameSug(true); runSearch(`${first} ${e.target.value}`.trim()); }}
+                      onFocus={() => setShowNameSug(true)}
+                      onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
+                    />
+                  </AdminFormField>
+                  {showNameSug && results.length > 0 && sugList}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <AdminFormField label="Street"><input className={adminInputClass} value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Street & no." /></AdminFormField>
+                  <AdminFormField label="Postcode"><input className={adminInputClass} value={plz} onChange={(e) => setPlz(e.target.value)} placeholder="73207" /></AdminFormField>
+                  <AdminFormField label="City"><input className={adminInputClass} value={ort} onChange={(e) => setOrt(e.target.value)} placeholder="Plochingen" /></AdminFormField>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-slate-400" /> Email</span>}>
+                    <input className={adminInputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="customer@company.de" />
+                  </AdminFormField>
+                  <div className="relative">
+                    <AdminFormField label={<span className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-slate-400" /> Phone</span>}>
+                      <input
+                        className={adminInputClass}
+                        value={phone}
+                        onChange={(e) => { setPhone(e.target.value); setLinkedId(null); setShowPhoneSug(true); runSearch(e.target.value); }}
+                        onFocus={() => setShowPhoneSug(true)}
+                        onBlur={() => setTimeout(() => setShowPhoneSug(false), 180)}
+                        placeholder="+49 …"
+                      />
+                    </AdminFormField>
+                    {showPhoneSug && results.length > 0 && sugList}
+                  </div>
+                  <AdminFormField label="VAT ID (USt-IdNr)"><input className={adminInputClass} value={vatId} onChange={(e) => setVatId(e.target.value)} placeholder="DE… (B2B)" /></AdminFormField>
+                </div>
+              </div>
+            </AdminCard>
+
+            {/* Parcel & route */}
+            <AdminCard title={<span className="flex items-center gap-2"><Package className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Parcel &amp; Route</span>}>
+              <div className="space-y-3">
+                <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto_1fr]">
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-emerald-600" /> Pickup</span>} required>
+                    <input className={adminInputClass} value={pickup} onChange={(e) => setPickup(e.target.value)} placeholder="Full address — street, postcode, city" />
+                  </AdminFormField>
+                  <ArrowRight className="mb-2.5 hidden h-4 w-4 text-slate-400 sm:block" />
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-rose-600" /> Destination</span>} required>
+                    <input className={adminInputClass} value={dropoff} onChange={(e) => setDropoff(e.target.value)} placeholder="Full address — street, postcode, city" />
+                  </AdminFormField>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <AdminFormField label="Recipient at destination"><input className={adminInputClass} value={consignee} onChange={(e) => setConsignee(e.target.value)} placeholder="Consignee name" /></AdminFormField>
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><Boxes className="h-3 w-3 text-slate-400" /> Quantity</span>}>
+                    <AffixInput unit="pcs" type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} />
+                  </AdminFormField>
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><Scale className="h-3 w-3 text-slate-400" /> Weight</span>}>
+                    <AffixInput unit="kg" type="number" min={0} step={0.1} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0" />
+                  </AdminFormField>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <AdminFormField label="Parcel contents"><input className={adminInputClass} value={parcelDesc} onChange={(e) => setParcelDesc(e.target.value)} placeholder="e.g. documents, medical samples…" /></AdminFormField>
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3 text-slate-400" /> Pickup date</span>}>
+                    <input className={adminInputClass} type="date" value={pickDate} onChange={(e) => setPickDate(e.target.value)} />
+                  </AdminFormField>
+                </div>
+              </div>
+            </AdminCard>
+
+            {/* Driver & price */}
+            <AdminCard
+              title={<span className="flex items-center gap-2"><UserCheck className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Driver assignment &amp; price</span>}
+              description="Price shows on the customer invoice only — never on the driver slip."
+            >
+              <div className="space-y-3">
+                <AdminFormField label={<span className="flex items-center gap-1.5"><Truck className="h-3 w-3 text-slate-400" /> Assign driver</span>}>
+                  <select className={adminInputClass} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+                    <option value="">— Select driver —</option>
+                    {drivers.map((d) => <option key={d.id} value={d.id}>{d.full_name}{d.vehicle_label ? ` · ${d.vehicle_label}` : ""}</option>)}
+                  </select>
+                </AdminFormField>
+
+                {driver && (
+                  <div className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-2.5">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center bg-slate-900 text-[12px] font-semibold uppercase text-white">
+                      {driver.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium text-slate-900">{driver.full_name}</p>
+                      {driver.vehicle_label && <p className="flex items-center gap-1 text-[11px] text-slate-500"><Building2 className="h-3 w-3" /> {driver.vehicle_label}</p>}
+                    </div>
+                    <div className="ml-auto text-right text-[11px] text-slate-500">
+                      {driver.phone && <p className="flex items-center justify-end gap-1"><Phone className="h-3 w-3" /> {driver.phone}</p>}
+                      {driver.email && <p className="flex items-center justify-end gap-1"><Mail className="h-3 w-3" /> {driver.email}</p>}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid items-start gap-3 sm:grid-cols-3">
+                  <AdminFormField label="Flat price (net)" required>
+                    <AffixInput unit="EUR" type="number" value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" />
+                  </AdminFormField>
+                  <AdminFormField label="VAT rate">
+                    <AffixInput unit="%" type="number" min={0} max={99} value={vatPct} onChange={(e) => setVat(String((Number(e.target.value) || 0) / 100))} placeholder="7" />
+                    <div className="mt-1.5 flex gap-1.5">
+                      {VAT_PRESETS.map((v) => <button key={v} type="button" className={chip(vat === v)} onClick={() => setVat(v)}>{Math.round(Number(v) * 100)}%</button>)}
+                    </div>
+                  </AdminFormField>
+                  <AdminFormField label="Payment term">
+                    <AffixInput unit="days" type="number" min={1} max={120} value={term} onChange={(e) => setTerm(e.target.value)} placeholder="14" />
+                    <div className="mt-1.5 flex gap-1.5">
+                      {TERM_PRESETS.map((d) => <button key={d} type="button" className={chip(Number(term) === d)} onClick={() => setTerm(String(d))}>{d}d</button>)}
+                    </div>
+                  </AdminFormField>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">Net</p>
+                    <p className="mt-0.5 font-mono text-[13px] tabular-nums text-slate-900">{money(netNum)}</p>
+                  </div>
+                  <div className="border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">VAT {vatPct}%</p>
+                    <p className="mt-0.5 font-mono text-[13px] tabular-nums text-slate-900">{money(vatAmt)}</p>
+                  </div>
+                  <div className="bg-slate-900 px-3 py-2">
+                    <p className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-slate-400">Total</p>
+                    <p className="mt-0.5 font-mono text-[13px] font-semibold tabular-nums text-white">{money(brutto)}</p>
+                  </div>
+                </div>
+              </div>
+            </AdminCard>
+          </div>
+
+          {/* LIVE PREVIEW */}
+          {previewOpen && (
+            <div className="xl:sticky xl:top-4 xl:self-start">
+              <AdminCard
+                eyebrow="Live preview"
+                title={previewMode === "driver" ? "Driver slip" : "Customer invoice"}
+                serif
+                headerActions={
+                  <div className="flex overflow-hidden border border-slate-300">
+                    <button type="button" onClick={() => setPreviewMode("driver")} className={cn("flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold", previewMode === "driver" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50")}>
+                      <Truck className="h-3 w-3" /> Slip
+                    </button>
+                    <button type="button" onClick={() => setPreviewMode("customer")} className={cn("flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold", previewMode === "customer" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50")}>
+                      <Receipt className="h-3 w-3" /> Invoice
+                    </button>
+                  </div>
+                }
+              >
+                {/* Paper */}
+                <div className="border border-slate-200 bg-white p-5 text-[13px] leading-relaxed text-slate-700 shadow-sm">
+                  {/* Issuer header */}
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="grid h-9 w-9 place-items-center bg-slate-900 text-[13px] font-semibold text-white">SN</div>
+                      <div>
+                        <p className="font-serif text-[15px] font-medium leading-tight text-slate-900">{ISSUER.name}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">{ISSUER.sub}</p>
+                      </div>
+                    </div>
+                    <div className="text-right text-[11px] leading-relaxed text-slate-500">
+                      <p className="font-serif text-[16px] font-medium uppercase tracking-wide text-slate-900">
+                        {previewMode === "driver" ? "Fahrauftrag" : "Rechnung"}
+                      </p>
+                      <p className="font-mono text-[12.5px] text-slate-700">{order?.order_number ?? "—"}</p>
+                      <p>{previewMode === "driver" ? deDate(pickDate) : `Datum: ${deDate(pickDate)}`}</p>
+                      {previewMode === "customer" && <p>{ISSUER.steuer}</p>}
+                    </div>
+                  </div>
+
+                  {previewMode === "driver" ? (
+                    <>
+                      <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 bg-slate-900 px-3.5 py-2.5 text-white">
+                        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300"><Truck className="h-3 w-3" /> Fahrer</span>
+                        {driver
+                          ? <span className="text-[13px] font-semibold text-white">{driver.full_name}{driver.vehicle_label ? ` · ${driver.vehicle_label}` : ""}{driver.phone ? ` · ${driver.phone}` : ""}</span>
+                          : <span className="text-[13px] italic text-slate-400">Noch nicht zugewiesen</span>}
+                      </div>
+                      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border border-slate-200 bg-slate-50 p-3.5">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Abholung</p>
+                          <p className="mt-1 text-[13px] font-medium leading-snug text-slate-900">{pickup || <span className="italic text-slate-400">—</span>}</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-600">Zustellung</p>
+                          <p className="mt-1 text-[13px] font-medium leading-snug text-slate-900">{dropoff || <span className="italic text-slate-400">—</span>}</p>
+                          {consignee && <p className="text-[11px] text-slate-500">Empfänger: {consignee}</p>}
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 border border-dashed border-slate-300 px-3.5 py-2.5 text-[12px] text-slate-500">
+                        <span>Auftraggeber: <strong className="text-slate-900">{fullName || "—"}</strong></span>
+                        <span>Mobil: <strong className="text-slate-900">{phone || "—"}</strong></span>
+                      </div>
+                      <table className="mt-4 w-full border-collapse">
+                        <thead><tr className="border-b-2 border-slate-900 text-[10px] uppercase tracking-wide text-slate-500">
+                          <th className="py-1.5 pr-2 text-left font-semibold">Pos.</th><th className="py-1.5 pr-2 text-left font-semibold">Sendung / Inhalt</th><th className="py-1.5 pl-2 text-right font-semibold">Menge</th><th className="py-1.5 pl-2 text-right font-semibold">Gewicht</th>
+                        </tr></thead>
+                        <tbody><tr className="border-b border-slate-100 align-top">
+                          <td className="py-2.5 pr-2 text-[13px]">1</td>
+                          <td className="py-2.5 pr-2 text-[13px]"><strong className="text-slate-900">Kuriersendung</strong>{parcelDesc && <div className="text-[11px] text-slate-500">{parcelDesc}</div>}</td>
+                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{qty || 1} St.</td>
+                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{weight ? `${weight} kg` : "—"}</td>
+                        </tr></tbody>
+                      </table>
+                      <div className="mt-8 grid grid-cols-2 gap-6">
+                        <div className="border-t border-slate-900 pt-1.5 text-[11px] font-semibold text-slate-500">Unterschrift Abholung</div>
+                        <div className="border-t border-slate-900 pt-1.5 text-[11px] font-semibold text-slate-500">Unterschrift Empfänger</div>
+                      </div>
+                      <p className="mt-4 text-center text-[11px] italic text-slate-500">Belegart Fahrauftrag — enthält bewusst keine Preisangaben.</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">Rechnung an</p>
+                          <div className="mt-1.5 text-[13px] leading-relaxed">
+                            {fullName ? (
+                              <>
+                                <strong className="text-[14px] text-slate-900">{fullName}</strong>
+                                {street && <div>{street}</div>}
+                                {(plz || ort) && <div>{plz} {ort}</div>}
+                                {vatId && <div className="mt-0.5 text-[11px] text-slate-500">USt-IdNr: {vatId}</div>}
+                              </>
+                            ) : <span className="italic text-slate-400">Kunde wählen…</span>}
+                          </div>
+                        </div>
+                        <dl className="min-w-[170px] space-y-1 text-[12px]">
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Leistungsdatum</dt><dd className="text-slate-800">{deDate(pickDate)}</dd></div>
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Fällig bis</dt><dd className="text-slate-800">{addDaysDE(pickDate, term)}</dd></div>
+                        </dl>
+                      </div>
+
+                      <table className="mt-5 w-full border-collapse">
+                        <thead><tr className="border-b-2 border-slate-900 text-[10px] uppercase tracking-wide text-slate-500">
+                          <th className="py-1.5 pr-2 text-left font-semibold">Pos.</th>
+                          <th className="py-1.5 pr-2 text-left font-semibold">Bezeichnung</th>
+                          <th className="py-1.5 pl-2 text-right font-semibold">Menge</th>
+                          <th className="py-1.5 pl-2 text-right font-semibold">Einzelpreis</th>
+                          <th className="py-1.5 pl-2 text-right font-semibold">MwSt</th>
+                          <th className="py-1.5 pl-2 text-right font-semibold">Gesamt</th>
+                        </tr></thead>
+                        <tbody><tr className="border-b border-slate-100 align-top">
+                          <td className="py-2.5 pr-2 text-[13px]">1</td>
+                          <td className="py-2.5 pr-2 text-[13px]"><strong className="text-slate-900">Kuriertransport (Pauschale)</strong>{(pickup || dropoff) && <div className="text-[11px] text-slate-500">{pickup || "—"} → {dropoff || "—"}</div>}{parcelDesc && <div className="text-[11px] text-slate-500">{parcelDesc}</div>}</td>
+                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{qty || 1}</td>
+                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum)}</td>
+                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{vatPct}%</td>
+                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum)}</td>
+                        </tr></tbody>
+                      </table>
+
+                      <div className="mt-4 flex justify-end">
+                        <div className="w-64 text-[13px]">
+                          <div className="flex justify-between py-0.5"><span className="text-slate-500">Zwischensumme (netto)</span><span className="font-mono">{money(netNum)}</span></div>
+                          <div className="flex justify-between py-0.5"><span className="text-slate-500">zzgl. MwSt {vatPct}%</span><span className="font-mono">{money(vatAmt)}</span></div>
+                          <div className="mt-1 flex justify-between border-t-2 border-slate-900 bg-slate-50 px-2 py-2 text-[15px] font-semibold text-slate-900"><span>Gesamtbetrag</span><span className="font-mono">{money(brutto)}</span></div>
+                        </div>
+                      </div>
+
+                      <p className="mt-5 text-[12px] leading-relaxed text-slate-600">
+                        Zahlbar ohne Abzug bis <strong className="text-slate-900">{addDaysDE(pickDate, term)}</strong> ({Number(term) || 0} Tage netto).
+                        Bitte geben Sie bei der Zahlung die Rechnungsnummer <span className="font-mono">{order?.order_number ?? "—"}</span> an.
+                      </p>
+                      <p className="mt-2 border-t border-dashed border-slate-300 pt-2 text-[11px] text-slate-500">{ISSUER.bank}</p>
+                    </>
+                  )}
+
+                  <div className="-mx-5 -mb-5 mt-5 bg-slate-900 px-5 py-2.5 text-center text-[10px] text-slate-300">{ISSUER.foot}</div>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-400">
+                  Layout preview only — the issued PDF is rendered from your business settings.
+                </p>
+              </AdminCard>
+            </div>
           )}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* Customer */}
-          <AdminCard title="Sender / Customer" description="Search a saved customer by name or phone, or type a new one.">
-            <div className="relative">
-              <AdminFormField label="First name">
-                <input className={adminInputClass} value={first} placeholder="Type to search…"
-                  onChange={(e) => { setFirst(e.target.value); setLinkedId(null); setShowSug(true); runSearch(`${e.target.value} ${last}`); }}
-                  onFocus={() => setShowSug(true)} onBlur={() => setTimeout(() => setShowSug(false), 180)} />
-              </AdminFormField>
-              <AdminFormField label="Last name">
-                <input className={adminInputClass} value={last}
-                  onChange={(e) => { setLast(e.target.value); setLinkedId(null); setShowSug(true); runSearch(`${first} ${e.target.value}`); }}
-                  onFocus={() => setShowSug(true)} onBlur={() => setTimeout(() => setShowSug(false), 180)} />
-              </AdminFormField>
-              {showSug && results.length > 0 && (
-                <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-                  {results.map((c) => (
-                    <button key={c.id} type="button" onMouseDown={() => pickCustomer(c)} className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-slate-50">
-                      <span className="text-sm font-semibold">{c.first_name} {c.last_name}</span>
-                      <span className="text-xs text-slate-500">{c.phone ?? "—"} · {c.plz} {c.ort}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {linkedId && (
-              <div className="mb-2 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-                <Check size={12} /> Saved customer
-                <button onClick={clearCustomer} className="ml-1"><X size={12} /></button>
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-3">
-              <AdminFormField label="Street"><input className={adminInputClass} value={street} onChange={(e) => setStreet(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Postcode"><input className={adminInputClass} value={plz} onChange={(e) => setPlz(e.target.value)} /></AdminFormField>
-              <AdminFormField label="City"><input className={adminInputClass} value={ort} onChange={(e) => setOrt(e.target.value)} /></AdminFormField>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <AdminFormField label="Email"><input className={adminInputClass} value={email} onChange={(e) => setEmail(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Phone"><input className={adminInputClass} value={phone} onChange={(e) => { setPhone(e.target.value); setLinkedId(null); if (e.target.value.replace(/\D/g, "").length >= 3) { setShowSug(true); runSearch(e.target.value); } }} onFocus={() => setShowSug(true)} onBlur={() => setTimeout(() => setShowSug(false), 180)} /></AdminFormField>
-              <AdminFormField label="VAT ID"><input className={adminInputClass} value={vatId} onChange={(e) => setVatId(e.target.value)} placeholder="DE…" /></AdminFormField>
-            </div>
-          </AdminCard>
-
-          {/* Parcel & route */}
-          <AdminCard title="Parcel & Route">
-            <div className="grid grid-cols-2 gap-3">
-              <AdminFormField label="Pickup *"><input className={adminInputClass} value={pickup} onChange={(e) => setPickup(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Pickup city"><input className={adminInputClass} value={pickupCity} onChange={(e) => setPickupCity(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Destination *"><input className={adminInputClass} value={dropoff} onChange={(e) => setDropoff(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Destination city"><input className={adminInputClass} value={dropoffCity} onChange={(e) => setDropoffCity(e.target.value)} /></AdminFormField>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <AdminFormField label="Recipient"><input className={adminInputClass} value={consignee} onChange={(e) => setConsignee(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Quantity"><input className={adminInputClass} type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} /></AdminFormField>
-              <AdminFormField label="Weight (kg)"><input className={adminInputClass} value={weight} onChange={(e) => setWeight(e.target.value)} /></AdminFormField>
-            </div>
-            <AdminFormField label="Parcel contents"><input className={adminInputClass} value={parcelDesc} onChange={(e) => setParcelDesc(e.target.value)} /></AdminFormField>
-          </AdminCard>
-
-          {/* Driver & price */}
-          <AdminCard title="Driver & Price" description="Price shows on the customer invoice only — never on the driver slip.">
-            <AdminFormField label="Assign driver">
-              <select className={adminInputClass} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
-                <option value="">— Select driver —</option>
-                {drivers.map((d) => <option key={d.id} value={d.id}>{d.full_name}{d.vehicle_label ? ` · ${d.vehicle_label}` : ""}</option>)}
-              </select>
-            </AdminFormField>
-            <div className="grid grid-cols-3 gap-3">
-              <AdminFormField label="Flat price (net) *"><input className={adminInputClass} value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" /></AdminFormField>
-              <AdminFormField label="VAT rate">
-                <select className={adminInputClass} value={vat} onChange={(e) => setVat(e.target.value)}>
-                  {VAT_PRESETS.map((v) => <option key={v} value={v}>{(Number(v) * 100).toFixed(0)}%</option>)}
-                </select>
-              </AdminFormField>
-              <AdminFormField label="Payment term (days)">
-                <select className={adminInputClass} value={term} onChange={(e) => setTerm(e.target.value)}>
-                  {TERM_PRESETS.map((t) => <option key={t} value={t}>{t} days</option>)}
-                </select>
-              </AdminFormField>
-            </div>
-            <p className="mt-2 text-sm text-slate-600">Gross total: <strong>{grossPreview}</strong></p>
-          </AdminCard>
-
-          {/* Actions */}
-          <AdminCard title="Dispatch & Billing">
-            <label className="mb-3 flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" checked={ccCustomer} onChange={(e) => setCcCustomer(e.target.checked)} />
-              Also email the invoice to the customer
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={onSave} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50">
-                {busy === "save" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Save
-              </button>
-              <button onClick={onPdf} disabled={!!busy} className="inline-flex items-center gap-2 rounded-lg border border-slate-900 px-3 py-2 text-sm font-semibold hover:bg-slate-900 hover:text-white">
-                {busy === "pdf" ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />} Driver slip PDF
-              </button>
-              <button onClick={onSend} disabled={!!busy || !driverId} title={!driverId ? "Assign a driver first" : ""} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
-                {busy === "send" ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Send to driver
-              </button>
-            </div>
-            {order?.driver_emailed_at && <p className="mt-2 text-xs text-emerald-700">Driver notified · {new Date(order.driver_emailed_at).toLocaleString("de-DE")}</p>}
-          </AdminCard>
+        {/* Sticky action bar */}
+        <div className="sticky bottom-0 z-10 -mx-6 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 px-6 py-3 backdrop-blur">
+          <label className="flex items-center gap-2 text-[12px] text-slate-600">
+            <input type="checkbox" className="accent-emerald-600" checked={ccCustomer} onChange={(e) => setCcCustomer(e.target.checked)} />
+            Also email invoice to customer
+          </label>
+          {ccNoEmail && <span className="bg-rose-50 px-2 py-0.5 text-[10.5px] font-semibold text-rose-700">⚠ no customer email</span>}
+          {order?.driver_emailed_at && <span className="inline-flex items-center gap-1 bg-emerald-50 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-700"><Truck className="h-3 w-3" /> Driver notified</span>}
+          <div className="ml-auto flex flex-wrap gap-2">
+            <button type="button" onClick={onSave} disabled={!!busy} className="inline-flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+              {busy === "save" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" strokeWidth={1.5} />} Save
+            </button>
+            <button type="button" onClick={onPdf} disabled={!!busy} className="inline-flex h-9 items-center gap-1.5 border border-slate-900 bg-white px-3 text-[12.5px] font-medium text-slate-900 hover:bg-slate-900 hover:text-white disabled:opacity-50">
+              {busy === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" strokeWidth={1.5} />} Driver slip PDF
+            </button>
+            <button type="button" onClick={onSend} disabled={!!busy || !driverId} title={!driverId ? "Assign a driver first" : ""} className="inline-flex h-9 items-center gap-1.5 bg-emerald-600 px-3.5 text-[12.5px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+              {busy === "send" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" strokeWidth={1.5} />} Send to driver
+            </button>
+          </div>
         </div>
       </div>
     </>
