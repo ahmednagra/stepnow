@@ -18,6 +18,8 @@ from app.Models.contact import ContactMessage
 from app.Models.email_logs import EmailLog
 from app.Models.expense_categories import ExpenseCategory
 from app.Models.expenses import Expense
+from app.Models.drivers import Driver
+from app.Models.customers import Customer
 
 __all__ = [
     "Base",
@@ -35,8 +37,10 @@ __all__ = [
     "LegalPage",
     "LegalPageVersion",
     "BookingRequest",
-    "Order",
+    "Driver",
+    "Customer",
     "Invoice",
+    "Order",
     "Payment",
     "ExpenseCategory",
     "Expense",
