@@ -21,6 +21,8 @@ from routes.api.v0.admin import ui_strings as admin_ui_strings_router
 from routes.api.v0.admin import uploads as admin_uploads_router
 from routes.api.v0.admin import vehicles as admin_vehicles_router
 
+
+from routes.api.v0.admin.orders import router as admin_orders_router
 from routes.api.v0.admin.drivers import router as admin_drivers_router
 from routes.api.v0.admin.customers import router as admin_customers_router
 from routes.api.v0.admin.courier import router as admin_courier_router
@@ -50,6 +52,7 @@ def setup_api_routes(app: FastAPI) -> None:
     app.include_router(admin_uploads_router.router, prefix=_API_PREFIX)
     app.include_router(admin_audit_log_router.router, prefix=_API_PREFIX)
 
+    app.include_router(admin_orders_router, prefix=_API_PREFIX)
     app.include_router(admin_drivers_router, prefix=_API_PREFIX)
     app.include_router(admin_customers_router, prefix=_API_PREFIX)
     app.include_router(admin_courier_router, prefix=_API_PREFIX)

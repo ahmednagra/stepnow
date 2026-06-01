@@ -1,11 +1,4 @@
 # apps/backend/routes/api/v0/admin/courier.py
-# Parcel-dispatch endpoints layered on the orders domain:
-#   - create a manual courier order
-#   - list courier orders (by delivery_status)
-#   - advance the manual delivery lifecycle
-#   - download the driver slip (Fahrauftrag, no price)
-#   - email the slip to the driver (and optionally the invoice to the customer)
-# Register in routes/__init__.py after the orders router.
 
 from uuid import UUID
 from pathlib import Path

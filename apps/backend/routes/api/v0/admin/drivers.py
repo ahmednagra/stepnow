@@ -1,5 +1,4 @@
-# apps/backend/routes/api/v0/admin/drivers.py
-# Driver admin endpoints. Register in routes/__init__.py alongside the orders router.
+# apps/backend/routes/api/v0/admin/drivers.py 
 
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -28,26 +27,54 @@ async def list_drivers(
     return DriversController.list(db, page, size, q, active_only, include_deleted)
 
 
-@router.post("/admin/drivers", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
-async def create_driver(request: Request, payload: DriverCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> DriverResponse:
+@router.post(
+    "/admin/drivers", response_model=DriverResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_driver(
+    request: Request,
+    payload: DriverCreate,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+) -> DriverResponse:
     return DriversController.create(db, payload, actor, request)
 
 
 @router.get("/admin/drivers/{driver_id}", response_model=DriverResponse)
-async def get_driver(driver_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> DriverResponse:
+async def get_driver(
+    driver_id: UUID,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+) -> DriverResponse:
     return DriversController.get(db, driver_id)
 
 
 @router.patch("/admin/drivers/{driver_id}", response_model=DriverResponse)
-async def update_driver(request: Request, driver_id: UUID, payload: DriverUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> DriverResponse:
+async def update_driver(
+    request: Request,
+    driver_id: UUID,
+    payload: DriverUpdate,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+) -> DriverResponse:
     return DriversController.update(db, driver_id, payload, actor, request)
 
 
 @router.delete("/admin/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_driver(request: Request, driver_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+async def delete_driver(
+    request: Request,
+    driver_id: UUID,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+) -> None:
     DriversController.delete(db, driver_id, actor, request)
 
 
-@router.get("/admin/drivers/{driver_id}/orders", response_model=list[CourierOrderResponse])
-async def driver_orders(driver_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> list[CourierOrderResponse]:
+@router.get(
+    "/admin/drivers/{driver_id}/orders", response_model=list[CourierOrderResponse]
+)
+async def driver_orders(
+    driver_id: UUID,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+) -> list[CourierOrderResponse]:
     return DriversController.list_orders(db, driver_id)
