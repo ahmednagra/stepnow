@@ -46,6 +46,9 @@ SEEDERS_IN_ORDER = [
     ("bookings", "scripts.seeders.seed_bookings"),
     ("contact_messages", "scripts.seeders.seed_contact_messages"),
     ("expenses", "scripts.seeders.seed_expenses"),
+    ("customers", "scripts.seeders.seed_customers"),
+    ("drivers", "scripts.seeders.seed_drivers"),
+    ("parcel_orders", "scripts.seeders.seed_parcel_orders"),
 ]
 
 
