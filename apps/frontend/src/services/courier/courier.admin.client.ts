@@ -96,5 +96,5 @@ export async function sendDocuments(orderId: string, to: Array<"driver" | "custo
 }
 /** Authenticated slip PDF — proxied through the Next API (same base nextjsApiClient uses). */
 export function slipPdfHref(orderId: string): string {
-  return `/api/admin/orders/${orderId}/slip/pdf`;
+  return `/api/v0/admin/orders/${orderId}/slip/pdf`;
 }

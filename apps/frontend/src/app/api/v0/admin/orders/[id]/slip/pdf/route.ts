@@ -1,8 +1,5 @@
-// src/app/api/admin/orders/[id]/slip/pdf/route.ts
+// src/app/api/v0/admin/orders/[id]/slip/pdf/route.ts
 // Binary BFF passthrough for the driver-slip (Fahrauftrag) PDF stream. The client
-// (slipPdfHref) points at /api/admin/orders/{id}/slip/pdf, so this handler lives under
-// /api/admin (NOT /api/v0). Attaches the admin Bearer token and streams raw PDF bytes.
-// Modeled on src/app/api/v0/admin/uploads/route.ts.
 
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminToken } from "@/lib/admin-bff";
