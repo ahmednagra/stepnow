@@ -252,3 +252,4 @@ docs/.docusaurus/
 # Local infrastructure overrides
 infra/docker-compose.override.yml
 infra/*.local.conf
+.venv
