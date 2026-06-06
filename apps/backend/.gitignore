@@ -5,20 +5,12 @@
 # =====================================================================
 
 # ---------- Secrets and environment ----------
-.env
-.env.local
-.env.*.local
-.env.production
-.env.development
-.env.staging
-.envrc                       # direnv local overrides
+# direnv local overrides
 *.pem
 *.key
 *.crt
 *.pfx
 *.jks
-secrets/
-.secrets/
 
 # ---------- Python (apps/backend/) ----------
 __pycache__/
@@ -51,9 +43,6 @@ apps/backend/parts/
 # (these typically live in repo root or inside apps/backend/)
 .venv/
 venv/
-ENV/
-env/
-.env-*/
 apps/backend/.venv/
 apps/backend/venv/
 
