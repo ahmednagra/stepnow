@@ -23,6 +23,7 @@ import {
 } from "@/components/features/services";
 import { pickT } from "@/lib/i18n/pick";
 import { getServiceHeroImage } from "@/components/features/pricing/PricingSections";
+export const dynamic = "force-dynamic";
 
 export const revalidate = 300;
 
