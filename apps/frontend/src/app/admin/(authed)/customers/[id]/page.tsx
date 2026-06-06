@@ -93,7 +93,7 @@ export default function CustomerDetailPage() {
                 <AdminTableCell><DeliveryStatusBadge status={o.delivery_status} /></AdminTableCell>
                 <AdminTableCell>{formatPriceEur(o.gross_amount)}</AdminTableCell>
               </AdminTableRow>
-            )) : <AdminTableEmpty colSpan={4} message="No orders yet." />}
+            )) : <AdminTableEmpty message="No orders yet." />}
           </AdminTable>
         </AdminCard>
       </div>

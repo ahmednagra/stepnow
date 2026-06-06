@@ -36,9 +36,9 @@ export interface ListDriversParams {
   include_deleted?: boolean;
 }
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: Record<string, unknown> | ListDriversParams): string {
   const s = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") s.set(k, String(v));
+  for (const [k, v] of Object.entries(params as Record<string, unknown>)) if (v !== undefined && v !== "") s.set(k, String(v));
   const str = s.toString();
   return str ? `?${str}` : "";
 }

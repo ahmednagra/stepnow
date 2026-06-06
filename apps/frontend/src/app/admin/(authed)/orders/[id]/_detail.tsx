@@ -91,6 +91,7 @@ export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
             <Field label="Destination" value={order.destination_address} />
             <Field label="Customer" value={order.customer_name} />
             <Field label="Phone" value={order.customer_phone} />
+            <Field label="Email" value={order.customer_email} />
           </dl>
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-[13px]">
             <Field label="Net" value={formatPriceEur(order.net_amount)} />

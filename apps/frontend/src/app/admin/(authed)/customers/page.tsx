@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import {
   AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty,
   FilterToolbar, Pagination,
@@ -46,7 +45,7 @@ export default function CustomersPage() {
         <AdminCard flush title={`${total} ${total === 1 ? "customer" : "customers"}`}>
           <AdminTable columns={["Name", "Company", "City", "Phone", "Type"]}>
             {loading ? (
-              <AdminTableRow><AdminTableCell colSpan={5}><div className="flex justify-center py-8"><Loader2 className="animate-spin text-slate-400" /></div></AdminTableCell></AdminTableRow>
+              <AdminTableEmpty loading />
             ) : rows && rows.length > 0 ? (
               rows.map((c) => (
                 <AdminTableRow key={c.id}>
@@ -54,15 +53,15 @@ export default function CustomersPage() {
                   <AdminTableCell>{c.company_name ?? "—"}</AdminTableCell>
                   <AdminTableCell>{[c.plz, c.ort].filter(Boolean).join(" ") || "—"}</AdminTableCell>
                   <AdminTableCell>{c.phone ?? "—"}</AdminTableCell>
-                  <AdminTableCell><Badge variant={c.is_business ? "info" : "neutral"}>{c.is_business ? "Business" : "Private"}</Badge></AdminTableCell>
+                  <AdminTableCell><Badge tone={c.is_business ? "gold" : "neutral"}>{c.is_business ? "Business" : "Private"}</Badge></AdminTableCell>
                 </AdminTableRow>
               ))
             ) : (
-              <AdminTableEmpty colSpan={5} message="No customers yet." />
+              <AdminTableEmpty message="No customers yet." />
             )}
           </AdminTable>
         </AdminCard>
-        <Pagination page={page} pages={pages} onPageChange={setPage} />
+        <Pagination page={page} totalPages={pages} totalItems={total} onPageChange={setPage} />
       </div>
     </>
   );

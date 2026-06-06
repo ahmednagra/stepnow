@@ -9,7 +9,6 @@ import { useParams } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminFormField, adminInputClass, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty } from "@/components/admin";
 import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
-import { Badge } from "@/components/ui/Badge";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { formatPriceEur } from "@/utils/decimal";
@@ -83,7 +82,7 @@ export default function DriverDetailPage() {
                 <AdminTableCell><DeliveryStatusBadge status={o.delivery_status} /></AdminTableCell>
                 <AdminTableCell>{formatPriceEur(o.gross_amount)}</AdminTableCell>
               </AdminTableRow>
-            )) : <AdminTableEmpty colSpan={4} message="No jobs assigned yet." />}
+            )) : <AdminTableEmpty message="No jobs assigned yet." />}
           </AdminTable>
         </AdminCard>
       </div>

@@ -74,7 +74,7 @@ export default function DriversPage() {
         <AdminCard flush title={`${total} ${total === 1 ? "driver" : "drivers"}`}>
           <AdminTable columns={["Name", "Phone", "Email", "Vehicle", "Status"]}>
             {loading ? (
-              <AdminTableRow><AdminTableCell colSpan={5}><div className="flex justify-center py-8"><Loader2 className="animate-spin text-slate-400" /></div></AdminTableCell></AdminTableRow>
+              <AdminTableEmpty loading />
             ) : rows && rows.length > 0 ? (
               rows.map((d) => (
                 <AdminTableRow key={d.id}>
@@ -82,15 +82,15 @@ export default function DriversPage() {
                   <AdminTableCell>{d.phone ?? "—"}</AdminTableCell>
                   <AdminTableCell>{d.email ?? "—"}</AdminTableCell>
                   <AdminTableCell>{d.vehicle_label ?? "—"}</AdminTableCell>
-                  <AdminTableCell><Badge variant={d.active ? "success" : "neutral"}>{d.active ? "Active" : "Inactive"}</Badge></AdminTableCell>
+                  <AdminTableCell><Badge tone={d.active ? "success" : "neutral"}>{d.active ? "Active" : "Inactive"}</Badge></AdminTableCell>
                 </AdminTableRow>
               ))
             ) : (
-              <AdminTableEmpty colSpan={5} message="No drivers yet." />
+              <AdminTableEmpty message="No drivers yet." />
             )}
           </AdminTable>
         </AdminCard>
-        <Pagination page={page} pages={pages} onPageChange={setPage} />
+        <Pagination page={page} totalPages={pages} totalItems={total} onPageChange={setPage} />
       </div>
     </>
   );
