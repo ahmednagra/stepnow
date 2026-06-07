@@ -1,4 +1,4 @@
-﻿[Unit]
+[Unit]
 Description=StepNow Next.js frontend
 After=network.target
 
