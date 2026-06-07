@@ -44,5 +44,8 @@
     "**/package-lock.json": true
   },
 
-  "terminal.integrated.cwd": "${workspaceFolder}"
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "cSpell.words": [
+    "psycopg"
+  ]
 }
