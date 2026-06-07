@@ -8,6 +8,22 @@ import {
 } from "@/lib/i18n/config";
 import { ROUTE_MAP, REVERSE_ROUTE_MAP } from "@/lib/i18n/routes";
 
+/**
+ * Build an absolute URL for a redirect using the PUBLIC origin as seen by
+ * the browser, not the internal proxy origin (localhost:3000). nginx sends
+ * X-Forwarded-Host / X-Forwarded-Proto; fall back to the Host header.
+ */
+function publicUrl(path: string, request: NextRequest): URL {
+  const proto =
+    request.headers.get("x-forwarded-proto") ??
+    request.nextUrl.protocol.replace(":", "");
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    request.nextUrl.host;
+  return new URL(path, `${proto}://${host}`);
+}
+
 function isEnglishPath(path: string): boolean {
   return path === "/en" || path.startsWith("/en/");
 }
@@ -46,16 +62,12 @@ export function middleware(request: NextRequest) {
     if (cookieValue === "en" && !englishPath) {
       const target = deToEnStaticOnly(path);
       if (!target) return NextResponse.next();
-      const url = request.nextUrl.clone();
-      url.pathname = target;
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(publicUrl(target, request));
     }
     if (cookieValue === "de" && englishPath) {
       const target = enToDeStaticOnly(path);
       if (!target) return NextResponse.next();
-      const url = request.nextUrl.clone();
-      url.pathname = target;
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(publicUrl(target, request));
     }
     return NextResponse.next();
   }
@@ -70,7 +82,7 @@ export function middleware(request: NextRequest) {
   if (!prefersGerman && !englishPath) {
     const target = deToEnStaticOnly(path);
     response = target
-      ? NextResponse.redirect(new URL(target, request.url))
+      ? NextResponse.redirect(publicUrl(target, request))
       : NextResponse.next();
   } else {
     response = NextResponse.next();
