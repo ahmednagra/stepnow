@@ -1,0 +1,261 @@
+================================================================
+ STEPNOW — VPS OPERATIONS GUIDE
+ Server: srv1737236  (Hostinger VPS, Ubuntu 24.04)
+ Domain: step-now.de  |  API: api.step-now.de
+ App path on VPS: /root/stepnow
+================================================================
+
+----------------------------------------------------------------
+ 0) HOW TO CONNECT TO THE SERVER
+----------------------------------------------------------------
+Open the VPS terminal (Hostinger browser terminal) or SSH:
+
+    ssh root@76.13.136.150
+
+Then go to the app folder:
+
+    cd /root/stepnow
+
+
+----------------------------------------------------------------
+ 1) ARCHITECTURE (what runs where)
+----------------------------------------------------------------
+- Backend  : FastAPI (uvicorn) on 127.0.0.1:8000   -> systemd: stepnow-backend
+- Frontend : Next.js (next start) on 127.0.0.1:3000 -> systemd: stepnow-frontend
+- nginx    : public 80/443, SSL via Let's Encrypt
+             step-now.de / www  -> frontend (3000)
+             api.step-now.de     -> backend  (8000)
+
+Env files (live on the server, NOT in git):
+- Backend  : /root/stepnow/apps/backend/.env
+- Frontend : /root/stepnow/apps/frontend/.env.local
+
+
+----------------------------------------------------------------
+ 2) DEPLOY NEW CODE (after pushing to GitHub from your PC)
+----------------------------------------------------------------
+On your PC (PowerShell), push as usual:
+
+    git add .
+    git commit -m "your message"
+    git push origin main
+
+Then on the VPS, ONE command does everything
+(pull + backend deps + clean frontend build + restart all):
+
+    cd /root/stepnow
+    bash scripts/deploy.sh
+
+What deploy.sh does:
+  - git reset --hard origin/main   (pulls latest; does NOT touch .env files)
+  - installs backend requirements
+  - STOPS frontend, deletes .next, runs a CLEAN build (avoids corruption)
+  - syncs systemd + nginx config
+  - restarts backend + frontend
+  - prints status + listening ports at the end
+
+NOTE: the [BFF] "DYNAMIC_SERVER_USAGE" lines during build are NOISE,
+not errors. A good build ends with:
+    ✓ Generating static pages (90/90)
+    ✓ Collecting build traces
+    ✓ Finalizing page optimization
+
+
+----------------------------------------------------------------
+ 3) EDIT BACKEND CREDENTIALS / SETTINGS (.env)
+----------------------------------------------------------------
+Backend reads: /root/stepnow/apps/backend/.env
+
+    nano /root/stepnow/apps/backend/.env
+    # edit values, then save:  Ctrl+O , Enter , Ctrl+X
+    systemctl restart stepnow-backend
+
+Common values you may change:
+    DATABASE_URL=postgresql+psycopg://stepnow:PASSWORD@127.0.0.1:5432/stepnow
+    JWT_SECRET_KEY=...
+    SEED_ADMIN_EMAIL=info@step-now.de
+    SEED_ADMIN_PASSWORD=...
+    SMTP_USER=...
+    SMTP_PASSWORD=...        (Gmail 16-char App Password)
+    EMAILS_FROM_EMAIL=info@step-now.de
+
+IMPORTANT for production (keep these):
+    ENVIRONMENT=production
+    DEBUG=false
+    CORS_ALLOWED_ORIGINS=["https://step-now.de","https://www.step-now.de"]
+
+To generate a new JWT secret:
+    python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+
+After ANY backend .env change:
+    systemctl restart stepnow-backend
+
+
+----------------------------------------------------------------
+ 4) EDIT FRONTEND CREDENTIALS / SETTINGS (.env.local)
+----------------------------------------------------------------
+Frontend reads: /root/stepnow/apps/frontend/.env.local
+
+    nano /root/stepnow/apps/frontend/.env.local
+    # save: Ctrl+O , Enter , Ctrl+X
+
+Current values:
+    BACKEND_API_URL=http://127.0.0.1:8000   (server-to-server, keep as-is)
+    NEXT_PUBLIC_SITE_URL=https://step-now.de
+
+VERY IMPORTANT:
+- Server-side vars (like BACKEND_API_URL): a simple restart is enough:
+      systemctl restart stepnow-frontend
+- Any NEXT_PUBLIC_* var is baked in at BUILD time. Changing it needs a
+  REBUILD, not just a restart:
+      cd /root/stepnow/apps/frontend
+      systemctl stop stepnow-frontend
+      rm -rf .next
+      npm run build
+      systemctl start stepnow-frontend
+
+
+----------------------------------------------------------------
+ 5) START / STOP / RESTART SERVICES
+----------------------------------------------------------------
+    systemctl start   stepnow-backend
+    systemctl stop    stepnow-backend
+    systemctl restart stepnow-backend
+
+    systemctl start   stepnow-frontend
+    systemctl stop    stepnow-frontend
+    systemctl restart stepnow-frontend
+
+    systemctl reload  nginx        (after editing nginx config)
+    systemctl restart nginx
+
+Enable on boot (already done, but if ever needed):
+    systemctl enable stepnow-backend stepnow-frontend
+
+
+----------------------------------------------------------------
+ 6) CHECK STATUS / HEALTH
+----------------------------------------------------------------
+One-shot check of everything:
+
+    bash /root/stepnow/scripts/status.sh
+
+Manual checks:
+    systemctl is-active stepnow-backend stepnow-frontend nginx
+    ss -ltnp | grep -E '3000|8000|:80|:443'
+
+    curl -s -o /dev/null -w "frontend: %{http_code}\n" http://127.0.0.1:3000
+    curl -s -o /dev/null -w "backend:  %{http_code}\n" http://127.0.0.1:8000
+    curl -s -o /dev/null -w "%{http_code}\n" https://step-now.de
+    curl -s -o /dev/null -w "%{http_code}\n" https://api.step-now.de/api/v0/public/services
+
+Expected (healthy):
+    frontend -> 200 or 307
+    backend root -> 404   (normal; real routes are under /api/v0/...)
+    https://step-now.de -> 307 (redirect, fine)
+    api .../public/services -> 200
+
+
+----------------------------------------------------------------
+ 7) VIEW LOGS (when something is broken)
+----------------------------------------------------------------
+Live (follow) logs:
+    journalctl -u stepnow-backend  -f
+    journalctl -u stepnow-frontend -f
+    journalctl -u nginx            -f
+
+Last N lines (no follow):
+    journalctl -u stepnow-frontend -n 40 --no-pager
+    journalctl -u stepnow-backend  -n 40 --no-pager
+
+(Press Ctrl+C to exit a -f follow.)
+
+
+----------------------------------------------------------------
+ 8) DATABASE QUICK CHECKS (PostgreSQL)
+----------------------------------------------------------------
+List databases:
+    sudo -u postgres psql -c "\l"
+
+Check the stepnow role:
+    sudo -u postgres psql -c "\du stepnow"
+
+Open the stepnow DB:
+    sudo -u postgres psql -d stepnow
+    # inside: \dt  (list tables) , \q (quit)
+
+
+----------------------------------------------------------------
+ 9) NGINX CONFIG (rarely needed)
+----------------------------------------------------------------
+Config file: /etc/nginx/sites-available/step-now.de
+The repo copy is: /root/stepnow/deploy/nginx/step-now.de.conf
+(deploy.sh copies repo -> /etc/nginx automatically.)
+
+After editing nginx by hand:
+    nginx -t            (MUST say "syntax is ok" + "test is successful")
+    systemctl reload nginx
+
+WARNING: never paste nginx config created on Windows with a BOM.
+If nginx says: unknown directive "#" ... that is a BOM problem.
+Re-create the file on the server with a clean here-doc (cat > file <<'EOF').
+
+
+----------------------------------------------------------------
+ 10) SSL CERTIFICATES (Let's Encrypt / certbot)
+----------------------------------------------------------------
+Certs live at: /etc/letsencrypt/live/step-now.de/
+Auto-renew runs via the certbot systemd timer:
+    systemctl status certbot.timer
+
+Manual renew test (dry run):
+    certbot renew --dry-run
+
+Issue/extend for a new subdomain:
+    certbot certonly --nginx -d step-now.de -d www.step-now.de -d api.step-now.de
+
+
+----------------------------------------------------------------
+ 11) REBOOT THE SERVER
+----------------------------------------------------------------
+    reboot
+After it comes back (services auto-start), reconnect and verify:
+    cd /root/stepnow && bash scripts/status.sh
+
+
+----------------------------------------------------------------
+ 12) COMMON PROBLEMS -> FIX
+----------------------------------------------------------------
+502 Bad Gateway (nginx page):
+    -> an app is down. Check: bash scripts/status.sh
+    -> if frontend down: journalctl -u stepnow-frontend -n 40 --no-pager
+
+"next: not found":
+    -> node_modules missing. Fix:
+       cd /root/stepnow/apps/frontend && npm ci && npm run build
+       systemctl restart stepnow-frontend
+
+"ENOENT ... .next/prerender-manifest.json":
+    -> build is incomplete/corrupt. Fix (clean rebuild):
+       systemctl stop stepnow-frontend
+       cd /root/stepnow/apps/frontend && rm -rf .next && npm run build
+       systemctl start stepnow-frontend
+
+Backend won't start after .env edit:
+    -> check for typos / missing values:
+       journalctl -u stepnow-backend -n 40 --no-pager
+
+nginx: unknown directive "#":
+    -> BOM in config (see section 9).
+
+
+----------------------------------------------------------------
+ 13) GOLDEN RULES
+----------------------------------------------------------------
+- .env files live ONLY on the server. Never commit them to git.
+- git reset --hard (inside deploy.sh) does NOT delete .env (it's gitignored).
+- Changing NEXT_PUBLIC_* needs a REBUILD, not just restart.
+- Always run `nginx -t` before reloading nginx.
+- After backend .env change: systemctl restart stepnow-backend
+- For everyday deploys: cd /root/stepnow && bash scripts/deploy.sh
+================================================================
