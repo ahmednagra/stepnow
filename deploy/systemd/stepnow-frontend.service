@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=root
 WorkingDirectory=/root/stepnow/apps/frontend
-EnvironmentFile=/etc/stepnow/frontend.env
+EnvironmentFile=/root/stepnow/apps/frontend/.env.local
 Environment="NODE_ENV=production"
 ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3000
 Restart=always

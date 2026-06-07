@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=root
 WorkingDirectory=/root/stepnow/apps/backend
-EnvironmentFile=/etc/stepnow/backend.env
+EnvironmentFile=/root/stepnow/apps/backend/.env
 Environment="PATH=/root/stepnow/apps/backend/venv/bin"
 ExecStart=/root/stepnow/apps/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
 Restart=always
