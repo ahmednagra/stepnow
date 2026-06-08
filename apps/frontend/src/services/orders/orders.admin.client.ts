@@ -6,26 +6,52 @@ import { nextjsApiClient } from "@/lib/nextjs-api";
 import type { Paginated } from "@/types";
 
 export type OrderStatus = "open" | "completed" | "cancelled";
+export type DeliveryStatus = "draft" | "dispatched" | "picked_up" | "delivered";
 export type PaymentMethod = "cash" | "girocard" | "bank_transfer" | "paypal" | "other";
 
 export interface OrderAdmin {
   id: string;
   order_number: string;
   status: OrderStatus;
+  delivery_status: DeliveryStatus;
   booking_id: string | null;
   service_id: string | null;
+  vehicle_id: string | null;
+  driver_id: string | null;
   customer_name: string;
   customer_phone: string;
   customer_email: string;
+  is_business: boolean;
+  company_name: string | null;
+  company_vatid: string | null;
   pickup_address: string;
+  pickup_city: string | null;
   destination_address: string;
+  destination_city: string | null;
   scheduled_datetime: string | null;
+  passenger_count: number;
+  luggage_count: number;
+  distance_km: string | null;
+  driver_name: string | null;
+  service_description: string | null;
   net_amount: string;
   vat_rate: string;
   vat_amount: string;
   gross_amount: string;
+  payment_due_days: number;
   due_date: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  internal_notes: string | null;
+  is_deleted: boolean;
   created_at: string;
+  updated_at: string;
+  // Derived list-level fields (computed server-side from the payment ledger / linked invoice).
+  amount_paid: string;
+  balance_due: string;
+  is_overdue: boolean;
+  invoice_number: string | null;
+  invoice_status: string | null;
 }
 
 export interface PaymentAdmin {
@@ -55,8 +81,6 @@ export interface InvoiceAdmin {
 export interface OrderDetail extends OrderAdmin {
   invoice: InvoiceAdmin | null;
   payments: PaymentAdmin[];
-  amount_paid: string;
-  balance_due: string;
 }
 
 export interface ConvertBookingInput {
@@ -136,8 +160,7 @@ export async function recordOrderPayment(orderId: string, payload: RecordPayment
 
 /**
  * Authenticated download of the invoice PDF (it streams behind get_current_admin).
- * Goes through the Next BFF with the session cookie. If your nextjsApiClient uses a base
- * other than "/api", change the prefix below to match.
+ * Goes through the Next BFF with the session cookie. The BFF base is "/api/v0".
  */
 export async function downloadInvoicePdf(orderId: string, invoiceNumber?: string): Promise<void> {
   const res = await fetch(`/api/v0/admin/orders/${orderId}/invoice/pdf`, { credentials: "include" });

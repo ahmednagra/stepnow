@@ -1,8 +1,8 @@
 # apps/backend/app/Http/Controllers/admin/OrdersController.py
-# Thin controller for the order bounded context (orders + optional invoices + payments + PDF),
-# mirroring how PricingController covers categories+items. Logic lives in the services.
+# Thin controller for the orders + optional-billing module. Logic lives in the services.
 
 import math
+from datetime import date
 from pathlib import Path
 from uuid import UUID
 from fastapi import Request
@@ -52,8 +52,29 @@ class OrdersController:
     ) -> PaginatedResponse[OrderAdminResponse]:
         items, total = OrdersService.list(db, page, size, status, q, include_deleted)
         pages = max(1, math.ceil(total / size)) if total else 0
+        today = date.today()
+        rows: list[OrderAdminResponse] = []
+        for o in items:
+            # Derive payment + invoice state per row so the list view can show balance/overdue
+            # without a round-trip to the detail endpoint. Same PaymentsService calls used in
+            # _detail; the page size cap (≤100) keeps this cheap.
+            paid = PaymentsService.received_total(db, o.id)
+            balance = PaymentsService.balance_due(db, o)
+            invoice = o.invoice  # one-to-one relationship (may be None)
+            is_overdue = bool(
+                balance > 0 and o.due_date is not None and o.due_date < today
+            )
+            base = OrderAdminResponse.model_validate(o).model_dump()
+            base.update(
+                amount_paid=paid,
+                balance_due=balance,
+                is_overdue=is_overdue,
+                invoice_number=invoice.invoice_number if invoice else None,
+                invoice_status=invoice.status if invoice else None,
+            )
+            rows.append(OrderAdminResponse(**base))
         return PaginatedResponse[OrderAdminResponse](
-            items=[OrderAdminResponse.model_validate(o) for o in items],
+            items=rows,
             pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
         )
 
@@ -144,11 +165,21 @@ class OrdersController:
             if order.invoice
             else None
         )
+        today = date.today()
+        is_overdue = bool(
+            balance > 0 and order.due_date is not None and order.due_date < today
+        )
         base = OrderAdminResponse.model_validate(order).model_dump()
+        # Keep the detail response's derived fields consistent with the list view.
+        base.update(
+            amount_paid=paid,
+            balance_due=balance,
+            is_overdue=is_overdue,
+            invoice_number=order.invoice.invoice_number if order.invoice else None,
+            invoice_status=order.invoice.status if order.invoice else None,
+        )
         return OrderDetailResponse(
             **base,
             invoice=invoice,
             payments=payments,
-            amount_paid=paid,
-            balance_due=balance,
         )

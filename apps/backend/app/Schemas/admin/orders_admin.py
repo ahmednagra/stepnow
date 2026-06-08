@@ -37,10 +37,12 @@ class OrderAdminResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     order_number: str
-    status: str
+    status: str                       # financial: open | completed | cancelled
+    delivery_status: str              # physical: draft | dispatched | picked_up | delivered
     booking_id: UUID | None
     service_id: UUID | None
     vehicle_id: UUID | None
+    driver_id: UUID | None
     customer_name: str
     customer_phone: str
     customer_email: EmailStr
@@ -69,6 +71,16 @@ class OrderAdminResponse(BaseModel):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+
+    # ── Derived list-level fields (computed in the controller, not stored). These let the
+    # Orders table show payment + invoicing state without opening each order. They are
+    # populated via model_construct/extra kwargs in OrdersController.list. Defaults keep the
+    # schema valid for any caller that validates straight from the ORM object. ──
+    amount_paid: Decimal = Decimal("0.00")
+    balance_due: Decimal = Decimal("0.00")
+    is_overdue: bool = False           # balance_due > 0 AND due_date in the past
+    invoice_number: str | None = None  # the linked invoice's number, if one exists
+    invoice_status: str | None = None  # draft | sent | paid | ... (invoice doc lifecycle)
 
 
 # ─────────────────────────── Invoices ───────────────────────────
