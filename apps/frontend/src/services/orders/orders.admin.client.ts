@@ -140,7 +140,7 @@ export async function recordOrderPayment(orderId: string, payload: RecordPayment
  * other than "/api", change the prefix below to match.
  */
 export async function downloadInvoicePdf(orderId: string, invoiceNumber?: string): Promise<void> {
-  const res = await fetch(`/api/admin/orders/${orderId}/invoice/pdf`, { credentials: "include" });
+  const res = await fetch(`/api/v0/admin/orders/${orderId}/invoice/pdf`, { credentials: "include" });
   if (!res.ok) throw new Error("PDF download failed");
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

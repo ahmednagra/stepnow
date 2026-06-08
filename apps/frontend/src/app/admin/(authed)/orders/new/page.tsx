@@ -23,6 +23,7 @@ import {
   createParcelOrder, updateParcelOrder, setDeliveryStatus, sendDocuments, slipPdfHref,
   type CourierOrder, type DeliveryStatus, type ParcelOrderInput,
 } from "@/services/courier";
+import { createOrderInvoice } from "@/services/orders";
 
 const VAT_PRESETS = ["0", "0.07", "0.19"];
 const TERM_PRESETS = [14, 30, 45];
@@ -38,7 +39,7 @@ const ISSUER = {
   sender: "StepNow Rides & Movers — Naeem Ahmad e.K. · Blumenstraße 8 · 73779 Deizisau",
   steuer: "Steuer-Nr. 59500/72609",
   bank: "IBAN DE12 6005 0101 0001 2345 67 · BIC SOLADEST600 · Kreissparkasse Esslingen",
-  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · info@step-now.de",
+  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · rides@mail.step-now.de",
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -100,6 +101,7 @@ export default function NewParcelOrderPage() {
 
   // persisted order + ui
   const [order, setOrder] = useState<CourierOrder | null>(null);
+  const [hasInvoice, setHasInvoice] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [ccCustomer, setCcCustomer] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(true);
@@ -155,6 +157,11 @@ export default function NewParcelOrderPage() {
     const saved = order ? await updateParcelOrder(order.id, payload) : await createParcelOrder(payload);
     setOrder(saved);
     if (!linkedId && saved.customer_id) setLinkedId(saved.customer_id);
+    // Create-or-reuse the invoice (backend is idempotent). This is what enables "Send to driver".
+    if (!hasInvoice) {
+      await createOrderInvoice(saved.id, {});
+      setHasInvoice(true);
+    }
     return saved;
   }
 
@@ -619,7 +626,7 @@ export default function NewParcelOrderPage() {
             <button type="button" onClick={onPdf} disabled={!!busy} className="inline-flex h-9 items-center gap-1.5 border border-slate-900 bg-white px-3 text-[12.5px] font-medium text-slate-900 hover:bg-slate-900 hover:text-white disabled:opacity-50">
               {busy === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" strokeWidth={1.5} />} Driver slip PDF
             </button>
-            <button type="button" onClick={onSend} disabled={!!busy || !driverId} title={!driverId ? "Assign a driver first" : ""} className="inline-flex h-9 items-center gap-1.5 bg-emerald-600 px-3.5 text-[12.5px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+            <button type="button" onClick={onSend} disabled={!!busy || !driverId || !hasInvoice} title={!driverId ? "Assign a driver first" : !hasInvoice ? "Save first to create the invoice" : ""} className="inline-flex h-9 items-center gap-1.5 bg-emerald-600 px-3.5 text-[12.5px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
               {busy === "send" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" strokeWidth={1.5} />} Send to driver
             </button>
           </div>

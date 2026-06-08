@@ -6,7 +6,7 @@ from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
-from app.Core.Exceptions import ConflictError, NotFoundError
+from app.Core.Exceptions import NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.orders import Order
 from app.Models.invoices import Invoice
@@ -34,9 +34,12 @@ class InvoicesService:
         if not order:
             raise NotFoundError("Order not found", order_id=str(order_id))
 
-        if db.query(Invoice).filter(Invoice.order_id == order_id).first():
-            existing = db.query(Invoice).filter(Invoice.order_id == order_id).first()
-            raise ConflictError("Order already has an invoice", invoice_number=existing.invoice_number)
+        # ── Idempotent: an order has at most one invoice. If it already exists, return it
+        # instead of raising — this lets the admin "Save" action create-or-reuse the invoice
+        # on every save without a 409. (Was: raise ConflictError.)
+        existing = db.query(Invoice).filter(Invoice.order_id == order_id).first()
+        if existing:
+            return existing
 
         issue = payload.issue_date or date.today()
         rate = order.vat_rate
@@ -60,6 +63,12 @@ class InvoicesService:
         )
         db.add(invoice)
         db.flush()
+
+        # NOTE: the draft→dispatched delivery-lifecycle transition is intentionally NOT done
+        # here. Issuing the invoice is a billing event; the parcel is "dispatched" only when
+        # the driver is actually notified, which CourierController.send owns (it sets
+        # delivery_status="dispatched" + dispatched_at when the driver slip is emailed).
+
         AuditService.log(db, actor, "invoices", str(invoice.id), "create", None, InvoicesService._snapshot(invoice), request)
         db.commit()
         db.refresh(invoice)
