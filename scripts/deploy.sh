@@ -37,10 +37,27 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
 
-echo "==> [7/8] Enable + (re)start services"
+echo "==> [7/8] Start backend FIRST, then wait until it's actually ready"
 systemctl enable stepnow-backend stepnow-frontend >/dev/null 2>&1 || true
 systemctl restart stepnow-backend
-systemctl start stepnow-frontend
+
+# Wait for the backend to accept connections before touching the frontend.
+echo "    waiting for backend on 127.0.0.1:8000 ..."
+for i in $(seq 1 30); do
+  code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/v0/public/services || true)
+  if [ "$code" = "200" ]; then
+    echo "    backend is ready (HTTP $code after ${i}s)"
+    break
+  fi
+  if [ "$i" = "30" ]; then
+    echo "    !! backend did not become ready in 30s — check: journalctl -u stepnow-backend -n 40 --no-pager"
+    exit 1
+  fi
+  sleep 1
+done
+
+echo "==> Start frontend (backend confirmed up)"
+systemctl restart stepnow-frontend
 
 echo "==> [8/8] Status"
 sleep 5
