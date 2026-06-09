@@ -98,12 +98,19 @@ export function StorySection({ t, settings }: StorySectionProps) {
         </div>
 
         {paragraphs.length > 0 ? (
-          <div className="drop-cap text-[15px] leading-[1.75] text-[var(--color-text-secondary)] md:text-[15.5px]">
-            {paragraphs.map((p, idx) => (
-              <p key={idx} className="mb-3 last:mb-0">
-                {p}
+          <div>
+            <div className="drop-cap text-[15px] leading-[1.75] text-[var(--color-text-secondary)] md:text-[15.5px]">
+              {paragraphs.map((p, idx) => (
+                <p key={idx} className="mb-3 last:mb-0">
+                  {p}
+                </p>
+              ))}
+            </div>
+            {resolve(t, "about.story.servicegebiet") && (
+              <p className="mt-5 border-t border-[color:var(--color-border-soft)] pt-4 text-[13.5px] font-medium leading-relaxed text-[var(--color-text-primary)]">
+                {resolve(t, "about.story.servicegebiet")}
               </p>
-            ))}
+            )}
           </div>
         ) : (
           <p className="text-[15px] text-[var(--color-text-secondary)]">
