@@ -20,6 +20,11 @@ export interface CustomerAdmin {
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+  orders_count: number;
+  total_billed: string;
+  balance_due: string;
+  overdue_balance: string;
+  last_order_at: string | null;
 }
 
 export interface CustomerInput {

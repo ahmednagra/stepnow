@@ -19,10 +19,28 @@ class CustomersController:
     def list(
         db: Session, page: int, size: int, q: str | None, include_deleted: bool
     ) -> PaginatedResponse[CustomerResponse]:
-        items, total = CustomersService.list(db, page, size, q, include_deleted)
+        items, total = CustomersService.customers_list(db, page, size, q, include_deleted)
         pages = max(1, math.ceil(total / size)) if total else 0
+
+        # One grouped query for the loaded page → per-customer rollups (no N+1).
+        aggregates = CustomersService.aggregates_for(db, [c.id for c in items])
+
+        rows: list[CustomerResponse] = []
+        for c in items:
+            base = CustomerResponse.model_validate(c).model_dump()
+            agg = aggregates.get(c.id)
+            if agg:
+                base.update(
+                    orders_count=agg["orders_count"],
+                    total_billed=agg["total_billed"],
+                    balance_due=agg["balance_due"],
+                    overdue_balance=agg["overdue_balance"],
+                    last_order_at=agg["last_order_at"],
+                )
+            rows.append(CustomerResponse(**base))
+
         return PaginatedResponse[CustomerResponse](
-            items=[CustomerResponse.model_validate(c) for c in items],
+            items=rows,
             pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
         )
 

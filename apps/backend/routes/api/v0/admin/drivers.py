@@ -1,4 +1,4 @@
-# apps/backend/routes/api/v0/admin/drivers.py 
+# apps/backend/routes/api/v0/admin/drivers.py
 
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -7,7 +7,9 @@ from config.database import get_db
 from app.Http.Controllers.admin.DriversController import DriversController
 from app.Models.admin import AdminUser
 from app.Schemas.common import PaginatedResponse
-from app.Schemas.admin.drivers_admin import DriverCreate, DriverResponse, DriverUpdate
+from app.Schemas.admin.drivers_admin import (
+    DriverCreate, DriverResponse, DriverUpdate, LicenseCheckCreate,
+)
 from app.Schemas.admin.courier_admin import CourierOrderResponse
 from app.Utils.Helpers import get_current_admin
 
@@ -27,9 +29,7 @@ async def list_drivers(
     return DriversController.list(db, page, size, q, active_only, include_deleted)
 
 
-@router.post(
-    "/admin/drivers", response_model=DriverResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/admin/drivers", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
 async def create_driver(
     request: Request,
     payload: DriverCreate,
@@ -59,6 +59,17 @@ async def update_driver(
     return DriversController.update(db, driver_id, payload, actor, request)
 
 
+@router.post("/admin/drivers/{driver_id}/license-check", response_model=DriverResponse)
+async def record_license_check(
+    request: Request,
+    driver_id: UUID,
+    payload: LicenseCheckCreate,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+) -> DriverResponse:
+    return DriversController.record_license_check(db, driver_id, payload, actor, request)
+
+
 @router.delete("/admin/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_driver(
     request: Request,
@@ -69,9 +80,7 @@ async def delete_driver(
     DriversController.delete(db, driver_id, actor, request)
 
 
-@router.get(
-    "/admin/drivers/{driver_id}/orders", response_model=list[CourierOrderResponse]
-)
+@router.get("/admin/drivers/{driver_id}/orders", response_model=list[CourierOrderResponse])
 async def driver_orders(
     driver_id: UUID,
     db: Session = Depends(get_db),

@@ -4,6 +4,8 @@
 import { nextjsApiClient } from "@/lib/nextjs-api";
 import type { Paginated } from "@/types";
 
+export type ComplianceStatus = "ok" | "due" | "expired" | "blocked" | "unknown";
+
 export interface DriverAdmin {
   id: string;
   full_name: string;
@@ -13,9 +15,23 @@ export interface DriverAdmin {
   vehicle_label: string | null;
   active: boolean;
   internal_notes: string | null;
+  // Compliance (§21 StVG / §48 FeV)
+  license_number: string | null;
+  license_classes: string[] | null;
+  license_expiry: string | null;          // ISO date
+  license_restrictions: string | null;
+  pschein_number: string | null;
+  pschein_expiry: string | null;           // ISO date
+  last_license_check_at: string | null;    // ISO date
+  next_license_check_due: string | null;   // ISO date
+  last_checked_by: string | null;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+  // Derived (computed server-side)
+  compliance_status: ComplianceStatus;
+  orders_count: number;
+  last_dispatch_at: string | null;
 }
 
 export interface DriverInput {
@@ -26,6 +42,18 @@ export interface DriverInput {
   vehicle_label?: string | null;
   active?: boolean;
   internal_notes?: string | null;
+  license_number?: string | null;
+  license_classes?: string[] | null;
+  license_expiry?: string | null;
+  license_restrictions?: string | null;
+  pschein_number?: string | null;
+  pschein_expiry?: string | null;
+}
+
+export interface LicenseCheckInput {
+  checked_on?: string;        // ISO date; defaults to today server-side
+  interval_months?: number;   // defaults to 6
+  notes?: string;
 }
 
 export interface ListDriversParams {
@@ -54,6 +82,10 @@ export async function createAdminDriver(payload: DriverInput): Promise<DriverAdm
 }
 export async function updateAdminDriver(id: string, payload: Partial<DriverInput>): Promise<DriverAdmin> {
   return nextjsApiClient.patch<DriverAdmin>(`/admin/drivers/${id}`, payload);
+}
+/** Record a §21 StVG licence inspection — stamps last-check + recomputes next-due. */
+export async function recordLicenseCheck(id: string, payload: LicenseCheckInput = {}): Promise<DriverAdmin> {
+  return nextjsApiClient.post<DriverAdmin>(`/admin/drivers/${id}/license-check`, payload);
 }
 export async function deleteAdminDriver(id: string): Promise<void> {
   await nextjsApiClient.delete<void>(`/admin/drivers/${id}`);

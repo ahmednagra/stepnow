@@ -2,6 +2,7 @@
 # Request/response schemas for the Customers admin + the repeat-customer search.
 
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -53,3 +54,8 @@ class CustomerResponse(BaseModel):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+    orders_count: int = 0
+    total_billed: Decimal = Decimal("0.00")
+    balance_due: Decimal = Decimal("0.00")
+    overdue_balance: Decimal = Decimal("0.00")
+    last_order_at: datetime | None = None
