@@ -9,14 +9,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, Truck, Download, AlertTriangle, ChevronDown } from "lucide-react";
+import { Plus, Truck, Download, AlertTriangle, ChevronDown, MoreVertical } from "lucide-react";
 import {
   AdminPageHeader,
   AdminCard,
-  AdminTable,
-  AdminTableRow,
-  AdminTableCell,
-  AdminTableEmpty,
   FilterToolbar,
   Pagination,
 } from "@/components/admin";
@@ -33,7 +29,10 @@ const PAGE_SIZE = 20;
 
 type FinFilter = "all" | OrderStatus;
 type DelFilter = "all" | DeliveryStatus;
-type SortKey = "order_number" | "scheduled_datetime" | "due_date" | "gross_amount" | "balance_due";
+type SortKey =
+  | "order_number" | "customer_name" | "pickup_address" | "driver_name"
+  | "scheduled_datetime" | "due_date" | "delivery_status" | "status"
+  | "balance_due" | "gross_amount";
 
 const DELIVERY_LABEL: Record<DeliveryStatus, string> = {
   draft: "Draft", dispatched: "Dispatched", picked_up: "Picked up", delivered: "Delivered",
@@ -106,6 +105,29 @@ export default function OrdersPage() {
   const [compact, setCompact] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // column resize — pixel widths keyed by column id; resets on reload (no persistence)
+  const [colW, setColW] = useState<Record<string, number>>({});
+  const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
+
+  const onResizeStart = useCallback((e: React.PointerEvent, key: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const th = (e.currentTarget as HTMLElement).closest("th") as HTMLElement | null;
+    resizing.current = { key, startX: e.clientX, startW: th?.offsetWidth ?? 120 };
+    const onMove = (ev: PointerEvent) => {
+      if (!resizing.current) return;
+      const next = Math.max(64, resizing.current.startW + (ev.clientX - resizing.current.startX));
+      setColW((w) => ({ ...w, [resizing.current!.key]: next }));
+    };
+    const onUp = () => {
+      resizing.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }, []);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -131,7 +153,11 @@ export default function OrdersPage() {
 
   // close export menu on outside click
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false); };
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (exportRef.current && !exportRef.current.contains(t)) setExportOpen(false);
+      if (!(t instanceof Element) || !t.closest("[data-row-menu]")) setOpenMenuId(null);
+    };
     document.addEventListener("click", h);
     return () => document.removeEventListener("click", h);
   }, []);
@@ -324,23 +350,46 @@ export default function OrdersPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-[10px] uppercase tracking-[0.08em] text-slate-500">
-                  <th className="cursor-pointer px-3.5 py-2.5 text-left font-semibold hover:text-slate-700" onClick={() => toggleSort("order_number")}>Order / Invoice{arrow("order_number")}</th>
-                  <th className="px-3.5 py-2.5 text-left font-semibold">Customer</th>
-                  <th className="hidden px-3.5 py-2.5 text-left font-semibold lg:table-cell">Route</th>
-                  <th className="hidden px-3.5 py-2.5 text-left font-semibold lg:table-cell">Driver</th>
-                  <th className="cursor-pointer px-3.5 py-2.5 text-left font-semibold hover:text-slate-700" onClick={() => toggleSort("scheduled_datetime")}>Scheduled{arrow("scheduled_datetime")}</th>
-                  <th className="cursor-pointer px-3.5 py-2.5 text-left font-semibold hover:text-slate-700" onClick={() => toggleSort("due_date")}>Due{arrow("due_date")}</th>
-                  <th className="px-3.5 py-2.5 text-left font-semibold">Delivery</th>
-                  <th className="px-3.5 py-2.5 text-left font-semibold">Status</th>
-                  <th className="px-3.5 py-2.5 text-left font-semibold">Payment</th>
-                  <th className="cursor-pointer px-3.5 py-2.5 text-right font-semibold hover:text-slate-700" onClick={() => toggleSort("gross_amount")}>Gross{arrow("gross_amount")}</th>
+                  {([
+                    { key: "order_number", label: "Order / Invoice", sortable: true, align: "left" },
+                    { key: "customer_name", label: "Customer", sortable: true, align: "left" },
+                    { key: "pickup_address", label: "Route", sortable: true, align: "left", hide: true },
+                    { key: "driver_name", label: "Driver", sortable: true, align: "left", hide: true },
+                    { key: "scheduled_datetime", label: "Scheduled", sortable: true, align: "left" },
+                    { key: "due_date", label: "Due", sortable: true, align: "left" },
+                    { key: "delivery_status", label: "Delivery", sortable: true, align: "left" },
+                    { key: "status", label: "Status", sortable: true, align: "left" },
+                    { key: "balance_due", label: "Payment", sortable: true, align: "left" },
+                    { key: "gross_amount", label: "Gross", sortable: true, align: "right" },
+                  ] as { key: SortKey; label: string; sortable: boolean; align: "left" | "right"; hide?: boolean }[]).map((c) => (
+                    <th
+                      key={c.key}
+                      style={colW[c.key] ? { width: colW[c.key], minWidth: colW[c.key] } : undefined}
+                      className={cn(
+                        "group relative select-none px-3.5 py-2.5 font-semibold",
+                        c.align === "right" ? "text-right" : "text-left",
+                        c.sortable && "cursor-pointer hover:text-slate-700",
+                        c.hide && "hidden lg:table-cell",
+                      )}
+                      onClick={c.sortable ? () => toggleSort(c.key) : undefined}
+                    >
+                      {c.label}{c.sortable ? arrow(c.key) : ""}
+                      <span
+                        onPointerDown={(e) => onResizeStart(e, c.key)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none bg-transparent hover:bg-slate-300"
+                        aria-hidden
+                      />
+                    </th>
+                  ))}
+                  <th className="px-3.5 py-2.5 text-right font-semibold"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={10} className="px-3.5 py-10 text-center text-slate-400">Loading…</td></tr>
+                  <tr><td colSpan={11} className="px-3.5 py-10 text-center text-slate-400">Loading…</td></tr>
                 ) : view.length === 0 ? (
-                  <tr><td colSpan={10} className="px-3.5 py-10 text-center text-slate-400">No orders match these filters.</td></tr>
+                  <tr><td colSpan={11} className="px-3.5 py-10 text-center text-slate-400">No orders match these filters.</td></tr>
                 ) : (
                   view.map((o) => {
                     const overdue = o.is_overdue && num(o.balance_due) > 0;
@@ -386,6 +435,29 @@ export default function OrdersPage() {
                           <span className="font-mono text-[13px] font-semibold tabular-nums text-slate-900">{formatPriceEur(o.gross_amount)}</span>
                           {!compact && <span className="block text-[10px] text-slate-400">VAT {Math.round(num(o.vat_rate) * 100)}%</span>}
                         </td>
+                        <td className={cn("relative px-3.5 text-right", pad)} data-row-menu>
+                          <button
+                            type="button"
+                            aria-label="Row actions"
+                            className="inline-grid h-7 w-7 place-items-center border border-transparent text-slate-400 hover:border-slate-200 hover:bg-white hover:text-slate-700"
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId((id) => (id === o.id ? null : o.id)); }}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          {openMenuId === o.id && (
+                            <div className="absolute right-2 top-9 z-30 min-w-[200px] border border-slate-200 bg-white text-left shadow-lg">
+                              <Link href={`/admin/orders/${o.id}/invoice`} className="flex w-full items-center gap-2.5 border-b border-slate-100 px-3.5 py-2.5 text-[12.5px] text-slate-700 hover:bg-slate-50">
+                                <Download className="h-3.5 w-3.5" strokeWidth={1.5} /> Download invoice PDF
+                              </Link>
+                              <Link href={`/admin/orders/${o.id}`} className="flex w-full items-center gap-2.5 border-b border-slate-100 px-3.5 py-2.5 text-[12.5px] text-slate-700 hover:bg-slate-50">
+                                <Truck className="h-3.5 w-3.5" strokeWidth={1.5} /> Send to driver
+                              </Link>
+                              <Link href={`/admin/orders/${o.id}`} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[12.5px] text-slate-700 hover:bg-slate-50">
+                                Mark delivered
+                              </Link>
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
@@ -395,7 +467,7 @@ export default function OrdersPage() {
           </AdminCard>
         </div>
 
-        {pages > 1 && <Pagination page={page} pages={pages} onPageChange={setPage} />}
+        {pages > 1 && <Pagination page={page} totalPages={pages} totalItems={total} onPageChange={setPage} />}
       </div>
     </>
   );

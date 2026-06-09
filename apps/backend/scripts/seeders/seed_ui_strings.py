@@ -2967,6 +2967,129 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Generic copy success state",
         False,
     ),
+    # ════════════════════════════════════════════════════════════════════
+    # MISSING KEYS — backfill (from i18n runtime warnings)
+    # ════════════════════════════════════════════════════════════════════
+    # Homepage — How it works (section lead)
+    (
+        "home.how.summary",
+        "home",
+        "In drei einfachen Schritten zu Ihrer Fahrt — anfragen, bestätigen lassen, einsteigen.",
+        "Three simple steps to your ride — request, get confirmation, get going.",
+        "How-it-works section lead paragraph",
+        False,
+    ),
+    # Homepage — Testimonials (section lead)
+    (
+        "home.testimonials.lead",
+        "home",
+        "Echte Stimmen von Fahrgästen aus Plochingen, Esslingen und dem mittleren Neckartal.",
+        "Real voices from passengers in Plochingen, Esslingen and the central Neckar valley.",
+        "Testimonials section lead paragraph",
+        False,
+    ),
+    # Services — How it works (section lead/summary)
+    (
+        "services.hiw.summary",
+        "services",
+        "Vom ersten Kontakt bis zur Ankunft — der Pauschalpreis steht vor der Abfahrt fest.",
+        "From first contact to arrival — the price is fixed before you leave.",
+        "Services HIW section lead paragraph",
+        False,
+    ),
+    # Contact — Form column lead
+    (
+        "contact.form.lead",
+        "contact",
+        "Schreiben Sie uns Ihr Anliegen. Wir melden uns mit einer klaren Rückmeldung während unserer Servicezeiten.",
+        "Send us your request. We respond with a clear follow-up during our service hours.",
+        "Contact form column lead (right-aligned beside heading)",
+        False,
+    ),
+    # Contact — Methods column lead
+    (
+        "contact.methods.lead",
+        "contact",
+        "Telefon, E-Mail und Standort auf einen Blick. Für kurze Rückfragen ist der direkte Kontakt meist der schnellste Weg.",
+        "Phone, email, and location in one place. For short questions, direct contact is usually the fastest route.",
+        "Contact methods column lead",
+        False,
+    ),
+    # Contact — FAQ block
+    (
+        "contact.faq.eyebrow",
+        "contact",
+        "FAQ",
+        "FAQ",
+        "Contact FAQ eyebrow (small caps)",
+        False,
+    ),
+    (
+        "contact.faq.lead",
+        "contact",
+        "Antworten auf die häufigsten Fragen rund um Buchung, Preise und Ablauf.",
+        "Answers to the most common questions about booking, pricing and how it works.",
+        "Contact FAQ lead paragraph",
+        False,
+    ),
+    (
+        "contact.faq.jump",
+        "contact",
+        "Alle Fragen ansehen",
+        "View all questions",
+        "Contact FAQ jump/CTA link",
+        False,
+    ),
+    # Pricing — per-service tab taglines (rendered over hero band)
+    (
+        "pricing.tab.airport-transfer.tagline",
+        "pricing",
+        "Pünktlich, vorbestellt, mit Flugverfolgung.",
+        "On time, pre-booked, with flight tracking.",
+        "Pricing tab tagline: airport transfer",
+        False,
+    ),
+    (
+        "pricing.tab.hospital-transport.tagline",
+        "pricing",
+        "Sicher und sanft zu jedem Termin.",
+        "Safe and gentle to every appointment.",
+        "Pricing tab tagline: hospital transport",
+        False,
+    ),
+    (
+        "pricing.tab.school-transport.tagline",
+        "pricing",
+        "Derselbe Fahrer, jeden Schultag.",
+        "The same driver, every school day.",
+        "Pricing tab tagline: school transport",
+        False,
+    ),
+    (
+        "pricing.tab.shuttle-service.tagline",
+        "pricing",
+        "Bis zu 8 Fahrgäste, eine Fahrt.",
+        "Up to 8 passengers, one journey.",
+        "Pricing tab tagline: shuttle service",
+        False,
+    ),
+    (
+        "pricing.tab.courier-transport.tagline",
+        "pricing",
+        "Schnell, nachverfolgbar, zuverlässig zugestellt.",
+        "Fast, trackable, reliably delivered.",
+        "Pricing tab tagline: courier transport",
+        False,
+    ),
+    # Pricing — empty state body
+    (
+        "pricing.empty.body",
+        "pricing",
+        "Für diese Strecke erstellen wir Ihnen ein Pauschalpreis-Angebot innerhalb von 30 Minuten zu unseren Telefonzeiten.",
+        "We'll prepare a fixed-price quote for this route within 30 minutes during our phone hours.",
+        "Empty pricing state body",
+        False,
+    ),
 ]
 
 
