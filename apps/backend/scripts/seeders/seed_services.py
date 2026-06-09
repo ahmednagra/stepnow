@@ -164,8 +164,8 @@ SERVICES = [
         "slug_en": "shuttle-service",
         "title_de": "Shuttle Service",
         "title_en": "Shuttle Service",
-        "short_description_de": "Gruppentransport für Veranstaltungen, Konferenzen, Hochzeiten und Firmenanlässe.",
-        "short_description_en": "Group transport for events, conferences, weddings and corporate occasions.",
+        "short_description_de": "Zuverlässige Gruppenfahrten für Firmenevents, Veranstaltungen, Hochzeiten und private Anlässe – pünktlich, komfortabel und professionell organisiert.",
+        "short_description_en": "Reliable group transport for corporate events, occasions, weddings and private gatherings – punctual, comfortable and professionally organised.",
         "long_description_de": (
             "## Shuttle Service — Gruppentransport ohne Stress\n\n"
             "Hochzeit, Firmenfeier, Konferenz, Tagung: Wenn mehrere Gäste zur gleichen Zeit zum gleichen Ort müssen, "
@@ -260,19 +260,29 @@ def run() -> None:
 
         actor = get_system_actor(db)
         created = 0
+        updated = 0
         skipped = 0
         for svc_data in SERVICES:
             existing = (
                 db.query(Service).filter(Service.slug_de == svc_data["slug_de"]).first()
             )
             if existing:
-                log_skip(f"service '{svc_data['slug_de']}'", f"id={existing.id}")
-                skipped += 1
+                changes = {
+                    k: v for k, v in svc_data.items()
+                    if getattr(existing, k, None) != v
+                }
+                if not changes:
+                    log_skip(f"service '{svc_data['slug_de']}'", f"id={existing.id}")
+                    skipped += 1
+                    continue
+                ContentService.update_service(db, existing.id, changes, actor, request=None)
+                log_create(f"service '{svc_data['slug_de']}' (updated)", f"id={existing.id}")
+                updated += 1
                 continue
             svc = ContentService.create_service(db, svc_data, actor, request=None)
             log_create(f"service '{svc.slug_de}' / '{svc.slug_en}'", f"id={svc.id}")
             created += 1
-        print(f"  [done] {created} created, {skipped} skipped")
+        print(f"  [done] {created} created, {updated} updated, {skipped} skipped")
     finally:
         db.close()
 

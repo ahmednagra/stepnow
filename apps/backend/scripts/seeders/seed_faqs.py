@@ -33,6 +33,14 @@ FAQS = [
         "answer_en": "We operate by pre-booking only no spontaneous street pickups. The price is set **before** the ride (a price instead of a taximeter). We are a licensed Mietwagen company under § 49 PBefG, not a taxi license. In practice: predictable, calculable, personal.",
     },
     {
+        "sort_order": 25,
+        "category": "general",
+        "question_de": "Kann ich kurzfristig buchen?",
+        "question_en": "Can I book at short notice?",
+        "answer_de": "Kurzfristige Buchungen sind möglich – rufen Sie uns einfach an und wir prüfen die Verfügbarkeit.",
+        "answer_en": "Short-notice bookings are possible – just give us a call and we'll check availability.",
+    },
+    {
         "sort_order": 30,
         "category": "general",
         "question_de": "In welcher Region fahren Sie?",
@@ -100,6 +108,14 @@ FAQS = [
     },
     # === AIRPORT-specific (category matches service slug for the service detail page) ===
     {
+        "sort_order": 5,
+        "category": "flughafentransfer",
+        "question_de": "Bieten Sie Flughafentransfers an?",
+        "question_en": "Do you offer airport transfers?",
+        "answer_de": "Ja, wir fahren Sie zuverlässig zu allen Flughäfen – Festpreis vor Abfahrt, inklusive Flugverfolgung.",
+        "answer_en": "Yes, we drive you reliably to all airports – fixed price before departure, including flight tracking.",
+    },
+    {
         "sort_order": 10,
         "category": "flughafentransfer",
         "question_de": "Was passiert, wenn mein Flug Verspätung hat?",
@@ -144,17 +160,44 @@ def run() -> None:
 
         actor = get_system_actor(db)
         created = 0
+        updated = 0
         skipped = 0
+
+        # Remove stale FAQs left over from the old car-rental template.
+        STALE_QUESTIONS_DE = [
+            "Wie kann ich ein Auto buchen?",
+        ]
+        for stale_q in STALE_QUESTIONS_DE:
+            stale = (
+                db.query(Faq)
+                .filter(Faq.question_de == stale_q, Faq.is_deleted == False)
+                .first()
+            )
+            if stale:
+                FaqsService.soft_delete_faq(db, stale.id, actor, request=None)
+
         for faq_data in FAQS:
             existing = (
                 db.query(Faq).filter(Faq.question_de == faq_data["question_de"]).first()
             )
             if existing:
-                skipped += 1
+                fields = ("sort_order", "active", "category", "question_de",
+                          "question_en", "answer_de", "answer_en")
+                changes = {
+                    k: faq_data[k] for k in fields
+                    if k in faq_data and getattr(existing, k) != faq_data[k]
+                }
+                if existing.is_deleted:
+                    changes["is_deleted"] = False
+                if not changes:
+                    skipped += 1
+                    continue
+                FaqsService.update_faq(db, existing.id, changes, actor, request=None)
+                updated += 1
                 continue
             FaqsService.create_faq(db, faq_data, actor, request=None)
             created += 1
-        print(f"  [done] {created} created, {skipped} skipped")
+        print(f"  [done] {created} created, {updated} updated, {skipped} skipped")
     finally:
         db.close()
 

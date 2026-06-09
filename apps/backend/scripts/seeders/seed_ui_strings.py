@@ -258,8 +258,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "home.how.heading",
         "home",
-        "So einfach geht's",
-        "Three simple steps",
+        "So funktioniert Ihre Buchung",
+        "How your booking works",
         "How-it-works section heading",
         False,
     ),
@@ -1634,6 +1634,14 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Ob Flughafentransfer, Krankenfahrt, Schülerbeförderung oder Shuttle — wir behandeln jede Fahrt mit dem Respekt, den sie verdient.",
         "Whether it's an airport transfer, a hospital ride, a school run or a shuttle — we treat every trip with the respect it deserves.",
         "Story paragraph 4",
+        False,
+    ),
+    (
+        "about.story.servicegebiet",
+        "about",
+        "Unser Servicegebiet: Deizisau · Plochingen · Wernau · Denkendorf · Köngen · Esslingen · Kirchheim (Teck) und Umgebung.",
+        "Our service area: Deizisau · Plochingen · Wernau · Denkendorf · Köngen · Esslingen · Kirchheim (Teck) and the surrounding region.",
+        "Service area line shown in the About story section",
         False,
     ),
     # Values section
@@ -3099,11 +3107,40 @@ def run() -> None:
     try:
         actor = get_system_actor(db)
         created = 0
+        updated = 0
         skipped = 0
         for key, namespace, value_de, value_en, description, is_locked in UI_STRINGS:
+            snapshot = {
+                "key": key,
+                "namespace": namespace,
+                "value_de": value_de,
+                "value_en": value_en,
+                "description": description,
+                "is_locked": is_locked,
+            }
             existing = db.query(UiString).filter(UiString.key == key).first()
             if existing:
-                skipped += 1
+                before = {
+                    "key": existing.key,
+                    "namespace": existing.namespace,
+                    "value_de": existing.value_de,
+                    "value_en": existing.value_en,
+                    "description": existing.description,
+                    "is_locked": existing.is_locked,
+                }
+                if before == snapshot:
+                    skipped += 1
+                    continue
+                existing.namespace = namespace
+                existing.value_de = value_de
+                existing.value_en = value_en
+                existing.description = description
+                existing.is_locked = is_locked
+                db.flush()
+                AuditService.log(
+                    db, actor, "ui_strings", str(existing.id), "update", before, snapshot, None
+                )
+                updated += 1
                 continue
             row = UiString(
                 key=key,
@@ -3115,20 +3152,12 @@ def run() -> None:
             )
             db.add(row)
             db.flush()
-            snapshot = {
-                "key": key,
-                "namespace": namespace,
-                "value_de": value_de,
-                "value_en": value_en,
-                "description": description,
-                "is_locked": is_locked,
-            }
             AuditService.log(
                 db, actor, "ui_strings", str(row.id), "create", None, snapshot, None
             )
             created += 1
         db.commit()
-        print(f"  [done] {created} created, {skipped} skipped")
+        print(f"  [done] {created} created, {updated} updated, {skipped} skipped")
     finally:
         db.close()
 
