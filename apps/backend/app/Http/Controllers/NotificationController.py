@@ -1,6 +1,7 @@
 # apps/backend/app/Http/Controllers/NotificationController.py
 # Thin controller for the admin notification panel. Logic lives in NotificationService.
 
+from typing import List
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -31,7 +32,7 @@ class NotificationController:
         return UnreadCountResponse(unread=NotificationService.unread_count(db, actor.id))
 
     @staticmethod
-    def mark_read(db: Session, actor: AdminUser, ids: list[UUID]) -> UnreadCountResponse:
+    def mark_read(db: Session, actor: AdminUser, ids: List[UUID]) -> UnreadCountResponse:
         NotificationService.mark_read(db, actor.id, ids)
         return UnreadCountResponse(unread=NotificationService.unread_count(db, actor.id))
 
