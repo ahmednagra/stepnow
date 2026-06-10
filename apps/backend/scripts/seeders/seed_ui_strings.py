@@ -258,7 +258,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "home.how.heading",
         "home",
-        "So funktioniert Ihre Buchung",
+        "So einfach funktioniert Ihre Buchung",
         "How your booking works",
         "How-it-works section heading",
         False,
@@ -616,7 +616,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "services.krankenhausfahrten",
         "services",
-        "Krankenhausfahrten",
+        "Krankenfahrten",
         "Hospital transport",
         "Short label — Footer, hero feature block",
         True,
@@ -632,7 +632,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "services.shuttle",
         "services",
-        "Shuttle-Service",
+        "Shuttle Service",
         "Shuttle service",
         "Short label — Footer, hero feature block",
         True,
@@ -640,8 +640,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "services.courier",
         "services",
-        "Kurier-/Sondertransport",
-        "Courier transport",
+        "Kurier- & Expressfahrten",
+        "Courier & express",
         "Short label — Footer, hero feature block",
         True,
     ),
@@ -1550,8 +1550,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.page.subhead",
         "about",
-        "Ihr regionaler Mobilitätspartner für vorbestellte Fahrten.",
-        "Your regional mobility partner for pre-booked transfers.",
+        "Wir sind Ihr professioneller Fahrdienst als Alternative zum Taxi und bieten sichere, komfortable sowie zuverlässige Fahrten für Privat- und Geschäftskunden. Mit einem gepflegten Fuhrpark, erfahrenen Fahrern und konsequent kundenorientiertem Service garantieren wir höchste Qualität und Pünktlichkeit. Ob Flughafentransfer, Krankenfahrt oder Kurierdienst – wir bringen Sie entspannt und sicher ans Ziel.",
+        "We are your professional driver service as an alternative to the taxi, offering safe, comfortable and reliable trips for private and business customers. With a well-maintained fleet, experienced drivers and consistently customer-focused service, we guarantee the highest quality and punctuality. Whether airport transfer, hospital ride or courier service — we get you to your destination relaxed and safe.",
         "About page subhead",
         False,
     ),
@@ -2693,8 +2693,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "footer.col.brand",
         "footer",
-        "StepNow Rides & Movers — Ihr regionaler Partner für vorbestellte Fahrten in Plochingen/Esslingen.",
-        "StepNow Rides & Movers — your regional partner for pre-booked transfers in Plochingen/Esslingen.",
+        "StepNow Rides & Movers — Ihr zuverlässiger Partner für Personenbeförderung und Kurierdienste in Deizisau, Esslingen und Umgebung.",
+        "StepNow Rides & Movers — your reliable partner for passenger transport and courier services in Deizisau, Esslingen and the surrounding area.",
         "Footer brand column tagline",
         False,
     ),
