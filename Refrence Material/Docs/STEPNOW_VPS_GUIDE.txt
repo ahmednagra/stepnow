@@ -70,6 +70,8 @@ Backend reads: /root/stepnow/apps/backend/.env
     # edit values, then save:  Ctrl+O , Enter , Ctrl+X
     systemctl restart stepnow-backend
 
+for backend service verify run or error:
+journalctl -u stepnow-backend -n 60 --no-pager
 Common values you may change:
     DATABASE_URL=postgresql+psycopg://stepnow:PASSWORD@127.0.0.1:5432/stepnow
     JWT_SECRET_KEY=...

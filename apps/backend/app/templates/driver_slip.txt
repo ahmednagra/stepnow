@@ -1,0 +1,19 @@
+Hallo {{ driver_name }},
+
+Ihnen wurde ein neuer Fahrauftrag zugewiesen. Der vollstaendige Fahrauftrag liegt dieser E-Mail als PDF bei ({{ order_number }}.pdf).
+
+AUFTRAGSDETAILS
+---------------
+Auftragsnummer : {{ order_number }}
+Datum / Zeit   : {{ pickup_datetime }}
+Abholung       : {{ pickup }}
+Zielort        : {{ destination }}
+Fahrer         : {{ driver_name }}
+{% if vehicle %}Fahrzeug       : {{ vehicle }}
+{% endif %}{% if notes %}Hinweise       : {{ notes }}
+{% endif %}
+
+Bei Fragen zu diesem Auftrag wenden Sie sich bitte an {{ support_email }}.
+
+— {{ brand_name }} · {{ brand_tagline }}
+{{ company_name }}, {{ company_owner }}

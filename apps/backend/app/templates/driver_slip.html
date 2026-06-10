@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block subject_line %}Fahrauftrag {{ order_number }}{% endblock %}
+{% block preheader %}Neuer Fahrauftrag {{ order_number }} — {{ pickup }} → {{ destination }}{% endblock %}
+{% block header_title %}Neuer Fahrauftrag{% endblock %}
+
+{% block header_ref %}
+    <p style="margin:6px 0 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#185FA5; font-weight:600;">
+        Auftragsnummer {{ order_number }}
+    </p>
+{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Hallo {{ driver_name }},</p>
+
+    <p style="margin:0 0 24px 0;">
+        Ihnen wurde ein neuer Fahrauftrag zugewiesen. Die Einzelheiten finden Sie nachfolgend.
+        Der vollständige Fahrauftrag liegt dieser E-Mail als PDF bei.
+    </p>
+
+    <!-- Detail card -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 24px 0;">
+        <tr>
+            <td style="padding:18px 22px; background-color:#FAFBFC; border-bottom:1px solid #E5E7EB;
+                       font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:700;
+                       color:#1F2937; letter-spacing:0.3px; text-transform:uppercase;">
+                Auftragsdetails
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:8px 22px 18px 22px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                       style="font-family:Arial,Helvetica,sans-serif; font-size:14px;">
+                    {% macro row(label, value) %}
+                    <tr>
+                        <td style="padding:10px 0; border-bottom:1px solid #F0F2F4; color:#6B7280; width:38%; vertical-align:top;">{{ label }}</td>
+                        <td style="padding:10px 0; border-bottom:1px solid #F0F2F4; color:#1F2937; font-weight:600; vertical-align:top;">{{ value }}</td>
+                    </tr>
+                    {% endmacro %}
+                    {{ row('Auftragsnummer', order_number) }}
+                    {{ row('Datum / Zeit', pickup_datetime) }}
+                    {{ row('Abholung', pickup) }}
+                    {{ row('Zielort', destination) }}
+                    {{ row('Fahrer', driver_name) }}
+                    {% if vehicle %}{{ row('Fahrzeug', vehicle) }}{% endif %}
+                    {% if notes %}{{ row('Hinweise', notes) }}{% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Attachment note (PDF is attached, not linked) -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="background-color:#EEF4FB; border:1px solid #D6E4F2; border-radius:4px; margin:0 0 8px 0;">
+        <tr>
+            <td style="padding:14px 18px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#185FA5;">
+                <strong>📎 Anhang:</strong> Der vollständige Fahrauftrag <strong>{{ order_number }}.pdf</strong>
+                ist dieser E-Mail beigefügt.
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:20px 0 0 0; font-size:13px; color:#6B7280;">
+        Bei Fragen zu diesem Auftrag wenden Sie sich bitte an
+        <a href="mailto:{{ support_email }}" style="color:#185FA5;">{{ support_email }}</a>.
+    </p>
+{% endblock %}

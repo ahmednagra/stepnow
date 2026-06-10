@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="{% block lang %}de{% endblock %}" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>{% block subject_line %}{{ brand_name }}{% endblock %}</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
+    </style>
+    <![endif]-->
+    <style type="text/css">
+        body { margin:0; padding:0; width:100% !important; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+        table { border-collapse:collapse !important; }
+        img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+        a { text-decoration:none; }
+        /* Brand tokens — primary #185FA5, dark #0F4377, ink #1F2937, muted #6B7280, hairline #E5E7EB, canvas #F4F6F8 */
+        @media only screen and (max-width:620px) {
+            .email-card { width:100% !important; }
+            .email-pad { padding-left:24px !important; padding-right:24px !important; }
+            .email-header-pad { padding-left:24px !important; padding-right:24px !important; }
+        }
+    </style>
+</head>
+<body style="margin:0; padding:0; background-color:#F4F6F8; -webkit-font-smoothing:antialiased;">
+
+    <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F4F6F8;">
+        {% block preheader %}{{ brand_name }} — {{ brand_tagline }}{% endblock %}
+    </div>
+
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F4F6F8;">
+        <tr>
+            <td align="center" style="padding:32px 16px;">
+                <!--[if mso]><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600"><tr><td><![endif]-->
+                <table role="presentation" class="email-card" border="0" cellpadding="0" cellspacing="0" width="600"
+                       style="width:600px; max-width:600px; background-color:#FFFFFF; border:1px solid #E5E7EB;">
+
+                    <!-- Brand band -->
+                    <tr>
+                        <td class="email-header-pad" style="{% block header_color %}background-color:#185FA5;{% endblock %} padding:22px 40px;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="left" style="font-family:Arial,Helvetica,sans-serif; font-size:18px; font-weight:700; letter-spacing:0.3px; color:#FFFFFF;">
+                                        {% block brand_wordmark %}{{ brand_name }}{% endblock %}
+                                    </td>
+                                    <td align="right" style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#FFFFFF; opacity:0.85;">
+                                        {% block header_subtitle %}{{ brand_tagline }}{% endblock %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr><td style="height:3px; background-color:#0F4377; font-size:0; line-height:0;">&nbsp;</td></tr>
+
+                    <!-- Title + document number -->
+                    <tr>
+                        <td class="email-pad" style="padding:36px 40px 0 40px;">
+                            <h1 style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:22px; font-weight:700; color:#1F2937; line-height:1.3;">
+                                {% block header_title %}{{ brand_name }}{% endblock %}
+                            </h1>
+                            {% block header_ref %}{% endblock %}
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td class="email-pad" style="padding:20px 40px 40px 40px; font-family:Arial,Helvetica,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
+                            {% block content %}{% endblock %}
+                        </td>
+                    </tr>
+
+                    <!-- Footer: company legal block -->
+                    <tr>
+                        <td class="email-pad" style="padding:24px 40px; background-color:#FAFBFC; border-top:1px solid #E5E7EB; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#6B7280; line-height:1.6;">
+                            <p style="margin:0 0 4px 0; color:#4B5563; font-weight:600;">{{ company_name }}</p>
+                            <p style="margin:0 0 4px 0;">{{ company_owner }}{% if company_street %} · {{ company_street }}{% endif %}{% if company_city %} · {{ company_city }}{% endif %}</p>
+                            <p style="margin:0 0 8px 0;">
+                                {% if company_phone %}Tel: {{ company_phone }} · {% endif %}
+                                <a href="mailto:{{ support_email }}" style="color:#185FA5; text-decoration:none;">{{ support_email }}</a>
+                            </p>
+                            <p style="margin:0; color:#9CA3AF;">
+                                © {{ current_year }} {{ brand_name }} · Diese Nachricht wurde automatisch versendet — bitte nicht direkt antworten.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+                <!--[if mso]></td></tr></table><![endif]-->
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

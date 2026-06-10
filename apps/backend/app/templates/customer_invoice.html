@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block subject_line %}Rechnung {{ invoice_number }}{% endblock %}
+{% block preheader %}Ihre Rechnung {{ invoice_number }} zu Auftrag {{ order_number }}{% endblock %}
+{% block header_title %}Ihre Rechnung{% endblock %}
+
+{% block header_ref %}
+    <p style="margin:6px 0 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#185FA5; font-weight:600;">
+        Rechnungsnummer {{ invoice_number }}
+    </p>
+{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Sehr geehrte/r {{ customer_name }},</p>
+
+    <p style="margin:0 0 24px 0;">
+        vielen Dank für Ihren Auftrag. Anbei erhalten Sie Ihre Rechnung
+        <strong style="color:#1F2937;">{{ invoice_number }}</strong> zum Auftrag
+        <strong style="color:#1F2937;">{{ order_number }}</strong>. Die vollständige Rechnung
+        liegt dieser E-Mail als PDF bei.
+    </p>
+
+    <!-- Meta card -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:8px 22px 14px 22px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                       style="font-family:Arial,Helvetica,sans-serif; font-size:14px;">
+                    {% macro row(label, value) %}
+                    <tr>
+                        <td style="padding:10px 0; border-bottom:1px solid #F0F2F4; color:#6B7280; width:38%; vertical-align:top;">{{ label }}</td>
+                        <td style="padding:10px 0; border-bottom:1px solid #F0F2F4; color:#1F2937; font-weight:600; vertical-align:top;">{{ value }}</td>
+                    </tr>
+                    {% endmacro %}
+                    {{ row('Rechnungsnummer', invoice_number) }}
+                    {{ row('Auftragsnummer', order_number) }}
+                    {{ row('Rechnungsdatum', invoice_date) }}
+                    {% if due_date %}{{ row('Fällig bis', due_date) }}{% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Line items (optional; render if provided) -->
+    {% if line_items %}
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px;">
+        <tr style="background-color:#FAFBFC;">
+            <td style="padding:12px 22px; border-bottom:1px solid #E5E7EB; color:#6B7280; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Position</td>
+            <td align="right" style="padding:12px 22px; border-bottom:1px solid #E5E7EB; color:#6B7280; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Betrag</td>
+        </tr>
+        {% for item in line_items %}
+        <tr>
+            <td style="padding:12px 22px; border-bottom:1px solid #F0F2F4; color:#1F2937;">{{ item.description }}</td>
+            <td align="right" style="padding:12px 22px; border-bottom:1px solid #F0F2F4; color:#1F2937; font-weight:600;">{{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td style="padding:14px 22px; color:#1F2937; font-weight:700;">Gesamtbetrag</td>
+            <td align="right" style="padding:14px 22px; color:#185FA5; font-weight:700; font-size:16px;">{{ total_amount }}</td>
+        </tr>
+    </table>
+    {% else %}
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#1F2937;">Gesamtbetrag</td>
+            <td align="right" style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif; font-size:16px; color:#185FA5; font-weight:700;">{{ total_amount }}</td>
+        </tr>
+    </table>
+    {% endif %}
+
+    <!-- Attachment note -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="background-color:#EEF4FB; border:1px solid #D6E4F2; border-radius:4px; margin:0 0 8px 0;">
+        <tr>
+            <td style="padding:14px 18px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#185FA5;">
+                <strong>📎 Anhang:</strong> Ihre Rechnung <strong>{{ invoice_number }}.pdf</strong>
+                ist dieser E-Mail beigefügt.
+            </td>
+        </tr>
+    </table>
+
+    {% if company_bank %}
+    <p style="margin:20px 0 0 0; font-size:13px; color:#6B7280;">
+        <strong style="color:#4B5563;">Zahlungsinformationen:</strong> {{ company_bank }}
+    </p>
+    {% endif %}
+
+    <p style="margin:16px 0 0 0; font-size:13px; color:#6B7280;">
+        Bei Fragen zu dieser Rechnung erreichen Sie uns unter
+        <a href="mailto:{{ support_email }}" style="color:#185FA5;">{{ support_email }}</a>.
+    </p>
+{% endblock %}
