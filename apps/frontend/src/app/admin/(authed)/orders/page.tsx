@@ -102,7 +102,7 @@ export default function OrdersPage() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<1 | -1>(1);
-  const [compact, setCompact] = useState(false);
+  const [compact] = useState(true);
   const [exportOpen, setExportOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -269,7 +269,6 @@ export default function OrdersPage() {
   return (
     <>
       <AdminPageHeader
-        eyebrow="Operations"
         title="Orders"
         description="Confirmed jobs from bookings, plus manually created parcel orders."
         actions={
@@ -289,16 +288,44 @@ export default function OrdersPage() {
           {kpiCard("Delivered", String(kpis.delivered), "completed runs", "good")}
         </div>
 
-        {/* Search + export */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-[240px] flex-1">
+        {/* Filters — single responsive row; wraps gracefully on narrow screens */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+          <div className="min-w-[200px] flex-1 basis-[220px]">
             <FilterToolbar
               searchValue={q}
               onSearchChange={(v: string) => { setPage(1); setQ(v); }}
               searchPlaceholder="Search order-no, customer, email…"
             />
           </div>
-          <div className="relative" ref={exportRef}>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(["all", "open", "completed", "cancelled"] as FinFilter[]).map((f) => (
+              <button key={f} type="button" className={chipCls(fin === f)} onClick={() => setFin(f)}>
+                {f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <span className="hidden text-slate-300 sm:inline">|</span>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(["all", "draft", "dispatched", "picked_up", "delivered"] as DelFilter[]).map((d) => (
+              <button key={d} type="button" className={chipCls(del === d)} onClick={() => setDel(d)}>
+                {d === "all" ? "Any stage" : DELIVERY_LABEL[d as DeliveryStatus]}
+              </button>
+            ))}
+          </div>
+
+          <span className="hidden text-slate-300 sm:inline">|</span>
+
+          <button type="button"
+            className={cn("h-8 px-3 text-[11.5px] font-semibold border inline-flex items-center gap-1.5 transition-colors",
+              overdueOnly ? "bg-rose-600 text-white border-rose-600" : "bg-white text-rose-700 border-rose-200 hover:border-rose-300")}
+            onClick={() => setOverdueOnly((v) => !v)}>
+            <AlertTriangle className="h-3 w-3" /> Overdue only
+          </button>
+
+          <div className="relative ml-auto" ref={exportRef}>
             <button type="button" onClick={() => setExportOpen((v) => !v)}
               className="flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <Download className="h-3.5 w-3.5" strokeWidth={1.5} /> Export <ChevronDown className="h-3 w-3 opacity-50" />
@@ -312,36 +339,6 @@ export default function OrdersPage() {
                 <button type="button" onClick={doPrint} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-red-600 py-0.5 text-center text-[9px] font-bold text-white">PDF</span> Print / save as PDF</button>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Filter chips */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-1.5">
-            {(["all", "open", "completed", "cancelled"] as FinFilter[]).map((f) => (
-              <button key={f} type="button" className={chipCls(fin === f)} onClick={() => setFin(f)}>
-                {f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-          <span className="text-slate-300">|</span>
-          <div className="flex gap-1.5">
-            {(["all", "draft", "dispatched", "picked_up", "delivered"] as DelFilter[]).map((d) => (
-              <button key={d} type="button" className={chipCls(del === d)} onClick={() => setDel(d)}>
-                {d === "all" ? "Any stage" : DELIVERY_LABEL[d as DeliveryStatus]}
-              </button>
-            ))}
-          </div>
-          <span className="text-slate-300">|</span>
-          <button type="button"
-            className={cn("h-8 px-3 text-[11.5px] font-semibold border inline-flex items-center gap-1.5 transition-colors",
-              overdueOnly ? "bg-rose-600 text-white border-rose-600" : "bg-white text-rose-700 border-rose-200 hover:border-rose-300")}
-            onClick={() => setOverdueOnly((v) => !v)}>
-            <AlertTriangle className="h-3 w-3" /> Overdue only
-          </button>
-          <div className="ml-auto flex border border-slate-300">
-            <button type="button" onClick={() => setCompact(false)} className={cn("px-2.5 py-1 text-[11px] font-semibold", !compact ? "bg-slate-900 text-white" : "bg-white text-slate-600")}>Comfortable</button>
-            <button type="button" onClick={() => setCompact(true)} className={cn("px-2.5 py-1 text-[11px] font-semibold", compact ? "bg-slate-900 text-white" : "bg-white text-slate-600")}>Compact</button>
           </div>
         </div>
 

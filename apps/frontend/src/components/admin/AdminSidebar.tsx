@@ -185,6 +185,7 @@ function AdminSidebarBase({ counts }: AdminSidebarProps) {
   const pathname = usePathname() ?? "";
   const open = useMobileNav((s) => s.open);
   const setOpen = useMobileNav((s) => s.setOpen);
+  const collapsed = useMobileNav((s) => s.collapsed);
   const close = () => setOpen(false);
 
   // Auto-close the drawer whenever the route changes (e.g. after tapping a link).
@@ -209,9 +210,17 @@ function AdminSidebarBase({ counts }: AdminSidebarProps) {
 
   return (
     <>
-      {/* ── Desktop rail (unchanged) — visible from lg up ── */}
-      <aside className="hidden h-full w-60 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-        <SidebarContent counts={counts} pathname={pathname} />
+       {/* ── Desktop rail — visible from lg up, collapsible ── */}
+      <aside
+        className={cn(
+          "hidden h-full shrink-0 overflow-hidden border-r border-slate-200 bg-white",
+          "transition-[width] duration-300 ease-out lg:flex lg:flex-col",
+          collapsed ? "lg:w-0 lg:border-r-0" : "lg:w-60",
+        )}
+      >
+        <div className="flex h-full w-60 flex-col">
+          <SidebarContent counts={counts} pathname={pathname} />
+        </div>
       </aside>
 
       {/* ── Mobile drawer — below lg only ── */}

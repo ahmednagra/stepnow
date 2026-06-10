@@ -224,7 +224,6 @@ export default function NewParcelOrderPage() {
   return (
     <>
       <AdminPageHeader
-        eyebrow="Operations"
         title="New Parcel Order"
         description="Create a courier job, dispatch it to a driver, and bill the customer."
         actions={

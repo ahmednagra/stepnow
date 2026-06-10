@@ -44,6 +44,13 @@ function AdminTopbarBase({ admin }: AdminTopbarProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleMobileNav = useMobileNav((s) => s.toggle);
+  const toggleCollapsed = useMobileNav((s) => s.toggleCollapsed);
+
+function handleNavToggle() {
+  // < lg → open the drawer; lg+ → collapse/expand the rail
+  if (window.matchMedia("(min-width: 1024px)").matches) toggleCollapsed();
+  else toggleMobileNav();
+}
 
   const initials = getInitials(admin);
   const displayName = admin.full_name?.trim() || admin.email.split("@")[0];
@@ -78,9 +85,9 @@ function AdminTopbarBase({ admin }: AdminTopbarProps) {
         {/* Mobile menu toggle — opens the sidebar drawer (hidden from lg up) */}
         <button
           type="button"
-          onClick={toggleMobileNav}
-          aria-label="Open menu"
-          className="-ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+          onClick={handleNavToggle}
+          aria-label="Toggle menu"
+          className="-ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
         >
           <Menu className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
         </button>
