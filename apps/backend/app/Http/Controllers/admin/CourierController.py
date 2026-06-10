@@ -9,7 +9,7 @@ from uuid import UUID
 from fastapi import BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from config.database import SessionLocal
-from app.Core.Exceptions import ConflictError, NotFoundError
+from app.Core.Exceptions import ConflictError
 from app.Models.admin import AdminUser
 from app.Models.drivers import Driver
 from app.Schemas.common import PaginatedResponse, PaginationInfo
@@ -66,10 +66,10 @@ class CourierController:
         order = OrdersService.get(db, order_id)
         path = order.driver_slip_pdf_url
         if not path or not Path(path).exists():
-            order.driver_slip_pdf_url = DriverSlipPdfService.render(db, order)
+            path = DriverSlipPdfService.render(db, order)
+            order.driver_slip_pdf_url = path
             db.commit()
             db.refresh(order)
-            path = order.driver_slip_pdf_url
         return str(Path(path).resolve())
 
     @staticmethod
@@ -100,6 +100,7 @@ class CourierController:
                     "destination": order.destination_address,
                     "driver_name": driver.full_name,
                 },
+                module="courier_driver",
             )
             queued.append(log.id)
 
@@ -112,6 +113,7 @@ class CourierController:
                 db, to_address=order.customer_email, template="customer_invoice",
                 subject=f"Rechnung {order.invoice.invoice_number}", locale="de",
                 extra={"invoice_number": order.invoice.invoice_number, "order_number": order.order_number},
+                module="courier_invoice",
             )
             queued.append(log.id)
 

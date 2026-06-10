@@ -93,6 +93,7 @@ class FormsService:
             db, owner_email, "booking_owner_notification",
             f"Neue Buchungsanfrage {booking.reference}", booking.language,
             extra={"booking_id": str(booking.id), "reference": booking.reference, "customer_email": booking.customer_email, "customer_phone": booking.customer_phone},
+            module="booking",
         )
         ids.append(owner_log.id)
         customer_log = EmailService.queue(
@@ -100,6 +101,7 @@ class FormsService:
             f"Buchungsbestätigung {booking.reference}" if booking.language == "de" else f"Booking confirmation {booking.reference}",
             booking.language,
             extra={"booking_id": str(booking.id), "reference": booking.reference},
+            module="booking",
         )
         ids.append(customer_log.id)
         return ids

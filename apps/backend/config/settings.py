@@ -1,41 +1,198 @@
 # apps/backend/config/settings.py
-# Pydantic Settings: loads .env and exposes typed config including AUTO_SEED_ON_STARTUP for dev seed-on-boot.
+# Pydantic Settings: loads .env via os.getenv with explicit defaults and exposes
+# typed config. Email is SMTP-based (Hostinger) with two mailboxes — rides and
+# movers — selectable through the `mailbox()` helper. Falls back gracefully:
+# a mailbox with no dedicated credentials uses the shared/default identity.
 
-from pydantic import Field
+import os
+from dataclasses import dataclass
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load .env so os.getenv resolves at import time regardless of cwd.
+load_dotenv()
+
+
+def _as_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+@dataclass(frozen=True)
+class MailboxConfig:
+    """Resolved SMTP identity for a single sending mailbox."""
+    host: str | None
+    port: int
+    use_ssl: bool          # True => implicit TLS (465); False => STARTTLS (587)
+    timeout: int
+    user: str | None
+    password: str | None
+    from_email: str
+    from_name: str
+    reply_to: str | None
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.host and self.user and self.password)
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
-    APP_NAME: str = "StepNow Backend"
-    ENVIRONMENT: str = Field("development")
-    DEBUG: bool = False
-    DATABASE_URL: str
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = 60
-    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = 7
-    EMAIL_PROVIDER: str = "postmark"
-    EMAIL_API_KEY: str
-    EMAIL_FROM_ADDRESS: str = "info@step-now.de"
-    EMAIL_FROM_NAME: str = "StepNow Rides"
-    EMAIL_ADMIN_NOTIFY: str = "info@step-now.de"
+
+    # ── Application ──
+    APP_NAME: str = os.getenv("APP_NAME", "StepNow Backend")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = _as_bool(os.getenv("DEBUG"), False)
+
+    # ── Seed-on-boot (dev only; hard-refused in production) ──
+    AUTO_SEED_ON_STARTUP: bool = _as_bool(os.getenv("AUTO_SEED_ON_STARTUP"), False)
+    SEED_ADMIN_EMAIL: str = os.getenv("SEED_ADMIN_EMAIL", "info@step-now.de")
+    SEED_ADMIN_PASSWORD: str = os.getenv("SEED_ADMIN_PASSWORD", "")
+    SEED_ADMIN_ALLOW_WEAK_PASSWORD: bool = _as_bool(os.getenv("SEED_ADMIN_ALLOW_WEAK_PASSWORD"), False)
+
+    # ── Database ──
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+
+    # ── JWT ──
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "60"))
+    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "7"))
+
+    # ── CORS ──
+    # JSON-list string in .env, e.g. ["http://localhost:3000","https://step-now.de"]
     CORS_ALLOWED_ORIGINS: list[str] = ["https://step-now.de"]
-    BOOKING_RATE_LIMIT: str = "5/hour"
-    CONTACT_RATE_LIMIT: str = "3/hour"
-    BACKUP_S3_ENDPOINT: str | None = None
-    BACKUP_S3_BUCKET: str | None = None
-    BACKUP_S3_ACCESS_KEY: str | None = None
-    BACKUP_S3_SECRET_KEY: str | None = None
-    BACKUP_RETENTION_DAYS: int = 30
-    UPLOAD_DIR: str = "./uploads"
-    UPLOAD_PUBLIC_URL_PREFIX: str = "/uploads"
-    UPLOAD_MAX_SIZE_BYTES: int = 10 * 1024 * 1024
-    UPLOAD_MIN_DIMENSION: int = 100
-    UPLOAD_MAX_DIMENSION: int = 8000
-    LOG_LEVEL: str = "INFO"
-    # Dev-only: when true, lifespan runs scripts/seed.py after creating missing tables. Hard-refused in production.
-    AUTO_SEED_ON_STARTUP: bool = False
+
+    # ── Rate limits ──
+    BOOKING_RATE_LIMIT: str = os.getenv("BOOKING_RATE_LIMIT", "5/hour")
+    CONTACT_RATE_LIMIT: str = os.getenv("CONTACT_RATE_LIMIT", "3/hour")
+
+    # ── Backups (S3-compatible) ──
+    BACKUP_S3_ENDPOINT: str | None = os.getenv("BACKUP_S3_ENDPOINT") or None
+    BACKUP_S3_BUCKET: str | None = os.getenv("BACKUP_S3_BUCKET") or None
+    BACKUP_S3_ACCESS_KEY: str | None = os.getenv("BACKUP_S3_ACCESS_KEY") or None
+    BACKUP_S3_SECRET_KEY: str | None = os.getenv("BACKUP_S3_SECRET_KEY") or None
+    BACKUP_RETENTION_DAYS: int = int(os.getenv("BACKUP_RETENTION_DAYS", "30"))
+
+    # ════════════════════════════════════════════════════════════════
+    # EMAIL
+    # ════════════════════════════════════════════════════════════════
+    # Provider switch: "smtp" => real send via SMTP_* below; "log" => log-only.
+    EMAIL_PROVIDER: str = os.getenv("EMAIL_PROVIDER", "log")
+    # Legacy API-key placeholder (Postmark/etc.); unused while provider is smtp.
+    EMAIL_API_KEY: str = os.getenv("EMAIL_API_KEY", "")
+
+    # Shared SMTP transport (both mailboxes share host/port/security).
+    SMTP_HOST: str | None = os.getenv("SMTP_HOST") or None
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "465"))
+    SMTP_SSL: bool = _as_bool(os.getenv("SMTP_SSL"), True)
+    SMTP_TIMEOUT_SECONDS: int = int(os.getenv("SMTP_TIMEOUT_SECONDS", "30"))
+
+    # Default sender identity + admin notify target + global reply-to.
+    EMAIL_FROM_ADDRESS: str = os.getenv("EMAIL_FROM_ADDRESS", "info@step-now.de")
+    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "StepNow Rides")
+    EMAIL_ADMIN_NOTIFY: str = os.getenv("EMAIL_ADMIN_NOTIFY", "info@step-now.de")
+    EMAIL_REPLY_TO: str | None = os.getenv("EMAIL_REPLY_TO") or None
+
+    # ── Mailbox: RIDES (taxi / passenger bookings) ──
+    SMTP_RIDES_USER: str | None = os.getenv("SMTP_RIDES_USER") or None
+    SMTP_RIDES_PASSWORD: str | None = os.getenv("SMTP_RIDES_PASSWORD") or None
+    SMTP_RIDES_FROM_EMAIL: str | None = os.getenv("SMTP_RIDES_FROM_EMAIL") or None
+    SMTP_RIDES_FROM_NAME: str | None = os.getenv("SMTP_RIDES_FROM_NAME") or None
+
+    # ── Mailbox: MOVERS (courier / transport orders) ──
+    SMTP_MOVERS_USER: str | None = os.getenv("SMTP_MOVERS_USER") or None
+    SMTP_MOVERS_PASSWORD: str | None = os.getenv("SMTP_MOVERS_PASSWORD") or None
+    SMTP_MOVERS_FROM_EMAIL: str | None = os.getenv("SMTP_MOVERS_FROM_EMAIL") or None
+    SMTP_MOVERS_FROM_NAME: str | None = os.getenv("SMTP_MOVERS_FROM_NAME") or None
+
+    # ── Module → mailbox routing ──
+    # Each module names the mailbox it sends from ("rides" | "movers"). Edit in
+    # .env to re-route without code changes; unknown values fall back to "rides".
+    MAILBOX_BOOKING: str = os.getenv("MAILBOX_BOOKING", "rides")
+    MAILBOX_CONTACT: str = os.getenv("MAILBOX_CONTACT", "rides")
+    MAILBOX_COURIER_DRIVER: str = os.getenv("MAILBOX_COURIER_DRIVER", "movers")
+    MAILBOX_COURIER_INVOICE: str = os.getenv("MAILBOX_COURIER_INVOICE", "movers")
+
+    # ════════════════════════════════════════════════════════════════
+    # Company / invoice header
+    # ════════════════════════════════════════════════════════════════
+    COMPANY_NAME: str = os.getenv("COMPANY_NAME", "StepNow Rides & Movers")
+    COMPANY_OWNER: str = os.getenv("COMPANY_OWNER", "Naeem Ahmad e.K.")
+    COMPANY_STREET: str = os.getenv("COMPANY_STREET", "")
+    COMPANY_CITY: str = os.getenv("COMPANY_CITY", "")
+    COMPANY_REGION: str = os.getenv("COMPANY_REGION", "")
+    COMPANY_PHONE: str = os.getenv("COMPANY_PHONE", "")
+    COMPANY_EMAIL: str = os.getenv("COMPANY_EMAIL", "info@step-now.de")
+    COMPANY_TAX_NO: str = os.getenv("COMPANY_TAX_NO", "")
+    COMPANY_BANK: str = os.getenv("COMPANY_BANK", "")
+
+    # ── Uploads ──
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "./uploads")
+    UPLOAD_PUBLIC_URL_PREFIX: str = os.getenv("UPLOAD_PUBLIC_URL_PREFIX", "/uploads")
+    UPLOAD_MAX_SIZE_BYTES: int = int(os.getenv("UPLOAD_MAX_SIZE_BYTES", str(10 * 1024 * 1024)))
+    UPLOAD_MIN_DIMENSION: int = int(os.getenv("UPLOAD_MIN_DIMENSION", "100"))
+    UPLOAD_MAX_DIMENSION: int = int(os.getenv("UPLOAD_MAX_DIMENSION", "8000"))
+
+    # ── Logging ──
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # ────────────────────────────────────────────────────────────────
+    # Email helpers
+    # ────────────────────────────────────────────────────────────────
+    @property
+    def email_enabled(self) -> bool:
+        """True when the SMTP provider is selected and the transport host is set."""
+        return self.EMAIL_PROVIDER.strip().lower() == "smtp" and bool(self.SMTP_HOST)
+
+    def mailbox(self, kind: str = "rides") -> MailboxConfig:
+        """Resolve SMTP identity for a sending mailbox.
+
+        kind: "rides" (default) or "movers". Unknown kinds fall back to the
+        shared default identity. Per-mailbox user/password/sender override the
+        defaults; anything missing falls back to EMAIL_FROM_ADDRESS/NAME and the
+        shared SMTP transport.
+        """
+        k = (kind or "rides").strip().lower()
+        if k == "movers":
+            user = self.SMTP_MOVERS_USER
+            password = self.SMTP_MOVERS_PASSWORD
+            from_email = self.SMTP_MOVERS_FROM_EMAIL
+            from_name = self.SMTP_MOVERS_FROM_NAME
+        else:  # "rides" and any unknown kind
+            user = self.SMTP_RIDES_USER
+            password = self.SMTP_RIDES_PASSWORD
+            from_email = self.SMTP_RIDES_FROM_EMAIL
+            from_name = self.SMTP_RIDES_FROM_NAME
+
+        return MailboxConfig(
+            host=self.SMTP_HOST,
+            port=self.SMTP_PORT,
+            use_ssl=self.SMTP_SSL,
+            timeout=self.SMTP_TIMEOUT_SECONDS,
+            user=user,
+            password=password,
+            from_email=from_email or user or self.EMAIL_FROM_ADDRESS,
+            from_name=from_name or self.EMAIL_FROM_NAME,
+            reply_to=self.EMAIL_REPLY_TO,
+        )
+
+    def module_mailbox(self, module: str) -> MailboxConfig:
+        """Resolve the mailbox a given module sends from, per the .env routing map.
+
+        module: one of "booking", "contact", "courier_driver", "courier_invoice".
+        Returns the configured MailboxConfig. Unknown modules default to "rides".
+        Edit MAILBOX_* in .env to re-route a module without touching code.
+        """
+        routing = {
+            "booking": self.MAILBOX_BOOKING,
+            "contact": self.MAILBOX_CONTACT,
+            "courier_driver": self.MAILBOX_COURIER_DRIVER,
+            "courier_invoice": self.MAILBOX_COURIER_INVOICE,
+        }
+        kind = routing.get((module or "").strip().lower(), "rides")
+        return self.mailbox(kind)
 
 
 settings = Settings()
