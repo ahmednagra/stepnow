@@ -5,8 +5,9 @@
 
 import { useEffect, useRef, useState, memo } from "react";
 import Link from "next/link";
-import { Bell, ChevronDown, ExternalLink, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
+import { ChevronDown, ExternalLink, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
 import type { CurrentAdmin } from "@/types";
+import { NotificationBell } from "@/components/admin/NotificationBell";
 import { logout as logoutAdmin } from "@/services/auth";
 import { cn } from "@/utils/cn";
 import { openCommandPalette } from "@/hooks/useCommandPalette";
@@ -116,17 +117,7 @@ function handleNavToggle() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative grid h-8 w-8 place-items-center text-slate-500 transition-colors hover:text-slate-900"
-        >
-          <Bell className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-          <span
-            aria-hidden="true"
-            className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#A8865A] ring-2 ring-white"
-          />
-        </button>
+        <NotificationBell />
 
         <div ref={menuRef} className="relative border-l border-slate-200 pl-3">
           <button

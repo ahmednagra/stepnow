@@ -20,6 +20,7 @@ from app.Models.expense_categories import ExpenseCategory
 from app.Models.expenses import Expense
 from app.Models.drivers import Driver
 from app.Models.customers import Customer
+from app.Models.notification import Notification
 
 __all__ = [
     "Base",
@@ -46,4 +47,5 @@ __all__ = [
     "Expense",
     "ContactMessage",
     "EmailLog",
+    "Notification",
 ]

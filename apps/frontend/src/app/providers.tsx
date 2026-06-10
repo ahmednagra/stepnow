@@ -1,12 +1,18 @@
 // src/app/providers.tsx
-// Client providers shell; reports Core Web Vitals via the built-in Next hook.
+// Client providers shell. Mounts the React Query client (one per browser session) and reports
+// Core Web Vitals via the built-in Next hook. The QueryClient is created once with useState so
+// it survives re-renders but is never shared across requests on the server.
 
 "use client";
 
 import { useReportWebVitals } from "next/web-vitals";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { makeQueryClient } from "@/lib/react-query";
 
 export function Providers({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => makeQueryClient());
+
   useReportWebVitals((metric) => {
     if (process.env.NODE_ENV !== "production") {
       // eslint-disable-next-line no-console
@@ -25,5 +31,6 @@ export function Providers({ children }: { children: ReactNode }) {
       fetch(url, { method: "POST", body, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(() => {});
     }
   });
-  return <>{children}</>;
+
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

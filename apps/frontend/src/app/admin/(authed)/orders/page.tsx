@@ -18,7 +18,8 @@ import {
 } from "@/components/admin";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
-import { listAdminOrders, type OrderAdmin, type OrderStatus, type DeliveryStatus } from "@/services/orders";
+import { type OrderAdmin, type OrderStatus, type DeliveryStatus } from "@/services/orders";
+import { useOrders } from "@/hooks/queries";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { formatPriceEur } from "@/utils/decimal";
@@ -89,12 +90,8 @@ const chipCls = (active: boolean) =>
 
 export default function OrdersPage() {
   const pushToast = useAdminToast((s) => s.push);
-  const [orders, setOrders] = useState<OrderAdmin[] | null>(null);
-  const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
   // client-side view controls
   const [fin, setFin] = useState<FinFilter>("all");
@@ -129,26 +126,26 @@ export default function OrdersPage() {
     window.addEventListener("pointerup", onUp);
   }, []);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Financial status is filtered server-side (the endpoint supports it); delivery / overdue
-      // are refined client-side on the returned page.
-      const res = await listAdminOrders({
-        page, size: PAGE_SIZE, q: q || undefined,
-        status: fin === "all" ? undefined : fin,
-      });
-      setOrders(res.items);
-      setPages(res.pagination.pages);
-      setTotal(res.pagination.total);
-    } catch (err) {
-      pushToast("error", "Could not load orders", err instanceof ApiError ? err.message : "Network error");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, q, fin, pushToast]);
+  // Financial status is filtered server-side (the endpoint supports it); delivery / overdue
+  // are refined client-side on the returned page. React Query owns loading/caching/refetch.
+  const { data, isLoading: loading, error } = useOrders({
+    page,
+    size: PAGE_SIZE,
+    q: q || undefined,
+    status: fin === "all" ? undefined : fin,
+  });
+  const orders = data?.items ?? null;
+  const pages = data?.pagination.pages ?? 1;
+  const total = data?.pagination.total ?? 0;
 
-  useEffect(() => { void reload(); }, [reload]);
+  // Surface load failures the same way the old reload() did.
+  useEffect(() => {
+    if (error) {
+      pushToast("error", "Could not load orders", error instanceof ApiError ? error.message : "Network error");
+    }
+  }, [error, pushToast]);
+
+  // Reset to page 1 when the server-side filters change.
   useEffect(() => { setPage(1); }, [q, fin]);
 
   // close export menu on outside click

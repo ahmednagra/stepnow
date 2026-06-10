@@ -21,11 +21,13 @@ from routes.api.v0.admin import ui_strings as admin_ui_strings_router
 from routes.api.v0.admin import uploads as admin_uploads_router
 from routes.api.v0.admin import vehicles as admin_vehicles_router
 
-
 from routes.api.v0.admin.orders import router as admin_orders_router
 from routes.api.v0.admin.drivers import router as admin_drivers_router
 from routes.api.v0.admin.customers import router as admin_customers_router
 from routes.api.v0.admin.courier import router as admin_courier_router
+from routes.api.v0 import notifications as admin_notifications_router
+from routes.api.v0 import ws as ws_router
+
 
 _API_PREFIX = "/api/v0"
 
@@ -44,6 +46,7 @@ def setup_api_routes(app: FastAPI) -> None:
     app.include_router(admin_faqs_router.router, prefix=_API_PREFIX)
     app.include_router(admin_testimonials_router.router, prefix=_API_PREFIX)
     app.include_router(admin_legal_pages_router.router, prefix=_API_PREFIX)
+    app.include_router(admin_notifications_router.router, prefix=_API_PREFIX)
 
     # CRITICAL ORDER: dashboard BEFORE forms_admin. Both declare paths under /admin/bookings/ without a router prefix. dashboard owns the literal sub-paths (/heatmap, /upcoming); forms_admin owns the UUID path-param (/{booking_id}). Reverse this and the literals get swallowed by the UUID matcher → 422 on every dashboard call.
     app.include_router(admin_dashboard_router.router, prefix=_API_PREFIX)
@@ -56,3 +59,5 @@ def setup_api_routes(app: FastAPI) -> None:
     app.include_router(admin_drivers_router, prefix=_API_PREFIX)
     app.include_router(admin_customers_router, prefix=_API_PREFIX)
     app.include_router(admin_courier_router, prefix=_API_PREFIX)
+
+    app.include_router(ws_router.router)
