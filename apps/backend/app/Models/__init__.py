@@ -16,6 +16,7 @@ from app.Models.invoices import Invoice
 from app.Models.payments import Payment
 from app.Models.contact import ContactMessage
 from app.Models.email_logs import EmailLog
+from app.Models.message_delivery import MessageDelivery
 from app.Models.expense_categories import ExpenseCategory
 from app.Models.expenses import Expense
 from app.Models.drivers import Driver
@@ -47,5 +48,6 @@ __all__ = [
     "Expense",
     "ContactMessage",
     "EmailLog",
+    "MessageDelivery",
     "Notification",
 ]

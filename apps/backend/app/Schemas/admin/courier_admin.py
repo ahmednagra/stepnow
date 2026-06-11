@@ -60,8 +60,8 @@ class DeliveryStatusUpdate(BaseModel):
 
 class SendSlipRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-    # which documents to email: any of "driver" (Fahrauftrag) and "customer" (invoice)
     to: list[str] = Field(default_factory=lambda: ["driver"])
+    channel: str = Field(default="email", pattern=r"^(email|whatsapp)$")
 
 
 class CourierOrderResponse(BaseModel):
@@ -96,3 +96,4 @@ class CourierOrderResponse(BaseModel):
     delivered_at: datetime | None
     driver_emailed_at: datetime | None
     created_at: datetime
+    whatsapp_link: str | None = None

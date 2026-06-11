@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     # JSON-list string in .env, e.g. ["http://localhost:3000","https://step-now.de"]
     CORS_ALLOWED_ORIGINS: list[str] = ["https://step-now.de"]
 
+    # ── Public site (Next.js frontend) base URL ──
+    # Used to build user-facing links the backend hands out (e.g. the short driver-slip
+    # download link /p/s/{code}). Prod: https://step-now.de · dev: http://localhost:3000.
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://step-now.de")
+
     # ── Rate limits ──
     BOOKING_RATE_LIMIT: str = os.getenv("BOOKING_RATE_LIMIT", "5/hour")
     CONTACT_RATE_LIMIT: str = os.getenv("CONTACT_RATE_LIMIT", "3/hour")

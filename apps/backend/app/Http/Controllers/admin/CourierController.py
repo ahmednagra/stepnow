@@ -21,6 +21,7 @@ from app.Services.CourierOrdersService import CourierOrdersService
 from app.Services.DriverSlipPdfService import DriverSlipPdfService
 from app.Services.EmailService import EmailService
 from app.Services.OrdersService import OrdersService
+from app.Services.message_delivery.MessageDeliveryService import MessageDeliveryService
 
 
 def _dispatch_emails(email_log_ids: list[int]) -> None:
@@ -64,17 +65,49 @@ class CourierController:
     @staticmethod
     def slip_pdf_path(db: Session, order_id: UUID) -> str:
         order = OrdersService.get(db, order_id)
-        path = order.driver_slip_pdf_url
-        if not path or not Path(path).exists():
-            path = DriverSlipPdfService.render(db, order)
-            order.driver_slip_pdf_url = path
-            db.commit()
-            db.refresh(order)
-        return str(Path(path).resolve())
+        return DriverSlipPdfService.ensure(db, order)
 
     @staticmethod
     def send(db: Session, order_id: UUID, payload: SendSlipRequest, actor: AdminUser, request: Request, background_tasks: BackgroundTasks) -> CourierOrderResponse:
         order = OrdersService.get(db, order_id)
+
+        # ── WhatsApp web-click handoff (driver only) — reuses the slip renderer, writes a
+        #    message_deliveries audit row, returns a wa.me link the frontend opens. The email
+        #    branches below run only for the default channel="email". ──
+        if payload.channel == "whatsapp":
+            if payload.to != ["driver"]:
+                raise ConflictError("WhatsApp send currently supports the driver slip only (to=['driver'])")
+            driver = db.get(Driver, order.driver_id) if order.driver_id else None
+            if not driver:
+                raise ConflictError("No driver assigned to this order")
+            if not driver.phone:
+                raise ConflictError("Assigned driver has no phone number")
+
+            wa_now = datetime.now(timezone.utc)
+            DriverSlipPdfService.ensure(db, order)
+
+            row = MessageDeliveryService.initiate_whatsapp_slip(
+                db, order, driver, triggered_by_user_id=actor.id,
+            )
+
+            # Mirror the email path's dispatch semantics: first handoff moves draft → dispatched.
+            if order.delivery_status == "draft":
+                order.delivery_status = "dispatched"
+                order.dispatched_at = wa_now
+
+            AuditService.log(
+                db, actor, "orders", str(order.id), "update",
+                None,
+                {"whatsapp_initiated": True, "delivery_id": str(row.id), "delivery_status": order.delivery_status},
+                request,
+            )
+            db.commit()
+            db.refresh(order)
+
+            resp = CourierOrderResponse.model_validate(order)
+            resp.whatsapp_link = row.deep_link
+            return resp
+
         now = datetime.now(timezone.utc)
         queued: list[int] = []
 

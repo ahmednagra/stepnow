@@ -3,14 +3,22 @@
 // live driver-slip / customer-invoice preview, manual delivery lifecycle, and a sticky action
 // bar. Built entirely on the admin design system (AdminPageHeader / AdminCard / AdminFormField
 // + Tailwind tokens) — no page-local CSS. Wired to the real courier/customer/driver services.
+//
+// Action-bar UX (progressive enablement):
+//   • Save        → enabled once the core required fields are valid (live, pre-click).
+//   • Driver PDF  → enabled only after the order is persisted (needs a real order id).
+//   • Send driver → enabled only after save + a driver is assigned + invoice exists
+//                   (+ a customer email when "cc customer" is on).
+// Every disabled control explains *why* via its title, and an inline hint lists what's missing.
 
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   User, Mail, Phone, Package, MapPin, ArrowRight, ArrowLeft, Boxes, Scale, CalendarDays,
   UserCheck, Truck, Building2, Receipt, Check, X, Eye, EyeOff, Save, FileDown, Send, Loader2,
+  AlertCircle, MessageCircle,
 } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
 import { useAdminToast } from "@/hooks/useAdminToast";
@@ -21,6 +29,7 @@ import { searchCustomers, type CustomerAdmin } from "@/services/customers";
 import { listAdminDrivers, type DriverAdmin } from "@/services/drivers";
 import {
   createParcelOrder, updateParcelOrder, setDeliveryStatus, sendDocuments, slipPdfHref,
+  sendDriverSlipWhatsApp,
   type CourierOrder, type DeliveryStatus, type ParcelOrderInput,
 } from "@/services/courier";
 import { createOrderInvoice } from "@/services/orders";
@@ -42,6 +51,9 @@ const ISSUER = {
   foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · rides@mail.step-now.de",
 };
 
+// Loose but practical email check — mirrors what the backend will accept.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const deDate = (iso: string) =>
   iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
@@ -51,14 +63,21 @@ const addDaysDE = (iso: string, d: number | string) => {
 };
 
 /** Unit-suffixed numeric input matching the admin field styling. */
-function AffixInput({ unit, ...props }: { unit: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function AffixInput({ unit, invalid, ...props }: { unit: string; invalid?: boolean } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="flex">
       <input
         {...props}
-        className="h-9 w-full border border-r-0 border-slate-300 bg-white px-3 text-[13px] tabular-nums text-slate-900 transition-colors placeholder:text-slate-400 focus:border-slate-900 focus:outline-none"
+        aria-invalid={invalid || undefined}
+        className={cn(
+          "h-9 w-full border border-r-0 bg-white px-3 text-[13px] tabular-nums text-slate-900 transition-colors placeholder:text-slate-400 focus:outline-none",
+          invalid ? "border-rose-400 focus:border-rose-500" : "border-slate-300 focus:border-slate-900",
+        )}
       />
-      <span className="flex items-center border border-slate-300 bg-slate-50 px-2.5 text-[11px] font-medium text-slate-500">
+      <span className={cn(
+        "flex items-center border px-2.5 text-[11px] font-medium",
+        invalid ? "border-rose-400 bg-rose-50 text-rose-500" : "border-slate-300 bg-slate-50 text-slate-500",
+      )}>
         {unit}
       </span>
     </div>
@@ -106,6 +125,9 @@ export default function NewParcelOrderPage() {
   const [ccCustomer, setCcCustomer] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [previewMode, setPreviewMode] = useState<"driver" | "customer">("driver");
+  // True after the first Save attempt — used to reveal inline field errors only once
+  // the user has tried to act (avoids yelling at an untouched form).
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     listAdminDrivers({ active_only: true, size: 100 }).then((r) => setDrivers(r.items)).catch(() => {});
@@ -128,11 +150,36 @@ export default function NewParcelOrderPage() {
     setEmail(""); setPhone(""); setVatId(""); setLinkedId(null);
   }
 
+  // ── Live validation ───────────────────────────────────────────────
+  // Centralised, derived every render. Drives both inline field errors and
+  // which action-bar buttons are enabled. Keep the rules here, not scattered.
+  const netNorm = useMemo(() => normalizeDecimalInput(net), [net]);
+  const v = useMemo(() => {
+    const netNum = Number(netNorm || "0");
+    const errors: Record<string, string> = {};
+    if (!first.trim()) errors.first = "First name is required";
+    if (!last.trim()) errors.last = "Last name is required";
+    if (!pickup.trim()) errors.pickup = "Pickup address is required";
+    if (!dropoff.trim()) errors.dropoff = "Destination address is required";
+    if (!netNorm || netNum <= 0) errors.net = "Enter a valid net price (e.g. 39.00)";
+    if (email.trim() && !EMAIL_RE.test(email.trim())) errors.email = "Email format looks invalid";
+    if (qty && (Number(qty) < 1 || !Number.isFinite(Number(qty)))) errors.qty = "Quantity must be at least 1";
+    if (weight && Number(weight) < 0) errors.weight = "Weight cannot be negative";
+    const termN = Number(term);
+    if (term && (termN < 1 || termN > 120)) errors.term = "Term must be 1–120 days";
+    return { errors, isValid: Object.keys(errors).length === 0 };
+  }, [first, last, pickup, dropoff, netNorm, email, qty, weight, term]);
+
+  const err = (key: string) => (showErrors ? v.errors[key] : undefined);
+
   function buildPayload(): ParcelOrderInput | null {
-    const netNorm = normalizeDecimalInput(net);
-    if (!netNorm) { pushToast("error", "Enter a valid net price (e.g. 39.00)"); return null; }
-    if (!first.trim() || !last.trim()) { pushToast("error", "Customer first and last name are required"); return null; }
-    if (!pickup.trim() || !dropoff.trim()) { pushToast("error", "Pickup and destination are required"); return null; }
+    // Validity is already computed in `v`; surface a single toast pointing at the gap.
+    if (!v.isValid) {
+      setShowErrors(true);
+      const first = Object.values(v.errors)[0];
+      pushToast("error", "Please fix the highlighted fields", first);
+      return null;
+    }
     return {
       ...(linkedId
         ? { customer_id: linkedId }
@@ -145,7 +192,7 @@ export default function NewParcelOrderPage() {
       parcel_quantity: Number(qty) || 1,
       parcel_weight_kg: weight ? normalizeDecimalInput(weight) : null,
       scheduled_datetime: pickDate ? `${pickDate}T00:00:00` : null,
-      net_amount: netNorm,
+      net_amount: netNorm!,
       vat_rate: vat,
       payment_due_days: Number(term) || 14,
     };
@@ -178,6 +225,18 @@ export default function NewParcelOrderPage() {
     const updated = await sendDocuments(o.id, to); setOrder(updated);
     pushToast("success", `Driver slip sent${ccCustomer && email ? " · invoice queued to customer" : ""}`);
   });
+  const onWhatsApp = () => wrap("whatsapp", async () => {
+    const o = await ensureSaved(); if (!o) return;
+    const updated = await sendDriverSlipWhatsApp(o.id);
+    setOrder(updated);
+    if (updated.whatsapp_link) {
+      window.open(updated.whatsapp_link, "_blank", "noopener");
+      pushToast("success", "WhatsApp opened", "Slip message prefilled — press send in WhatsApp.");
+    } else {
+      pushToast("error", "Could not build the WhatsApp link");
+    }
+  });
+
   const goToStage = (stage: DeliveryStatus) => wrap("stage", async () => {
     if (!order || stage === order.delivery_status) return;
     const updated = await setDeliveryStatus(order.id, stage); setOrder(updated);
@@ -189,13 +248,51 @@ export default function NewParcelOrderPage() {
   const stepIdx = FLOW.indexOf(ds);
   const driver = drivers.find((d) => d.id === driverId) || null;
   const fullName = `${first} ${last}`.trim();
-  const netNum = Number(normalizeDecimalInput(net) || "0");
+  const netNum = Number(netNorm || "0");
   const rate = Number(vat) || 0;
   const vatAmt = netNum * rate;
   const brutto = netNum + vatAmt;
   const vatPct = Math.round(rate * 100);
   const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
   const ccNoEmail = ccCustomer && !email;
+
+  // ── Action-bar gating (progressive enablement) ────────────────────
+  const saved = order != null;
+  const emailValidIfPresent = !email.trim() || EMAIL_RE.test(email.trim());
+  const canSave = v.isValid && !busy;
+  const canPdf = saved && !busy;
+  const sendBlockers: string[] = [];
+  if (!saved) sendBlockers.push("save the order");
+  if (!driverId) sendBlockers.push("assign a driver");
+  if (!hasInvoice) sendBlockers.push("create the invoice (save first)");
+  if (ccCustomer && (!email || !emailValidIfPresent)) sendBlockers.push("add a valid customer email or untick “email invoice”");
+  const canSend = sendBlockers.length === 0 && !busy;
+
+  const saveTitle = canSave
+    ? "Save the order"
+    : v.isValid ? "Working…" : "Complete the required fields first";
+  const pdfTitle = canPdf ? "Open the driver-slip PDF" : "Save the order first to generate its PDF";
+  const sendTitle = canSend ? "Send the driver slip" : `To send: ${sendBlockers.join(", ")}`;
+
+  // WhatsApp web-click handoff: needs a saved order + an assigned driver with a phone number.
+  const driverHasPhone = !!driver?.phone;
+  const waBlockers: string[] = [];
+  if (!saved) waBlockers.push("save the order");
+  if (!driverId) waBlockers.push("assign a driver");
+  if (!driverHasPhone) waBlockers.push("the driver needs a phone number");
+  const canWhatsApp = waBlockers.length === 0 && !busy;
+  const waTitle = canWhatsApp
+    ? "Open WhatsApp with the driver slip prefilled"
+    : `To send via WhatsApp: ${waBlockers.join(", ")}`;
+
+  // What the inline hint should say next to the bar.
+  const barHint = (() => {
+    if (busy) return null;
+    if (!v.isValid && showErrors) return Object.values(v.errors)[0];
+    if (!saved) return "Save the order to unlock the PDF and sending.";
+    if (!canSend) return `Next: ${sendBlockers.join(", ")}.`;
+    return null;
+  })();
 
   const chip = (active: boolean) =>
     cn(
@@ -220,6 +317,10 @@ export default function NewParcelOrderPage() {
       ))}
     </div>
   );
+
+  // Small inline field-error line.
+  const FieldErr = ({ msg }: { msg?: string }) =>
+    msg ? <p role="alert" className="mt-1 flex items-center gap-1 text-[11px] text-rose-600"><AlertCircle className="h-3 w-3" />{msg}</p> : null;
 
   return (
     <>
@@ -319,23 +420,27 @@ export default function NewParcelOrderPage() {
                 <div className="relative grid gap-3 sm:grid-cols-2">
                   <AdminFormField label="First name" required>
                     <input
-                      className={adminInputClass}
+                      className={cn(adminInputClass, err("first") && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!err("first") || undefined}
                       value={first}
                       placeholder="Type to search or add new…"
                       onChange={(e) => { setFirst(e.target.value); setLinkedId(null); setShowNameSug(true); runSearch(`${e.target.value} ${last}`.trim()); }}
                       onFocus={() => setShowNameSug(true)}
                       onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
                     />
+                    <FieldErr msg={err("first")} />
                   </AdminFormField>
                   <AdminFormField label="Last name" required>
                     <input
-                      className={adminInputClass}
+                      className={cn(adminInputClass, err("last") && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!err("last") || undefined}
                       value={last}
                       placeholder="Last"
                       onChange={(e) => { setLast(e.target.value); setLinkedId(null); setShowNameSug(true); runSearch(`${first} ${e.target.value}`.trim()); }}
                       onFocus={() => setShowNameSug(true)}
                       onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
                     />
+                    <FieldErr msg={err("last")} />
                   </AdminFormField>
                   {showNameSug && results.length > 0 && sugList}
                 </div>
@@ -347,8 +452,15 @@ export default function NewParcelOrderPage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <AdminFormField label={<span className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-slate-400" /> Email</span>}>
-                    <input className={adminInputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="customer@company.de" />
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-slate-400" /> Email{ccCustomer && <span className="text-rose-500">*</span>}</span>}>
+                    <input
+                      className={cn(adminInputClass, err("email") && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!err("email") || undefined}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="customer@company.de"
+                    />
+                    <FieldErr msg={err("email")} />
                   </AdminFormField>
                   <div className="relative">
                     <AdminFormField label={<span className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-slate-400" /> Phone</span>}>
@@ -373,20 +485,34 @@ export default function NewParcelOrderPage() {
               <div className="space-y-3">
                 <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto_1fr]">
                   <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-emerald-600" /> Pickup</span>} required>
-                    <input className={adminInputClass} value={pickup} onChange={(e) => setPickup(e.target.value)} placeholder="Full address — street, postcode, city" />
+                    <input
+                      className={cn(adminInputClass, err("pickup") && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!err("pickup") || undefined}
+                      value={pickup} onChange={(e) => setPickup(e.target.value)}
+                      placeholder="Full address — street, postcode, city"
+                    />
+                    <FieldErr msg={err("pickup")} />
                   </AdminFormField>
                   <ArrowRight className="mb-2.5 hidden h-4 w-4 text-slate-400 sm:block" />
                   <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-rose-600" /> Destination</span>} required>
-                    <input className={adminInputClass} value={dropoff} onChange={(e) => setDropoff(e.target.value)} placeholder="Full address — street, postcode, city" />
+                    <input
+                      className={cn(adminInputClass, err("dropoff") && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!err("dropoff") || undefined}
+                      value={dropoff} onChange={(e) => setDropoff(e.target.value)}
+                      placeholder="Full address — street, postcode, city"
+                    />
+                    <FieldErr msg={err("dropoff")} />
                   </AdminFormField>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <AdminFormField label="Recipient at destination"><input className={adminInputClass} value={consignee} onChange={(e) => setConsignee(e.target.value)} placeholder="Consignee name" /></AdminFormField>
                   <AdminFormField label={<span className="flex items-center gap-1.5"><Boxes className="h-3 w-3 text-slate-400" /> Quantity</span>}>
-                    <AffixInput unit="pcs" type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} />
+                    <AffixInput unit="pcs" type="number" min={1} value={qty} invalid={!!err("qty")} onChange={(e) => setQty(e.target.value)} />
+                    <FieldErr msg={err("qty")} />
                   </AdminFormField>
                   <AdminFormField label={<span className="flex items-center gap-1.5"><Scale className="h-3 w-3 text-slate-400" /> Weight</span>}>
-                    <AffixInput unit="kg" type="number" min={0} step={0.1} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0" />
+                    <AffixInput unit="kg" type="number" min={0} step={0.1} value={weight} invalid={!!err("weight")} onChange={(e) => setWeight(e.target.value)} placeholder="0" />
+                    <FieldErr msg={err("weight")} />
                   </AdminFormField>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -429,19 +555,21 @@ export default function NewParcelOrderPage() {
 
                 <div className="grid items-start gap-3 sm:grid-cols-3">
                   <AdminFormField label="Flat price (net)" required>
-                    <AffixInput unit="EUR" type="number" value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" />
+                    <AffixInput unit="EUR" type="number" value={net} invalid={!!err("net")} onChange={(e) => setNet(e.target.value)} placeholder="0.00" />
+                    <FieldErr msg={err("net")} />
                   </AdminFormField>
                   <AdminFormField label="VAT rate">
                     <AffixInput unit="%" type="number" min={0} max={99} value={vatPct} onChange={(e) => setVat(String((Number(e.target.value) || 0) / 100))} placeholder="7" />
                     <div className="mt-1.5 flex gap-1.5">
-                      {VAT_PRESETS.map((v) => <button key={v} type="button" className={chip(vat === v)} onClick={() => setVat(v)}>{Math.round(Number(v) * 100)}%</button>)}
+                      {VAT_PRESETS.map((val) => <button key={val} type="button" className={chip(vat === val)} onClick={() => setVat(val)}>{Math.round(Number(val) * 100)}%</button>)}
                     </div>
                   </AdminFormField>
                   <AdminFormField label="Payment term">
-                    <AffixInput unit="days" type="number" min={1} max={120} value={term} onChange={(e) => setTerm(e.target.value)} placeholder="14" />
+                    <AffixInput unit="days" type="number" min={1} max={120} value={term} invalid={!!err("term")} onChange={(e) => setTerm(e.target.value)} placeholder="14" />
                     <div className="mt-1.5 flex gap-1.5">
                       {TERM_PRESETS.map((d) => <button key={d} type="button" className={chip(Number(term) === d)} onClick={() => setTerm(String(d))}>{d}d</button>)}
                     </div>
+                    <FieldErr msg={err("term")} />
                   </AdminFormField>
                 </div>
 
@@ -618,14 +746,77 @@ export default function NewParcelOrderPage() {
           </label>
           {ccNoEmail && <span className="bg-rose-50 px-2 py-0.5 text-[10.5px] font-semibold text-rose-700">⚠ no customer email</span>}
           {order?.driver_emailed_at && <span className="inline-flex items-center gap-1 bg-emerald-50 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-700"><Truck className="h-3 w-3" /> Driver notified</span>}
+          {barHint && (
+            <span className="hidden items-center gap-1 text-[11px] text-slate-400 sm:inline-flex">
+              <AlertCircle className="h-3 w-3" /> {barHint}
+            </span>
+          )}
           <div className="ml-auto flex flex-wrap gap-2">
-            <button type="button" onClick={onSave} disabled={!!busy} className="inline-flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-              {busy === "save" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" strokeWidth={1.5} />} Save
+            {/* Save — enabled only when required fields are valid */}
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!canSave}
+              title={saveTitle}
+              aria-disabled={!canSave}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 border px-3 text-[12.5px] font-medium transition-colors",
+                canSave
+                  ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400",
+              )}
+            >
+              {busy === "save" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" strokeWidth={1.5} />} {order ? "Update" : "Save"}
             </button>
-            <button type="button" onClick={onPdf} disabled={!!busy} className="inline-flex h-9 items-center gap-1.5 border border-slate-900 bg-white px-3 text-[12.5px] font-medium text-slate-900 hover:bg-slate-900 hover:text-white disabled:opacity-50">
+
+            {/* Driver slip PDF — enabled only after the order is saved */}
+            <button
+              type="button"
+              onClick={onPdf}
+              disabled={!canPdf}
+              title={pdfTitle}
+              aria-disabled={!canPdf}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 border px-3 text-[12.5px] font-medium transition-colors",
+                canPdf
+                  ? "border-slate-900 bg-white text-slate-900 hover:bg-slate-900 hover:text-white"
+                  : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400",
+              )}
+            >
               {busy === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" strokeWidth={1.5} />} Driver slip PDF
             </button>
-            <button type="button" onClick={onSend} disabled={!!busy || !driverId || !hasInvoice} title={!driverId ? "Assign a driver first" : !hasInvoice ? "Save first to create the invoice" : ""} className="inline-flex h-9 items-center gap-1.5 bg-emerald-600 px-3.5 text-[12.5px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+
+            {/* Send to WhatsApp — web-click handoff; gated on a saved order + driver with a phone */}
+            <button
+              type="button"
+              onClick={onWhatsApp}
+              disabled={!canWhatsApp}
+              title={waTitle}
+              aria-disabled={!canWhatsApp}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-colors",
+                canWhatsApp
+                  ? "bg-[#25D366] text-white hover:bg-[#1FB855]"
+                  : "cursor-not-allowed bg-slate-100 text-slate-400",
+              )}
+            >
+              {busy === "whatsapp" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" strokeWidth={1.5} />} Send to WhatsApp
+            </button>
+
+            {/* Send to driver — enabled only after save + driver + invoice (+ email when cc'd) */}
+            <button
+              type="button"
+              onClick={onSend}
+              disabled={!canSend}
+              title={sendTitle}
+              aria-disabled={!canSend}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 px-3.5 text-[12.5px] font-medium transition-colors",
+                canSend
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "cursor-not-allowed bg-slate-100 text-slate-400",
+              )}
+            >
               {busy === "send" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" strokeWidth={1.5} />} Send to driver
             </button>
           </div>

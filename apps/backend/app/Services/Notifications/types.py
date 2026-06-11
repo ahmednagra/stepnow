@@ -13,12 +13,12 @@ class NotificationType:
     default_channels: tuple[str, ...] = field(default_factory=lambda: ("database",))
 
 
-# ── Orders domain ──────────────────────────────────────────
 ORDER_CREATED = NotificationType("order.created", "orders", ("database",))
 ORDER_UPDATED = NotificationType("order.updated", "orders", ("database",))
 ORDER_DELETED = NotificationType("order.deleted", "orders", ("database",))
 INVOICE_CREATED = NotificationType("order.invoice_created", "orders", ("database",))
 PAYMENT_RECORDED = NotificationType("order.payment_recorded", "orders", ("database",))
+SLIP_DOWNLOADED = NotificationType("courier.slip_downloaded", "orders", ("database",))
 
 
 NOTIFICATION_TYPES: dict[str, NotificationType] = {
@@ -29,6 +29,7 @@ NOTIFICATION_TYPES: dict[str, NotificationType] = {
         ORDER_DELETED,
         INVOICE_CREATED,
         PAYMENT_RECORDED,
+        SLIP_DOWNLOADED,
     )
 }
 

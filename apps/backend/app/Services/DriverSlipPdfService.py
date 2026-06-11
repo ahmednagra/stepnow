@@ -29,6 +29,19 @@ class DriverSlipPdfService:
         return STORAGE_DIR / f"Fahrauftrag_{order.order_number}.pdf"
 
     @staticmethod
+    def ensure(db: Session, order: Order) -> str:
+        """Return an absolute path to the order's slip PDF, rendering + caching if missing.
+        Single source of truth reused by the admin download and the public driver download.
+        Owns its commit (mirrors the prior controller behavior)."""
+        path = order.driver_slip_pdf_url
+        if not path or not Path(path).exists():
+            path = DriverSlipPdfService.render(db, order)
+            order.driver_slip_pdf_url = path
+            db.commit()
+            db.refresh(order)
+        return str(Path(path).resolve())
+
+    @staticmethod
     def render(db: Session, order: Order) -> str:
         """Generate the driver-slip PDF, return its (relative) storage path string."""
         STORAGE_DIR.mkdir(parents=True, exist_ok=True)

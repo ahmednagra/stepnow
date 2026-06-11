@@ -8,9 +8,10 @@ import type { Paginated } from "@/types";
 export type DeliveryStatus = "draft" | "dispatched" | "picked_up" | "delivered";
 
 export interface CourierOrder {
+  whatsapp_link?: string | null;
   id: string;
   order_number: string;
-  status: string;                 // financial: open|completed|cancelled
+  status: string;
   delivery_status: DeliveryStatus;
   customer_id: string | null;
   driver_id: string | null;
@@ -91,9 +92,21 @@ export async function updateParcelOrder(orderId: string, payload: ParcelOrderInp
 export async function setDeliveryStatus(orderId: string, delivery_status: DeliveryStatus): Promise<CourierOrder> {
   return nextjsApiClient.post<CourierOrder>(`/admin/orders/${orderId}/delivery-status`, { delivery_status });
 }
-export async function sendDocuments(orderId: string, to: Array<"driver" | "customer">): Promise<CourierOrder> {
-  return nextjsApiClient.post<CourierOrder>(`/admin/orders/${orderId}/send`, { to });
+
+export async function sendDocuments(
+  orderId: string,
+  to: Array<"driver" | "customer">,
+  channel: "email" | "whatsapp" = "email",
+): Promise<CourierOrder> {
+  return nextjsApiClient.post<CourierOrder>(`/admin/orders/${orderId}/send`, { to, channel });
 }
+
+/** Initiate a WhatsApp web-click handoff of the driver slip. Returns the order with
+ *  whatsapp_link populated — open it with window.open to launch WhatsApp Web. */
+export async function sendDriverSlipWhatsApp(orderId: string): Promise<CourierOrder> {
+  return sendDocuments(orderId, ["driver"], "whatsapp");
+}
+
 /** Authenticated slip PDF — proxied through the Next API (same base nextjsApiClient uses). */
 export function slipPdfHref(orderId: string): string {
   return `/api/v0/admin/orders/${orderId}/slip/pdf`;
