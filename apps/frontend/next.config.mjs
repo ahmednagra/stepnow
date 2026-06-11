@@ -35,6 +35,15 @@ const nextConfig = {
     remotePatterns: allowedRemoteHosts,
   },
   env: { NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || "https://step-now.de" },
+  async rewrites() {
+    const apiBase = (backendBase || "http://localhost:8000/api/v0").replace(/\/$/, "");
+    return [
+      {
+        source: "/p/s/:code",
+        destination: `${apiBase}/public/slips/:code`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
