@@ -1,5 +1,6 @@
 # apps/backend/app/Models/__init__.py
 from app.Models.base import Base
+from app.Models.message_delivery import MessageDelivery
 from app.Models.admin import AdminUser, RefreshToken
 from app.Models.audit import AuditLog
 from app.Models.settings import SiteSettings
@@ -16,7 +17,6 @@ from app.Models.invoices import Invoice
 from app.Models.payments import Payment
 from app.Models.contact import ContactMessage
 from app.Models.email_logs import EmailLog
-from app.Models.message_delivery import MessageDelivery
 from app.Models.expense_categories import ExpenseCategory
 from app.Models.expenses import Expense
 from app.Models.drivers import Driver

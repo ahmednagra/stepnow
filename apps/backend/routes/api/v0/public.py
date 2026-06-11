@@ -4,12 +4,15 @@
 import hashlib
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, Response, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from config.database import get_db
 from app.Http.Controllers.FormsController import FormsController
 from app.Http.Controllers.PublicController import PublicController
+from app.Http.Controllers.public.PublicSlipController import PublicSlipController
 from app.Schemas.forms import BookingCreate, BookingSubmitted, ContactCreate, ContactSubmitted
 from app.Utils.i18n import Locale, get_locale
 from app.Utils.rate_limit import limiter
@@ -111,3 +114,13 @@ async def submit_booking(request: Request, payload: BookingCreate, background_ta
 @limiter.limit("3/minute;10/hour")
 async def submit_contact(request: Request, payload: ContactCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ContactSubmitted:
     return FormsController.submit_contact(db, payload, request, background_tasks)
+
+
+@router.get("/slips/{public_code}")
+async def public_slip_download(
+    public_code: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> FileResponse:
+    abs_path = PublicSlipController.download(db, public_code, background_tasks)
+    return FileResponse(abs_path, media_type="application/pdf", filename=Path(abs_path).name)

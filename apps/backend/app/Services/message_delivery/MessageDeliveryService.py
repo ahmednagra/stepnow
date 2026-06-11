@@ -15,14 +15,11 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from config.settings import settings
-import asyncio
-
+from config.database import SessionLocal
 from app.Core.Exceptions import ConflictError, NotFoundError
-from app.Models.admin import AdminUser
 from app.Models.message_delivery import MessageDelivery
 from app.Models.orders import Order
 from app.Services.Notifications import NotificationService
-from config.database import SessionLocal
 from app.Utils.Logger import get_logger
 
 
@@ -178,7 +175,8 @@ class MessageDeliveryService:
     def notify_download(delivery_id: str) -> None:
         """Best-effort dispatcher notification after a driver download. Opens its own session
         (runs from BackgroundTasks). Never raises — a notification failure must not affect the
-        driver's download."""
+        driver's download. Uses the real NotificationService facade (notify_all_admins), which
+        flushes inside this session; we own the commit here since there's no other write."""
 
         db = SessionLocal()
         try:
@@ -188,32 +186,19 @@ class MessageDeliveryService:
             order = db.query(Order).filter(Order.id == row.source_entity_id).first()
             if not order:
                 return
-            admins = db.query(AdminUser).filter(AdminUser.is_deleted == False).all()  # noqa: E712
-            if not admins:
-                return
-            send_to_many = getattr(NotificationService, "send_to_many", None)
-            if send_to_many is None:
-                logger.warning("[MessageDelivery.notify_download] send_to_many unavailable — skipped")
-                return
-            asyncio.run(
-                send_to_many(
-                    recipients=[
-                        {"user_id": str(a.id), "user_type": getattr(a, "user_type", "admin")}
-                        for a in admins
-                    ],
-                    notification_type="courier.slip_downloaded",
-                    title=f"Fahrauftrag {order.order_number} geöffnet",
-                    body=(
-                        f"{row.recipient_name or 'Der Fahrer'} hat den Fahrauftrag "
-                        f"für Auftrag {order.order_number} heruntergeladen."
-                    ),
-                    action_url=f"/admin/orders/{order.id}",
-                    source_entity_type="courier_order",
-                    source_entity_id=str(order.id),
-                    notification_metadata={"delivery_id": str(row.id), "download_count": row.download_count},
-                    db=db,
-                )
+
+            NotificationService.notify_all_admins(
+                db,
+                type_code="courier.slip_downloaded",
+                title=f"Fahrauftrag {order.order_number} geöffnet",
+                body=(
+                    f"{row.recipient_name or 'Der Fahrer'} hat den Fahrauftrag "
+                    f"für Auftrag {order.order_number} heruntergeladen."
+                ),
+                link=f"/admin/orders/{order.id}",
+                data={"delivery_id": str(row.id), "download_count": row.download_count},
             )
+            db.commit()  # facade flushes; this background task owns the commit
         except Exception as exc:  # noqa: BLE001 — best-effort
             logger.warning(f"[MessageDelivery.notify_download] failed: {exc}")
         finally:
