@@ -37,3 +37,35 @@ def next_sequence_number(db: Session, column, prefix: str, width: int = 5) -> st
     )
     seq = (int(last[0].rsplit("-", 1)[1]) + 1) if last else 1
     return f"{prefix}{seq:0{width}d}"
+
+
+def order_date_sequence_number(db: Session, column, for_date: date | None = None) -> str:
+    """Generate an order number matching the Buchhaltung format:
+    counter(2) + DD(2) + MM(2) + YY(2)  →  e.g. '01260326'
+    meaning: 1st order on 26.03.2026.
+
+    counter = how many orders already exist on that date + 1 (padded to 2 digits).
+    Includes soft-deleted rows so a number is never reused.
+    """
+    d = for_date or date.today()
+    dd = str(d.day).zfill(2)
+    mm = str(d.month).zfill(2)
+    yy = str(d.year)[-2:]
+    date_suffix = f"{dd}{mm}{yy}"
+
+    # Count all existing orders whose number ends with this date suffix
+    count = (
+        db.query(column)
+        .filter(column.like(f"%{date_suffix}"))
+        .count()
+    )
+    counter = str(count + 1).zfill(2)
+    return f"{counter}{date_suffix}"
+
+
+def invoice_number_from_order(order_number: str) -> str:
+    """Derive invoice number from order number: 'R' + order_number.
+    e.g. '01260326' → 'R01260326'
+    Matches Buchhaltung genRechnungNr(auftragsNr) = 'R' + auftragsNr.
+    """
+    return f"R{order_number}"

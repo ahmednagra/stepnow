@@ -11,7 +11,7 @@ from app.Models.admin import AdminUser
 from app.Models.orders import Order
 from app.Models.invoices import Invoice
 from app.Services.AuditService import AuditService
-from app.Utils.finance import compute_totals, money, next_sequence_number, year_prefix
+from app.Utils.finance import compute_totals, invoice_number_from_order, money, next_sequence_number, year_prefix
 
 
 class InvoicesService:
@@ -34,9 +34,6 @@ class InvoicesService:
         if not order:
             raise NotFoundError("Order not found", order_id=str(order_id))
 
-        # ── Idempotent: an order has at most one invoice. If it already exists, return it
-        # instead of raising — this lets the admin "Save" action create-or-reuse the invoice
-        # on every save without a 409. (Was: raise ConflictError.)
         existing = db.query(Invoice).filter(Invoice.order_id == order_id).first()
         if existing:
             return existing
@@ -47,7 +44,7 @@ class InvoicesService:
         net, vat, gross = compute_totals(order.net_amount + surcharge_net, rate)
 
         invoice = Invoice(
-            invoice_number=next_sequence_number(db, Invoice.invoice_number, year_prefix("R")),
+            invoice_number=invoice_number_from_order(order.order_number),
             order_id=order.id,
             status="draft",
             issue_date=issue,

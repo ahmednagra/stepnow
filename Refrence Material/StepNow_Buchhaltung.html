@@ -434,7 +434,7 @@ tbody td{padding:8px 10px;color:var(--ink);vertical-align:middle}
   <div class="home-body">
     <div class="home-title">Auftrag erfassen</div>
     <p class="home-sub">Neuen Transportauftrag aufnehmen – nach § 433 BGB · Auftragsnummer wird automatisch generiert.</p>
-    
+
     <!-- Auftragsnummer Display -->
     <div class="home-auftrag-nr">
       <div>
@@ -455,7 +455,7 @@ tbody td{padding:8px 10px;color:var(--ink);vertical-align:middle}
         <div class="grp"><label>Fahrer <span class="req">*</span></label><input type="text" id="h-fahr" placeholder="Name"/></div>
         <div class="grp" style="position:relative">
   <label>Kunde / Auftraggeber <span class="req">*</span></label>
-  <input type="text" id="h-ku" placeholder="Vollständiger Name" 
+  <input type="text" id="h-ku" placeholder="Vollständiger Name"
     oninput="showCustSuggestions(this.value)"
     onblur="setTimeout(()=>{const b=document.getElementById('cust-suggestions');if(b)b.style.display='none'},200)"
     autocomplete="off"/>
@@ -591,7 +591,7 @@ tbody td{padding:8px 10px;color:var(--ink);vertical-align:middle}
       <span class="badge" id="b-yr">2026</span>
       <span class="badge am" id="b-un" style="display:none">0 unbezahlt</span>
       <span class="badge rd" id="b-ov" style="display:none">0 überfällig</span>
-      <button id="sn-save-btn" onclick="saveNow()" 
+      <button id="sn-save-btn" onclick="saveNow()"
         style="width:34px;height:34px;background:var(--br);color:var(--wh);border:none;
         border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;
         justify-content:center;transition:.2s;flex-shrink:0" title="Jetzt speichern">
@@ -1577,7 +1577,7 @@ function genAuftragNr(date){
   return counter + dateStr;
 }
 
-function genRechnungNr(auftragsNr){ return 'R' + auftragsNr; }
+function genRechnungNr(auftragsNr){ return 'R' + new Date().getFullYear() + '-' + String(auftragsNr).replace(/\D/g,'').slice(-4).padStart(4,'0'); }
 
 // ═══════════════════════════════════════════════
 // SCREEN CONTROL
@@ -2482,7 +2482,7 @@ sumRow('Gesamtbetrag',                              fmtPDF(d.brutto), true);
     doc.text('Mit freundlichen Grüßen', M, y); y+=5;
     doc.setTextColor(28,28,28); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
     doc.text('Naeem Ahmad', M, y);
-   
+
    // ── FOOTER ──
 doc.setDrawColor(180,180,180);
 doc.line(0, 285, W, 285);

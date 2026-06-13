@@ -93,7 +93,7 @@ class Settings(BaseSettings):
     SMTP_TIMEOUT_SECONDS: int = int(os.getenv("SMTP_TIMEOUT_SECONDS", "30"))
 
     # Default sender identity + admin notify target + global reply-to.
-    EMAIL_FROM_ADDRESS: str = os.getenv("EMAIL_FROM_ADDRESS", "info@step-now.de")
+    EMAIL_FROM_ADDRESS: str = os.getenv("EMAIL_FROM_ADDRESS", "accounts@step-now.de")
     EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "StepNow")
     EMAIL_ADMIN_NOTIFY: str = os.getenv("EMAIL_ADMIN_NOTIFY", "info@step-now.de")
     EMAIL_REPLY_TO: str | None = os.getenv("EMAIL_REPLY_TO") or None

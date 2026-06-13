@@ -16,7 +16,7 @@ from app.Models.orders import Order
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
 from app.Services.EmailService import EmailService
-from app.Utils.finance import compute_totals, next_sequence_number, year_prefix
+from app.Utils.finance import compute_totals, next_sequence_number, order_date_sequence_number, year_prefix
 
 DEFAULT_VAT_RATE = Decimal("0.0700")
 DELIVERY_FLOW = ["draft", "dispatched", "picked_up", "delivered"]
@@ -61,7 +61,7 @@ class CourierOrdersService:
         due_date = date.today() + timedelta(days=payload.payment_due_days)
 
         order = Order(
-            order_number=next_sequence_number(db, Order.order_number, year_prefix()),
+            order_number=order_date_sequence_number(db, Order.order_number),
             booking_id=None,
             status="open",
             delivery_status="draft",
