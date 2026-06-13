@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block subject_line %}{% if status == "picked_up" %}Sendung abgeholt &mdash; {{ order_number }}{% elif status == "delivered" %}Sendung zugestellt &mdash; {{ order_number }}{% else %}Sendungsstatus &mdash; {{ order_number }}{% endif %}{% endblock %}
+
+{% block preheader %}{% if status == "picked_up" %}Ihre Sendung {{ order_number }} wurde abgeholt und ist unterwegs.{% elif status == "delivered" %}Ihre Sendung {{ order_number }} wurde erfolgreich zugestellt.{% endif %}{% endblock %}
+
+{% block header_color %}{% if status == "picked_up" %}background-color:#b45309;{% elif status == "delivered" %}background-color:#15803d;{% else %}background-color:#185FA5;{% endif %}{% endblock %}
+
+{% block header_title %}{% if status == "picked_up" %}Sendung abgeholt{% elif status == "delivered" %}Sendung zugestellt{% else %}Sendungsstatus{% endif %}{% endblock %}
+
+{% block header_ref %}
+    <p style="margin:6px 0 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#FFFFFF; opacity:0.9; font-weight:600;">
+        Auftragsnummer {{ order_number }}
+    </p>
+{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Sehr geehrte/r {{ customer_name }},</p>
+
+    {% if status == "picked_up" %}
+    <p style="margin:0 0 24px 0;">
+        Ihre Sendung <strong style="color:#1F2937;">{{ order_number }}</strong> wurde soeben von
+        unserem Fahrer <strong style="color:#b45309;">abgeholt</strong> und ist nun auf dem Weg
+        zum Empf&auml;nger. Wir halten Sie auf dem Laufenden.
+    </p>
+    {% elif status == "delivered" %}
+    <p style="margin:0 0 24px 0;">
+        Ihre Sendung <strong style="color:#1F2937;">{{ order_number }}</strong> wurde erfolgreich
+        <strong style="color:#15803d;">zugestellt</strong>.
+        Vielen Dank f&uuml;r Ihr Vertrauen in {{ brand_name }} {{ brand_tagline }}.
+    </p>
+    {% endif %}
+
+    <!-- Status card — table-based, no flexbox (Outlook safe) -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td width="6" style="{% if status == 'picked_up' %}background-color:#d97706;{% else %}background-color:#16a34a;{% endif %} font-size:0; line-height:0;">&nbsp;</td>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif;">
+                <p style="margin:0 0 4px 0; font-size:11px; font-weight:700; text-transform:uppercase;
+                          letter-spacing:0.3px; {% if status == 'picked_up' %}color:#b45309;{% else %}color:#15803d;{% endif %}">Status</p>
+                {% if status == "picked_up" %}
+                <p style="margin:0; font-size:15px; font-weight:600; color:#1F2937;">Abgeholt &mdash; Sendung ist auf dem Weg</p>
+                {% elif status == "delivered" %}
+                <p style="margin:0; font-size:15px; font-weight:600; color:#1F2937;">Zugestellt &mdash; Sendung erfolgreich &uuml;bergeben</p>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Order number card -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif;">
+                <p style="margin:0 0 4px 0; font-size:11px; font-weight:700; text-transform:uppercase;
+                          letter-spacing:0.3px; color:#9CA3AF;">Auftragsnummer</p>
+                <p style="margin:0; font-size:22px; font-family:'Courier New',monospace;
+                          font-weight:700; color:#1F2937; letter-spacing:0.5px;">{{ order_number }}</p>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0; font-size:13px; color:#6B7280;">
+        Fragen zu Ihrer Sendung? Wir helfen gerne:
+        <a href="mailto:{{ support_email }}" style="color:#185FA5;">{{ support_email }}</a>
+        {% if company_phone %}&nbsp;&middot;&nbsp;{{ company_phone }}{% endif %}
+    </p>
+{% endblock %}

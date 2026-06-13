@@ -11,7 +11,7 @@ Rechnungsdatum  : {{ invoice_date }}
 {% endif %}
 {% if line_items %}POSITIONEN
 ----------
-{% for item in line_items %}{{ item.description }} — {{ item.amount }}
+{% for item in line_items %}{{ item.description }} -- {{ item.amount }}
 {% endfor %}{% endif %}
 Gesamtbetrag    : {{ total_amount }}
 {% if company_bank %}
@@ -19,5 +19,5 @@ Zahlungsinformationen: {{ company_bank }}
 {% endif %}
 Bei Fragen zu dieser Rechnung erreichen Sie uns unter {{ support_email }}.
 
-— {{ brand_name }} · {{ brand_tagline }}
+-- {{ brand_name }} - {{ brand_tagline }}
 {{ company_name }}, {{ company_owner }}

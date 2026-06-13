@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block subject_line %}Ihre Nachricht ist bei uns angekommen{% endblock %}
+{% block preheader %}Vielen Dank fuer Ihre Nachricht. Wir werden uns baldmoeglichst bei Ihnen melden.{% endblock %}
+{% block header_color %}background-color:#185FA5;{% endblock %}
+{% block header_title %}Nachricht erhalten{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Sehr geehrte/r Kunde/in,</p>
+
+    <p style="margin:0 0 24px 0;">
+        vielen Dank f&uuml;r Ihre Nachricht. Wir haben Ihre Anfrage erhalten und werden uns
+        <strong style="color:#1F2937;">so bald wie m&ouml;glich</strong> bei Ihnen melden.
+    </p>
+
+    <!-- Confirmation card -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="background-color:#F0FDF4; border:1px solid #BBF7D0; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#15803d;">
+                &#x2714;&nbsp; Ihre Nachricht wurde erfolgreich &uuml;bermittelt.
+            </td>
+        </tr>
+    </table>
+
+    <!-- Reference -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif;">
+                <p style="margin:0 0 4px 0; font-size:11px; font-weight:700; text-transform:uppercase;
+                          letter-spacing:0.3px; color:#9CA3AF;">Ihre Referenz</p>
+                <p style="margin:0; font-size:16px; font-family:'Courier New',monospace;
+                          font-weight:700; color:#1F2937;">{{ message_id }}</p>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin:0; font-size:13px; color:#6B7280;">
+        F&uuml;r dringende Anliegen erreichen Sie uns direkt unter
+        <a href="mailto:{{ support_email }}" style="color:#185FA5;">{{ support_email }}</a>
+        {% if company_phone %}&nbsp;&middot;&nbsp;{{ company_phone }}{% endif %}
+    </p>
+{% endblock %}

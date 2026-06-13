@@ -1,31 +1,27 @@
 {% extends "base.html" %}
 
-{% block subject_line %}Fahrauftrag {{ order_number }}{% endblock %}
-{% block preheader %}Neuer Fahrauftrag {{ order_number }} — {{ pickup }} &rarr; {{ destination }}{% endblock %}
-{% block header_title %}Neuer Fahrauftrag{% endblock %}
+{% block subject_line %}Kontaktanfrage von {{ from_email }}{% endblock %}
+{% block preheader %}Neue Kontaktanfrage ({{ category }}) von {{ from_email }}{% endblock %}
+{% block header_color %}background-color:#0F4377;{% endblock %}
+{% block header_title %}Neue Kontaktanfrage{% endblock %}
 
 {% block header_ref %}
     <p style="margin:6px 0 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#185FA5; font-weight:600;">
-        Auftragsnummer {{ order_number }}
+        Kategorie: {{ category }}
     </p>
 {% endblock %}
 
 {% block content %}
-    <p style="margin:0 0 16px 0;">Hallo {{ driver_name }},</p>
+    <p style="margin:0 0 16px 0;">Eine neue Kontaktanfrage ist eingegangen.</p>
 
-    <p style="margin:0 0 24px 0;">
-        Ihnen wurde ein neuer Fahrauftrag zugewiesen. Die Einzelheiten finden Sie nachfolgend.
-        Der vollst&auml;ndige Fahrauftrag liegt dieser E-Mail als PDF bei.
-    </p>
-
-    <!-- Detail card -->
+    <!-- Details card -->
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 24px 0;">
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
         <tr>
             <td style="padding:18px 22px; background-color:#FAFBFC; border-bottom:1px solid #E5E7EB;
                        font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:700;
                        color:#1F2937; letter-spacing:0.3px; text-transform:uppercase;">
-                Auftragsdetails
+                Absenderdaten
             </td>
         </tr>
         <tr>
@@ -38,31 +34,21 @@
                         <td style="padding:10px 0; border-bottom:1px solid #F0F2F4; color:#1F2937; font-weight:600; vertical-align:top;">{{ value }}</td>
                     </tr>
                     {% endmacro %}
-                    {{ row('Auftragsnummer', order_number) }}
-                    {{ row('Datum / Zeit', pickup_datetime) }}
-                    {{ row('Abholung', pickup) }}
-                    {{ row('Zielort', destination) }}
-                    {{ row('Fahrer', driver_name) }}
-                    {% if vehicle %}{{ row('Fahrzeug', vehicle) }}{% endif %}
-                    {% if notes %}{{ row('Hinweise', notes) }}{% endif %}
+                    {{ row('E-Mail', from_email) }}
+                    {{ row('Kategorie', category) }}
+                    {{ row('Nachrichten-ID', message_id) }}
                 </table>
             </td>
         </tr>
     </table>
 
-    <!-- Attachment note -->
+    <!-- Action hint -->
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
            style="background-color:#EEF4FB; border:1px solid #D6E4F2; border-radius:4px; margin:0 0 8px 0;">
         <tr>
             <td style="padding:14px 18px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#185FA5;">
-                <strong>&#128206; Anhang:</strong> Der vollst&auml;ndige Fahrauftrag <strong>{{ order_number }}.pdf</strong>
-                ist dieser E-Mail beigef&uuml;gt.
+                Bitte bearbeiten Sie diese Anfrage zeitnah im Admin-Panel und markieren Sie sie als erledigt.
             </td>
         </tr>
     </table>
-
-    <p style="margin:20px 0 0 0; font-size:13px; color:#6B7280;">
-        Bei Fragen zu diesem Auftrag wenden Sie sich bitte an
-        <a href="mailto:{{ support_email }}" style="color:#185FA5;">{{ support_email }}</a>.
-    </p>
 {% endblock %}

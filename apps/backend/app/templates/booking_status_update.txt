@@ -1,0 +1,28 @@
+{% if status == "confirmed" %}Buchung bestaetigt -- {{ reference }}
+{% elif status == "cancelled" %}Buchung storniert -- {{ reference }}
+{% elif status == "quoted" %}Angebot erhalten -- {{ reference }}
+{% endif %}
+
+Sehr geehrte/r {{ customer_name }},
+
+{% if status == "confirmed" %}
+wir freuen uns, Ihnen mitteilen zu koennen, dass Ihre Buchung {{ reference }} bestaetigt wurde.
+Unser Team wird zum vereinbarten Zeitpunkt fuer Sie bereitstehen.
+{% elif status == "cancelled" %}
+leider muessen wir Ihnen mitteilen, dass Ihre Buchung {{ reference }} storniert wurde.
+Bei Fragen oder fuer eine Neubuchung stehen wir Ihnen gerne zur Verfuegung.
+{% elif status == "quoted" %}
+wir haben ein Angebot fuer Ihre Buchung {{ reference }} erstellt.
+Bitte kontaktieren Sie uns, um die Buchung zu bestaetigen.
+{% endif %}
+
+Buchungsreferenz : {{ reference }}
+{% if status == "quoted" and quoted_price %}
+Angebotspreis    : {{ quoted_price }} EUR (netto)
+{% endif %}
+
+Bei Fragen erreichen Sie uns unter {{ support_email }}{% if company_phone %} oder {{ company_phone }}{% endif %}.
+
+-- {{ brand_name }} - {{ brand_tagline }}
+{{ company_name }}, {{ company_owner }}
+{% if company_street %}{{ company_street }}{% endif %}{% if company_city %} - {{ company_city }}{% endif %}

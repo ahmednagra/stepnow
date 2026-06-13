@@ -1,0 +1,15 @@
+NEUE BUCHUNGSANFRAGE -- {{ reference }}
+
+Eine neue Buchungsanfrage ist eingegangen.
+
+ANFRAGEDATEN
+------------
+Referenz      : {{ reference }}
+E-Mail Kunde  : {{ customer_email }}
+{% if customer_phone %}Telefon Kunde : {{ customer_phone }}
+{% endif %}
+
+Bitte melden Sie sich zeitnah beim Kunden und hinterlegen Sie einen Angebotspreis im Admin-Panel.
+
+-- {{ brand_name }} - {{ brand_tagline }}
+{{ company_name }}, {{ company_owner }}

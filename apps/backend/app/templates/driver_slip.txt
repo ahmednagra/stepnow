@@ -15,5 +15,5 @@ Fahrer         : {{ driver_name }}
 
 Bei Fragen zu diesem Auftrag wenden Sie sich bitte an {{ support_email }}.
 
-— {{ brand_name }} · {{ brand_tagline }}
+-- {{ brand_name }} - {{ brand_tagline }}
 {{ company_name }}, {{ company_owner }}

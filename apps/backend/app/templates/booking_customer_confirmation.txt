@@ -1,0 +1,22 @@
+Buchungsanfrage erhalten -- {{ reference }}
+
+Sehr geehrte/r Kunde/in,
+
+vielen Dank fuer Ihre Buchungsanfrage. Wir haben Ihre Anfrage erhalten und werden uns
+innerhalb von 2 Stunden mit Ihrem Pauschalpreis bei Ihnen melden.
+
+Ihre Referenznummer : {{ reference }}
+
+WIE ES WEITERGEHT
+-----------------
+1. Wir melden uns telefonisch mit Ihrem Pauschalpreis.
+2. Nach Ihrer Bestaetigung wird die Fahrt fest gebucht.
+3. Sie erhalten eine Buchungsbestaetigung per E-Mail.
+
+Bei Fragen koennen Sie uns jederzeit erreichen:
+E-Mail  : {{ support_email }}
+{% if company_phone %}Telefon : {{ company_phone }}
+{% endif %}
+
+-- {{ brand_name }} - {{ brand_tagline }}
+{{ company_name }}, {{ company_owner }}

@@ -1,0 +1,16 @@
+Nachricht erhalten
+
+Sehr geehrte/r Kunde/in,
+
+vielen Dank fuer Ihre Nachricht. Wir haben Ihre Anfrage erhalten und werden uns
+so bald wie moeglich bei Ihnen melden.
+
+Ihre Referenz : {{ message_id }}
+
+Fuer dringende Anliegen erreichen Sie uns direkt:
+E-Mail  : {{ support_email }}
+{% if company_phone %}Telefon : {{ company_phone }}
+{% endif %}
+
+-- {{ brand_name }} - {{ brand_tagline }}
+{{ company_name }}, {{ company_owner }}

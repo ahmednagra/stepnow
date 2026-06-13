@@ -14,9 +14,9 @@
     <p style="margin:0 0 16px 0;">Sehr geehrte/r {{ customer_name }},</p>
 
     <p style="margin:0 0 24px 0;">
-        vielen Dank für Ihren Auftrag. Anbei erhalten Sie Ihre Rechnung
+        vielen Dank f&uuml;r Ihren Auftrag. Anbei erhalten Sie Ihre Rechnung
         <strong style="color:#1F2937;">{{ invoice_number }}</strong> zum Auftrag
-        <strong style="color:#1F2937;">{{ order_number }}</strong>. Die vollständige Rechnung
+        <strong style="color:#1F2937;">{{ order_number }}</strong>. Die vollst&auml;ndige Rechnung
         liegt dieser E-Mail als PDF bei.
     </p>
 
@@ -36,13 +36,13 @@
                     {{ row('Rechnungsnummer', invoice_number) }}
                     {{ row('Auftragsnummer', order_number) }}
                     {{ row('Rechnungsdatum', invoice_date) }}
-                    {% if due_date %}{{ row('Fällig bis', due_date) }}{% endif %}
+                    {% if due_date %}{{ row('F&auml;llig bis', due_date) }}{% endif %}
                 </table>
             </td>
         </tr>
     </table>
 
-    <!-- Line items (optional; render if provided) -->
+    <!-- Line items (optional) -->
     {% if line_items %}
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
            style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px;">
@@ -76,8 +76,8 @@
            style="background-color:#EEF4FB; border:1px solid #D6E4F2; border-radius:4px; margin:0 0 8px 0;">
         <tr>
             <td style="padding:14px 18px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#185FA5;">
-                <strong>📎 Anhang:</strong> Ihre Rechnung <strong>{{ invoice_number }}.pdf</strong>
-                ist dieser E-Mail beigefügt.
+                <strong>&#128206; Anhang:</strong> Ihre Rechnung <strong>{{ invoice_number }}.pdf</strong>
+                ist dieser E-Mail beigef&uuml;gt.
             </td>
         </tr>
     </table>

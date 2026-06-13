@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block subject_line %}{% if status == "confirmed" %}Buchung best&auml;tigt &mdash; {{ reference }}{% elif status == "cancelled" %}Buchung storniert &mdash; {{ reference }}{% elif status == "quoted" %}Angebot erhalten &mdash; {{ reference }}{% else %}Buchungsstatus &mdash; {{ reference }}{% endif %}{% endblock %}
+
+{% block preheader %}{% if status == "confirmed" %}Ihre Buchung {{ reference }} wurde best&auml;tigt.{% elif status == "cancelled" %}Ihre Buchung {{ reference }} wurde storniert.{% elif status == "quoted" %}Ihr Angebot f&uuml;r Buchung {{ reference }} ist bereit.{% endif %}{% endblock %}
+
+{% block header_color %}{% if status == "confirmed" %}background-color:#15803d;{% elif status == "cancelled" %}background-color:#be123c;{% else %}background-color:#185FA5;{% endif %}{% endblock %}
+
+{% block header_title %}{% if status == "confirmed" %}Buchung best&auml;tigt{% elif status == "cancelled" %}Buchung storniert{% elif status == "quoted" %}Angebot erhalten{% else %}Buchungsstatus{% endif %}{% endblock %}
+
+{% block header_ref %}
+    <p style="margin:6px 0 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:#FFFFFF; opacity:0.9; font-weight:600;">
+        Referenz {{ reference }}
+    </p>
+{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px 0;">Sehr geehrte/r {{ customer_name }},</p>
+
+    {% if status == "confirmed" %}
+    <p style="margin:0 0 24px 0;">
+        wir freuen uns, Ihnen mitteilen zu k&ouml;nnen, dass Ihre Buchung
+        <strong style="color:#1F2937;">{{ reference }}</strong>
+        <strong style="color:#15803d;">best&auml;tigt</strong> wurde.
+        Unser Team wird zum vereinbarten Zeitpunkt f&uuml;r Sie bereitstehen.
+    </p>
+    {% elif status == "cancelled" %}
+    <p style="margin:0 0 24px 0;">
+        leider m&uuml;ssen wir Ihnen mitteilen, dass Ihre Buchung
+        <strong style="color:#1F2937;">{{ reference }}</strong>
+        <strong style="color:#be123c;">storniert</strong> wurde.
+        Bei Fragen oder f&uuml;r eine Neubuchung stehen wir Ihnen gerne zur Verf&uuml;gung.
+    </p>
+    {% elif status == "quoted" %}
+    <p style="margin:0 0 24px 0;">
+        wir haben ein Angebot f&uuml;r Ihre Buchung
+        <strong style="color:#1F2937;">{{ reference }}</strong> erstellt.
+        Bitte kontaktieren Sie uns, um die Buchung zu best&auml;tigen.
+    </p>
+    {% endif %}
+
+    <!-- Reference card -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #E5E7EB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif;">
+                <p style="margin:0 0 4px 0; font-size:11px; font-weight:700; text-transform:uppercase;
+                          letter-spacing:0.3px; color:#9CA3AF;">Buchungsreferenz</p>
+                <p style="margin:0; font-size:22px; font-family:'Courier New',monospace;
+                          font-weight:700; color:#1F2937; letter-spacing:0.5px;">{{ reference }}</p>
+            </td>
+        </tr>
+    </table>
+
+    {% if status == "quoted" and quoted_price %}
+    <!-- Price card -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+           style="border:1px solid #D6E4F2; background-color:#EEF4FB; border-radius:4px; margin:0 0 20px 0;">
+        <tr>
+            <td style="padding:16px 22px; font-family:Arial,Helvetica,sans-serif;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td style="font-size:14px; color:#374151;">Angebotspreis (netto)</td>
+                        <td align="right" style="font-size:18px; font-family:'Courier New',monospace;
+                                                 font-weight:700; color:#185FA5;">{{ quoted_price }} EUR</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    {% endif %}
+
+    <p style="margin:0; font-size:13px; color:#6B7280;">
+        Bei Fragen zu Ihrer Buchung erreichen Sie uns unter
+        <a href="mailto:{{ support_email }}" style="color:#185FA5;">{{ support_email }}</a>
+        {% if company_phone %}&nbsp;&middot;&nbsp;{{ company_phone }}{% endif %}.
+    </p>
+{% endblock %}

@@ -1,0 +1,14 @@
+NEUE KONTAKTANFRAGE -- {{ category }}
+
+Eine neue Kontaktanfrage ist eingegangen.
+
+ABSENDERDATEN
+-------------
+E-Mail        : {{ from_email }}
+Kategorie     : {{ category }}
+Nachrichten-ID: {{ message_id }}
+
+Bitte bearbeiten Sie diese Anfrage zeitnah im Admin-Panel und markieren Sie sie als erledigt.
+
+-- {{ brand_name }} - {{ brand_tagline }}
+{{ company_name }}, {{ company_owner }}
