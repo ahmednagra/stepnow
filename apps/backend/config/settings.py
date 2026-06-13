@@ -65,8 +65,6 @@ class Settings(BaseSettings):
     CORS_ALLOWED_ORIGINS: list[str] = ["https://step-now.de"]
 
     # ── Public site (Next.js frontend) base URL ──
-    # Used to build user-facing links the backend hands out (e.g. the short driver-slip
-    # download link /p/s/{code}). Prod: https://step-now.de · dev: http://localhost:3000.
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://step-now.de")
 
     # ── Rate limits ──
@@ -112,13 +110,23 @@ class Settings(BaseSettings):
     SMTP_MOVERS_FROM_EMAIL: str | None = os.getenv("SMTP_MOVERS_FROM_EMAIL") or None
     SMTP_MOVERS_FROM_NAME: str | None = os.getenv("SMTP_MOVERS_FROM_NAME") or None
 
+    # ── Mailbox: ACCOUNTS (all customer invoices) ──
+    SMTP_ACCOUNTS_USER: str | None = os.getenv("SMTP_ACCOUNTS_USER") or None
+    SMTP_ACCOUNTS_PASSWORD: str | None = os.getenv("SMTP_ACCOUNTS_PASSWORD") or None
+    SMTP_ACCOUNTS_FROM_EMAIL: str | None = os.getenv("SMTP_ACCOUNTS_FROM_EMAIL") or None
+    SMTP_ACCOUNTS_FROM_NAME: str | None = os.getenv("SMTP_ACCOUNTS_FROM_NAME") or None
+
+    # ── Mailbox: NOREPLY (system / automated) ──
+    SMTP_NOREPLY_USER: str | None = os.getenv("SMTP_NOREPLY_USER") or None
+    SMTP_NOREPLY_PASSWORD: str | None = os.getenv("SMTP_NOREPLY_PASSWORD") or None
+    SMTP_NOREPLY_FROM_EMAIL: str | None = os.getenv("SMTP_NOREPLY_FROM_EMAIL") or None
+    SMTP_NOREPLY_FROM_NAME: str | None = os.getenv("SMTP_NOREPLY_FROM_NAME") or None
+
     # ── Module → mailbox routing ──
-    # Each module names the mailbox it sends from ("rides" | "movers"). Edit in
-    # .env to re-route without code changes; unknown values fall back to "rides".
     MAILBOX_BOOKING: str = os.getenv("MAILBOX_BOOKING", "rides")
-    MAILBOX_CONTACT: str = os.getenv("MAILBOX_CONTACT", "rides")
+    MAILBOX_CONTACT: str = os.getenv("MAILBOX_CONTACT", "accounts")
     MAILBOX_COURIER_DRIVER: str = os.getenv("MAILBOX_COURIER_DRIVER", "movers")
-    MAILBOX_COURIER_INVOICE: str = os.getenv("MAILBOX_COURIER_INVOICE", "movers")
+    MAILBOX_COURIER_INVOICE: str = os.getenv("MAILBOX_COURIER_INVOICE", "accounts")
 
     # ════════════════════════════════════════════════════════════════
     # Company / invoice header
@@ -165,6 +173,16 @@ class Settings(BaseSettings):
             password = self.SMTP_MOVERS_PASSWORD
             from_email = self.SMTP_MOVERS_FROM_EMAIL
             from_name = self.SMTP_MOVERS_FROM_NAME
+        elif k == "accounts":
+            user = self.SMTP_ACCOUNTS_USER
+            password = self.SMTP_ACCOUNTS_PASSWORD
+            from_email = self.SMTP_ACCOUNTS_FROM_EMAIL
+            from_name = self.SMTP_ACCOUNTS_FROM_NAME
+        elif k == "noreply":
+            user = self.SMTP_NOREPLY_USER
+            password = self.SMTP_NOREPLY_PASSWORD
+            from_email = self.SMTP_NOREPLY_FROM_EMAIL
+            from_name = self.SMTP_NOREPLY_FROM_NAME
         else:  # "rides" and any unknown kind
             user = self.SMTP_RIDES_USER
             password = self.SMTP_RIDES_PASSWORD
