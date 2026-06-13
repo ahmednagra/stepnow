@@ -15,6 +15,7 @@ from app.Models.drivers import Driver
 from app.Models.orders import Order
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
+from app.Services.EmailService import EmailService
 from app.Utils.finance import compute_totals, next_sequence_number, year_prefix
 
 DEFAULT_VAT_RATE = Decimal("0.0700")
@@ -36,6 +37,8 @@ class CourierOrdersService:
         if payload.customer_id:
             return CustomersService.get(db, payload.customer_id, allow_deleted=False)
         if payload.customer:
+            if request is None:
+                raise ConflictError("Request context required for inline customer creation")
             return CustomersService.create(db, payload.customer.model_dump(), actor, request)
         raise ConflictError("Provide customer_id or inline customer data")
 
@@ -133,6 +136,22 @@ class CourierOrdersService:
             o.picked_up_at = now
         elif new_status == "delivered":
             o.delivered_at = now
+        if new_status in ("picked_up", "delivered") and o.customer_email:
+            _subject = (
+                f"Ihr Paket {o.order_number} wurde abgeholt"
+                if new_status == "picked_up"
+                else f"Ihr Paket {o.order_number} wurde zugestellt"
+            )
+            EmailService.queue(
+                db, o.customer_email, "delivery_status_update",
+                _subject, "de",
+                extra={
+                    "order_number": o.order_number,
+                    "status": new_status,
+                    "customer_name": o.customer_name,
+                },
+                module="courier_driver",
+            )
         AuditService.log(db, actor, "orders", str(o.id), "update", before, CourierOrdersService._snapshot(o), request)
         db.commit()
         db.refresh(o)

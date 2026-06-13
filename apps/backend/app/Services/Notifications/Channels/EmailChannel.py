@@ -29,7 +29,7 @@ class EmailChannel(BaseChannel):
                 subject=payload.title,
                 locale="de",
                 extra={"body": payload.body, "link": payload.link, **(payload.data or {})},
-                module="booking",
+                module="contact",
             )
         except Exception as exc:  # noqa: BLE001 — queueing must not break the notification fan-out
             logger.warning(f"[EmailChannel] queue failed type={payload.type_code}: {exc}")

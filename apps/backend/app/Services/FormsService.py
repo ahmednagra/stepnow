@@ -95,6 +95,7 @@ class FormsService:
             extra={"booking_id": str(booking.id), "reference": booking.reference, "customer_email": booking.customer_email, "customer_phone": booking.customer_phone},
             module="booking",
         )
+
         ids.append(owner_log.id)
         customer_log = EmailService.queue(
             db, booking.customer_email, "booking_customer_confirmation",
@@ -115,6 +116,7 @@ class FormsService:
             db, owner_email, "contact_owner_notification",
             f"Kontaktanfrage von {message.name}", message.language,
             extra={"message_id": str(message.id), "category": message.subject_category, "from_email": message.email},
+            module="contact",
         )
         ids.append(owner_log.id)
         customer_log = EmailService.queue(
@@ -122,6 +124,7 @@ class FormsService:
             "Vielen Dank für Ihre Nachricht" if message.language == "de" else "Thank you for your message",
             message.language,
             extra={"message_id": str(message.id)},
+            module="contact",
         )
         ids.append(customer_log.id)
         return ids

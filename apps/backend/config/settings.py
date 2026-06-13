@@ -94,7 +94,7 @@ class Settings(BaseSettings):
 
     # Default sender identity + admin notify target + global reply-to.
     EMAIL_FROM_ADDRESS: str = os.getenv("EMAIL_FROM_ADDRESS", "info@step-now.de")
-    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "StepNow Rides")
+    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "StepNow")
     EMAIL_ADMIN_NOTIFY: str = os.getenv("EMAIL_ADMIN_NOTIFY", "info@step-now.de")
     EMAIL_REPLY_TO: str | None = os.getenv("EMAIL_REPLY_TO") or None
 
@@ -162,10 +162,9 @@ class Settings(BaseSettings):
     def mailbox(self, kind: str = "rides") -> MailboxConfig:
         """Resolve SMTP identity for a sending mailbox.
 
-        kind: "rides" (default) or "movers". Unknown kinds fall back to the
-        shared default identity. Per-mailbox user/password/sender override the
-        defaults; anything missing falls back to EMAIL_FROM_ADDRESS/NAME and the
-        shared SMTP transport.
+        kind: "rides" (default), "movers", "accounts", or "noreply". Unknown
+        kinds fall back to "rides". Per-mailbox credentials override the shared
+        defaults; anything missing falls back to EMAIL_FROM_ADDRESS/NAME.
         """
         k = (kind or "rides").strip().lower()
         if k == "movers":

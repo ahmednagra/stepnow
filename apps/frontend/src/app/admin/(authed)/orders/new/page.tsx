@@ -48,7 +48,7 @@ const ISSUER = {
   sender: "StepNow Rides & Movers — Naeem Ahmad e.K. · Blumenstraße 8 · 73779 Deizisau",
   steuer: "Steuer-Nr. 59500/72609",
   bank: "IBAN DE12 6005 0101 0001 2345 67 · BIC SOLADEST600 · Kreissparkasse Esslingen",
-  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · rides@mail.step-now.de",
+  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · rides@step-now.de",
 };
 
 // Loose but practical email check — mirrors what the backend will accept.

@@ -12,6 +12,7 @@ from app.Models.admin import AdminUser
 from app.Models.bookings import BookingRequest
 from app.Models.orders import Order
 from app.Services.AuditService import AuditService
+from app.Services.EmailService import EmailService
 from app.Utils.finance import compute_totals, next_sequence_number, year_prefix
 
 DEFAULT_VAT_RATE = Decimal("0.0700")  # reduced rate (PBefG short-distance passenger transport)
@@ -39,8 +40,8 @@ class OrdersService:
             raise NotFoundError("Booking not found", booking_id=str(booking_id))
 
         # idempotency — one order per booking (also enforced by uq_orders_booking_id)
-        if db.query(Order).filter(Order.booking_id == booking_id).first():
-            existing = db.query(Order).filter(Order.booking_id == booking_id).first()
+        existing = db.query(Order).filter(Order.booking_id == booking_id).first()
+        if existing:
             raise ConflictError("Booking already converted to an order", order_number=existing.order_number)
 
         rate = payload.vat_rate if payload.vat_rate is not None else DEFAULT_VAT_RATE
@@ -123,6 +124,23 @@ class OrdersService:
                 o.completed_at = datetime.now(timezone.utc)
             if data["status"] == "cancelled" and not o.cancelled_at:
                 o.cancelled_at = datetime.now(timezone.utc)
+            if data["status"] in ("confirmed", "cancelled", "quoted") and o.customer_email:
+                _subject = {
+                    "confirmed": f"Buchung {o.order_number} bestätigt",
+                    "cancelled": f"Buchung {o.order_number} storniert",
+                    "quoted": f"Ihr Angebot für Buchung {o.order_number}",
+                }.get(data["status"], "")
+                EmailService.queue(
+                    db, o.customer_email, "booking_status_update",
+                    _subject, "de",
+                    extra={
+                        "reference": o.order_number,
+                        "status": data["status"],
+                        "quoted_price": str(o.net_amount or ""),
+                        "customer_name": o.customer_name,
+                    },
+                    module="booking",
+                )
         if "driver_name" in data:
             o.driver_name = data["driver_name"]
         if "internal_notes" in data:
