@@ -71,9 +71,6 @@ class CourierController:
     def send(db: Session, order_id: UUID, payload: SendSlipRequest, actor: AdminUser, request: Request, background_tasks: BackgroundTasks) -> CourierOrderResponse:
         order = OrdersService.get(db, order_id)
 
-        # ── WhatsApp web-click handoff (driver only) — reuses the slip renderer, writes a
-        #    message_deliveries audit row, returns a wa.me link the frontend opens. The email
-        #    branches below run only for the default channel="email". ──
         if payload.channel == "whatsapp":
             if payload.to != ["driver"]:
                 raise ConflictError("WhatsApp send currently supports the driver slip only (to=['driver'])")
@@ -134,6 +131,8 @@ class CourierController:
                     "driver_name": driver.full_name,
                 },
                 module="courier_driver",
+                attachment_path=str(Path(order.driver_slip_pdf_url).resolve()),
+                attachment_name=f"{order.order_number}.pdf",
             )
             queued.append(log.id)
 
@@ -147,6 +146,8 @@ class CourierController:
                 subject=f"Rechnung {order.invoice.invoice_number}", locale="de",
                 extra={"invoice_number": order.invoice.invoice_number, "order_number": order.order_number},
                 module="courier_invoice",
+                attachment_path=str(Path(order.invoice.pdf_url).resolve()) if order.invoice.pdf_url else None,
+                attachment_name=f"{order.invoice.invoice_number}.pdf",
             )
             queued.append(log.id)
 
