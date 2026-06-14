@@ -1,114 +1,82 @@
 # apps/backend/scripts/seed.py
-# Seed runner: bootstraps sys.path + .env, runs all idempotent seeders in dependency order. CLI for manual use; run_all() reused by main.py lifespan.
+# Master seeder runner — runs all seeders in declared order.
+# Each seeder's run() is idempotent: safe to re-run on an already-seeded DB.
+# Called by:
+#   python -m scripts.seed            (manual run)
+#   AUTO_SEED_ON_STARTUP=true         (app lifespan, non-production only)
 
-import argparse
-import importlib
-import sys
-import traceback
-from pathlib import Path
+from scripts.seeders import (
+    seed_system_user,
+    seed_admin,
+    seed_site_settings,
+    seed_ui_strings,
+    seed_services,
+    seed_pricing,
+    seed_vehicles,
+    seed_faqs,
+    seed_testimonials,
+    seed_legal_pages,
+    seed_bookings,
+    seed_contact_messages,
+    seed_expenses,
+    seed_customers,
+    seed_legacy_orders,
+    seed_drivers,
+    seed_parcel_orders,
+)
 
-# Add apps/backend/ to sys.path so `config.*`, `app.*`, and `scripts.*` all resolve. Required when invoked as `python scripts/seed.py` or via importlib.
-_BACKEND_DIR = Path(__file__).resolve().parent.parent
-if str(_BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(_BACKEND_DIR))
-
-# Load apps/backend/.env so Pydantic Settings validates regardless of cwd (monorepo root, backend dir, in-process from lifespan).
-_ENV_PATH = _BACKEND_DIR / ".env"
-if _ENV_PATH.exists():
-    try:
-        from dotenv import load_dotenv
-
-        load_dotenv(_ENV_PATH, override=False)
-    except ImportError:
-        import os as _os
-
-        for _line in _ENV_PATH.read_text().splitlines():
-            _line = _line.strip()
-            if not _line or _line.startswith("#") or "=" not in _line:
-                continue
-            _k, _, _v = _line.partition("=")
-            _k, _v = _k.strip(), _v.strip().strip('"').strip("'")
-            if _k and _k not in _os.environ:
-                _os.environ[_k] = _v
-
-# Dependency order: system_user (audit actor) → admin (Naeem) → site_settings (legal placeholders) → content seeders → forms with FKs.
+# Seeders run in this exact order.  Dependents must appear AFTER their dependencies.
+# ─────────────────────────────────────────────────────────────────────────────
+# Core system
+#   system_user → admin → site_settings → ui_strings
+# Rides module
+#   services → pricing → vehicles → faqs → testimonials → legal_pages
+#   → bookings → contact_messages
+# Accounting / legacy import (movers)
+#   expenses → customers → legacy_orders
+# Movers module demo data
+#   drivers → parcel_orders
+# ─────────────────────────────────────────────────────────────────────────────
 SEEDERS_IN_ORDER = [
-    ("system_user", "scripts.seeders.seed_system_user"),
-    ("admin", "scripts.seeders.seed_admin"),
-    ("site_settings", "scripts.seeders.seed_site_settings"),
-    ("ui_strings", "scripts.seeders.seed_ui_strings"),
-    ("services", "scripts.seeders.seed_services"),
-    ("pricing", "scripts.seeders.seed_pricing"),
-    ("vehicles", "scripts.seeders.seed_vehicles"),
-    ("faqs", "scripts.seeders.seed_faqs"),
-    ("testimonials", "scripts.seeders.seed_testimonials"),
-    ("legal_pages", "scripts.seeders.seed_legal_pages"),
-    ("bookings", "scripts.seeders.seed_bookings"),
-    ("contact_messages", "scripts.seeders.seed_contact_messages"),
-    ("expenses", "scripts.seeders.seed_expenses"),
-    ("customers", "scripts.seeders.seed_customers"),
-    ("drivers", "scripts.seeders.seed_drivers"),
-    ("parcel_orders", "scripts.seeders.seed_parcel_orders"),
+    seed_system_user,
+    seed_admin,
+    seed_site_settings,
+    seed_ui_strings,
+    seed_services,
+    seed_pricing,
+    seed_vehicles,
+    seed_faqs,
+    seed_testimonials,
+    seed_legal_pages,
+    seed_bookings,
+    seed_contact_messages,
+    seed_expenses,
+    seed_customers,
+    seed_legacy_orders,   # depends on customers
+    seed_drivers,
+    seed_parcel_orders,   # depends on customers + drivers
 ]
 
 
-def run_all(only: set[str] | None = None) -> list[str]:
-    # Runs seeders in declared order. Returns list of failed seeder names ([] = full success). Per-seeder errors are isolated.
-    available = {name for name, _ in SEEDERS_IN_ORDER}
-    if only is not None:
-        unknown = only - available
-        if unknown:
-            print(
-                f"ERROR: unknown seeder(s): {', '.join(sorted(unknown))}\nAvailable: {', '.join(sorted(available))}",
-                file=sys.stderr,
-            )
-            return ["__unknown_seeder_names__"]
-        to_run = [(n, m) for n, m in SEEDERS_IN_ORDER if n in only]
-    else:
-        to_run = list(SEEDERS_IN_ORDER)
-    print("=" * 60)
-    print(f"  StepNow seed runner — {len(to_run)} seeder(s)")
-    print("=" * 60)
+def run_all() -> list[str]:
+    """Run every seeder in order. Returns a list of seeder names that raised."""
     failures: list[str] = []
-    for name, module_path in to_run:
+    for seeder in SEEDERS_IN_ORDER:
+        name = seeder.__name__.split(".")[-1]
         try:
-            module = importlib.import_module(module_path)
-            module.run()
-        except Exception as e:
-            print(f"\n  [ERROR] seeder '{name}' failed: {e}")
+            seeder.run()
+        except Exception as exc:  # noqa: BLE001
+            import traceback
+            print(f"  [error] {name} failed: {exc}")
             traceback.print_exc()
             failures.append(name)
-    print("\n" + "=" * 60)
-    print(
-        f"  FAILED: {len(failures)} seeder(s) — {', '.join(failures)}"
-        if failures
-        else f"  SUCCESS: all {len(to_run)} seeder(s) completed"
-    )
-    print("=" * 60)
     return failures
 
 
-def main() -> int:
-    # CLI entry. --list prints seeders in order; --only=a,b runs a subset. Returns non-zero exit code if any seeder failed.
-    parser = argparse.ArgumentParser(description="Run all dev seeders for StepNow.")
-    parser.add_argument(
-        "--only",
-        type=str,
-        default=None,
-        help="Comma-separated seeder names (e.g. 'ui_strings,services')",
-    )
-    parser.add_argument(
-        "--list", action="store_true", help="List available seeders and exit"
-    )
-    args = parser.parse_args()
-    if args.list:
-        print("Available seeders (in run order):")
-        for name, _ in SEEDERS_IN_ORDER:
-            print(f"  - {name}")
-        return 0
-    only = {s.strip() for s in args.only.split(",")} if args.only else None
-    return 1 if run_all(only=only) else 0
-
-
 if __name__ == "__main__":
-    sys.exit(main())
+    import sys
+    failed = run_all()
+    if failed:
+        print(f"\n[seed] {len(failed)} seeder(s) failed: {', '.join(failed)}")
+        sys.exit(1)
+    print("\n[seed] all seeders completed successfully")
