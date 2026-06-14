@@ -20,7 +20,7 @@ from jinja2 import Environment, FileSystemLoader, TemplateNotFound, select_autoe
 from config.settings import settings
 
 # Templates directory (sits next to the app package). Adjust if your layout differs.
-_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "Templates" / "email"
+_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
 
 
 @lru_cache(maxsize=1)
