@@ -44,8 +44,8 @@ class OrderAdminResponse(BaseModel):
     vehicle_id: UUID | None
     driver_id: UUID | None
     customer_name: str
-    customer_phone: str
-    customer_email: EmailStr
+    customer_phone: str | None = None
+    customer_email: EmailStr | None = None
     is_business: bool
     company_name: str | None
     company_vatid: str | None

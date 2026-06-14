@@ -1,48 +1,19 @@
 # apps/backend/scripts/seeders/seed_legacy_orders.py
-# Imports all 81 Auftraege from StepNow_Data.json as the full
-# Order → Invoice → Payment chain using the existing services.
-#
-# Strategy:
-#   1. Look up Customer by legacy_nr stored in internal_notes ("Legacy: K911XXX").
-#   2. Create Order via direct DB insert (historical dates; avoids email triggers).
-#   3. Create Invoice via InvoicesService.create_from_order() — idempotent.
-#   4. If rechnung.stat == "Bezahlt": record Payment via PaymentsService.record().
-#
-# Financial authority: rechnung (invoice) amounts are canonical — not auftrag.net.
-# rechnung.net == entry.net (0 mismatches confirmed). auftrag.net = quoted price.
-#
-# Idempotency: keyed by internal_notes tag "LEGACY_AUF:<nr>" on the Order.
-# Source: StepNow_Data.json  fileId=STEPNOW-K911
 
-from datetime import date, datetime, timedelta, timezone
+
+from datetime import date, datetime, timezone
 from decimal import Decimal
+from types import SimpleNamespace
+
+from app.Models.customers import Customer
+from app.Models.orders import Order
+from app.Models.invoices import Invoice
+from app.Services.InvoicesService import InvoicesService
+from app.Services.PaymentsService import PaymentsService
+from app.Utils.finance import compute_totals, order_date_sequence_number
 
 from config.database import SessionLocal
-from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip
-
-# ── All 81 auftraege — 100% identical values from StepNow_Data.json ───────────
-# Fields per record:
-#   auftrag_nr    : auftrag.nr  (e.g. "01010526")
-#   rechnung_nr   : rechnung.id / auftrag.rechnungNr (becomes invoice_number via service)
-#   cust_nr       : JSON custNr → used to look up Customer by internal_notes
-#   ku            : customer name snapshot (as it appeared on the job)
-#   von           : pickup (origin address)
-#   nch           : destination
-#   km            : distance in km (0 when not recorded / Ersatzwagen)
-#   fz            : vehicle
-#   termin        : job date (YYYY-MM-DD)
-#   ref_nr        : customer reference number
-#   # rechnung fields (canonical billing amounts):
-#   r_net         : rechnung.net
-#   r_vat_r       : rechnung.mwstR (rate as fraction e.g. 0.19)
-#   r_vat_b       : rechnung.mwstB (VAT amount, pre-computed)
-#   r_brutto      : rechnung.brutto
-#   r_zz          : rechnung.zz (payment term days)
-#   r_faellig     : rechnung.faellig (due date YYYY-MM-DD)
-#   r_dat         : rechnung.dat (invoice issue date YYYY-MM-DD)
-#   r_stat        : "Bezahlt" | "Unbezahlt"
-#   r_skonto      : skonto percentage (0 = none)
-#   empfaenger    : rechnung.empfaenger (recipient name on invoice)
+from scripts.seeders._base import get_system_actor, log_section, log_create
 
 AUFTRAEGE = [
     # ── A1 ──
@@ -238,13 +209,6 @@ def run() -> None:
     log_section(f"Legacy Orders — {len(AUFTRAEGE)} auftraege → Orders + Invoices + Payments")
     db = SessionLocal()
     try:
-        from app.Models.customers import Customer
-        from app.Models.orders import Order
-        from app.Models.invoices import Invoice
-        from app.Models.payments import Payment
-        from app.Services.InvoicesService import InvoicesService
-        from app.Services.PaymentsService import PaymentsService
-        from app.Utils.finance import compute_totals, order_date_sequence_number
 
         actor = get_system_actor(db)
 
@@ -326,19 +290,17 @@ def run() -> None:
             o_created += 1
 
             # ── Create Invoice via service (idempotent) ──────────────────
-            # Build a simple namespace object that mimics InvoiceCreateFromOrder schema.
-            class _InvoicePayload:
-                pass
-
-            inv_payload = _InvoicePayload()
-            inv_payload.issue_date = issue_date
-            inv_payload.payment_due_days = a["r_zz"]
-            inv_payload.recipient_block = a["empfaenger"]
-            inv_payload.tax_number = TAX_NUMBER
-            inv_payload.surcharge_label = None
-            inv_payload.surcharge_net = None
-            inv_payload.skonto_pct = a["r_skonto"] if a["r_skonto"] > 0 else None
-            inv_payload.skonto_days = None
+            # SimpleNamespace mimics InvoiceCreateFromOrder without Pydantic validation.
+            inv_payload = SimpleNamespace(
+                issue_date=issue_date,
+                payment_due_days=a["r_zz"],
+                recipient_block=a["empfaenger"],
+                tax_number=TAX_NUMBER,
+                surcharge_label=None,
+                surcharge_net=None,
+                skonto_pct=a["r_skonto"] if a["r_skonto"] > 0 else None,
+                skonto_days=None,
+            )
 
             invoice: Invoice = InvoicesService.create_from_order(
                 db, order.id, inv_payload, actor, request=None
@@ -351,20 +313,17 @@ def run() -> None:
 
             # ── Record Payment if already paid ───────────────────────────
             if a["r_stat"] == "Bezahlt":
-                # Build a simple namespace for PaymentCreate.
-                class _PaymentPayload:
-                    pass
-
-                pay_payload = _PaymentPayload()
-                pay_payload.amount = a["r_brutto"]
-                pay_payload.method = "bank_transfer"
-                pay_payload.status = "received"
-                pay_payload.received_at = datetime.combine(
-                    due_date, datetime.min.time()
-                ).replace(tzinfo=timezone.utc)
-                pay_payload.invoice_id = invoice.id
-                pay_payload.reference = a["rechnung_nr"]
-                pay_payload.notes = None
+                pay_payload = SimpleNamespace(
+                    amount=a["r_brutto"],
+                    method="bank_transfer",
+                    status="received",
+                    received_at=datetime.combine(
+                        due_date, datetime.min.time()
+                    ).replace(tzinfo=timezone.utc),
+                    invoice_id=invoice.id,
+                    reference=a["rechnung_nr"],
+                    notes=None,
+                )
 
                 PaymentsService.record(db, order.id, pay_payload, actor, request=None)
                 pay_created += 1
