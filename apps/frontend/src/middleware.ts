@@ -29,6 +29,19 @@ function isEnglishPath(path: string): boolean {
 }
 
 /**
+ * Pass the request through while exposing the current path+query to server
+ * components via the `x-pathname` request header. The authed admin layout reads
+ * this to build `?next=` so a bookmarked deep link (e.g. /admin/orders/new)
+ * survives the login redirect. Request headers are the reliable channel for
+ * middleware → RSC data in the App Router.
+ */
+function passThrough(request: NextRequest): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname + request.nextUrl.search);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
+/**
  * Return the EN equivalent of a DE path ONLY when it's a known static
  * route (home, /preise, /kontakt, etc). For dynamic slug routes the
  * middleware has no way to translate the slug, so it returns null and
@@ -56,20 +69,20 @@ export function middleware(request: NextRequest) {
 
   // Cookie-driven redirect: only for paths that have a known mirror in
   // the other locale's static route table. Dynamic slug routes fall
-  // through to NextResponse.next() so the page renders in the URL's
+  // through to passThrough(request) so the page renders in the URL's
   // locale.
   if (isLocale(cookieValue)) {
     if (cookieValue === "en" && !englishPath) {
       const target = deToEnStaticOnly(path);
-      if (!target) return NextResponse.next();
+      if (!target) return passThrough(request);
       return NextResponse.redirect(publicUrl(target, request));
     }
     if (cookieValue === "de" && englishPath) {
       const target = enToDeStaticOnly(path);
-      if (!target) return NextResponse.next();
+      if (!target) return passThrough(request);
       return NextResponse.redirect(publicUrl(target, request));
     }
-    return NextResponse.next();
+    return passThrough(request);
   }
 
   // First-visit (no cookie yet): detect from Accept-Language, set the
@@ -83,9 +96,9 @@ export function middleware(request: NextRequest) {
     const target = deToEnStaticOnly(path);
     response = target
       ? NextResponse.redirect(publicUrl(target, request))
-      : NextResponse.next();
+      : passThrough(request);
   } else {
-    response = NextResponse.next();
+    response = passThrough(request);
   }
 
   const detectedLocale = englishPath || !prefersGerman ? "en" : "de";

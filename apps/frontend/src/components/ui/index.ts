@@ -18,3 +18,5 @@ export { Alert } from "./Alert";
 export type { AlertTone } from "./Alert";
 export { Card } from "./Card";
 export type { CardProps, CardTone, CardPadding } from "./Card";
+export { DatePicker } from "./DatePicker";
+export type { DatePickerProps, DatePickerVariant } from "./DatePicker";

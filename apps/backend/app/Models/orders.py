@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from app.Models.payments import Payment
     from app.Models.customers import Customer
     from app.Models.drivers import Driver
+    from app.Models.vehicles import Vehicle
 
 
 class Order(Base, TimestampMixin, SoftDeleteMixin):
@@ -57,6 +58,10 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     service_id: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("services.id"), nullable=True, index=True
     )
+    # The vehicle (app.Models.vehicles.Vehicle) that performed this job. The vehicles table is
+    # the single registry for both the public showcase AND the operational fleet (plate-bearing
+    # rows). This FK is the anchor for car-order-history and, via assignment windows, driver
+    # attribution. vehicle_name below is a denormalised snapshot (plate or marketing name).
     vehicle_id: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True, index=True
     )
@@ -88,6 +93,23 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     distance_km: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
 
     driver_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    # ── Vehicle-centric transport fields (additive; all nullable) ──
+    # Domain rule: an order is anchored to a VEHICLE first, driver second. The vehicle_id FK
+    # already exists above; vehicle_name is a denormalised snapshot so the assignment survives
+    # on invoices/history even if the fleet entry is later renamed or removed.
+    vehicle_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Auftraggeber Ref.-Nr. — the client's own reference number for this job.
+    client_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Leistungsart — Personenbeförderung | Kuriertransport | Umzugstransport | Sonderfahrt.
+    service_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Gewünschter Termin — desired service date, distinct from the order/booking date.
+    preferred_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Fahrtenbuch (logbook): total vs occupied km. Leer-KM is derived (total − occupied),
+    # never stored. distance_km (above) is the planned pickup→destination route distance.
+    total_km: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    occupied_km: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+
     service_description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # ── Money (Numeric, never float/String). vat_rate defaults to the reduced 7% rate for
@@ -164,3 +186,7 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     # Courier links.
     customer: Mapped["Customer | None"] = relationship(back_populates="orders")
     driver: Mapped["Driver | None"] = relationship(back_populates="orders")
+    # Vehicle is back-populated so a car can enumerate its full order history (Vehicle.orders).
+    vehicle: Mapped["Vehicle | None"] = relationship(
+        back_populates="orders", foreign_keys=[vehicle_id]
+    )

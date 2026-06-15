@@ -18,8 +18,8 @@ router = APIRouter(tags=["admin: courier"])
 
 
 @router.post("/admin/parcel-orders", response_model=CourierOrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_parcel_order(request: Request, payload: ParcelOrderCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CourierOrderResponse:
-    return CourierController.create(db, payload, actor, request)
+async def create_parcel_order(request: Request, payload: ParcelOrderCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CourierOrderResponse:
+    return CourierController.create(db, payload, actor, request, background_tasks)
 
 
 @router.get("/admin/parcel-orders", response_model=PaginatedResponse[CourierOrderResponse])
@@ -41,8 +41,8 @@ async def update_parcel_order(request: Request, order_id: UUID, payload: ParcelO
 
 
 @router.post("/admin/orders/{order_id}/delivery-status", response_model=CourierOrderResponse)
-async def set_delivery_status(request: Request, order_id: UUID, payload: DeliveryStatusUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CourierOrderResponse:
-    return CourierController.set_delivery_status(db, order_id, payload, actor, request)
+async def set_delivery_status(request: Request, order_id: UUID, payload: DeliveryStatusUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CourierOrderResponse:
+    return CourierController.set_delivery_status(db, order_id, payload, actor, request, background_tasks)
 
 
 @router.get("/admin/orders/{order_id}/slip/pdf")

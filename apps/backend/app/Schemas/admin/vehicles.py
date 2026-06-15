@@ -8,6 +8,10 @@ class VehicleCreate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     sort_order: int = 0
     active: bool = True
+    # public_visible=False marks an operational-only fleet car (kept off the public showcase).
+    public_visible: bool = True
+    plate: str | None = Field(default=None, max_length=50)
+    ownership_type: str | None = Field(default=None, max_length=10)
     name_de: str = Field(min_length=1, max_length=200)
     name_en: str = Field(min_length=1, max_length=200)
     category: str = Field(min_length=1, max_length=50)
@@ -22,6 +26,9 @@ class VehicleUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     sort_order: int | None = None
     active: bool | None = None
+    public_visible: bool | None = None
+    plate: str | None = Field(default=None, max_length=50)
+    ownership_type: str | None = Field(default=None, max_length=10)
     name_de: str | None = Field(default=None, min_length=1, max_length=200)
     name_en: str | None = Field(default=None, min_length=1, max_length=200)
     category: str | None = Field(default=None, min_length=1, max_length=50)
@@ -37,6 +44,9 @@ class VehicleAdminResponse(BaseModel):
     id: UUID
     sort_order: int
     active: bool
+    public_visible: bool
+    plate: str | None
+    ownership_type: str | None
     name_de: str
     name_en: str
     category: str

@@ -13,7 +13,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
+from typing import TYPE_CHECKING
 from app.Models.orders import Order
+
+if TYPE_CHECKING:
+    from app.Models.driver_vehicle_assignments import DriverVehicleAssignment
 
 
 class Driver(Base, TimestampMixin, SoftDeleteMixin):
@@ -48,3 +52,13 @@ class Driver(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     orders: Mapped[list["Order"]] = relationship(back_populates="driver")  # noqa: F821
+
+    # Full history of fleet cars this driver was assigned to (weekly rotation etc.). The OPEN
+    # assignment (end_date IS NULL) is the current car. This is the source of truth for the
+    # driver↔car link — the legacy vehicle_id/vehicle_label above are kept only as a free-text
+    # snapshot and are not authoritative for history.
+    vehicle_assignments: Mapped[list["DriverVehicleAssignment"]] = relationship(
+        back_populates="driver",
+        cascade="all, delete-orphan",
+        order_by="DriverVehicleAssignment.start_date",
+    )

@@ -21,6 +21,7 @@ from app.Services.CourierOrdersService import CourierOrdersService
 from app.Services.DriverSlipPdfService import DriverSlipPdfService
 from app.Services.EmailService import EmailService
 from app.Services.OrdersService import OrdersService
+from app.Services.Notifications import NotificationService
 from app.Services.message_delivery.MessageDeliveryService import MessageDeliveryService
 
 
@@ -36,11 +37,31 @@ def _dispatch_emails(email_log_ids: list[int]) -> None:
         db.close()
 
 
+def _notify_admins(type_code: str, title: str, body: str | None, link: str, data: dict, actor_id) -> None:
+    # In-app notification to every active admin (excludes the actor). Own session + commit,
+    # best-effort — mirrors OrdersController._notify_admins. Runs on BackgroundTasks post-commit.
+    db = SessionLocal()
+    try:
+        NotificationService.notify_all_admins(
+            db, type_code, title, body=body, link=link, data=data, exclude_id=actor_id
+        )
+        db.commit()
+    finally:
+        db.close()
+
+
 class CourierController:
 
     @staticmethod
-    def create(db: Session, payload: ParcelOrderCreate, actor: AdminUser, request: Request) -> CourierOrderResponse:
+    def create(db: Session, payload: ParcelOrderCreate, actor: AdminUser, request: Request, background_tasks: BackgroundTasks) -> CourierOrderResponse:
         order = CourierOrdersService.create_manual(db, payload, actor, request)
+        background_tasks.add_task(
+            _notify_admins, "order.created",
+            f"New order {order.order_number}", order.customer_name,
+            f"/admin/orders/{order.id}",
+            {"order_number": order.order_number, "customer_name": order.customer_name},
+            actor.id,
+        )
         return CourierOrderResponse.model_validate(order)
 
     @staticmethod
@@ -58,8 +79,17 @@ class CourierController:
         )
 
     @staticmethod
-    def set_delivery_status(db: Session, order_id: UUID, payload: DeliveryStatusUpdate, actor: AdminUser, request: Request) -> CourierOrderResponse:
+    def set_delivery_status(db: Session, order_id: UUID, payload: DeliveryStatusUpdate, actor: AdminUser, request: Request, background_tasks: BackgroundTasks) -> CourierOrderResponse:
         order = CourierOrdersService.set_delivery_status(db, order_id, payload.delivery_status, actor, request)
+        # Notify on completion (delivered) — the "order completes" step.
+        if order.delivery_status == "delivered":
+            background_tasks.add_task(
+                _notify_admins, "order.completed",
+                f"Order {order.order_number} delivered", order.customer_name,
+                f"/admin/orders/{order.id}",
+                {"order_number": order.order_number, "delivery_status": order.delivery_status},
+                actor.id,
+            )
         return CourierOrderResponse.model_validate(order)
 
     @staticmethod
@@ -100,6 +130,14 @@ class CourierController:
             )
             db.commit()
             db.refresh(order)
+
+            background_tasks.add_task(
+                _notify_admins, "order.documents_sent",
+                f"WhatsApp slip dispatched · {order.order_number}",
+                f"To driver {driver.full_name}", f"/admin/orders/{order.id}",
+                {"order_number": order.order_number, "channel": "whatsapp", "to": "driver"},
+                actor.id,
+            )
 
             resp = CourierOrderResponse.model_validate(order)
             resp.whatsapp_link = row.deep_link
@@ -159,4 +197,12 @@ class CourierController:
         db.commit()
         db.refresh(order)
         background_tasks.add_task(_dispatch_emails, queued)
+        recipients = " & ".join(payload.to)
+        background_tasks.add_task(
+            _notify_admins, "order.documents_sent",
+            f"Email sent · {order.order_number}", f"To: {recipients}",
+            f"/admin/orders/{order.id}",
+            {"order_number": order.order_number, "channel": "email", "to": payload.to},
+            actor.id,
+        )
         return CourierOrderResponse.model_validate(order)

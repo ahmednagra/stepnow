@@ -61,16 +61,64 @@ class MessageDeliveryService:
 
     @staticmethod
     def _slip_message(order: Order, driver_name: str, public_url: str) -> str:
-        # German prefilled WhatsApp text. The PDF rides as a link (deep links can't attach
-        # files); opening it is what stamps the download.
-        return (
-            f"Hallo {driver_name},\n\n"
-            f"neuer Fahrauftrag {order.order_number}.\n"
-            f"Abholung: {order.pickup_address}\n"
-            f"Zielort: {order.destination_address}\n\n"
-            f"Vollständiger Fahrauftrag (PDF):\n{public_url}\n\n"
-            f"— StepNow Rides & Movers"
-        )
+        # German prefilled WhatsApp text with the full dispatched-job briefing. The PDF rides as
+        # a link (deep links can't attach files); opening it is what stamps the download.
+        # NOTE: price is deliberately omitted — the driver slip never shows billing amounts.
+        def _fmt_dt(dt) -> str | None:
+            if not dt:
+                return None
+            # date or datetime → DD.MM.YYYY (+ HH:MM when a time is present)
+            try:
+                s = dt.strftime("%d.%m.%Y")
+                if getattr(dt, "hour", 0) or getattr(dt, "minute", 0):
+                    s += f" {dt.strftime('%H:%M')}"
+                return s
+            except Exception:  # noqa: BLE001
+                return None
+
+        pickup = ", ".join(p for p in (order.pickup_address, order.pickup_city) if p)
+        dest = ", ".join(p for p in (order.destination_address, order.destination_city) if p)
+        when = _fmt_dt(order.scheduled_datetime) or _fmt_dt(order.preferred_date)
+
+        lines: list[str] = [f"Hallo {driver_name},", ""]
+        lines.append(f"neuer Fahrauftrag {order.order_number}" + (f" am {when}." if when else "."))
+        lines.append("")
+
+        # Job header
+        if order.customer_name:
+            lines.append(f"Auftraggeber: {order.customer_name}")
+        if order.vehicle_name:
+            lines.append(f"Fahrzeug: {order.vehicle_name}")
+        if order.service_type:
+            lines.append(f"Leistung: {order.service_type}")
+        if order.client_reference:
+            lines.append(f"Referenz: {order.client_reference}")
+
+        # Route
+        lines.append("")
+        lines.append(f"Abholung: {pickup}")
+        lines.append(f"Zielort: {dest}")
+        if order.distance_km:
+            lines.append(f"Strecke: {order.distance_km} km")
+
+        # Cargo / recipient
+        if order.parcel_description or (order.parcel_quantity and order.parcel_quantity > 1) or order.parcel_weight_kg:
+            qty = f"{order.parcel_quantity}x " if order.parcel_quantity and order.parcel_quantity > 1 else ""
+            desc = order.parcel_description or "Sendung"
+            weight = f" ({order.parcel_weight_kg} kg)" if order.parcel_weight_kg else ""
+            lines.append(f"Sendung: {qty}{desc}{weight}")
+        if order.consignee:
+            lines.append(f"Empfänger: {order.consignee}")
+        note = order.service_description or order.internal_notes
+        if note:
+            lines.append(f"Hinweis: {note}")
+
+        lines.append("")
+        lines.append("Vollständiger Fahrauftrag (PDF):")
+        lines.append(public_url)
+        lines.append("")
+        lines.append("— StepNow Rides & Movers")
+        return "\n".join(lines)
 
     # ── WhatsApp web-click initiation (transaction owner) ─────────────
     @staticmethod

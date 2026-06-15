@@ -12,6 +12,9 @@ export interface ListAdminVehiclesParams {
 export interface VehicleCreateInput {
   sort_order?: number;
   active?: boolean;
+  public_visible?: boolean;
+  plate?: string | null;
+  ownership_type?: string | null;
   name_de: string;
   name_en: string;
   category: string;
@@ -34,6 +37,34 @@ export async function listAdminVehicles(
 
 export async function getAdminVehicle(id: string): Promise<VehicleAdmin> {
   return nextjsApiClient.get<VehicleAdmin>(`/admin/vehicles/${id}`);
+}
+
+/**
+ * Active, non-deleted vehicles for order assignment, ordered by sort_order.
+ * Filtering is done client-side so it works regardless of backend query params.
+ */
+export async function listActiveVehicles(): Promise<VehicleAdmin[]> {
+  const res = await listAdminVehicles({ size: 100 });
+  return res.items
+    .filter((v) => v.active && !v.is_deleted)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+/**
+ * Operational fleet only — the plate-bearing cars that actually perform jobs (excludes the
+ * pure public-showcase rows). This is what a transport/courier order should be anchored to.
+ * Sorted by plate for a predictable picker order.
+ */
+export async function listFleetVehicles(): Promise<VehicleAdmin[]> {
+  const res = await listAdminVehicles({ size: 100 });
+  return res.items
+    .filter((v) => v.active && !v.is_deleted && !!v.plate)
+    .sort((a, b) => (a.plate ?? "").localeCompare(b.plate ?? ""));
+}
+
+/** Display label for a vehicle in pickers — the plate for fleet cars, else the marketing name. */
+export function vehicleLabel(v: VehicleAdmin): string {
+  return v.plate ? v.plate : v.name_de;
 }
 
 export async function createAdminVehicle(payload: VehicleCreateInput): Promise<VehicleAdmin> {

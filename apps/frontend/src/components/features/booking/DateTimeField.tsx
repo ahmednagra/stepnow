@@ -1,7 +1,7 @@
 // src/components/features/booking/DateTimeField.tsx
 "use client";
 
-import { Input } from "@/components/ui";
+import { Input, DatePicker } from "@/components/ui";
 
 interface DateTimeFieldProps {
   date: string;
@@ -40,16 +40,24 @@ export function DateTimeField({
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 gap-3">
-        <Input
-          label={dateLabel}
-          type="date"
-          value={date}
-          onChange={(e) => onDateChange(e.target.value)}
-          min={minDate}
-          max={maxDate}
-          required
-          error={dateError}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[13px] font-medium tracking-tight text-ink">
+            {dateLabel}
+            <span className="ml-1 text-gold-deep" aria-hidden="true">*</span>
+          </label>
+          <DatePicker
+            variant="public"
+            value={date}
+            onChange={onDateChange}
+            min={minDate}
+            max={maxDate}
+            aria-label={dateLabel}
+            invalid={!!dateError}
+          />
+          {dateError && (
+            <p role="alert" className="text-xs font-medium text-danger">{dateError}</p>
+          )}
+        </div>
         <Input
           label={timeLabel}
           type="time"

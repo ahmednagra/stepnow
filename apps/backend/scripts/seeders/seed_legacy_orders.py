@@ -1,19 +1,49 @@
 # apps/backend/scripts/seeders/seed_legacy_orders.py
-
+# Imports all 81 Auftraege from StepNow_Data.json as the full
+# Order → Invoice → Payment chain using the existing services.
+#
+# Strategy:
+#   1. Look up Customer by legacy_nr stored in internal_notes ("Legacy: K911XXX").
+#   2. Create Order via direct DB insert (historical dates; avoids email triggers).
+#   3. Create Invoice via InvoicesService.create_from_order() — idempotent.
+#   4. If rechnung.stat == "Bezahlt": record Payment via PaymentsService.record().
+#
+# Financial authority: rechnung (invoice) amounts are canonical — not auftrag.net.
+# rechnung.net == entry.net (0 mismatches confirmed). auftrag.net = quoted price.
+#
+# Idempotency: keyed by internal_notes tag "LEGACY_AUF:<nr>" on the Order.
+# Source: StepNow_Data.json  fileId=STEPNOW-K911
 
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from types import SimpleNamespace
 
-from app.Models.customers import Customer
-from app.Models.orders import Order
-from app.Models.invoices import Invoice
-from app.Services.InvoicesService import InvoicesService
-from app.Services.PaymentsService import PaymentsService
-from app.Utils.finance import compute_totals, order_date_sequence_number
-
 from config.database import SessionLocal
 from scripts.seeders._base import get_system_actor, log_section, log_create
+
+# ── All 81 auftraege — 100% identical values from StepNow_Data.json ───────────
+# Fields per record:
+#   auftrag_nr    : auftrag.nr  (e.g. "01010526")
+#   rechnung_nr   : rechnung.id / auftrag.rechnungNr (becomes invoice_number via service)
+#   cust_nr       : JSON custNr → used to look up Customer by internal_notes
+#   ku            : customer name snapshot (as it appeared on the job)
+#   von           : pickup (origin address)
+#   nch           : destination
+#   km            : distance in km (0 when not recorded / Ersatzwagen)
+#   fz            : vehicle
+#   termin        : job date (YYYY-MM-DD)
+#   ref_nr        : customer reference number
+#   # rechnung fields (canonical billing amounts):
+#   r_net         : rechnung.net
+#   r_vat_r       : rechnung.mwstR (rate as fraction e.g. 0.19)
+#   r_vat_b       : rechnung.mwstB (VAT amount, pre-computed)
+#   r_brutto      : rechnung.brutto
+#   r_zz          : rechnung.zz (payment term days)
+#   r_faellig     : rechnung.faellig (due date YYYY-MM-DD)
+#   r_dat         : rechnung.dat (invoice issue date YYYY-MM-DD)
+#   r_stat        : "Bezahlt" | "Unbezahlt"
+#   r_skonto      : skonto percentage (0 = none)
+#   empfaenger    : rechnung.empfaenger (recipient name on invoice)
 
 AUFTRAEGE = [
     # ── A1 ──
@@ -209,15 +239,44 @@ def run() -> None:
     log_section(f"Legacy Orders — {len(AUFTRAEGE)} auftraege → Orders + Invoices + Payments")
     db = SessionLocal()
     try:
+        from app.Models.customers import Customer
+        from app.Models.orders import Order
+        from app.Models.invoices import Invoice
+        from app.Services.InvoicesService import InvoicesService
+        from app.Services.PaymentsService import PaymentsService
+        from app.Services.FleetService import FleetService
+        from app.Utils.finance import compute_totals, order_date_sequence_number
 
         actor = get_system_actor(db)
 
-        o_created = o_skipped = inv_created = pay_created = 0
+        o_created = o_skipped = o_backfilled = inv_created = pay_created = 0
         missing_cust = []
 
+        def _resolve_fleet(plate: str):
+            """Resolve (or auto-register) the fleet car for a plate. Gap-free: never returns
+            None for a non-empty plate, so no order is left without a car."""
+            if not plate:
+                return None
+            return FleetService.get_or_create(
+                db,
+                plate,
+                ownership_type="priv" if plate.strip().lower() == "ersatzwagen" else "firm",
+                notes="Auto-registered from legacy order import.",
+            )
+
         for a in AUFTRAEGE:
-            # ── Idempotency check ────────────────────────────────────────
-            if _order_exists(db, a["auftrag_nr"]):
+            # ── Idempotency check (with self-healing fleet backfill) ─────
+            existing_order = _order_exists(db, a["auftrag_nr"])
+            if existing_order:
+                # Orders imported before the fleet rework have no vehicle link — link them now
+                # from the plate so re-running this seeder closes the gap.
+                if existing_order.vehicle_id is None and a["fz"]:
+                    fv = _resolve_fleet(a["fz"])
+                    if fv:
+                        existing_order.vehicle_id = fv.id
+                        if not existing_order.vehicle_name:
+                            existing_order.vehicle_name = fv.plate
+                        o_backfilled += 1
                 o_skipped += 1
                 continue
 
@@ -252,6 +311,12 @@ def run() -> None:
             if a["km"]:
                 notes_parts.append(f"km: {a['km']}")
 
+            # ── Fleet car link (anchors car-order-history) ───────────────
+            # Resolve the plate to a fleet vehicle, auto-registering any plate not in the
+            # seeded fahrzeuge so no order is ever left without a car (gap-free). vehicle_name
+            # snapshots the plate so the label survives even if the fleet row is later edited.
+            fleet_vehicle = _resolve_fleet(a["fz"])
+
             order = Order(
                 order_number=order_date_sequence_number(db, Order.order_number),
                 booking_id=None,
@@ -260,8 +325,8 @@ def run() -> None:
                 customer_id=customer.id,
                 driver_id=None,
                 customer_name=display_name,
-                customer_phone=customer.phone or "",
-                customer_email=customer.email or "",
+                customer_phone=customer.phone or "-",
+                customer_email=customer.email or "noreply@step-now.de",
                 is_business=True,
                 company_name=customer.company_name,
                 company_vatid=customer.company_vatid,
@@ -275,6 +340,8 @@ def run() -> None:
                 parcel_weight_kg=None,
                 scheduled_datetime=datetime.combine(termin_date, datetime.min.time()).replace(tzinfo=timezone.utc),
                 driver_name=None,
+                vehicle_id=fleet_vehicle.id if fleet_vehicle else None,
+                vehicle_name=fleet_vehicle.plate if fleet_vehicle else (a["fz"] or None),
                 service_description="Sonderfahrt",
                 net_amount=net,
                 vat_rate=vat_rate,
@@ -339,7 +406,8 @@ def run() -> None:
             print(f"  [warn] {len(missing_cust)} auftraege skipped — customers not found: {', '.join(set(missing_cust))}")
 
         print(
-            f"  [done] orders: {o_created} created / {o_skipped} skipped | "
+            f"  [done] orders: {o_created} created / {o_skipped} skipped "
+            f"({o_backfilled} fleet-linked) | "
             f"invoices: {inv_created} created | payments: {pay_created} created"
         )
     finally:

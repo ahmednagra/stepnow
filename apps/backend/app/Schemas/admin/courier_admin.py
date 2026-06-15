@@ -5,8 +5,14 @@
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+# Leistungsart — the four service categories the business bills under.
+ServiceType = Literal[
+    "Personenbeförderung", "Kuriertransport", "Umzugstransport", "Sonderfahrt"
+]
 
 
 class _InlineCustomer(BaseModel):
@@ -31,7 +37,17 @@ class ParcelOrderCreate(BaseModel):
     customer_id: UUID | None = None
     customer: _InlineCustomer | None = None
 
+    # Vehicle is the PRIMARY anchor of the order; driver is the secondary, free-text person
+    # actually driving that vehicle on this run. vehicle_name is NOT accepted from the client —
+    # it is snapshotted server-side from the resolved vehicle to keep the label trustworthy.
+    # vehicle_id points at the shared vehicles registry (operational fleet rows carry a plate).
+    vehicle_id: UUID | None = None
     driver_id: UUID | None = None
+    driver_name: str | None = Field(default=None, max_length=200)
+
+    client_reference: str | None = Field(default=None, max_length=100)  # Auftraggeber Ref.-Nr.
+    service_type: ServiceType | None = None                              # Leistungsart
+    preferred_date: date | None = None                                   # Gewünschter Termin
 
     pickup_address: str = Field(min_length=1, max_length=500)
     pickup_city: str | None = Field(default=None, max_length=120)
@@ -42,6 +58,11 @@ class ParcelOrderCreate(BaseModel):
     parcel_description: str | None = Field(default=None, max_length=2000)
     parcel_quantity: int = Field(default=1, ge=1, le=9999)
     parcel_weight_kg: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
+
+    # KM (Abholung→Ziel) planned route distance + Fahrtenbuch logbook (Leer-KM derived).
+    distance_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
+    total_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
+    occupied_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
 
     scheduled_datetime: datetime | None = None
 
@@ -73,9 +94,17 @@ class CourierOrderResponse(BaseModel):
     delivery_status: str        # draft|dispatched|picked_up|delivered
     customer_id: UUID | None
     driver_id: UUID | None
+    vehicle_id: UUID | None
+    vehicle_name: str | None
+    driver_name: str | None
+    client_reference: str | None
+    service_type: str | None
+    preferred_date: date | None
     customer_name: str
     customer_phone: str | None
-    customer_email: EmailStr | None
+    # Output is lenient: a contact-less transport customer is stored as "" (column is NOT NULL),
+    # which is not a valid EmailStr. Inbound email is still strictly validated on _InlineCustomer.
+    customer_email: str | None
     pickup_address: str
     pickup_city: str | None
     destination_address: str
@@ -84,6 +113,9 @@ class CourierOrderResponse(BaseModel):
     parcel_description: str | None
     parcel_quantity: int
     parcel_weight_kg: Decimal | None
+    distance_km: Decimal | None
+    total_km: Decimal | None
+    occupied_km: Decimal | None
     scheduled_datetime: datetime | None
     net_amount: Decimal
     vat_rate: Decimal

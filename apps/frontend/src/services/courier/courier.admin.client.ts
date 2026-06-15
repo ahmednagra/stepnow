@@ -15,6 +15,12 @@ export interface CourierOrder {
   delivery_status: DeliveryStatus;
   customer_id: string | null;
   driver_id: string | null;
+  vehicle_id: string | null;
+  vehicle_name: string | null;
+  driver_name: string | null;
+  client_reference: string | null;
+  service_type: string | null;
+  preferred_date: string | null;
   customer_name: string;
   customer_phone: string | null;
   customer_email: string | null;
@@ -26,6 +32,9 @@ export interface CourierOrder {
   parcel_description: string | null;
   parcel_quantity: number;
   parcel_weight_kg: string | null;
+  distance_km: string | null;
+  total_km: string | null;
+  occupied_km: string | null;
   scheduled_datetime: string | null;
   net_amount: string;
   vat_rate: string;
@@ -53,10 +62,22 @@ export interface InlineCustomerInput {
   phone?: string | null;
 }
 
+export type ServiceType =
+  | "Personenbeförderung"
+  | "Kuriertransport"
+  | "Umzugstransport"
+  | "Sonderfahrt";
+
 export interface ParcelOrderInput {
   customer_id?: string | null;
   customer?: InlineCustomerInput | null;
+  // Vehicle is the primary anchor; driver_name is the secondary free-text field.
+  vehicle_id?: string | null;
   driver_id?: string | null;
+  driver_name?: string | null;
+  client_reference?: string | null;
+  service_type?: ServiceType | null;
+  preferred_date?: string | null;
   pickup_address: string;
   pickup_city?: string | null;
   destination_address: string;
@@ -65,6 +86,9 @@ export interface ParcelOrderInput {
   parcel_description?: string | null;
   parcel_quantity?: number;
   parcel_weight_kg?: string | null;
+  distance_km?: string | null;
+  total_km?: string | null;
+  occupied_km?: string | null;
   scheduled_datetime?: string | null;
   net_amount: string;
   vat_rate?: string;

@@ -8,9 +8,11 @@ import type { NextRequest } from "next/server";
 const ACCESS_COOKIE = "sn_access";
 const REFRESH_COOKIE = "sn_refresh";
 
-// Defaults; access tokens are short (FastAPI default 60min), refresh long (7 days).
-const ACCESS_MAX_AGE_SECONDS = 60 * 60; // 1h, refreshed before expiry
-const REFRESH_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+// Session length = 24h. The access cookie's real maxAge is set from the backend token's
+// expires_in at login (see login route); these constants are the fallback defaults and the
+// refresh-cookie lifetime. Both are 24h so the whole session expires together after a day.
+const ACCESS_MAX_AGE_SECONDS = 60 * 60 * 24; // 24h
+const REFRESH_MAX_AGE_SECONDS = 60 * 60 * 24; // 24h
 
 interface SetTokensInput {
   accessToken: string;

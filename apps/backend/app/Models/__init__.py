@@ -20,6 +20,7 @@ from app.Models.email_logs import EmailLog
 from app.Models.expense_categories import ExpenseCategory
 from app.Models.expenses import Expense
 from app.Models.drivers import Driver
+from app.Models.driver_vehicle_assignments import DriverVehicleAssignment
 from app.Models.customers import Customer
 from app.Models.notification import Notification
 
@@ -34,6 +35,7 @@ __all__ = [
     "PricingCategory",
     "PricingItem",
     "Vehicle",
+    "DriverVehicleAssignment",
     "Faq",
     "Testimonial",
     "LegalPage",

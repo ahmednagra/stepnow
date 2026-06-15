@@ -6,7 +6,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ─────────────────────────── Orders ───────────────────────────
@@ -45,7 +45,9 @@ class OrderAdminResponse(BaseModel):
     driver_id: UUID | None
     customer_name: str
     customer_phone: str | None = None
-    customer_email: EmailStr | None = None
+    # Output is lenient: a contact-less transport/courier order stores "" (the column is NOT
+    # NULL), which is not a valid EmailStr. Inbound creation still validates email strictly.
+    customer_email: str | None = None
     is_business: bool
     company_name: str | None
     company_vatid: str | None

@@ -57,8 +57,10 @@ class Settings(BaseSettings):
     # ── JWT ──
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "60"))
-    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "7"))
+    # Session length = 24h. The access token governs the live session (no auto-refresh), so it
+    # is set to a full day; the refresh token expires in step. Override per-env via .env.
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "1440"))
+    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "1"))
 
     # ── CORS ──
     # JSON-list string in .env, e.g. ["http://localhost:3000","https://step-now.de"]

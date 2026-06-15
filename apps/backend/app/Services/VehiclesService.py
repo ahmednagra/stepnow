@@ -10,7 +10,7 @@ from app.Models.admin import AdminUser
 from app.Models.vehicles import Vehicle
 from app.Services.AuditService import AuditService
 
-_FIELDS = ("sort_order", "active", "name_de", "name_en", "category", "capacity_passengers", "capacity_luggage", "features_de", "features_en", "image_url")
+_FIELDS = ("sort_order", "active", "public_visible", "plate", "ownership_type", "name_de", "name_en", "category", "capacity_passengers", "capacity_luggage", "features_de", "features_en", "image_url")
 
 
 class VehiclesService:
@@ -89,7 +89,10 @@ class VehiclesService:
 
     @staticmethod
     def list_public(db: Session) -> list[Vehicle]:
-        return db.query(Vehicle).filter(Vehicle.active == True, Vehicle.is_deleted == False).order_by(Vehicle.sort_order, Vehicle.created_at).all()
+        # public_visible keeps operational-only fleet cars (plates) off the public showcase.
+        return db.query(Vehicle).filter(
+            Vehicle.active == True, Vehicle.is_deleted == False, Vehicle.public_visible == True
+        ).order_by(Vehicle.sort_order, Vehicle.created_at).all()
 
     @staticmethod
     def _snapshot(v: Vehicle) -> dict[str, Any]:

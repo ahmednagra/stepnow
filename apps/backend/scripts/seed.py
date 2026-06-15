@@ -13,6 +13,7 @@ from scripts.seeders import (
     seed_services,
     seed_pricing,
     seed_vehicles,
+    seed_fleet_vehicles,
     seed_faqs,
     seed_testimonials,
     seed_legal_pages,
@@ -22,6 +23,7 @@ from scripts.seeders import (
     seed_customers,
     seed_legacy_orders,
     seed_drivers,
+    seed_driver_vehicle_assignments,
     seed_parcel_orders,
 )
 
@@ -30,12 +32,12 @@ from scripts.seeders import (
 # Core system
 #   system_user → admin → site_settings → ui_strings
 # Rides module
-#   services → pricing → vehicles → faqs → testimonials → legal_pages
+#   services → pricing → vehicles → fleet_vehicles → faqs → testimonials → legal_pages
 #   → bookings → contact_messages
 # Accounting / legacy import (movers)
-#   expenses → customers → legacy_orders
+#   expenses → customers → legacy_orders (links each order to its fleet car)
 # Movers module demo data
-#   drivers → parcel_orders
+#   drivers → driver_vehicle_assignments → parcel_orders
 # ─────────────────────────────────────────────────────────────────────────────
 SEEDERS_IN_ORDER = [
     seed_system_user,
@@ -45,6 +47,7 @@ SEEDERS_IN_ORDER = [
     seed_services,
     seed_pricing,
     seed_vehicles,
+    seed_fleet_vehicles,          # operational fleet (plates) — before legacy_orders
     seed_faqs,
     seed_testimonials,
     seed_legal_pages,
@@ -52,9 +55,10 @@ SEEDERS_IN_ORDER = [
     seed_contact_messages,
     seed_expenses,
     seed_customers,
-    seed_legacy_orders,   # depends on customers
+    seed_legacy_orders,           # depends on customers + fleet_vehicles
     seed_drivers,
-    seed_parcel_orders,   # depends on customers + drivers
+    seed_driver_vehicle_assignments,  # depends on drivers + fleet_vehicles
+    seed_parcel_orders,           # depends on customers + drivers
 ]
 
 

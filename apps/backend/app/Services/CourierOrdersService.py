@@ -13,6 +13,7 @@ from app.Models.admin import AdminUser
 from app.Models.customers import Customer
 from app.Models.drivers import Driver
 from app.Models.orders import Order
+from app.Models.vehicles import Vehicle
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
 from app.Services.EmailService import EmailService
@@ -29,8 +30,14 @@ class CourierOrdersService:
         return {
             "order_number": o.order_number, "status": o.status,
             "delivery_status": o.delivery_status, "driver_id": str(o.driver_id) if o.driver_id else None,
+            "vehicle_id": str(o.vehicle_id) if o.vehicle_id else None, "vehicle_name": o.vehicle_name,
             "net_amount": str(o.net_amount), "gross_amount": str(o.gross_amount),
         }
+
+    @staticmethod
+    def _vehicle_label(v: Vehicle) -> str:
+        """Trustworthy snapshot label — the plate for operational cars, else the marketing name."""
+        return v.plate or v.name_de
 
     @staticmethod
     def _resolve_customer(db: Session, payload, actor: AdminUser, request: Request | None) -> Customer:
@@ -43,8 +50,22 @@ class CourierOrdersService:
         raise ConflictError("Provide customer_id or inline customer data")
 
     @staticmethod
+    def _resolve_vehicle(db: Session, vehicle_id) -> Vehicle | None:
+        """Validate the vehicle (the order's primary anchor) and return it for snapshotting."""
+        if not vehicle_id:
+            return None
+        vehicle = db.query(Vehicle).filter(
+            Vehicle.id == vehicle_id, Vehicle.is_deleted == False  # noqa: E712
+        ).first()
+        if not vehicle:
+            raise NotFoundError("Vehicle not found", vehicle_id=str(vehicle_id))
+        return vehicle
+
+    @staticmethod
     def create_manual(db: Session, payload, actor: AdminUser, request: Request | None = None) -> Order:
         customer = CourierOrdersService._resolve_customer(db, payload, actor, request)
+
+        vehicle = CourierOrdersService._resolve_vehicle(db, payload.vehicle_id)
 
         driver = None
         if payload.driver_id:
@@ -68,8 +89,10 @@ class CourierOrdersService:
             customer_id=customer.id,
             driver_id=driver.id if driver else None,
             customer_name=display_name,
-            customer_phone=customer.phone,
-            customer_email=customer.email,
+            # Phone/email are optional on a transport order (the HTML tool marks them so), but
+            # the snapshot columns are NOT NULL — store empty strings rather than failing.
+            customer_phone=customer.phone or "",
+            customer_email=customer.email or "",
             is_business=customer.is_business,
             company_name=customer.company_name,
             company_vatid=customer.company_vatid,
@@ -82,7 +105,17 @@ class CourierOrdersService:
             parcel_quantity=payload.parcel_quantity,
             parcel_weight_kg=payload.parcel_weight_kg,
             scheduled_datetime=payload.scheduled_datetime,
-            driver_name=driver.full_name if driver else None,
+            # Vehicle is primary; driver is the secondary free-text person on this run.
+            # vehicle_name snapshots the plate for operational cars, else the marketing name.
+            vehicle_id=vehicle.id if vehicle else None,
+            vehicle_name=CourierOrdersService._vehicle_label(vehicle) if vehicle else None,
+            driver_name=driver.full_name if driver else (payload.driver_name or None),
+            client_reference=payload.client_reference,
+            service_type=payload.service_type,
+            preferred_date=payload.preferred_date,
+            distance_km=payload.distance_km,
+            total_km=payload.total_km,
+            occupied_km=payload.occupied_km,
             service_description=payload.service_description,
             net_amount=net, vat_rate=rate, vat_amount=vat, gross_amount=gross,
             payment_due_days=payload.payment_due_days, due_date=due_date,
@@ -100,14 +133,22 @@ class CourierOrdersService:
         from app.Services.OrdersService import OrdersService
         o = OrdersService.get(db, order_id)
         before = CourierOrdersService._snapshot(o)
-        # re-resolve customer/driver links + courier fields + money
+        # re-resolve customer/driver/vehicle links + courier fields + money
+        if payload.vehicle_id is not None:
+            vehicle = CourierOrdersService._resolve_vehicle(db, payload.vehicle_id)
+            o.vehicle_id = vehicle.id
+            o.vehicle_name = CourierOrdersService._vehicle_label(vehicle)
         if payload.driver_id is not None:
             o.driver_id = payload.driver_id
             drv = db.query(Driver).filter(Driver.id == payload.driver_id).first()
-            o.driver_name = drv.full_name if drv else o.driver_name
+            o.driver_name = drv.full_name if drv else (payload.driver_name or o.driver_name)
+        elif payload.driver_name is not None:
+            o.driver_name = payload.driver_name or None
         for f in ("pickup_address", "pickup_city", "destination_address", "destination_city",
                   "consignee", "parcel_description", "parcel_quantity", "parcel_weight_kg",
-                  "scheduled_datetime", "service_description", "internal_notes"):
+                  "scheduled_datetime", "service_description", "internal_notes",
+                  "client_reference", "service_type", "preferred_date",
+                  "distance_km", "total_km", "occupied_km"):
             setattr(o, f, getattr(payload, f))
         rate = payload.vat_rate if payload.vat_rate is not None else o.vat_rate
         net, vat, gross = compute_totals(payload.net_amount, rate)
