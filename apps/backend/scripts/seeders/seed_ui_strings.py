@@ -218,6 +218,38 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Trust strip: availability",
         False,
     ),
+    (
+        "home.trust.years",
+        "trust",
+        "Jahre Erfahrung",
+        "Years of service",
+        "Trust strip: years-active stat label",
+        False,
+    ),
+    (
+        "home.trust.rides",
+        "trust",
+        "Fahrten",
+        "Rides completed",
+        "Trust strip: rides-completed stat label",
+        False,
+    ),
+    (
+        "home.trust.fleet",
+        "trust",
+        "Fahrzeuge",
+        "Vehicles",
+        "Trust strip: fleet-size stat label",
+        False,
+    ),
+    (
+        "home.trust.reviews",
+        "trust",
+        "Bewertungen",
+        "reviews",
+        "Trust strip: Google review-count label",
+        False,
+    ),
     # ════════════════════════════════════════════════════════════════════
     # HOMEPAGE — SECTION HEADERS
     # ════════════════════════════════════════════════════════════════════
@@ -3087,6 +3119,39 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Schnell, nachverfolgbar, zuverlässig zugestellt.",
         "Fast, trackable, reliably delivered.",
         "Pricing tab tagline: courier transport",
+        False,
+    ),
+    # German-slug duplicates (DE pricing page keys tabs by the German slug)
+    (
+        "pricing.tab.flughafentransfer.tagline",
+        "pricing",
+        "Pünktlich, vorbestellt, mit Flugverfolgung.",
+        "On time, pre-booked, with flight tracking.",
+        "Pricing tab tagline: airport transfer (DE slug)",
+        False,
+    ),
+    (
+        "pricing.tab.krankenhausfahrten.tagline",
+        "pricing",
+        "Sicher und sanft zu jedem Termin.",
+        "Safe and gentle to every appointment.",
+        "Pricing tab tagline: hospital transport (DE slug)",
+        False,
+    ),
+    (
+        "pricing.tab.schuelerbefoerderung.tagline",
+        "pricing",
+        "Derselbe Fahrer, jeden Schultag.",
+        "The same driver, every school day.",
+        "Pricing tab tagline: school transport (DE slug)",
+        False,
+    ),
+    (
+        "pricing.tab.kurier-sondertransport.tagline",
+        "pricing",
+        "Schnell, nachverfolgbar, zuverlässig zugestellt.",
+        "Fast, trackable, reliably delivered.",
+        "Pricing tab tagline: courier transport (DE slug)",
         False,
     ),
     # Pricing — empty state body

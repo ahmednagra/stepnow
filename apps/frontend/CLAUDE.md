@@ -1,6 +1,6 @@
 # StepNow — Frontend
 
-Next.js 15 / React 19 / TypeScript strict / Tailwind / TanStack Query v5.
+Next.js 14 / React 18 / TypeScript strict / Tailwind / TanStack Query v5.
 Read the sibling file before touching anything.
 
 ---
@@ -9,7 +9,7 @@ Read the sibling file before touching anything.
 
 | | |
 |---|---|
-| Framework | Next.js 15 App Router |
+| Framework | Next.js 14 App Router |
 | State | TanStack Query v5 |
 | Language | TypeScript strict — `any` banned |
 | Auth | `localStorage` token (`accessToken`) → `Authorization: Bearer` header |

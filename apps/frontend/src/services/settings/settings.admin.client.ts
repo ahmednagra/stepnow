@@ -31,6 +31,11 @@ export interface SettingsUpdate {
   default_meta_title_de?: string;
   default_meta_title_en?: string;
   default_og_image_url?: string | null;
+  years_active?: number | null;
+  rides_completed?: number | null;
+  fleet_size?: number | null;
+  google_rating?: number | null;
+  google_review_count?: number | null;
 }
 
 export async function fetchAdminSettings(): Promise<SettingsAdmin> {

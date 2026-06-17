@@ -175,8 +175,14 @@ class LegalPagesService:
         if not version:
             raise NotFoundError("Published version missing for legal page", slug=slug)
         values = SettingsService.get_placeholder_values(db)
-        body = version.body_de if locale_value == "de" else version.body_en
-        title = version.title_de if locale_value == "de" else version.title_en
+        if locale_value == "de":
+            title, body = version.title_de, version.body_de
+        else:
+            title, body = version.title_en, version.body_en
+        # Legal pages must always render: fall back to the other locale when a
+        # translation is missing instead of 500-ing on a None body.
+        title = title or version.title_de or version.title_en or ""
+        body = body or version.body_de or version.body_en or ""
         rendered, _, _ = LegalPagesService._render(body, values)
         return {"slug": slug, "title": title, "body": rendered, "published_at": version.published_at, "version_number": version.version_number}
 
@@ -188,7 +194,9 @@ class LegalPagesService:
             raise DomainError(f"Unknown placeholders in body: {', '.join(sorted(set(bad)))}", unknown_placeholders=sorted(set(bad)))
 
     @staticmethod
-    def _render(text: str, values: dict[str, str]) -> tuple[str, list[str], list[str]]:
+    def _render(text: str | None, values: dict[str, str]) -> tuple[str, list[str], list[str]]:
+        if not text:
+            return "", [], []
         used: list[str] = []
         unresolved: list[str] = []
         def repl(m: re.Match) -> str:

@@ -35,7 +35,7 @@ type SortKey = "name" | "company_name" | "ort" | "orders_count" | "total_billed"
 
 const num = (s: string | number | null | undefined) => Number(s ?? 0) || 0;
 const todayISO = () => new Date().toISOString().slice(0, 10);
-const initials = (c: CustomerRow) => `${c.first_name?.[0] ?? ""}${c.last_name?.[0] ?? ""}`.toUpperCase();
+const initials = (c: CustomerRow) => (c.company_name || "?").trim().slice(0, 2).toUpperCase();
 const daysFromToday = (iso: string | null | undefined) =>
   iso ? Math.round((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 
@@ -134,7 +134,7 @@ export default function CustomersPage() {
     if (due === "dormant") list = list.filter((c) => lastOrderLabel(c.last_order_at).dormant);
     return [...list].sort((a, b) => {
       let x: number | string, y: number | string;
-      if (sortKey === "name") { x = `${a.last_name}${a.first_name}`.toLowerCase(); y = `${b.last_name}${b.first_name}`.toLowerCase(); }
+      if (sortKey === "name") { x = a.company_name.toLowerCase(); y = b.company_name.toLowerCase(); }
       else if (sortKey === "type") { x = a.is_business ? 1 : 0; y = b.is_business ? 1 : 0; }
       else if (sortKey === "last_order_at") { x = a.last_order_at ? new Date(a.last_order_at).getTime() : 0; y = b.last_order_at ? new Date(b.last_order_at).getTime() : 0; }
       else if (sortKey === "orders_count" || sortKey === "total_billed" || sortKey === "balance_due") { x = num(a[sortKey]); y = num(b[sortKey]); }
@@ -150,9 +150,8 @@ export default function CustomersPage() {
   const arrow = (k: SortKey) => (sortKey === k ? (sortDir === 1 ? " ▲" : " ▼") : "");
 
   const exportRows = useCallback(() => view.map((c) => ({
-    first_name: c.first_name,
-    last_name: c.last_name,
-    company: c.company_name ?? "",
+    company: c.company_name,
+    contact: c.contact_person ?? "",
     vat_id: c.company_vatid ?? "",
     email: c.email ?? "",
     phone: c.phone ?? "",
@@ -326,10 +325,10 @@ export default function CustomersPage() {
                             <span className={cn("grid h-7 w-7 flex-none place-items-center rounded-full text-[10px] font-bold uppercase text-white", c.is_business ? "bg-[#A8865A]" : "bg-slate-900")}>{initials(c)}</span>
                             <span className="min-w-0">
                               <span className="flex items-center gap-1.5">
-                                <Link href={`/admin/customers/${c.id}`} className="text-[13px] font-semibold text-slate-900 hover:underline">{c.first_name} {c.last_name}</Link>
+                                <Link href={`/admin/customers/${c.id}`} className="text-[13px] font-semibold text-slate-900 hover:underline">{c.company_name}</Link>
                                 {c.is_business && <span className="bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-indigo-700">B2B</span>}
                               </span>
-                              {!compact && c.email && <span className="block truncate text-[11px] text-slate-500">{c.email}</span>}
+                              {!compact && (c.contact_person || c.email) && <span className="block truncate text-[11px] text-slate-500">{c.contact_person ?? c.email}</span>}
                             </span>
                           </span>
                         </td>

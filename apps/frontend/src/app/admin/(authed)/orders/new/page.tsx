@@ -15,12 +15,12 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   User, Mail, Phone, MapPin, ArrowRight, ArrowLeft, Truck, Route as RouteIcon, Gauge,
   CalendarDays, CalendarClock, Hash, Receipt, Check, X, Eye, EyeOff, Save, FileDown,
-  Loader2, AlertCircle, Tag, ClipboardList, ChevronDown, MessageCircle,
+  Loader2, AlertCircle, Tag, ClipboardList, ChevronDown, MessageCircle, FileText,
 } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
 import { DatePicker } from "@/components/ui";
@@ -37,8 +37,8 @@ import { type DriverAdmin } from "@/services/drivers";
 import { useVehicles, useDrivers } from "@/hooks/queries";
 import type { VehicleAdmin } from "@/types";
 import {
-  sendDriverSlipWhatsApp, sendDocuments, slipPdfHref,
-  type CourierOrder, type ParcelOrderInput, type ServiceType,
+  sendDriverSlipWhatsApp, sendDocuments, downloadSlipPdf,
+  type CourierOrder, type ParcelOrderInput, type ServiceType, type OrderStopInput,
 } from "@/services/courier";
 import { createOrderInvoice } from "@/services/orders";
 import { useCreateParcelOrder, useUpdateParcelOrder, useCreateDriver, useUpdateDriver } from "@/hooks/mutations";
@@ -57,11 +57,10 @@ const SERVICE_TYPES: { value: ServiceType; label: string }[] = [
   { value: "Umzugstransport", label: "Removal transport" },
   { value: "Sonderfahrt", label: "Special trip" },
 ];
-// Payment-term chips — the only three terms the business offers (matches the HTML tool).
-const TERM_CHIPS = [
-  { days: 15, label: "2 weeks", sub: "15 days" },
-  { days: 30, label: "4 weeks", sub: "30 days" },
-  { days: 45, label: "6 weeks", sub: "45 days" },
+// Payment-term presets — weeks-first (14/28 days). Any other term goes through "Custom…".
+const TERM_OPTIONS = [
+  { days: 14, label: "2 weeks" },
+  { days: 28, label: "4 weeks" },
 ];
 
 // Display-only issuer block for the live preview. The stored PDFs are rendered server-side
@@ -83,30 +82,43 @@ const addDaysDE = (iso: string, d: number | string) => {
   return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
+const emptyStop = () => ({ address: "", plz: "", ort: "", contact_name: "", contact_phone: "", notes: "" });
+
 function emptyDefaults(): AdminOrderInput {
   return {
     order_date: todayISO(), preferred_date: "",
     vehicle_id: "", driver_name: "", driver_id: null,
-    customer_id: null, first_name: "", last_name: "",
+    customer_id: null, company_name: "", contact_person: "",
     street: "", plz: "", ort: "", email: "", phone: "", vat_id: "", client_reference: "",
-    pickup: "", dropoff: "", route_km: "", service_type: "",
+    pickups: [emptyStop()], dropoff: emptyStop(), route_km: "", service_type: "",
     net: "", vat: "0.19",
     km_total: "", km_occupied: "",
     term: null, service_description: "",
   };
 }
 
-// Form values → create/update payload. Mirrors the original buildPayload() exactly.
+// Form values → create/update payload. Company-first customer + ordered route stops.
 function toPayload(v: AdminOrderInput): ParcelOrderInput {
+  const orNull = (s: string | undefined) => (s?.trim() ? s.trim() : null);
+  const toStop = (s: AdminOrderInput["dropoff"], type: "pickup" | "drop"): OrderStopInput => ({
+    stop_type: type,
+    address: s.address.trim(),
+    postcode: orNull(s.plz),
+    city: orNull(s.ort),
+    contact_name: orNull(s.contact_name),
+    contact_phone: orNull(s.contact_phone),
+    notes: orNull(s.notes),
+  });
   return {
     ...(v.customer_id
       ? { customer_id: v.customer_id }
       : {
           customer: {
-            first_name: v.first_name, last_name: v.last_name,
-            street: v.street, plz: v.plz, ort: v.ort,
+            company_name: v.company_name.trim(),
+            contact_person: orNull(v.contact_person),
+            street: orNull(v.street), plz: orNull(v.plz), ort: orNull(v.ort),
             email: v.email || null, phone: v.phone || null,
-            company_vatid: v.vat_id || null, is_business: !!v.vat_id,
+            company_vatid: v.vat_id || null, is_business: true,
           },
         }),
     // Vehicle is primary; driver is secondary. The driver field autocompletes from the active
@@ -118,8 +130,7 @@ function toPayload(v: AdminOrderInput): ParcelOrderInput {
     client_reference: v.client_reference.trim() || null,
     service_type: v.service_type || null,
     preferred_date: v.preferred_date || null,
-    pickup_address: v.pickup, pickup_city: null,
-    destination_address: v.dropoff, destination_city: null,
+    stops: [...v.pickups.map((p) => toStop(p, "pickup")), toStop(v.dropoff, "drop")],
     distance_km: v.route_km ? normalizeDecimalInput(v.route_km) : null,
     total_km: v.km_total ? normalizeDecimalInput(v.km_total) : null,
     occupied_km: v.km_occupied ? normalizeDecimalInput(v.km_occupied) : null,
@@ -165,6 +176,9 @@ export default function NewTransportOrderPage() {
     defaultValues: emptyDefaults(),
   });
 
+  const { fields: pickupFields, append: appendPickup, remove: removePickup } =
+    useFieldArray({ control, name: "pickups" });
+
   // Operational fleet (plate-bearing cars) — the order is anchored to one of these. Mirrors
   // listFleetVehicles: active, not deleted, plate-bearing, sorted by plate.
   const { data: vehiclesPage } = useVehicles({ size: 100 });
@@ -191,6 +205,14 @@ export default function NewTransportOrderPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [previewMode, setPreviewMode] = useState<"driver" | "customer">("driver");
+  // VAT: presets (0/7/19) + a manual custom rate. vatPctInput holds the raw typed % so the
+  // controlled field doesn't fight decimals; `vat` (the form value) stays a 0..1 fraction.
+  const [vatCustom, setVatCustom] = useState(false);
+  const [vatPctInput, setVatPctInput] = useState("");
+  // Payment term: 2/4-week presets + a manual custom day count. termDaysInput holds the raw
+  // typed days; `term` (the form value) stays the integer day count.
+  const [termCustom, setTermCustom] = useState(false);
+  const [termDaysInput, setTermDaysInput] = useState("");
 
   // ── watched form values (preview + derived) ──
   const orderDate = watch("order_date");
@@ -198,8 +220,7 @@ export default function NewTransportOrderPage() {
   const vehicleId = watch("vehicle_id");
   const driverName = watch("driver_name");
   const driverId = watch("driver_id");
-  const first = watch("first_name");
-  const last = watch("last_name");
+  const companyName = watch("company_name");
   const street = watch("street");
   const plz = watch("plz");
   const ort = watch("ort");
@@ -207,7 +228,7 @@ export default function NewTransportOrderPage() {
   const vatId = watch("vat_id");
   const clientRef = watch("client_reference");
   const linkedId = watch("customer_id");
-  const pickup = watch("pickup");
+  const pickups = watch("pickups");
   const dropoff = watch("dropoff");
   const routeKm = watch("route_km");
   const serviceType = watch("service_type");
@@ -231,14 +252,14 @@ export default function NewTransportOrderPage() {
   }, [getValues]);
 
   function pickCustomer(c: CustomerAdmin) {
-    setValue("first_name", c.first_name); setValue("last_name", c.last_name);
+    setValue("company_name", c.company_name); setValue("contact_person", c.contact_person ?? "");
     setValue("street", c.street ?? ""); setValue("plz", c.plz ?? ""); setValue("ort", c.ort ?? "");
     setValue("email", c.email ?? ""); setValue("phone", c.phone ?? ""); setValue("vat_id", c.company_vatid ?? "");
     setValue("customer_id", c.id, { shouldValidate: true });
     setShowNameSug(false); setShowPhoneSug(false); setResults([]);
   }
   function clearCustomer() {
-    setValue("first_name", ""); setValue("last_name", ""); setValue("street", "");
+    setValue("company_name", ""); setValue("contact_person", ""); setValue("street", "");
     setValue("plz", ""); setValue("ort", ""); setValue("email", ""); setValue("phone", "");
     setValue("vat_id", ""); setValue("customer_id", null);
   }
@@ -365,7 +386,7 @@ export default function NewTransportOrderPage() {
     );
 
   const onSave = runAction("save", () => { pushToast("success", "Saved"); });
-  const onPdf = runAction("pdf", (o) => { window.open(slipPdfHref(o.id), "_blank"); });
+  const onPdf = runAction("pdf", (o) => downloadSlipPdf(o.id));
   // WhatsApp: opens WhatsApp (Web on laptop, the app on mobile) with the driver's number and a
   // prefilled job briefing — the operator reviews and hits send. Backend moves draft→dispatched.
   const onWhatsApp = runAction("wa", async (o) => {
@@ -392,14 +413,17 @@ export default function NewTransportOrderPage() {
   // ── derived ──
   const netNorm = useMemo(() => normalizeDecimalInput(net), [net]);
   const vehicle = vehicles.find((veh) => veh.id === vehicleId) || null;
-  const fullName = `${first} ${last}`.trim();
+  const fullName = companyName.trim();
   const netNum = Number(netNorm || "0");
   const rate = Number(vat) || 0;
   const vatAmt = netNum * rate;
   const brutto = netNum + vatAmt;
-  const vatPct = Math.round(rate * 100);
+  const vatPct = +(rate * 100).toFixed(2);
   const leerKm = Math.max(0, (parseInt(kmGes) || 0) - (parseInt(kmBes) || 0));
   const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
+  // Days → weeks for the payment-term hint (whole weeks shown plainly, else one decimal).
+  const termWeeks = term != null ? term / 7 : 0;
+  const termWeeksLabel = Number.isInteger(termWeeks) ? `${termWeeks} week${termWeeks === 1 ? "" : "s"}` : `${termWeeks.toFixed(1)} weeks`;
 
   // ── Action-bar gating ──
   const saved = order != null;
@@ -431,9 +455,9 @@ export default function NewTransportOrderPage() {
           onMouseDown={() => pickCustomer(c)}
           className="flex w-full flex-col items-start gap-0.5 border-b border-slate-100 px-3 py-2 text-left last:border-b-0 hover:bg-slate-50"
         >
-          <span className="text-[12.5px] font-medium text-slate-900">{c.first_name} {c.last_name}</span>
+          <span className="text-[12.5px] font-medium text-slate-900">{c.company_name}</span>
           <span className="text-[11px] text-slate-500">
-            {[c.phone, [c.plz, c.ort].filter(Boolean).join(" "), c.company_vatid].filter(Boolean).join(" · ")}
+            {[c.contact_person, c.phone, [c.plz, c.ort].filter(Boolean).join(" "), c.company_vatid].filter(Boolean).join(" · ")}
           </span>
         </button>
       ))}
@@ -445,11 +469,23 @@ export default function NewTransportOrderPage() {
 
   const req = <span className="text-rose-500">*</span>;
 
+  // Save-status pill — centered in the page header (replaces the old status strip).
+  const statusPill = order ? (
+    <span className="inline-flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 text-[11.5px] font-medium text-emerald-700">
+      <Check className="h-3 w-3" strokeWidth={3} /> Saved · <span className="font-mono text-slate-700">{order.order_number}</span>
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500">
+      <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Draft — number assigned on save
+    </span>
+  );
+
   return (
     <>
       <AdminPageHeader
         title="New Order"
         description="Create a transport order — vehicle-centric, with logbook and billing details."
+        center={statusPill}
         actions={
           <>
             <button
@@ -472,19 +508,6 @@ export default function NewTransportOrderPage() {
       />
 
       <div className="space-y-4 p-6">
-        {/* Status strip */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border border-slate-200 bg-white px-4 py-3">
-          {order ? (
-            <span className="inline-flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 text-[11.5px] font-medium text-emerald-700">
-              <Check className="h-3 w-3" strokeWidth={3} /> Saved · <span className="font-mono text-slate-700">{order.order_number}</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-400">
-              Not saved yet — order number assigned on save
-            </span>
-          )}
-        </div>
-
         {/* Two-pane: builder + live preview */}
         <div className={cn("grid grid-cols-1 gap-4", previewOpen && "xl:grid-cols-[1.35fr_1fr]")}>
           {/* BUILDER */}
@@ -675,7 +698,7 @@ export default function NewTransportOrderPage() {
             {/* Section 2 — Customer */}
             <AdminCard
               title={<span className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Customer / Client</span>}
-              description="Search a saved customer by name or phone, or add a new one."
+              description="Search a saved company by name or phone, or add a new one."
               headerActions={linkedId ? (
                 <span className="inline-flex items-center gap-1.5 bg-emerald-50 px-2 py-1 text-[10.5px] font-semibold text-emerald-700">
                   <Check className="h-3 w-3" strokeWidth={3} /> Saved customer
@@ -687,29 +710,20 @@ export default function NewTransportOrderPage() {
             >
               <div className="space-y-3">
                 <div className="relative grid gap-3 sm:grid-cols-2">
-                  <AdminFormField label={<span>First name {req}</span>}>
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><User className="h-3 w-3 text-slate-400" /> Company name {req}</span>}>
                     <input
-                      className={cn(adminInputClass, errors.first_name && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!errors.first_name || undefined}
-                      value={first}
-                      placeholder="Type to search or add new…"
-                      onChange={(e) => { setValue("first_name", e.target.value); setValue("customer_id", null); setShowNameSug(true); runSearch(`${e.target.value} ${last}`.trim()); }}
+                      className={cn(adminInputClass, errors.company_name && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.company_name || undefined}
+                      value={companyName}
+                      placeholder="Type to search or add a company…"
+                      onChange={(e) => { setValue("company_name", e.target.value); setValue("customer_id", null); setShowNameSug(true); runSearch(e.target.value); }}
                       onFocus={() => setShowNameSug(true)}
                       onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
                     />
-                    <FieldErr msg={errors.first_name?.message} />
+                    <FieldErr msg={errors.company_name?.message} />
                   </AdminFormField>
-                  <AdminFormField label={<span>Last name {req}</span>}>
-                    <input
-                      className={cn(adminInputClass, errors.last_name && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!errors.last_name || undefined}
-                      value={last}
-                      placeholder="Last"
-                      onChange={(e) => { setValue("last_name", e.target.value); setValue("customer_id", null); setShowNameSug(true); runSearch(`${first} ${e.target.value}`.trim()); }}
-                      onFocus={() => setShowNameSug(true)}
-                      onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
-                    />
-                    <FieldErr msg={errors.last_name?.message} />
+                  <AdminFormField label="Contact person">
+                    <input className={adminInputClass} {...register("contact_person")} placeholder="Ansprechpartner (optional)" />
                   </AdminFormField>
                   {showNameSug && results.length > 0 && sugList}
                 </div>
@@ -753,44 +767,75 @@ export default function NewTransportOrderPage() {
 
             {/* Section 3 — Route */}
             <AdminCard title={<span className="flex items-center gap-2"><RouteIcon className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Route</span>}>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="sm:col-span-2">
-                  <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-emerald-600" /> Pickup address {req}</span>}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    <MapPin className="h-3 w-3" /> Pickups (Abholung) — one or more collection points {req}
+                  </p>
+                  {pickupFields.map((f, i) => (
+                    <div key={f.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_1fr_auto]">
+                      <input
+                        className={cn(adminInputClass, errors.pickups?.[i]?.address && "border-rose-400 focus:border-rose-500")}
+                        aria-invalid={!!errors.pickups?.[i]?.address || undefined}
+                        {...register(`pickups.${i}.address`)}
+                        placeholder={`Pickup ${i + 1} — street & no.`}
+                      />
+                      <input className={adminInputClass} {...register(`pickups.${i}.plz`)} placeholder="PLZ" />
+                      <input className={adminInputClass} {...register(`pickups.${i}.ort`)} placeholder="City" />
+                      <button
+                        type="button"
+                        onClick={() => removePickup(i)}
+                        disabled={pickupFields.length === 1}
+                        title="Remove pickup"
+                        className="inline-flex h-9 w-9 items-center justify-center border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => appendPickup(emptyStop())}
+                    className="inline-flex items-center gap-1.5 border border-dashed border-slate-300 px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:border-slate-400 hover:bg-slate-50"
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-[12px] leading-none text-white">+</span> Add pickup
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-600">
+                    <MapPin className="h-3 w-3" /> Drop-off (Ziel) — single destination {req}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_1fr]">
                     <input
-                      className={cn(adminInputClass, errors.pickup && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!errors.pickup || undefined}
-                      {...register("pickup")}
-                      placeholder="Street, postcode city"
+                      className={cn(adminInputClass, errors.dropoff?.address && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.dropoff?.address || undefined}
+                      {...register("dropoff.address")}
+                      placeholder="Destination — street & no."
                     />
-                    <FieldErr msg={errors.pickup?.message} />
+                    <input className={adminInputClass} {...register("dropoff.plz")} placeholder="PLZ" />
+                    <input className={adminInputClass} {...register("dropoff.ort")} placeholder="City" />
+                  </div>
+                  <FieldErr msg={errors.dropoff?.address?.message} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><Gauge className="h-3 w-3 text-slate-400" /> KM (total route)</span>}>
+                    <Controller
+                      name="route_km"
+                      control={control}
+                      render={({ field }) => (
+                        <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
+                      )}
+                    />
+                  </AdminFormField>
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><Tag className="h-3 w-3 text-slate-400" /> Service type</span>}>
+                    <select className={adminInputClass} {...register("service_type")}>
+                      <option value="">– Select –</option>
+                      {SERVICE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
                   </AdminFormField>
                 </div>
-                <AdminFormField label={<span className="flex items-center gap-1.5"><Gauge className="h-3 w-3 text-slate-400" /> KM (pickup→dest.)</span>}>
-                  <Controller
-                    name="route_km"
-                    control={control}
-                    render={({ field }) => (
-                      <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
-                    )}
-                  />
-                </AdminFormField>
-                <div className="sm:col-span-2">
-                  <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-rose-600" /> Destination address {req}</span>}>
-                    <input
-                      className={cn(adminInputClass, errors.dropoff && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!errors.dropoff || undefined}
-                      {...register("dropoff")}
-                      placeholder="Street, postcode city"
-                    />
-                    <FieldErr msg={errors.dropoff?.message} />
-                  </AdminFormField>
-                </div>
-                <AdminFormField label={<span className="flex items-center gap-1.5"><Tag className="h-3 w-3 text-slate-400" /> Service type</span>}>
-                  <select className={adminInputClass} {...register("service_type")}>
-                    <option value="">– Select –</option>
-                    {SERVICE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </AdminFormField>
               </div>
             </AdminCard>
 
@@ -800,7 +845,7 @@ export default function NewTransportOrderPage() {
               description="Price shows on the invoice only — never on the driver order."
             >
               <div className="space-y-3">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <AdminFormField label={<span>Net amount (€) {req}</span>}>
                     <Controller
                       name="net"
@@ -812,9 +857,113 @@ export default function NewTransportOrderPage() {
                     <FieldErr msg={errors.net?.message} />
                   </AdminFormField>
                   <AdminFormField label="VAT">
-                    <select className={adminInputClass} {...register("vat")}>
-                      {VAT_PRESETS.map((val) => <option key={val} value={val}>{Math.round(Number(val) * 100)}%</option>)}
-                    </select>
+                    {vatCustom ? (
+                      // "Custom…" turns this same field into a typeable % input (chevron reverts).
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex-1">
+                          <AffixInput
+                            unit="%"
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            value={vatPctInput}
+                            invalid={!!errors.vat}
+                            onChange={(e) => {
+                              setVatPctInput(e.target.value);
+                              const pct = Number(e.target.value);
+                              setValue("vat", e.target.value.trim() && Number.isFinite(pct) ? String(pct / 100) : "", { shouldValidate: true });
+                            }}
+                            placeholder="e.g. 10.5"
+                            aria-label="Custom VAT percentage"
+                            autoFocus
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setVatCustom(false); setValue("vat", "0.19", { shouldValidate: true }); }}
+                          title="Back to preset rates"
+                          aria-label="Back to preset VAT rates"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        className={adminInputClass}
+                        value={vat}
+                        onChange={(e) => {
+                          if (e.target.value === "custom") {
+                            setVatCustom(true);
+                            setVatPctInput(vat ? String(+(Number(vat) * 100).toFixed(2)) : "");
+                          } else {
+                            setValue("vat", e.target.value, { shouldValidate: true });
+                          }
+                        }}
+                      >
+                        {VAT_PRESETS.map((val) => <option key={val} value={val}>{Math.round(Number(val) * 100)}%</option>)}
+                        <option value="custom">Custom…</option>
+                      </select>
+                    )}
+                    <FieldErr msg={errors.vat?.message} />
+                  </AdminFormField>
+                  <AdminFormField label={<span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3 text-slate-400" /> Payment term {req}</span>}>
+                    {termCustom ? (
+                      // "Custom…" turns this same field into a typeable days input (chevron reverts).
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex-1">
+                          <AffixInput
+                            unit="days"
+                            type="number"
+                            min={1}
+                            step={1}
+                            value={termDaysInput}
+                            invalid={!!errors.term}
+                            onChange={(e) => {
+                              setTermDaysInput(e.target.value);
+                              const d = parseInt(e.target.value);
+                              setValue("term", e.target.value.trim() && Number.isFinite(d) && d > 0 ? d : null, { shouldValidate: true });
+                            }}
+                            placeholder="e.g. 45"
+                            aria-label="Custom payment term in days"
+                            autoFocus
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setTermCustom(false); setTermDaysInput(""); setValue("term", null, { shouldValidate: true }); }}
+                          title="Back to preset terms"
+                          aria-label="Back to preset payment terms"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        className={cn(adminInputClass, errors.term && "border-rose-400 focus:border-rose-500")}
+                        aria-invalid={!!errors.term || undefined}
+                        value={term != null ? String(term) : ""}
+                        onChange={(e) => {
+                          if (e.target.value === "custom") {
+                            setTermCustom(true);
+                            setTermDaysInput(term != null ? String(term) : "");
+                          } else {
+                            setValue("term", Number(e.target.value), { shouldValidate: true });
+                          }
+                        }}
+                      >
+                        <option value="" disabled>– Select term –</option>
+                        {TERM_OPTIONS.map((o) => <option key={o.days} value={o.days}>{o.label}</option>)}
+                        <option value="custom">Custom…</option>
+                      </select>
+                    )}
+                    {term != null && orderDate ? (
+                      <p className="mt-1.5 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">≈ {termWeeksLabel} · due {addDaysDE(orderDate, term)}</p>
+                    ) : (
+                      <FieldErr msg={errors.term?.message} />
+                    )}
                   </AdminFormField>
                 </div>
 
@@ -871,47 +1020,19 @@ export default function NewTransportOrderPage() {
               </div>
             </AdminCard>
 
-            {/* Section 6 — Payment term + description */}
-            <AdminCard title={<span className="flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Payment term &amp; description</span>}>
-              <div className="space-y-4">
-                <div>
-                  <p className="mb-2 text-[12px] font-medium text-slate-700">Payment term {req} <span className="font-normal text-slate-400">(§ 271 BGB)</span></p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TERM_CHIPS.map((c) => (
-                      <button
-                        key={c.days}
-                        type="button"
-                        onClick={() => setValue("term", c.days, { shouldValidate: true })}
-                        className={cn(
-                          "flex flex-col items-center border-[1.5px] px-2 py-2.5 text-xs font-bold transition-colors",
-                          term === c.days
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400",
-                        )}
-                      >
-                        {c.label}
-                        <span className="mt-0.5 text-[9.5px] font-normal opacity-65">{c.sub}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {term != null && orderDate ? (
-                    <p className="mt-2 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-                      Due on: {addDaysDE(orderDate, term)} ({term} days net)
-                    </p>
-                  ) : (
-                    <FieldErr msg={errors.term?.message} />
-                  )}
-                </div>
-
-                <AdminFormField label="Service description (§ 14 UStG)">
-                  <textarea
-                    className={cn(adminInputClass, "h-auto py-2")}
-                    rows={3}
-                    {...register("service_description")}
-                    placeholder="Detailed description of the service…"
-                  />
-                </AdminFormField>
-              </div>
+            {/* Section 6 — Service description (payment term now lives in Pricing) */}
+            <AdminCard
+              title={<span className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Service description</span>}
+              description="Printed on the invoice line item (§ 14 UStG)."
+            >
+              <AdminFormField label="Service description (§ 14 UStG)">
+                <textarea
+                  className={cn(adminInputClass, "h-auto py-2")}
+                  rows={3}
+                  {...register("service_description")}
+                  placeholder="Detailed description of the service…"
+                />
+              </AdminFormField>
             </AdminCard>
           </div>
 
@@ -963,15 +1084,23 @@ export default function NewTransportOrderPage() {
                           : <span className="text-[13px] italic text-slate-400">Noch nicht gewählt</span>}
                         {driverName && <span className="ml-auto text-[12px] text-slate-300">Fahrer: <strong className="text-white">{driverName}</strong></span>}
                       </div>
-                      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border border-slate-200 bg-slate-50 p-3.5">
+                      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-start gap-3 border border-slate-200 bg-slate-50 p-3.5">
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Abholung</p>
-                          <p className="mt-1 text-[13px] font-medium leading-snug text-slate-900">{pickup || <span className="italic text-slate-400">—</span>}</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Abholung{pickups.length > 1 ? ` (${pickups.length})` : ""}</p>
+                          {pickups.some((p) => p.address.trim()) ? (
+                            <ol className="mt-1 space-y-0.5">
+                              {pickups.map((p, i) => (
+                                <li key={i} className="text-[13px] font-medium leading-snug text-slate-900">
+                                  {(pickups.length > 1 ? `${i + 1}. ` : "") + (p.address || "—") + (p.ort ? `, ${p.ort}` : "")}
+                                </li>
+                              ))}
+                            </ol>
+                          ) : <p className="mt-1 text-[13px] italic text-slate-400">—</p>}
                         </div>
-                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                        <ArrowRight className="mt-1 h-4 w-4 text-slate-400" />
                         <div>
                           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-600">Ziel</p>
-                          <p className="mt-1 text-[13px] font-medium leading-snug text-slate-900">{dropoff || <span className="italic text-slate-400">—</span>}</p>
+                          <p className="mt-1 text-[13px] font-medium leading-snug text-slate-900">{dropoff.address ? `${dropoff.address}${dropoff.ort ? `, ${dropoff.ort}` : ""}` : <span className="italic text-slate-400">—</span>}</p>
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 border border-dashed border-slate-300 px-3.5 py-2.5 text-[12px] text-slate-500">
@@ -1031,7 +1160,7 @@ export default function NewTransportOrderPage() {
                           <td className="py-2.5 pr-2 text-[13px]">1</td>
                           <td className="py-2.5 pr-2 text-[13px]">
                             <strong className="text-slate-900">{serviceType || "Transportleistung"}</strong>
-                            {(pickup || dropoff) && <div className="text-[11px] text-slate-500">{pickup || "—"} → {dropoff || "—"}</div>}
+                            {(pickups[0]?.address || dropoff.address) && <div className="text-[11px] text-slate-500">{(pickups[0]?.address || "—") + (pickups.length > 1 ? ` (+${pickups.length - 1})` : "") + " → " + (dropoff.address || "—")}</div>}
                             {serviceDescription && <div className="text-[11px] text-slate-500">{serviceDescription}</div>}
                           </td>
                           <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum)}</td>

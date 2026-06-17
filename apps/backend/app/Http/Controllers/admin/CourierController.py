@@ -126,14 +126,13 @@ class CourierController:
                 raise ConflictError("No driver assigned to this order")
             if not driver.email:
                 raise ConflictError("Assigned driver has no email address")
-            # ensure the slip PDF exists (stored, authed-streamed; not attached by the log-only provider)
-            if not order.driver_slip_pdf_url or not Path(order.driver_slip_pdf_url).exists():
-                try:
-                    order.driver_slip_pdf_url = DriverSlipPdfService.render(db, order)
-                except Exception as e:
-                    db.rollback()
-                    logger.error(f"Error rendering driver slip PDF for order {order.order_number}: {e}")
-                    raise AppError("Failed to generate the driver slip PDF")
+            # Always render the slip fresh so the emailed PDF reflects the order's current state.
+            try:
+                order.driver_slip_pdf_url = DriverSlipPdfService.render(db, order)
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Error rendering driver slip PDF for order {order.order_number}: {e}")
+                raise AppError("Failed to generate the driver slip PDF")
             order.driver_emailed_at = now
             if order.delivery_status == "draft":
                 order.delivery_status = "dispatched"

@@ -2,10 +2,8 @@
 # Imports all 69 B2B customers from StepNow_Data.json — values copied VERBATIM.
 # All are business dispatch clients (Frachtführer / Kurierdienste).
 #
-# Name splitting: first word → first_name, remainder → last_name.
-# company_name = full name from JSON.
-# company_vatid = ustId from JSON (where provided).
-# kontakt field → internal_notes (contact person if present).
+# Company-first (B2B): company_name = full name from JSON; contact_person = kontakt.
+# company_vatid = ustId from JSON (where provided). Person first/last names are not used.
 # All have is_business=True (100% B2B freight companies).
 # Idempotent: keyed by company_vatid if non-empty, otherwise by last_name (company full name).
 # Legacy customer number stored in internal_notes as "Legacy: K911XXX".
@@ -157,16 +155,6 @@ CUSTOMERS = [
 # fmt: on
 
 
-def _split_name(company: str) -> tuple[str, str]:
-    """Split 'First Rest of Name' → ('First', 'Rest of Name').
-    If only one word, first_name=company, last_name=company.
-    """
-    parts = company.strip().split(" ", 1)
-    if len(parts) == 1:
-        return parts[0], parts[0]
-    return parts[0], parts[1]
-
-
 def run() -> None:
     log_section(f"Customers — legacy B2B ({len(CUSTOMERS)} companies from StepNow_Data.json)")
     db = SessionLocal()
@@ -205,24 +193,20 @@ def run() -> None:
                 skipped += 1
                 continue
 
-            first_name, last_name = _split_name(company)
             kontakt = raw.get("kontakt", "").strip()
-            notes_parts = [f"Legacy: {legacy_nr}"]
-            if kontakt:
-                notes_parts.append(f"Kontakt: {kontakt}")
 
             data = {
-                "first_name": first_name,
-                "last_name": last_name,
-                "is_business": True,
                 "company_name": company,
+                "contact_person": kontakt or None,
+                "is_business": True,
                 "company_vatid": vat_id,
                 "street": raw["street"] or None,
                 "plz": raw["plz"] or None,
                 "ort": raw["ort"] or None,
                 "email": None,
                 "phone": None,
-                "internal_notes": " | ".join(notes_parts),
+                # Legacy customer number — seed_legacy_orders.py looks orders up by this tag.
+                "internal_notes": f"Legacy: {legacy_nr}",
             }
             c = CustomersService.create(db, data, actor, request=None)
             log_create(f"customer '{legacy_nr}'", f"id={c.id}, company={company}")

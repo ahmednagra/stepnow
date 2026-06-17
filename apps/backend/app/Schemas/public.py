@@ -61,6 +61,11 @@ class SettingsPublicResponse(BaseModel):
     social_tiktok: str | None
     default_meta_title: str | None
     default_og_image_url: str | None
+    years_active: int | None = None
+    rides_completed: int | None = None
+    fleet_size: int | None = None
+    google_rating: Decimal | None = None
+    google_review_count: int | None = None
 
 
 class UiStringsPublicResponse(BaseModel):

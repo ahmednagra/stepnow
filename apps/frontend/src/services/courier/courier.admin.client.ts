@@ -4,9 +4,43 @@
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
 import { ENDPOINTS } from "@/services/api/endpoints";
+import { getAccessToken } from "@/lib/auth-storage";
+import { ApiError } from "@/lib/api-errors";
 import type { Paginated } from "@/types";
 
 export type DeliveryStatus = "draft" | "dispatched" | "picked_up" | "delivered";
+export type StopType = "pickup" | "drop";
+
+export interface OrderStop {
+  id: string;
+  sequence: number;
+  stop_type: StopType;
+  status: string;
+  address: string;
+  postcode: string | null;
+  city: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  time_from: string | null;
+  time_to: string | null;
+  package_count: number | null;
+  weight_kg: string | null;
+  notes: string | null;
+}
+
+export interface OrderStopInput {
+  stop_type: StopType;
+  address: string;
+  postcode?: string | null;
+  city?: string | null;
+  contact_name?: string | null;
+  contact_phone?: string | null;
+  time_from?: string | null;
+  time_to?: string | null;
+  package_count?: number | null;
+  weight_kg?: string | null;
+  notes?: string | null;
+}
 
 export interface CourierOrder {
   whatsapp_link?: string | null;
@@ -29,6 +63,7 @@ export interface CourierOrder {
   pickup_city: string | null;
   destination_address: string;
   destination_city: string | null;
+  stops: OrderStop[];
   consignee: string | null;
   parcel_description: string | null;
   parcel_quantity: number;
@@ -51,11 +86,11 @@ export interface CourierOrder {
 }
 
 export interface InlineCustomerInput {
-  first_name: string;
-  last_name: string;
+  company_name: string;
+  contact_person?: string | null;
   is_business?: boolean;
-  company_name?: string | null;
   company_vatid?: string | null;
+  tax_number?: string | null;
   street?: string | null;
   plz?: string | null;
   ort?: string | null;
@@ -79,10 +114,7 @@ export interface ParcelOrderInput {
   client_reference?: string | null;
   service_type?: ServiceType | null;
   preferred_date?: string | null;
-  pickup_address: string;
-  pickup_city?: string | null;
-  destination_address: string;
-  destination_city?: string | null;
+  stops: OrderStopInput[];
   consignee?: string | null;
   parcel_description?: string | null;
   parcel_quantity?: number;
@@ -128,4 +160,37 @@ export async function sendDriverSlipWhatsApp(orderId: string): Promise<CourierOr
 /** Authenticated slip PDF — proxied through the Next API (same base nextjsApiClient uses). */
 export function slipPdfHref(orderId: string): string {
   return `/api/v0/admin/orders/${orderId}/slip/pdf`;
+}
+
+function filenameFromDisposition(cd: string | null): string | null {
+  if (!cd) return null;
+  const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+/** Download the driver-slip PDF. A plain link / window.open can't send the Authorization header
+ *  (the token lives in localStorage), so we fetch the stream with the bearer header and save the
+ *  resulting blob. Throws ApiError on a non-200 so the caller can surface a toast. */
+export async function downloadSlipPdf(orderId: string): Promise<void> {
+  const token = getAccessToken();
+  const res = await fetch(slipPdfHref(orderId), {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    let message = "Could not generate the PDF";
+    try {
+      const data = await res.json();
+      message = data?.error?.message ?? message;
+    } catch { /* binary / empty error body */ }
+    throw new ApiError("PDF_ERROR", message, res.status);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filenameFromDisposition(res.headers.get("Content-Disposition")) ?? `Fahrauftrag-${orderId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

@@ -9,6 +9,10 @@ const optionalLat = z.string().trim().optional().or(z.literal(""))
   .refine((v) => !v || (/^-?\d+(\.\d+)?$/.test(v) && Math.abs(parseFloat(v)) <= 90), "Must be -90 to 90");
 const optionalLng = z.string().trim().optional().or(z.literal(""))
   .refine((v) => !v || (/^-?\d+(\.\d+)?$/.test(v) && Math.abs(parseFloat(v)) <= 180), "Must be -180 to 180");
+const optionalInt = (max: number) => z.string().trim().optional().or(z.literal(""))
+  .refine((v) => !v || (/^\d+$/.test(v) && parseInt(v, 10) <= max), `Must be a whole number 0–${max}`);
+const optionalRating = z.string().trim().optional().or(z.literal(""))
+  .refine((v) => !v || (/^\d(\.\d)?$/.test(v) && parseFloat(v) <= 5), "Must be 0.0–5.0");
 
 export const adminSettingsSchema = z.object({
   business_name: z.string().trim().min(1, "Required").max(200),
@@ -39,6 +43,11 @@ export const adminSettingsSchema = z.object({
   default_meta_title_de: z.string().trim().min(1, "Required").max(200),
   default_meta_title_en: z.string().trim().min(1, "Required").max(200),
   default_og_image_url: optionalUrl,
+  years_active: optionalInt(500),
+  rides_completed: optionalInt(100_000_000),
+  fleet_size: optionalInt(10_000),
+  google_rating: optionalRating,
+  google_review_count: optionalInt(100_000_000),
 });
 
 export type AdminSettingsInput = z.infer<typeof adminSettingsSchema>;

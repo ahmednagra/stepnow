@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from app.Models.customers import Customer
     from app.Models.drivers import Driver
     from app.Models.vehicles import Vehicle
+    from app.Models.order_stops import OrderStop
 
 
 class Order(Base, TimestampMixin, SoftDeleteMixin):
@@ -188,4 +189,11 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     # Vehicle is back-populated so a car can enumerate its full order history (Vehicle.orders).
     vehicle: Mapped["Vehicle | None"] = relationship(
         back_populates="orders", foreign_keys=[vehicle_id]
+    )
+    # Ordered route stops — N pickups → 1 drop (multi-collection consolidation runs). Canonical
+    # source for the route; pickup_address/destination_address above mirror the first pickup + drop.
+    stops: Mapped[list["OrderStop"]] = relationship(
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="OrderStop.sequence",
     )

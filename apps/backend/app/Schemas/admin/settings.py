@@ -34,6 +34,11 @@ class SettingsUpdate(BaseModel):
     default_meta_title_de: str | None = Field(default=None, max_length=200)
     default_meta_title_en: str | None = Field(default=None, max_length=200)
     default_og_image_url: str | None = Field(default=None, max_length=500)
+    years_active: int | None = Field(default=None, ge=0, le=500)
+    rides_completed: int | None = Field(default=None, ge=0)
+    fleet_size: int | None = Field(default=None, ge=0, le=10000)
+    google_rating: Decimal | None = Field(default=None, ge=0, le=5)
+    google_review_count: int | None = Field(default=None, ge=0)
 
 
 class SettingsAdminResponse(BaseModel):
@@ -66,5 +71,10 @@ class SettingsAdminResponse(BaseModel):
     default_meta_title_de: str | None
     default_meta_title_en: str | None
     default_og_image_url: str | None
+    years_active: int | None
+    rides_completed: int | None
+    fleet_size: int | None
+    google_rating: Decimal | None
+    google_review_count: int | None
     created_at: datetime
     updated_at: datetime

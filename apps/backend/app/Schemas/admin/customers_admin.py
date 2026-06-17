@@ -1,5 +1,6 @@
 # apps/backend/app/Schemas/admin/customers_admin.py
 # Request/response schemas for the Customers admin + the repeat-customer search.
+# B2B / company-first: company_name is the identity; contact_person is the optional Ansprechpartner.
 
 from datetime import datetime
 from decimal import Decimal
@@ -9,11 +10,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class CustomerCreate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    is_business: bool = False
-    company_name: str | None = Field(default=None, max_length=200)
+    company_name: str = Field(min_length=1, max_length=200)
+    contact_person: str | None = Field(default=None, max_length=200)
+    is_business: bool = True
     company_vatid: str | None = Field(default=None, max_length=50)
+    tax_number: str | None = Field(default=None, max_length=50)
     street: str | None = Field(default=None, max_length=200)
     plz: str | None = Field(default=None, max_length=20)
     ort: str | None = Field(default=None, max_length=100)
@@ -24,11 +25,11 @@ class CustomerCreate(BaseModel):
 
 class CustomerUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-    first_name: str | None = Field(default=None, min_length=1, max_length=100)
-    last_name: str | None = Field(default=None, min_length=1, max_length=100)
+    company_name: str | None = Field(default=None, min_length=1, max_length=200)
+    contact_person: str | None = Field(default=None, max_length=200)
     is_business: bool | None = None
-    company_name: str | None = Field(default=None, max_length=200)
     company_vatid: str | None = Field(default=None, max_length=50)
+    tax_number: str | None = Field(default=None, max_length=50)
     street: str | None = Field(default=None, max_length=200)
     plz: str | None = Field(default=None, max_length=20)
     ort: str | None = Field(default=None, max_length=100)
@@ -40,11 +41,11 @@ class CustomerUpdate(BaseModel):
 class CustomerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
-    first_name: str
-    last_name: str
+    company_name: str
+    contact_person: str | None
     is_business: bool
-    company_name: str | None
     company_vatid: str | None
+    tax_number: str | None
     street: str | None
     plz: str | None
     ort: str | None

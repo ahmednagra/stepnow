@@ -34,6 +34,12 @@ SETTINGS_DATA = {
     "default_meta_title_de": "StepNow Rides — Ihre TAXI-Alternative in Stuttgart, Esslingen und Region",
     "default_meta_title_en": "StepNow Rides — Your premium taxi alternative in Stuttgart, Germany",
     "default_og_image_url": None,
+    # Trust numbers — owner edits in admin; seed only the verifiable fleet size, leave the rest null.
+    "years_active": None,
+    "rides_completed": None,
+    "fleet_size": 2,
+    "google_rating": None,
+    "google_review_count": None,
 }
 
 

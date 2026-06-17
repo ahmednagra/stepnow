@@ -26,8 +26,8 @@ export function CustomerEditClient({ id }: { id: string }) {
     <>
       <AdminPageHeader
         eyebrow="Customers"
-        title={`${customer.first_name} ${customer.last_name}`}
-        description={customer.company_name ?? "Private customer"}
+        title={customer.company_name}
+        description={customer.contact_person ?? "B2B customer"}
         actions={
           <Link href="/admin/customers" className="flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" /> All customers

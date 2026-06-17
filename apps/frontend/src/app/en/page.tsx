@@ -61,7 +61,7 @@ export default async function HomePageEn() {
     <>
       <HeroHomeSection t={t} settings={settings} locale="en" />
 
-      <TrustStrip t={t} />
+      <TrustStrip t={t} settings={settings} locale="en" />
 
       <HomeServicesSection t={t} locale="en" services={services} />
 
