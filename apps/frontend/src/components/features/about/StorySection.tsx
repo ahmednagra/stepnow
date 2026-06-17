@@ -88,7 +88,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
             <div className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden bg-[var(--color-text-primary)]">
               <div
                 aria-hidden="true"
-                className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(167,201,87,0.18),transparent_60%)]"
+                className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(194,166,117,0.18),transparent_60%)]"
               />
               <span className="relative font-serif text-5xl tracking-tight text-[var(--color-text-on-strong)]">
                 {initials(ownerName) || "SN"}

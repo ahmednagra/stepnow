@@ -26,6 +26,11 @@ export interface SettingsPublic {
   social_tiktok: string | null;
   default_meta_title: string;
   default_og_image_url: string | null;
+  years_active: number | null;
+  rides_completed: number | null;
+  fleet_size: number | null;
+  google_rating: string | null;
+  google_review_count: number | null;
 }
 
 export interface SettingsAdmin extends Omit<SettingsPublic, "opening_hours" | "default_meta_title"> {

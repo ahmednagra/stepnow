@@ -241,6 +241,7 @@ def run() -> None:
     try:
         from app.Models.customers import Customer
         from app.Models.orders import Order
+        from app.Models.order_stops import OrderStop
         from app.Models.invoices import Invoice
         from app.Services.InvoicesService import InvoicesService
         from app.Services.PaymentsService import PaymentsService
@@ -353,6 +354,12 @@ def run() -> None:
                 completed_at=datetime.combine(termin_date, datetime.min.time()).replace(tzinfo=timezone.utc) if a["r_stat"] == "Bezahlt" else None,
             )
             db.add(order)
+            db.flush()
+            # Route stops (multi-pickup model): a legacy order is a single pickup → drop.
+            db.add_all([
+                OrderStop(order_id=order.id, sequence=1, stop_type="pickup", address=a["von"], status="completed"),
+                OrderStop(order_id=order.id, sequence=2, stop_type="drop", address=a["nch"], status="completed"),
+            ])
             db.flush()
             o_created += 1
 

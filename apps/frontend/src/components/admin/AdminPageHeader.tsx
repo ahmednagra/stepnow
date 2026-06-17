@@ -9,12 +9,14 @@ interface AdminPageHeaderProps {
   description?: string;
   eyebrow?: string;
   actions?: ReactNode;
+  /** Optional slot centered between the title and the actions (e.g. a save-status pill). */
+  center?: ReactNode;
   className?: string;
   variant?: "default" | "compact";
 }
 
 export function AdminPageHeader({
-  title, description, eyebrow, actions, className, variant = "default",
+  title, description, eyebrow, actions, center, className, variant = "default",
 }: AdminPageHeaderProps) {
   if (variant === "compact") {
     return (
@@ -45,6 +47,9 @@ export function AdminPageHeader({
         <h1 className="font-serif text-[26px] font-medium leading-none tracking-tight text-slate-900">{title}</h1>
         {description && <p className="mt-2 text-[13px] leading-relaxed text-slate-500">{description}</p>}
       </div>
+      {center && (
+        <div className="order-last flex w-full justify-center lg:order-none lg:w-auto lg:flex-1 lg:pb-1">{center}</div>
+      )}
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </header>
   );

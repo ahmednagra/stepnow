@@ -8,7 +8,7 @@ interface RouteLoaderProps {
 export function RouteLoader({ locale: _locale = "de" }: RouteLoaderProps) {
   return (
     <section aria-live="polite" aria-busy="true" className="bg-[var(--color-bg-page)]">
-      <div className="route-loader-topbar h-[2px] w-full overflow-hidden bg-[rgba(85,133,24,0.1)]">
+      <div className="route-loader-topbar h-[2px] w-full overflow-hidden bg-[rgba(168,134,90,0.1)]">
         <span className="route-loader-line block h-full w-[22%] bg-[var(--color-accent-primary)]" />
       </div>
 

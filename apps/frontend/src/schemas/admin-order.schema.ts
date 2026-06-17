@@ -1,12 +1,12 @@
 // src/schemas/admin-order.schema.ts
-// Parcel/courier transport-order create form (admin orders/new). An order is anchored to a
-// VEHICLE first; the driver is a secondary free-text field that may link to a registered driver.
-// The customer is either a linked saved customer (customer_id) OR inline first/last + contact.
+// Transport-order create form (admin orders/new). An order is anchored to a VEHICLE first; the
+// driver is a secondary free-text field that may link to a registered driver. The customer is
+// B2B (company-first): either a linked saved customer (customer_id) OR an inline company name.
+// The route is a list of pickups (Abholung) consolidated into a single drop-off (Ziel).
 
 import { z } from "zod";
 import { normalizeDecimalInput } from "@/utils/decimal";
 
-// Loose but practical email check — mirrors what the backend will accept.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SERVICE_TYPE_VALUES = [
@@ -15,6 +15,16 @@ const SERVICE_TYPE_VALUES = [
   "Umzugstransport",
   "Sonderfahrt",
 ] as const;
+
+// One route stop — address required; the rest optional. Same shape for pickups + the drop.
+const stopSchema = z.object({
+  address: z.string().trim().min(1, "Address is required"),
+  plz: z.string().trim().optional().or(z.literal("")),
+  ort: z.string().trim().optional().or(z.literal("")),
+  contact_name: z.string().trim().optional().or(z.literal("")),
+  contact_phone: z.string().trim().optional().or(z.literal("")),
+  notes: z.string().trim().optional().or(z.literal("")),
+});
 
 export const adminOrderSchema = z
   .object({
@@ -25,10 +35,10 @@ export const adminOrderSchema = z
     driver_name: z.string(),
     driver_id: z.string().nullable(),
 
-    // ── Customer ──
+    // ── Customer (company-first / B2B) ──
     customer_id: z.string().nullable(),
-    first_name: z.string().trim().min(1, "First name is required"),
-    last_name: z.string().trim().min(1, "Last name is required"),
+    company_name: z.string().trim(),
+    contact_person: z.string(),
     street: z.string(),
     plz: z.string(),
     ort: z.string(),
@@ -40,9 +50,9 @@ export const adminOrderSchema = z
     vat_id: z.string(),
     client_reference: z.string(),
 
-    // ── Route ──
-    pickup: z.string().trim().min(1, "Pickup address is required"),
-    dropoff: z.string().trim().min(1, "Destination address is required"),
+    // ── Route: N pickups → 1 drop ──
+    pickups: z.array(stopSchema).min(1, "At least one pickup is required"),
+    dropoff: stopSchema,
     route_km: z.string(),
     service_type: z.enum(SERVICE_TYPE_VALUES).or(z.literal("")),
 
@@ -53,7 +63,12 @@ export const adminOrderSchema = z
         const n = normalizeDecimalInput(v);
         return !!n && Number(n) > 0;
       }, "Enter a valid net amount (e.g. 39.00)"),
-    vat: z.string(),
+    vat: z
+      .string()
+      .refine((v) => {
+        const n = Number(v);
+        return v !== "" && Number.isFinite(n) && n >= 0 && n <= 1;
+      }, "Enter a VAT rate (0–100%)"),
 
     // ── Logbook ──
     km_total: z.string(),
@@ -63,17 +78,12 @@ export const adminOrderSchema = z
     term: z.number().nullable(),
     service_description: z.string(),
   })
-  // Customer rule: a linked saved customer (customer_id) OR inline first + last name.
-  // first/last are already required above, so this guards the inline branch explicitly.
+  // Customer rule: a linked saved customer (customer_id) OR an inline company name.
   .superRefine((val, ctx) => {
-    if (!val.customer_id) {
-      if (!val.first_name.trim())
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["first_name"], message: "First name is required" });
-      if (!val.last_name.trim())
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["last_name"], message: "Last name is required" });
-    }
+    if (!val.customer_id && !val.company_name.trim())
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["company_name"], message: "Company name is required" });
     if (val.term == null)
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["term"], message: "Select a payment term (15 / 30 / 45 days)" });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["term"], message: "Select a payment term" });
   });
 
 export type AdminOrderInput = z.infer<typeof adminOrderSchema>;

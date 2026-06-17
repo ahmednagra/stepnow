@@ -523,7 +523,7 @@ export function HowItWorksBeat({ t, locale }: { t: TFunction; locale: Locale }) 
               <li key={step.num} className="bg-[var(--color-bg-surface)]">
                 <article className="flex h-full flex-col p-6 md:p-8">
                   <div className="items-end. flex justify-between gap-4">
-                    <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(85,133,24,0.34)] md:text-[56px]">
+                    <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(168,134,90,0.34)] md:text-[56px]">
                       {step.num}
                     </span>
                     <span className="inline-flex h-12 w-12 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
@@ -618,7 +618,7 @@ export function ServicesEditorialClose({
           )}{" "}
           <Link
             href={pricingHref}
-            className="ml-1 inline-block border-b border-[rgba(85,133,24,0.3)] pb-0.5 font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]"
+            className="ml-1 inline-block border-b border-[rgba(168,134,90,0.3)] pb-0.5 font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]"
           >
             {pickT(
               t,

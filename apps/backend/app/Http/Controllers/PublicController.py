@@ -60,6 +60,11 @@ class PublicController:
             social_tiktok=s.social_tiktok,
             default_meta_title=s.default_meta_title_de if is_de else s.default_meta_title_en,
             default_og_image_url=s.default_og_image_url,
+            years_active=s.years_active,
+            rides_completed=s.rides_completed,
+            fleet_size=s.fleet_size,
+            google_rating=s.google_rating,
+            google_review_count=s.google_review_count,
         )
 
     @staticmethod

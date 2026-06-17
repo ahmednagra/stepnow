@@ -22,7 +22,7 @@ class CustomersService:
 
     @staticmethod
     def _snapshot(c: Customer) -> dict:
-        return {"first_name": c.first_name, "last_name": c.last_name, "email": c.email, "phone": c.phone}
+        return {"company_name": c.company_name, "contact_person": c.contact_person, "email": c.email, "phone": c.phone}
 
     @staticmethod
     def customers_list(db: Session, page: int, size: int, q: str | None, include_deleted: bool):
@@ -33,9 +33,8 @@ class CustomersService:
             like = f"%{q.strip()}%"
             digits = "".join(ch for ch in q if ch.isdigit())
             conds = [
-                Customer.first_name.ilike(like),
-                Customer.last_name.ilike(like),
                 Customer.company_name.ilike(like),
+                Customer.contact_person.ilike(like),
                 Customer.email.ilike(like),
                 Customer.company_vatid.ilike(like),
             ]
@@ -44,7 +43,7 @@ class CustomersService:
             query = query.filter(or_(*conds))
         total = query.count()
         items = (
-            query.order_by(Customer.last_name.asc(), Customer.first_name.asc())
+            query.order_by(Customer.company_name.asc())
             .offset((page - 1) * size)
             .limit(size)
             .all()

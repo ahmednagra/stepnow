@@ -17,6 +17,7 @@ _SETTINGS_FIELDS = (
     "opening_hours_de", "opening_hours_en",
     "social_facebook", "social_instagram", "social_youtube", "social_tiktok",
     "default_meta_title_de", "default_meta_title_en", "default_og_image_url",
+    "years_active", "rides_completed", "fleet_size", "google_rating", "google_review_count",
 )
 
 

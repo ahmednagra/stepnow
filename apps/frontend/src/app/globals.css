@@ -7,24 +7,25 @@
 
 @layer base {
   :root {
+    /* Gold/charcoal/cream — unified accent (replaced the legacy green palette). */
     --color-bg-page: #F7F4EA;
     --color-bg-surface: #FFFDF8;
-    --color-bg-accent-soft: #EEF4E1;
-    --color-bg-strong: #558518;
-    --color-bg-strong-hover: #456E13;
-    --color-bg-footer: #181A17;
-    --color-bg-footer-surface: #222520;
-    --color-text-primary: #2F3A1F;
-    --color-text-secondary: #66735A;
+    --color-bg-accent-soft: #F1EAD9;
+    --color-bg-strong: #6E5430;
+    --color-bg-strong-hover: #5A4327;
+    --color-bg-footer: #17181A;
+    --color-bg-footer-surface: #212225;
+    --color-text-primary: #0F1115;
+    --color-text-secondary: #5A5A5A;
     --color-text-on-strong: #F7F4EA;
     --color-text-footer: #F7F4EA;
-    --color-text-footer-muted: #C8CEC0;
-    --color-border-soft: #DDE5D1;
+    --color-text-footer-muted: #C8C5BE;
+    --color-border-soft: #E5E2DB;
     --color-border-footer: rgba(247, 244, 234, 0.16);
-    --color-accent-primary: #558518;
-    --color-accent-secondary: #A7C957;
-    --color-accent-highlight: #D9B44A;
-    --color-accent-warm: #C96C4A;
+    --color-accent-primary: #6E5430;
+    --color-accent-secondary: #C2A675;
+    --color-accent-highlight: #C2A675;
+    --color-accent-warm: #86683F;
     --color-ink: 0 0 0;
     --color-cream: 245 242 236;
     --color-gold: 168 134 90;
@@ -156,7 +157,7 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle at top right, rgba(167, 201, 87, 0.16), transparent 38%),
+      radial-gradient(circle at top right, rgba(194, 166, 117, 0.16), transparent 38%),
       linear-gradient(180deg, rgba(255, 253, 248, 0.24), transparent 58%);
     pointer-events: none;
   }

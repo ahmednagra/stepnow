@@ -84,7 +84,7 @@ export function ValuesSection({ t, locale = "de" }: ValuesSectionProps) {
             >
               <span
                 aria-hidden="true"
-                className="min-w-[34px] font-serif text-[24px] leading-none tabular-nums text-[color:rgba(85,133,24,0.34)]"
+                className="min-w-[34px] font-serif text-[24px] leading-none tabular-nums text-[color:rgba(168,134,90,0.34)]"
               >
                 {String(idx + 1).padStart(2, "0")}
               </span>

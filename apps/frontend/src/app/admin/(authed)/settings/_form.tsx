@@ -58,6 +58,11 @@ function defaultValues(s: SettingsAdmin): AdminSettingsInput {
     default_meta_title_de: s.default_meta_title_de ?? "",
     default_meta_title_en: s.default_meta_title_en ?? "",
     default_og_image_url: s.default_og_image_url ?? "",
+    years_active: s.years_active != null ? String(s.years_active) : "",
+    rides_completed: s.rides_completed != null ? String(s.rides_completed) : "",
+    fleet_size: s.fleet_size != null ? String(s.fleet_size) : "",
+    google_rating: s.google_rating != null ? String(s.google_rating) : "",
+    google_review_count: s.google_review_count != null ? String(s.google_review_count) : "",
   };
 }
 
@@ -88,6 +93,11 @@ function toPatchPayload(values: AdminSettingsInput): SettingsUpdate {
     default_meta_title_de: values.default_meta_title_de,
     default_meta_title_en: values.default_meta_title_en,
     default_og_image_url: values.default_og_image_url?.trim() || null,
+    years_active: values.years_active?.trim() ? Number(values.years_active) : null,
+    rides_completed: values.rides_completed?.trim() ? Number(values.rides_completed) : null,
+    fleet_size: values.fleet_size?.trim() ? Number(values.fleet_size) : null,
+    google_rating: values.google_rating?.trim() ? Number(values.google_rating) : null,
+    google_review_count: values.google_review_count?.trim() ? Number(values.google_review_count) : null,
   };
 }
 
@@ -280,6 +290,30 @@ export function SettingsForm({ initial }: SettingsFormProps) {
           </AdminFormField>
           <AdminFormField id="social_tiktok" label="TikTok" error={errors.social_tiktok?.message}>
             <input id="social_tiktok" type="url" className={adminInputClass} {...register("social_tiktok")} />
+          </AdminFormField>
+        </div>
+      </AdminCard>
+
+      {/* Trust numbers */}
+      <AdminCard
+        title="Trust numbers"
+        description="Shown on the homepage trust strip. Leave any field blank to hide that stat."
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AdminFormField id="years_active" label="Years active" hint="optional" error={errors.years_active?.message}>
+            <input id="years_active" inputMode="numeric" className={adminInputClass} {...register("years_active")} />
+          </AdminFormField>
+          <AdminFormField id="rides_completed" label="Rides completed" hint="optional" error={errors.rides_completed?.message}>
+            <input id="rides_completed" inputMode="numeric" className={adminInputClass} {...register("rides_completed")} />
+          </AdminFormField>
+          <AdminFormField id="fleet_size" label="Fleet size" hint="optional" error={errors.fleet_size?.message}>
+            <input id="fleet_size" inputMode="numeric" className={adminInputClass} {...register("fleet_size")} />
+          </AdminFormField>
+          <AdminFormField id="google_rating" label="Google rating" hint="optional · 0.0–5.0" error={errors.google_rating?.message}>
+            <input id="google_rating" inputMode="decimal" placeholder="4.9" className={adminInputClass} {...register("google_rating")} />
+          </AdminFormField>
+          <AdminFormField id="google_review_count" label="Google review count" hint="optional" error={errors.google_review_count?.message}>
+            <input id="google_review_count" inputMode="numeric" className={adminInputClass} {...register("google_review_count")} />
           </AdminFormField>
         </div>
       </AdminCard>

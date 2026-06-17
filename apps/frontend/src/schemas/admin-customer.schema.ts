@@ -5,11 +5,11 @@ const optStr = (max: number) =>
   z.string().trim().max(max).optional().or(z.literal(""));
 
 export const adminCustomerSchema = z.object({
-  first_name: z.string().trim().min(1, "First name is required.").max(120),
-  last_name: z.string().trim().min(1, "Last name is required.").max(120),
+  company_name: z.string().trim().min(1, "Company name is required.").max(200),
+  contact_person: optStr(200),
   is_business: z.boolean(),
-  company_name: optStr(200),
   company_vatid: optStr(50),
+  tax_number: optStr(50),
   email: z
     .string()
     .trim()

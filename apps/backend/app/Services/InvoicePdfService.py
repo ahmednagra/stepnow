@@ -98,7 +98,14 @@ class InvoicePdfService:
         base_net = Decimal(invoice.net_amount) - (Decimal(invoice.surcharge_net) if invoice.surcharge_net else Decimal("0"))
         rows = [["Pos.", "Beschreibung", "Netto", "MwSt", "Brutto"]]
         desc = order.service_description or "Transportleistung"
-        route = f"{order.pickup_address} → {order.destination_address}"
+        # Route from the canonical stops (N pickups → 1 drop); legacy columns are the fallback.
+        _pickups = [st for st in (order.stops or []) if not st.is_deleted and st.stop_type == "pickup"]
+        _drop = next((st for st in (order.stops or []) if not st.is_deleted and st.stop_type == "drop"), None)
+        _from = (_pickups[0].address if _pickups else order.pickup_address) or "—"
+        if len(_pickups) > 1:
+            _from = f"{_from} (+{len(_pickups) - 1})"
+        _to = (_drop.address if _drop else order.destination_address) or "—"
+        route = f"{_from} → {_to}"
         rows.append(["1", Paragraph(f"{desc}<br/><font size=7 color='#64748B'>{route}</font>", small),
                      _eur(base_net), rate_pct, _eur(base_net * (1 + Decimal(invoice.vat_rate)))])
         if invoice.surcharge_net:

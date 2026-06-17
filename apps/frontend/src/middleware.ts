@@ -85,24 +85,11 @@ export function middleware(request: NextRequest) {
     return passThrough(request);
   }
 
-  // First-visit (no cookie yet): detect from Accept-Language, set the
-  // cookie, and optionally redirect to the EN home for non-German users
-  // landing on the DE root. Same static-only constraint applies.
-  const acceptLang = (request.headers.get("accept-language") || "").toLowerCase();
-  const prefersGerman = acceptLang.startsWith("de");
-
-  let response: NextResponse;
-  if (!prefersGerman && !englishPath) {
-    const target = deToEnStaticOnly(path);
-    response = target
-      ? NextResponse.redirect(publicUrl(target, request))
-      : passThrough(request);
-  } else {
-    response = passThrough(request);
-  }
-
-  const detectedLocale = englishPath || !prefersGerman ? "en" : "de";
-  response.cookies.set(LOCALE_COOKIE_NAME, detectedLocale, {
+  // First visit (no cookie yet): German is the default locale. Respect an
+  // explicit /en/* URL, otherwise serve the German site. We intentionally do
+  // NOT auto-switch to English based on Accept-Language — DE is the default.
+  const response = passThrough(request);
+  response.cookies.set(LOCALE_COOKIE_NAME, englishPath ? "en" : "de", {
     path: "/",
     maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
     sameSite: "lax",

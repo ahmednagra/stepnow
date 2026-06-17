@@ -7,11 +7,11 @@ import type { Paginated } from "@/types";
 
 export interface CustomerAdmin {
   id: string;
-  first_name: string;
-  last_name: string;
+  company_name: string;
+  contact_person: string | null;
   is_business: boolean;
-  company_name: string | null;
   company_vatid: string | null;
+  tax_number: string | null;
   street: string | null;
   plz: string | null;
   ort: string | null;
@@ -29,11 +29,11 @@ export interface CustomerAdmin {
 }
 
 export interface CustomerInput {
-  first_name: string;
-  last_name: string;
+  company_name: string;
+  contact_person?: string | null;
   is_business?: boolean;
-  company_name?: string | null;
   company_vatid?: string | null;
+  tax_number?: string | null;
   street?: string | null;
   plz?: string | null;
   ort?: string | null;

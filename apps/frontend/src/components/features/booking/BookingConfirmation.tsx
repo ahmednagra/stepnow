@@ -113,7 +113,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
                       <span aria-hidden="true" className="font-serif text-[22px] leading-none tabular-nums text-[var(--color-accent-primary)]">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
-                      <span aria-hidden="true" className="block h-px flex-1 bg-[rgba(85,133,24,0.24)]" />
+                      <span aria-hidden="true" className="block h-px flex-1 bg-[rgba(168,134,90,0.24)]" />
                     </div>
                     <p className="text-[13px] leading-[1.55] text-[var(--color-text-primary)]">{stepText}</p>
                   </li>
@@ -186,7 +186,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
             </p>
             <a
               href={toTelHref(settings.phone)}
-              className="mt-6 inline-flex items-center gap-2 border-b border-[rgba(85,133,24,0.3)] pb-0.5 text-[15px] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]"
+              className="mt-6 inline-flex items-center gap-2 border-b border-[rgba(168,134,90,0.3)] pb-0.5 text-[15px] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]"
             >
               <Phone className="h-4 w-4 text-[var(--color-accent-primary)]" aria-hidden="true" strokeWidth={1.5} />
               <span className="tabular-nums">{settings.phone}</span>

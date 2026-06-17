@@ -61,7 +61,7 @@ export default async function HomePageDe() {
     <>
       <HeroHomeSection t={t} settings={settings} locale="de" />
 
-      <TrustStrip t={t} />
+      <TrustStrip t={t} settings={settings} locale="de" />
 
       <HomeServicesSection t={t} locale="de" services={services} />
 

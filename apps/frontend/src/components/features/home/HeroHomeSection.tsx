@@ -65,8 +65,8 @@ export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
             className="object-cover object-[68%_center]"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(39,45,31,0.74)_0%,rgba(39,45,31,0.62)_38%,rgba(39,45,31,0.30)_66%,rgba(39,45,31,0.12)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(39,45,31,0.08)_0%,rgba(39,45,31,0.06)_40%,rgba(39,45,31,0.48)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,17,21,0.74)_0%,rgba(15,17,21,0.62)_38%,rgba(15,17,21,0.30)_66%,rgba(15,17,21,0.12)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08)_0%,rgba(15,17,21,0.06)_40%,rgba(15,17,21,0.48)_100%)]" />
 
         <Container className="relative flex min-h-[calc(100svh-10rem)] items-center py-10 md:py-12 lg:min-h-[46rem] lg:py-16">
           <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.05fr)_24rem] lg:items-end xl:grid-cols-[minmax(0,1fr)_26rem]">
@@ -96,12 +96,18 @@ export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-[color:rgba(247,244,234,0.34)] bg-transparent px-7 text-[var(--color-text-on-strong)] hover:border-[color:var(--color-accent-primary)] hover:bg-[color:rgba(85,133,24,0.12)] hover:text-[var(--color-text-on-strong)]"
+                    className="border-[color:rgba(247,244,234,0.34)] bg-transparent px-7 text-[var(--color-text-on-strong)] hover:border-[color:var(--color-accent-primary)] hover:bg-[color:rgba(168,134,90,0.12)] hover:text-[var(--color-text-on-strong)]"
                   >
                     <span className="tabular-nums">{settings.phone}</span>
                   </Button>
                 </a>
               </div>
+
+              <p className="mt-4 text-[12px] font-medium tracking-[0.04em] text-[color:rgba(247,244,234,0.82)]">
+                {locale === "de"
+                  ? "§ 49 PBefG · Festpreis · Antwort in 30 Min"
+                  : "§ 49 PBefG · Fixed price · Reply within 30 min"}
+              </p>
 
               <ConcessionBadge
                 settings={settings}
@@ -135,7 +141,7 @@ interface HeroPointProps {
 function HeroPoint({ icon: Icon, label, body }: HeroPointProps) {
   return (
     <div className="flex gap-3">
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-[color:rgba(167,201,87,0.34)] bg-[color:rgba(85,133,24,0.18)] text-[var(--color-accent-secondary)]">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-[color:rgba(194,166,117,0.34)] bg-[color:rgba(168,134,90,0.18)] text-[var(--color-accent-secondary)]">
         <Icon className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
       </span>
       <div>

@@ -7,12 +7,13 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.Core.Exceptions import ConflictError, DomainError, NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.customers import Customer
 from app.Models.drivers import Driver
 from app.Models.orders import Order
+from app.Models.order_stops import OrderStop
 from app.Models.vehicles import Vehicle
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
@@ -32,6 +33,7 @@ class CourierOrdersService:
             "delivery_status": o.delivery_status, "driver_id": str(o.driver_id) if o.driver_id else None,
             "vehicle_id": str(o.vehicle_id) if o.vehicle_id else None, "vehicle_name": o.vehicle_name,
             "net_amount": str(o.net_amount), "gross_amount": str(o.gross_amount),
+            "stops": [f"{s.sequence}:{s.stop_type}:{s.address}" for s in (o.stops or [])],
         }
 
     @staticmethod
@@ -73,13 +75,16 @@ class CourierOrdersService:
             if not driver:
                 raise NotFoundError("Driver not found", driver_id=str(payload.driver_id))
 
-        display_name = (
-            customer.company_name if customer.is_business and customer.company_name
-            else f"{customer.first_name} {customer.last_name}"
-        )
+        display_name = customer.company_name
         rate = payload.vat_rate if payload.vat_rate is not None else DEFAULT_VAT_RATE
         net, vat, gross = compute_totals(payload.net_amount, rate)
         due_date = date.today() + timedelta(days=payload.payment_due_days)
+
+        # Route: N pickups → 1 drop. Mirror the first pickup + the drop into the legacy
+        # single-address columns so PDFs/list keep working; order_stops is the full source.
+        pickups = [s for s in payload.stops if s.stop_type == "pickup"]
+        drop = next(s for s in payload.stops if s.stop_type == "drop")
+        first_pickup = pickups[0]
 
         order = Order(
             order_number=order_date_sequence_number(db, Order.order_number),
@@ -96,10 +101,10 @@ class CourierOrdersService:
             is_business=customer.is_business,
             company_name=customer.company_name,
             company_vatid=customer.company_vatid,
-            pickup_address=payload.pickup_address,
-            pickup_city=payload.pickup_city,
-            destination_address=payload.destination_address,
-            destination_city=payload.destination_city,
+            pickup_address=first_pickup.address,
+            pickup_city=first_pickup.city,
+            destination_address=drop.address,
+            destination_city=drop.city,
             consignee=payload.consignee,
             parcel_description=payload.parcel_description,
             parcel_quantity=payload.parcel_quantity,
@@ -123,6 +128,18 @@ class CourierOrdersService:
         )
         db.add(order)
         db.flush()
+        # Persist the ordered route stops (pickups first, drop last; sequence 1..N).
+        db.add_all([
+            OrderStop(
+                order_id=order.id, sequence=i, stop_type=s.stop_type, address=s.address,
+                postcode=s.postcode, city=s.city, contact_name=s.contact_name,
+                contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
+                package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
+            )
+            for i, s in enumerate([*pickups, drop], start=1)
+        ])
+        db.flush()
+        db.refresh(order)
         AuditService.log(db, actor, "orders", str(order.id), "create", None, CourierOrdersService._snapshot(order), request)
         db.commit()
         db.refresh(order)
@@ -144,17 +161,31 @@ class CourierOrdersService:
             o.driver_name = drv.full_name if drv else (payload.driver_name or o.driver_name)
         elif payload.driver_name is not None:
             o.driver_name = payload.driver_name or None
-        for f in ("pickup_address", "pickup_city", "destination_address", "destination_city",
-                  "consignee", "parcel_description", "parcel_quantity", "parcel_weight_kg",
+        for f in ("consignee", "parcel_description", "parcel_quantity", "parcel_weight_kg",
                   "scheduled_datetime", "service_description", "internal_notes",
                   "client_reference", "service_type", "preferred_date",
                   "distance_km", "total_km", "occupied_km"):
             setattr(o, f, getattr(payload, f))
+        # Replace the route stops (N pickups → 1 drop) and re-mirror the legacy columns.
+        pickups = [s for s in payload.stops if s.stop_type == "pickup"]
+        drop = next(s for s in payload.stops if s.stop_type == "drop")
+        o.pickup_address, o.pickup_city = pickups[0].address, pickups[0].city
+        o.destination_address, o.destination_city = drop.address, drop.city
+        o.stops.clear()
+        db.flush()
+        for i, s in enumerate([*pickups, drop], start=1):
+            o.stops.append(OrderStop(
+                sequence=i, stop_type=s.stop_type, address=s.address, postcode=s.postcode,
+                city=s.city, contact_name=s.contact_name, contact_phone=s.contact_phone,
+                time_from=s.time_from, time_to=s.time_to, package_count=s.package_count,
+                weight_kg=s.weight_kg, notes=s.notes,
+            ))
         rate = payload.vat_rate if payload.vat_rate is not None else o.vat_rate
         net, vat, gross = compute_totals(payload.net_amount, rate)
         o.net_amount, o.vat_rate, o.vat_amount, o.gross_amount = net, rate, vat, gross
         o.due_date = date.today() + timedelta(days=payload.payment_due_days)
         o.payment_due_days = payload.payment_due_days
+        o.driver_slip_pdf_url = None  # invalidate the cached slip — regenerate on next download/email
         AuditService.log(db, actor, "orders", str(o.id), "update", before, CourierOrdersService._snapshot(o), request)
         db.commit()
         db.refresh(o)
@@ -200,7 +231,7 @@ class CourierOrdersService:
 
     @staticmethod
     def list(db: Session, page: int, size: int, delivery_status: str | None, q: str | None, include_deleted: bool):
-        query = db.query(Order)
+        query = db.query(Order).options(selectinload(Order.stops))
         if not include_deleted:
             query = query.filter(Order.is_deleted == False)  # noqa: E712
         if delivery_status:

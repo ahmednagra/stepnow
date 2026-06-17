@@ -167,14 +167,14 @@ function VehicleCard({ vehicle, locale }: { vehicle: VehiclePublic; locale: Loca
             />
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-[linear-gradient(180deg,rgba(47,58,31,0.06),rgba(47,58,31,0.42))]"
+              className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.06),rgba(15,17,21,0.42))]"
             />
           </>
         ) : (
           <>
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(167,201,87,0.18),transparent_65%)]"
+              className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(194,166,117,0.18),transparent_65%)]"
             />
             <p className="absolute bottom-5 left-5 right-5 font-serif text-[26px] leading-[1.1] tracking-tight text-[var(--color-text-on-strong)] md:text-[28px]">
               {vehicle.name}
@@ -200,7 +200,7 @@ function VehicleCard({ vehicle, locale }: { vehicle: VehiclePublic; locale: Loca
             {vehicle.features.slice(0, 4).map((feature) => (
               <li
                 key={feature}
-                className="border border-[color:rgba(85,133,24,0.22)] bg-[var(--color-bg-accent-soft)] px-2.5 py-1 text-[11px] leading-relaxed tracking-tight text-[var(--color-text-secondary)]"
+                className="border border-[color:rgba(168,134,90,0.22)] bg-[var(--color-bg-accent-soft)] px-2.5 py-1 text-[11px] leading-relaxed tracking-tight text-[var(--color-text-secondary)]"
               >
                 {feature}
               </li>
