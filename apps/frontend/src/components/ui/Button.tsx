@@ -27,17 +27,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: cn(
-    "border border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "border border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
     "before:bg-[var(--color-bg-strong-hover)] before:opacity-100",
-    "hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)]",
-    "active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)]",
+    "active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
     "disabled:border-[color:var(--color-border-soft)] disabled:bg-[var(--color-border-soft)] disabled:text-[var(--color-text-secondary)] disabled:shadow-none",
   ),
   secondary: cn(
-    "border border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-    "before:bg-[#243017]",
-    "hover:border-[#243017] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)]",
-    "active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+    "border border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
+    "before:bg-[#1A1A1A]",
+    "hover:border-[#1A1A1A] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)]",
+    "active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
     "disabled:border-[color:var(--color-text-secondary)] disabled:bg-[var(--color-text-secondary)] disabled:text-[var(--color-bg-page)] disabled:shadow-none",
   ),
   inverse: cn(

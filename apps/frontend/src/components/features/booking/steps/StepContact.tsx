@@ -84,7 +84,7 @@ export function StepContact({ t, registerValidator }: StepContactProps) {
         />
 
         {draft.is_business && (
-          <div className="grid gap-5 border-l-2 border-[rgba(85,133,24,0.3)] pl-6 md:grid-cols-2">
+          <div className="grid gap-5 border-l-2 border-[rgba(168,134,90,0.3)] pl-6 md:grid-cols-2">
             <Input
               label={pickT(t, "booking.contact.company_label", "Firmenname")}
               value={draft.company_name ?? ""}

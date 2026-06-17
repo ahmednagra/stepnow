@@ -58,7 +58,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
               sizes="(max-width: 1024px) 100vw, 40vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(47,58,31,0.08),rgba(47,58,31,0.48))]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08),rgba(15,17,21,0.48))]" />
           </div>
         </div>
       </Container>

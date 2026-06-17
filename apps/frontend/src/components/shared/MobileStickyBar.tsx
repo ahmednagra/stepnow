@@ -13,6 +13,7 @@ import { useUiStrings } from "@/hooks/useUiStrings";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 
 interface MobileStickyBarProps {
   settings: SettingsPublic;
@@ -24,6 +25,7 @@ export function MobileStickyBar({ settings, revealAfter = 600 }: MobileStickyBar
   const { t, locale } = useUiStrings();
   const [visible, setVisible] = useState(false);
   const bookingHref = locale === "de" ? "/buchen" : "/en/book";
+  const hasWhatsApp = Boolean(settings.whatsapp_url);
 
   useEffect(() => {
     function onScroll() {
@@ -46,7 +48,12 @@ export function MobileStickyBar({ settings, revealAfter = 600 }: MobileStickyBar
           : "pointer-events-none translate-y-full opacity-0",
       )}
     >
-      <div className="grid grid-cols-2 gap-px bg-line pb-safe">
+      <div
+        className={cn(
+          "grid gap-px bg-line pb-safe",
+          hasWhatsApp ? "grid-cols-3" : "grid-cols-2",
+        )}
+      >
         <a
           href={toTelHref(settings.phone)}
           className="flex items-center justify-center gap-2 bg-cream py-4 text-[14px] font-medium tracking-tight text-ink"
@@ -55,9 +62,21 @@ export function MobileStickyBar({ settings, revealAfter = 600 }: MobileStickyBar
           <Phone className="h-4 w-4 text-gold-deep" aria-hidden="true" strokeWidth={1.5} />
           <span>{t("common.call_us")}</span>
         </a>
+        {hasWhatsApp && (
+          <a
+            href={settings.whatsapp_url!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-cream py-4 text-[14px] font-medium tracking-tight text-ink"
+            aria-label="WhatsApp"
+          >
+            <WhatsAppIcon className="h-4 w-4 text-gold-deep" />
+            <span>WhatsApp</span>
+          </a>
+        )}
         <Link
           href={bookingHref}
-          className="flex items-center justify-center gap-2 bg-ink py-4 text-[14px] font-medium tracking-tight text-cream"
+          className="flex items-center justify-center gap-2 bg-gold-deep py-4 text-[14px] font-medium tracking-tight text-cream"
         >
           <span>{t("nav.book_now")}</span>
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

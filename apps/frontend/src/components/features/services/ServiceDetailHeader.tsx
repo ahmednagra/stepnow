@@ -57,7 +57,7 @@ export function ServiceDetailHeader({ t, service, bookingPath }: ServiceDetailHe
               sizes="(min-width: 1024px) 50vw, 100vw"
               className="object-cover"
             />
-            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(47,58,31,0.08),rgba(47,58,31,0.44))]" />
+            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08),rgba(15,17,21,0.44))]" />
           </div>
         </div>
       </Container>

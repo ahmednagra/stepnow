@@ -26,7 +26,7 @@ export function ContactFaqGrid({ faqs }: ContactFaqGridProps) {
           <div className="flex items-center justify-between gap-3">
             <span
               aria-hidden="true"
-              className="font-serif text-[28px] leading-none tabular-nums text-[color:rgba(85,133,24,0.30)]"
+              className="font-serif text-[28px] leading-none tabular-nums text-[color:rgba(168,134,90,0.30)]"
             >
               {String(idx + 1).padStart(2, "0")}
             </span>

@@ -5,6 +5,7 @@ import type { TFunction } from "@/lib/i18n/t";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
+import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 
 interface ContactMethodsProps {
   t: TFunction;
@@ -38,6 +39,30 @@ export function ContactMethods({ t, settings }: ContactMethodsProps) {
           </div>
         </a>
       </li>
+
+      {/* WhatsApp */}
+      {settings.whatsapp_url && (
+        <li className="bg-[var(--color-bg-page)]">
+          <a
+            href={settings.whatsapp_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-4 p-5 transition-colors duration-base hover:bg-[var(--color-bg-surface)]"
+          >
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-accent-primary)]">
+              <WhatsAppIcon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                {pickT(t, "contact.method.whatsapp", "WhatsApp")}
+              </p>
+              <p className="mt-1 font-serif text-[17px] leading-snug tracking-tight tabular-nums text-[var(--color-text-primary)]">
+                {settings.phone}
+              </p>
+            </div>
+          </a>
+        </li>
+      )}
 
       {/* Email */}
       <li className="bg-[var(--color-bg-page)]">

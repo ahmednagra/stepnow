@@ -76,7 +76,7 @@ return (
 <Icon className={cn("h-3.5 w-3.5", isActive ? "text-[var(--color-accent-primary)]" : "text-[var(--color-text-secondary)]")} strokeWidth={1.5} aria-hidden="true" />
 <span>{service.title}</span>
 {count > 0 && (
-<span className={cn("ml-1 inline-block min-w-[24px] border px-1.5 py-0.5 text-center text-[10.5px] tabular-nums", isActive ? "border-[color:rgba(85,133,24,0.24)] bg-[var(--color-bg-accent-soft)] text-[var(--color-accent-primary)]" : "border-[color:var(--color-border-soft)] text-[var(--color-text-secondary)]")}>{count}</span>
+<span className={cn("ml-1 inline-block min-w-[24px] border px-1.5 py-0.5 text-center text-[10.5px] tabular-nums", isActive ? "border-[color:rgba(168,134,90,0.24)] bg-[var(--color-bg-accent-soft)] text-[var(--color-accent-primary)]" : "border-[color:var(--color-border-soft)] text-[var(--color-text-secondary)]")}>{count}</span>
 )}
 </button>
 );

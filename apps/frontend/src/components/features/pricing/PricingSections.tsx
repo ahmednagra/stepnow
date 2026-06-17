@@ -95,7 +95,7 @@ export function PricingFeaturedHero({
         className="absolute bottom-[-100px] right-[-100px] h-[500px] w-[700px] opacity-70 blur-sm"
         style={{
           background:
-            "radial-gradient(circle at 80% 30%, rgba(167, 201, 87, 0.18), transparent 50%)",
+            "radial-gradient(circle at 80% 30%, rgba(194, 166, 117, 0.18), transparent 50%)",
         }}
       />
       <Container className="relative z-10 py-14 md:py-20">
@@ -153,7 +153,7 @@ export function PricingFeaturedHero({
             </div>
           </div>
           <div className="text-left md:text-right">
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-[rgba(167,201,87,0.86)]">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-[rgba(194,166,117,0.86)]">
               {pickT(
                 t,
                 "pricing.hero.price_label",
@@ -218,7 +218,7 @@ export function PricingTrustStrip({ t, locale }: PricingTrustStripProps) {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(167, 201, 87, 0.14), transparent 70%)",
+            "radial-gradient(circle at center, rgba(194, 166, 117, 0.14), transparent 70%)",
         }}
       />
       <Container className="relative z-10 py-20 text-center md:py-24">
@@ -287,7 +287,7 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
         <div className="text-center md:text-left">
           <p
             aria-hidden="true"
-            className="font-serif text-[160px] font-medium leading-[0.85] tracking-[-0.04em] text-[color:rgba(85,133,24,0.28)] md:text-[220px]"
+            className="font-serif text-[160px] font-medium leading-[0.85] tracking-[-0.04em] text-[color:rgba(168,134,90,0.28)] md:text-[220px]"
           ></p>
           <span
             aria-hidden="true"
@@ -718,7 +718,7 @@ export function PricingPaymentCancellation({
             </div>
             <Link
               href={agbHref}
-              className="inline-block border-b border-[rgba(85,133,24,0.32)] pb-0.5 text-[11.5px] font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]"
+              className="inline-block border-b border-[rgba(168,134,90,0.32)] pb-0.5 text-[11.5px] font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]"
             >
               {pickT(
                 t,

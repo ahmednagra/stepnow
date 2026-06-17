@@ -69,7 +69,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
               <li key={step.number} className="bg-[var(--color-bg-surface)]">
                 <article className="flex h-full flex-col p-6 md:p-8">
                   <div className="flex items-end justify-between gap-4">
-                    <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(85,133,24,0.34)] md:text-[56px]">
+                    <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(168,134,90,0.34)] md:text-[56px]">
                       {step.number}
                     </span>
                     <span className="inline-flex h-12 w-12 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">

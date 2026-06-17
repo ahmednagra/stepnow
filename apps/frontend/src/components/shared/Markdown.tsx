@@ -40,7 +40,7 @@ export function Markdown({ source, className }: MarkdownProps) {
           a: ({ children, href }) => (
             <a
               href={href}
-              className="text-[var(--color-accent-primary)] underline decoration-[color:rgba(85,133,24,0.35)] underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
+              className="text-[var(--color-accent-primary)] underline decoration-[color:rgba(168,134,90,0.35)] underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
             >
               {children}
             </a>

@@ -56,7 +56,7 @@ On submit: `POST /api/v0/public/bookings` → FastAPI `/public/bookings` (rate-l
 | **Motion** | durations `fast 150 / base 250 / slow 400 / slower 600`; `ease-premium`, `ease-out-premium`; `fade-up`, `fade-in`, `fade-up-slow`, `nudge` |
 | **Tracking** | `wordmark .22em`, `label-wide .18em`, `label-wider .22em` |
 
-**⚠️ Critical inconsistency — two palettes coexist.** `globals.css` `:root` defines a **green/olive "eco" palette** that conflicts with the charcoal/gold/cream Tailwind tokens the homepage actually renders:
+**⚠️ Critical inconsistency — two palettes coexist, and GREEN is the live one.** `globals.css` `:root` defines a **green/olive "eco" palette** in `--color-*` variables that conflicts with the charcoal/gold/cream Tailwind tokens:
 
 ```
 --color-accent-primary: #558518   (green)      --color-text-primary: #2F3A1F (olive)
@@ -65,11 +65,11 @@ On submit: `POST /api/v0/public/bookings` → FastAPI `/public/bookings` (rate-l
 --color-bg-page: #F7F4EA           --color-gold: 168 134 90   --color-gold-deep: 110 84 48
 ```
 
-The body renders with Tailwind tokens (`bg-cream text-ink font-sans`, eyebrows `text-gold-deep`, h1/h2 `font-serif`), and `layout.tsx` explicitly notes *"themeColor now matches the gold-deep brand token (#6E5430) instead of the off-brand green that was here before."* So the brand **migrated green → charcoal/gold/cream**, but the green `--color-*` variables are still in `globals.css` (only the `route-loader` decoration still references the lime green). This is dead/contradictory CSS that should be reconciled (see Phase 7).
+**Grep evidence (corrected):** the green `--color-*` system is the **dominant live accent — 250 refs across 42 component files** (Header, Footer, Hero, Pricing, Services, the booking wizard, Contact, About). The header nav underline, the "Jetzt buchen" button (`--color-bg-strong #558518`), link/active states, icons and borders all render **green**. The gold/charcoal Tailwind tokens (`text-gold`, `text-ink`, `bg-ink`, `gold-deep`, `text-cream`) are **97 refs across 25 files**, concentrated in the **UI primitive layer** (Button, Input, Select, Checkbox, Card, Badge, DatePicker), a few shared comps (`PhoneCTA`, `MobileStickyBar`, `ConcessionBadge`), and admin. The `globals.css` base layer sets body `bg-cream text-ink` + Cormorant headings + `gold-deep` eyebrows, and `layout.tsx` moved themeColor to `gold-deep #6E5430` *"instead of the off-brand green that was here before"* — signalling an **intent** to move toward gold that is **mostly not executed**. The net effect: a **visible two-accent split** (green chrome vs gold-accented form fields render in the same viewport). This is **not dead CSS** — it is a genuine brand-direction decision (green vs gold) that must be made before any "reconciliation" (see Phase 7).
 
 **Font strategy:** Cormorant (serif) for H1/H2 + editorial quote text; Inter (sans) for H3/H4, body, labels, buttons, wordmark. Eyebrow labels use `label-sm` uppercase + wide tracking in `gold-deep`.
 
-**Visual identity:** **Premium / editorial.** Serif display headings + warm gold accent + cream/charcoal contrast + generous spacing + subtle scroll-reveal animation. Closer to a boutique-hospitality look than a utilitarian transfer-booking tool.
+**Visual identity (as actually rendered):** **Premium / editorial.** Cormorant serif headings + cream background + near-black text + **green (#558518) accent** + gold-deep eyebrow labels + generous spacing + subtle scroll-reveal animation. Closer to a boutique-hospitality look than a utilitarian transfer-booking tool — but the accent reads **green**, not the gold the tokens imply.
 
 ### 1.3 Public Website Sections Audit
 
@@ -300,7 +300,7 @@ Aligned to existing tokens (charcoal/cream/gold, Cormorant headings, Inter body)
 ## PHASE 7 — Design System Recommendations
 
 **Color**
-- *Reconcile the dual palette (the #1 system issue):* delete or remap the green `--color-*` variables in `globals.css` to the gold/charcoal/cream tokens so there is **one** source of truth. Current state → contradictory (green vars vs gold Tailwind tokens) → unify on charcoal/cream/gold → *Why:* prevents future drift and accidental green leakage (route-loader still uses lime).
+- *Resolve the green-vs-gold split (the #1 system issue) — this is a BRAND decision, not a cleanup:* the site renders **green** as its live accent (42 files of `--color-*`) while the design tokens + UI primitives pull **gold/charcoal** (25 files). Decide one primary accent, then unify both layers on it. **Recommendation: commit to gold/charcoal/cream** — it matches the premium-transport category (Bavaria's gold/amber, Blacklane's monochrome) and the stated `layout.tsx` intent; green is a category outlier. Migration scope: ~42 files remap `--color-accent-primary`/`--color-bg-strong`/`--color-text-primary` → gold/charcoal/ink tokens. If green is kept deliberately (distinctiveness), instead remap the ~25 gold-token files to green. Either way: **one** source of truth. *Why:* the current split is visible to users (green chrome around gold form fields) and compounds with every new component.
 - *Gold #A8865A:* reads premium and is **on-trend** (Bavaria uses gold/amber). Keep as the brand accent — but **not as the primary CTA fill** (contrast risk).
 - *Charcoal hero vs cream-led:* charcoal hero is a valid premium choice; keep it but ensure the embedded widget sits on a cream surface for legibility.
 - *CTA color:* gold on cream can fail 4.5:1. Recommend a **higher-contrast CTA** — `gold-deep #6E5430` fill (or charcoal) with cream text for primary buttons; reserve light gold for accents/borders. *Why:* accessibility + click-through.
@@ -343,7 +343,7 @@ Aligned to existing tokens (charcoal/cream/gold, Cormorant headings, Inter body)
 - **Homepage B2B section** + B2B inquiry path. New `BusinessSection`, reuse contact submit. Backend: none. Impact: Med–High.
 - **Live Google Reviews sync** into `testimonials` (`source='google_review'`) via a periodic job; render aggregate. Backend: small. Impact: High.
 - **Wizard: vehicle selection step with photos + capacity** (vehicles already public). Frontend mainly. Impact: Med.
-- **Reconcile design-system palette** (remove green vars; unify tokens) + cut unused font tokens. Frontend-only. Impact: Med (maintainability).
+- **Resolve green-vs-gold palette** (decide primary accent → remap ~42 green-`--color-*` files OR ~25 gold-token files onto it) + cut unused font tokens. Frontend-only but touches many files. Impact: High (visible brand consistency).
 - **Verify admin migration status** end-to-end and update the stale "🔲 create" markers in `apps/frontend/CLAUDE.md`. Low effort, prevents confusion.
 
 ### LARGE STRATEGIC (1–2 months)
@@ -380,11 +380,11 @@ Sketch on the existing stack: a public `POST /public/price-quote` (FastAPI) → 
 1. **WhatsApp everywhere** — `shared/Header.tsx`, `shared/MobileStickyBar.tsx`, `shared/Footer.tsx`, `contact/ContactMethods.tsx` (read `settings.whatsapp_url`).
 2. **Hero trust micro-copy + CTA contrast** — `home/HeroHomeSection.tsx` + button token (gold-deep fill, cream text).
 3. **Social proof upgrade** — `home/TrustStrip.tsx` + `home/TestimonialsSection.tsx` (Google rating/count + numbers from `site_settings`).
-4. **Reconcile design palette** — `app/globals.css` (remove/remap green `--color-*` to gold/charcoal/cream; fix route-loader green).
+4. **Decide green-vs-gold, then unify palette** — confirm primary accent (recommend gold/charcoal/cream), then remap the green `--color-*` files (or vice-versa). Bigger than a one-file edit (~42 files) — schedule as its own PR.
 5. **Spike the price-quote endpoint** — backend 6-step scaffold + wire `HeroBookingWidget` to show "ab €X" (kicks off the strategic calculator).
 
 **6. Design verdict.**
-StepNow's **Cormorant + charcoal + gold** identity is genuinely premium and more polished than most regional competitors — it is an asset, not a liability. But it is the **category outlier** (every deep-dived competitor uses sans-serif), and the editorial styling currently masks a functional gap: the site *looks* like a boutique brand but *behaves* like a contact form. **Keep the visual identity; change the behavior.** The single highest-impact visual+UX change is to **put a fixed price into the hero widget** (and raise CTA contrast) — so the premium look is backed by the instant-price certainty German transfer customers expect. Secondary visual fix: **unify the split color system** so the brand renders one consistent palette.
+StepNow's **Cormorant serif + editorial** styling is genuinely premium and more polished than most regional competitors — it is an asset, keep it. Two caveats correct the brief's premise. (a) The rendered accent is **green (#558518), not gold** — and green is a *double* category outlier (premium transport runs black/navy/gold/monochrome; see Bavaria, Blacklane). The tokens and `layout.tsx` already lean gold, so **commit to gold/charcoal/cream and retire the green** unless green is a deliberate brand signature. (b) The serif is also unusual (every deep-dived competitor uses sans-serif) but is a defensible differentiator — keep it for editorial headings, keep functional surfaces (widget, wizard) on Inter. The deeper issue is behavioural: the site *looks* like a boutique brand but *behaves* like a contact form. **Keep the visual identity; change the behaviour.** The single highest-impact change is to **put a fixed price into the hero widget** (and raise CTA contrast); the single highest-impact *visual* change is to **resolve the green-vs-gold split** so the brand renders one consistent accent.
 
 ---
 *End of report.*

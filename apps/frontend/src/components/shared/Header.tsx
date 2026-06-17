@@ -8,6 +8,7 @@ import { useUiStrings } from "@/hooks/useUiStrings";
 import { Logo } from "./Logo";
 import { Container } from "./Container";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
@@ -106,6 +107,17 @@ export function Header({ settings }: HeaderProps) {
               />
               <span className="tabular-nums">{settings.phone}</span>
             </a>
+            {settings.whatsapp_url && (
+              <a
+                href={settings.whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 transition-colors duration-base hover:text-[var(--color-text-primary)]"
+              >
+                <WhatsAppIcon className="h-3.5 w-3.5 text-[var(--color-accent-primary)]" />
+                <span>WhatsApp</span>
+              </a>
+            )}
           </div>
           <LanguageSwitcher className="text-[var(--color-text-secondary)]" />
         </Container>
@@ -116,7 +128,7 @@ export function Header({ settings }: HeaderProps) {
           "ease-out-premium sticky top-0 z-40 transition-all duration-base",
           "bg-[color:rgba(247,244,234,0.92)] backdrop-blur",
           scrolled
-            ? "border-b border-[color:var(--color-border-soft)] shadow-[0_4px_14px_rgba(47,58,31,0.06)]"
+            ? "border-b border-[color:var(--color-border-soft)] shadow-[0_4px_14px_rgba(15,17,21,0.06)]"
             : "border-b border-transparent",
         )}
       >
@@ -146,7 +158,7 @@ export function Header({ settings }: HeaderProps) {
                     "relative py-2 text-[14px] font-semibold tracking-[0.02em] transition-colors duration-base",
                     active
                       ? "text-[var(--color-text-primary)]"
-                      : "text-[color:rgba(47,58,31,0.72)] hover:text-[var(--color-text-primary)]",
+                      : "text-[color:rgba(15,17,21,0.72)] hover:text-[var(--color-text-primary)]",
                   )}
                 >
                   {t(item.key)}
@@ -168,8 +180,8 @@ export function Header({ settings }: HeaderProps) {
               href={bookingHref}
               className={cn(
                 "group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
-                "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
+                "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                 "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
               )}
             >
@@ -183,6 +195,21 @@ export function Header({ settings }: HeaderProps) {
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
+            {settings.whatsapp_url && (
+              <a
+                href={settings.whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className={cn(
+                  "inline-flex h-10 w-10 items-center justify-center border transition-colors duration-base",
+                  "border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-text-primary)]",
+                  "hover:border-[color:var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]",
+                )}
+              >
+                <WhatsAppIcon className="h-[18px] w-[18px]" />
+              </a>
+            )}
             <a
               href={toTelHref(settings.phone)}
               aria-label={`${t("contact.method.phone")}: ${settings.phone}`}
@@ -285,8 +312,8 @@ export function Header({ settings }: HeaderProps) {
               href={bookingHref}
               className={cn(
                 "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
-                "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
+                "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                 "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
               )}
             >

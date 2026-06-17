@@ -9,8 +9,8 @@ interface BrandMarkProps {
 }
 
 export function BrandMark({ size = 24, tone = "dark", className }: BrandMarkProps) {
-  const stroke = tone === "dark" ? "var(--color-text-primary, #2F3A1F)" : "var(--color-bg-page, #F7F4EA)";
-  const accent = "var(--color-accent-highlight, #D9B44A)";
+  const stroke = tone === "dark" ? "var(--color-text-primary, #0F1115)" : "var(--color-bg-page, #F7F4EA)";
+  const accent = "var(--color-accent-highlight, #C2A675)";
   return (
     <svg
       width={size}

@@ -7,6 +7,7 @@ import { useUiStrings } from "@/hooks/useUiStrings";
 import { Container } from "./Container";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Logo } from "./Logo";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
@@ -143,8 +144,8 @@ export function Footer({ settings }: FooterProps) {
                     href={bookHref}
                     className={cn(
                       "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
-                      "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
-                      "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(47,58,31,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(47,58,31,0.08)]",
+                      "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
+                      "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                       "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
                     )}
                   >
@@ -221,7 +222,7 @@ export function Footer({ settings }: FooterProps) {
               as="div"
               className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between"
             >
-              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.04em] text-[color:rgba(190,199,177,0.82)]">
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.04em] text-[color:rgba(200,197,190,0.82)]">
                 <span>
                   © {year} {displayName}. {rightsReserved}
                 </span>
@@ -241,7 +242,7 @@ export function Footer({ settings }: FooterProps) {
                   <li key={item.key}>
                     <Link
                       href={hrefFor(item)}
-                      className="text-[11px] tracking-[0.04em] text-[color:rgba(190,199,177,0.86)] transition-colors duration-base hover:text-[var(--color-accent-secondary)]"
+                      className="text-[11px] tracking-[0.04em] text-[color:rgba(200,197,190,0.86)] transition-colors duration-base hover:text-[var(--color-accent-secondary)]"
                     >
                       {t(item.key)}
                     </Link>
@@ -352,6 +353,24 @@ function ContactColumn({ heading, settings, dark = false }: ContactColumnProps) 
             {settings.phone}
           </a>
         </p>
+        {settings.whatsapp_url && (
+          <p>
+            <a
+              href={settings.whatsapp_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "inline-flex items-center gap-1.5 transition-colors duration-base",
+                dark
+                  ? "hover:text-[var(--color-text-footer)]"
+                  : "hover:text-[var(--color-text-primary)]",
+              )}
+            >
+              <WhatsAppIcon className="h-3.5 w-3.5" />
+              <span>WhatsApp</span>
+            </a>
+          </p>
+        )}
         <p>
           <a
             href={`mailto:${settings.email}`}
