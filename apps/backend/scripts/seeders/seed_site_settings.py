@@ -34,12 +34,13 @@ SETTINGS_DATA = {
     "default_meta_title_de": "StepNow Rides — Ihre TAXI-Alternative in Stuttgart, Esslingen und Region",
     "default_meta_title_en": "StepNow Rides — Your premium taxi alternative in Stuttgart, Germany",
     "default_og_image_url": None,
-    # Trust numbers — owner edits in admin; seed only the verifiable fleet size, leave the rest null.
-    "years_active": None,
-    "rides_completed": None,
+    # Trust numbers (homepage TrustStrip) — MOCK figures so the strip renders a full row in dev.
+    # The owner overwrites these with accurate numbers in admin → Settings (mock now, accurate later).
+    "years_active": 8,
+    "rides_completed": 12500,
     "fleet_size": 2,
-    "google_rating": None,
-    "google_review_count": None,
+    "google_rating": Decimal("4.9"),
+    "google_review_count": 180,
 }
 
 
@@ -59,7 +60,20 @@ def run() -> None:
 
         existing = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
         if existing:
-            log_skip("site_settings", f"id=1, business_name='{existing.business_name}'")
+            # Backfill ONLY the homepage trust numbers that are still empty — so an already-seeded
+            # DB picks up the mock figures without a reset, and any value the owner has already set
+            # in admin is never overwritten (mock now, accurate later).
+            filled = [
+                f for f in ("years_active", "rides_completed", "fleet_size", "google_rating", "google_review_count")
+                if getattr(existing, f) is None and SETTINGS_DATA[f] is not None
+            ]
+            for f in filled:
+                setattr(existing, f, SETTINGS_DATA[f])
+            if filled:
+                db.commit()
+                log_create("site_settings", f"backfilled trust numbers: {', '.join(filled)}")
+            else:
+                log_skip("site_settings", f"id=1, business_name='{existing.business_name}'")
             return
         actor = get_system_actor(db)
         settings = SiteSettings(id=1, **SETTINGS_DATA)

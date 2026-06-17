@@ -23,8 +23,8 @@ class Customer(Base, TimestampMixin, SoftDeleteMixin):
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     # B2B: the customer is a company. company_name is the primary identity; contact_person is the
-    # optional Ansprechpartner. first/last are legacy, nullable, and unused by the UI (kept so
-    # historical rows aren't dropped — see scripts/migrate_customers_b2b.py).
+    # optional Ansprechpartner. first/last are legacy, nullable, and unused by the UI (kept only so
+    # a fresh schema can still hold any imported historical rows).
     company_name: Mapped[str] = mapped_column(
         String(200), nullable=False, comment="Firmenname — the B2B customer (company)"
     )
