@@ -1,15 +1,18 @@
 // src/app/api/v0/public/faqs/route.ts
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { bffHandler, getParam, validateEnum } from "@/lib/bff-helpers";
+import { apiErrorResponse, getParam, validateEnum } from "@/lib/bff-helpers";
 import { listFaqsServer } from "@/services/faqs";
 import type { Locale } from "@/types";
 
 const LOCALES: readonly Locale[] = ["de", "en"];
 
 export async function GET(request: NextRequest) {
-  return bffHandler(async () => {
-    const locale = validateEnum<Locale>(getParam(request, "locale"), LOCALES, "de") ?? "de";
-    const category = getParam(request, "category") ?? undefined;
-    return listFaqsServer(locale, category);
-  });
+  const locale = validateEnum<Locale>(getParam(request, "locale"), LOCALES, "de") ?? "de";
+  const category = getParam(request, "category") ?? undefined;
+  try {
+    return NextResponse.json(await listFaqsServer(locale, category));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

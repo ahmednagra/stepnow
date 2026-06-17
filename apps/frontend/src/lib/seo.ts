@@ -176,6 +176,12 @@ export function buildFaqPageJsonLd(faqs: FaqPublic[]): Record<string, unknown> {
   };
 }
 
+/** Derive a ~155-char plain-text meta description from a markdown body (e.g. legal pages). */
+export function metaDescription(body: string): string {
+  const text = stripMarkdown(body).replace(/\s+/g, " ").trim();
+  return text.length > 155 ? `${text.slice(0, 155).trimEnd()}…` : text;
+}
+
 /** Crude markdown stripper for FAQ answers in JSON-LD (HTML in JSON-LD is allowed but cleaner without). */
 function stripMarkdown(md: string): string {
   return md

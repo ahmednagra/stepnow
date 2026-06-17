@@ -10,7 +10,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
 import type { SettingsAdmin } from "@/types";
-import { updateAdminSettings, type SettingsUpdate } from "@/services/settings";
+import { type SettingsUpdate } from "@/services/settings";
+import { useUpdateSettings } from "@/hooks/mutations/useSettingsMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -98,6 +99,7 @@ async function uploadHandler(file: File): Promise<string> {
 export function SettingsForm({ initial }: SettingsFormProps) {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
+  const updateSettings = useUpdateSettings();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -114,7 +116,7 @@ export function SettingsForm({ initial }: SettingsFormProps) {
   async function onSubmit(values: AdminSettingsInput) {
     setServerError(null);
     try {
-      const updated = await updateAdminSettings(toPatchPayload(values));
+      const updated = await updateSettings.mutateAsync(toPatchPayload(values));
       reset(defaultValues(updated));
       pushToast("success", "Settings saved", "Public site updated.");
       router.refresh();

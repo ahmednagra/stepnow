@@ -3,6 +3,7 @@
 // + driver slip). Money is string end-to-end to preserve precision (matches orders service).
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated } from "@/types";
 
 export type DeliveryStatus = "draft" | "dispatched" | "picked_up" | "delivered";
@@ -97,24 +98,17 @@ export interface ParcelOrderInput {
   internal_notes?: string | null;
 }
 
-function qs(params: Record<string, unknown>): string {
-  const s = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") s.set(k, String(v));
-  const str = s.toString();
-  return str ? `?${str}` : "";
-}
-
 export async function listParcelOrders(params: { page?: number; size?: number; delivery_status?: DeliveryStatus; q?: string } = {}): Promise<Paginated<CourierOrder>> {
-  return nextjsApiClient.get<Paginated<CourierOrder>>(`/admin/parcel-orders${qs(params)}`);
+  return nextjsApiClient.get<Paginated<CourierOrder>>(ENDPOINTS.ADMIN.PARCEL_ORDERS, { params });
 }
 export async function createParcelOrder(payload: ParcelOrderInput): Promise<CourierOrder> {
-  return nextjsApiClient.post<CourierOrder>(`/admin/parcel-orders`, payload);
+  return nextjsApiClient.post<CourierOrder>(ENDPOINTS.ADMIN.PARCEL_ORDERS, payload);
 }
 export async function updateParcelOrder(orderId: string, payload: ParcelOrderInput): Promise<CourierOrder> {
-  return nextjsApiClient.patch<CourierOrder>(`/admin/orders/${orderId}/parcel`, payload);
+  return nextjsApiClient.patch<CourierOrder>(ENDPOINTS.ADMIN.ORDER_PARCEL(orderId), payload);
 }
 export async function setDeliveryStatus(orderId: string, delivery_status: DeliveryStatus): Promise<CourierOrder> {
-  return nextjsApiClient.post<CourierOrder>(`/admin/orders/${orderId}/delivery-status`, { delivery_status });
+  return nextjsApiClient.post<CourierOrder>(ENDPOINTS.ADMIN.ORDER_DELIVERY_STATUS(orderId), { delivery_status });
 }
 
 export async function sendDocuments(
@@ -122,7 +116,7 @@ export async function sendDocuments(
   to: Array<"driver" | "customer">,
   channel: "email" | "whatsapp" = "email",
 ): Promise<CourierOrder> {
-  return nextjsApiClient.post<CourierOrder>(`/admin/orders/${orderId}/send`, { to, channel });
+  return nextjsApiClient.post<CourierOrder>(ENDPOINTS.ADMIN.ORDER_SEND(orderId), { to, channel });
 }
 
 /** Initiate a WhatsApp web-click handoff of the driver slip. Returns the order with

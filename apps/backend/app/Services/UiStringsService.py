@@ -41,7 +41,7 @@ class UiStringsService:
 
     @staticmethod
     def create_string(db: Session, data: dict[str, Any], actor: AdminUser, request: Request | None = None) -> UiString:
-        existing = db.query(UiString).filter(UiString.key == data["key"]).first()
+        existing = db.query(UiString).filter(UiString.key == data["key"], UiString.is_deleted == False).first()
         if existing:
             raise ConflictError("UI string key already exists", key=data["key"])
         s = UiString(**data)

@@ -1,6 +1,7 @@
 // src/app/api/v0/public/contact/route.ts
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { bffHandler, errorResponse, parseJsonBody } from "@/lib/bff-helpers";
+import { apiErrorResponse, errorResponse, parseJsonBody } from "@/lib/bff-helpers";
 import { submitContactServer } from "@/services/contact";
 import type { ContactCreate } from "@/types";
 
@@ -22,5 +23,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return bffHandler(() => submitContactServer(body), 201);
+  try {
+    return NextResponse.json(await submitContactServer(body), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

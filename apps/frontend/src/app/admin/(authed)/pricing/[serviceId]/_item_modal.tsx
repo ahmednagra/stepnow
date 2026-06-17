@@ -12,9 +12,9 @@ import {
   type AdminPricingItemInput,
 } from "@/schemas/admin-pricing.schema";
 import {
-  createAdminPricingItem,
-  updateAdminPricingItem,
-} from "@/services/pricing";
+  useCreatePricingItem,
+  useUpdatePricingItem,
+} from "@/hooks/mutations/usePricingMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -28,6 +28,7 @@ import type { PricingItemAdmin } from "@/types";
 
 interface ItemModalProps {
   mode: "create" | "edit";
+  serviceId: string;
   categoryId: string;
   item?: PricingItemAdmin;
   nextSortOrder: number;
@@ -54,10 +55,12 @@ function FieldErr({ msg }: { msg?: string }) {
 }
 
 export function ItemModal({
-  mode, categoryId, item, nextSortOrder, onClose, onSaved,
+  mode, serviceId, categoryId, item, nextSortOrder, onClose, onSaved,
 }: ItemModalProps) {
   const pushToast = useAdminToast((s) => s.push);
   const [serverError, setServerError] = useState<string | null>(null);
+  const createItem = useCreatePricingItem(serviceId);
+  const updateItem = useUpdatePricingItem(serviceId);
 
   const {
     register,
@@ -90,8 +93,8 @@ export function ItemModal({
     try {
       const saved =
         mode === "create"
-          ? await createAdminPricingItem(categoryId, payload)
-          : await updateAdminPricingItem(item!.id, payload);
+          ? await createItem.mutateAsync({ categoryId, payload })
+          : await updateItem.mutateAsync({ itemId: item!.id, payload });
       onSaved(saved);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Network error";

@@ -2,6 +2,7 @@
 // Derives dashboard series from the existing bookings API. No backend changes needed.
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, BookingAdmin } from "@/types";
 import type { Range } from "@/components/admin/dashboard/RangeSwitcher";
 import type { RevenuePoint } from "@/components/admin/dashboard/RevenueChart";
@@ -26,7 +27,7 @@ function fromDate(r: Range): string {
 
 function fetchAll(r: Range): Promise<BookingAdmin[]> {
   return nextjsApiClient
-    .get<Paginated<BookingAdmin>>("/admin/bookings", {
+    .get<Paginated<BookingAdmin>>(ENDPOINTS.ADMIN.BOOKINGS, {
       params: { size: 100, from_date: fromDate(r) },
     })
     .then((p) => p.items);

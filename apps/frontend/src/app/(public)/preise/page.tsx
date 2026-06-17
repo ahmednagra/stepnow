@@ -6,7 +6,8 @@ import { listServicesServer } from "@/services/services";
 import { listAllPricingServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
+import { JsonLd } from "@/utils/json-ld";
 import { ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
 import {
   PricingTabs,
@@ -129,6 +130,12 @@ export default async function PricingPageDe() {
         </Container>
       </section>
       <MobileStickyBar settings={settings} />
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: pickT(t, "nav.home", "Startseite"), href: "/" },
+          { name: t("pricing.page.title"), href: "/preise" },
+        ])}
+      />
     </>
   );
 }

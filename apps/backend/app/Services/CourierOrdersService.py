@@ -8,7 +8,7 @@ from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
-from app.Core.Exceptions import ConflictError, NotFoundError
+from app.Core.Exceptions import ConflictError, DomainError, NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.customers import Customer
 from app.Models.drivers import Driver
@@ -17,7 +17,7 @@ from app.Models.vehicles import Vehicle
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
 from app.Services.EmailService import EmailService
-from app.Utils.finance import compute_totals, next_sequence_number, order_date_sequence_number, year_prefix
+from app.Utils.finance import compute_totals, order_date_sequence_number
 
 DEFAULT_VAT_RATE = Decimal("0.0700")
 DELIVERY_FLOW = ["draft", "dispatched", "picked_up", "delivered"]
@@ -45,9 +45,9 @@ class CourierOrdersService:
             return CustomersService.get(db, payload.customer_id, allow_deleted=False)
         if payload.customer:
             if request is None:
-                raise ConflictError("Request context required for inline customer creation")
+                raise DomainError("Request context required for inline customer creation")
             return CustomersService.create(db, payload.customer.model_dump(), actor, request)
-        raise ConflictError("Provide customer_id or inline customer data")
+        raise DomainError("Provide customer_id or inline customer data")
 
     @staticmethod
     def _resolve_vehicle(db: Session, vehicle_id) -> Vehicle | None:
@@ -140,7 +140,7 @@ class CourierOrdersService:
             o.vehicle_name = CourierOrdersService._vehicle_label(vehicle)
         if payload.driver_id is not None:
             o.driver_id = payload.driver_id
-            drv = db.query(Driver).filter(Driver.id == payload.driver_id).first()
+            drv = db.query(Driver).filter(Driver.id == payload.driver_id, Driver.is_deleted == False).first()
             o.driver_name = drv.full_name if drv else (payload.driver_name or o.driver_name)
         elif payload.driver_name is not None:
             o.driver_name = payload.driver_name or None

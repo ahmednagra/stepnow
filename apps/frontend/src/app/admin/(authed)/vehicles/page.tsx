@@ -4,13 +4,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, PreviewButton, FilterToolbar } from "@/components/admin";
-import { ApiError } from "@/lib/api-errors";
-import { listAdminVehicles } from "@/services/vehicles";
-import type { VehicleAdmin } from "@/types";
-import { useAdminToast } from "@/hooks/useAdminToast";
+import { useVehicles } from "@/hooks/queries/useVehicles";
 import { vehiclesPreviewUrl } from "@/utils/preview-urls";
 import { exportCsv, exportJson } from "@/utils/exporters";
 import { resolveMediaUrl } from "@/utils/media-url";
@@ -18,37 +15,26 @@ import { resolveMediaUrl } from "@/utils/media-url";
 type ListFilter = "active" | "deleted" | "all";
 
 export default function VehiclesListPage() {
-const pushToast = useAdminToast((s) => s.push);
-const [items, setItems] = useState<VehicleAdmin[] | null>(null);
 const [filter, setFilter] = useState<ListFilter>("active");
 const [q, setQ] = useState("");
-const [loading, setLoading] = useState(true);
-
-const reload = useCallback(async (f: ListFilter, search: string) => {
-setLoading(true);
-try {
-const res = await listAdminVehicles({ size: 100, include_deleted: f !== "active", q: search || undefined });
-const filtered = f === "deleted" ? res.items.filter((v) => v.is_deleted) : res.items;
-setItems(filtered);
-} catch (err) {
-pushToast("error", "Could not load vehicles", err instanceof ApiError ? err.message : "Network error");
-setItems([]);
-} finally { setLoading(false); }
-}, [pushToast]);
+const [debouncedQ, setDebouncedQ] = useState("");
 
 useEffect(() => {
-const id = window.setTimeout(() => { void reload(filter, q); }, 300);
+const id = window.setTimeout(() => setDebouncedQ(q), 300);
 return () => window.clearTimeout(id);
-}, [filter, q, reload]);
+}, [q]);
 
-const stats = useMemo(() => {
-if (!items) return { total: 0, active: 0, capacity: 0 };
-return {
+const { data, isLoading } = useVehicles({ size: 100, include_deleted: filter !== "active", q: debouncedQ || undefined });
+const items = useMemo(() => {
+const rows = data?.items ?? [];
+return filter === "deleted" ? rows.filter((v) => v.is_deleted) : rows;
+}, [data, filter]);
+
+const stats = useMemo(() => ({
 total: items.length,
 active: items.filter((v) => v.active && !v.is_deleted).length,
 capacity: items.filter((v) => v.active && !v.is_deleted).reduce((s, v) => s + v.capacity_passengers, 0),
-};
-}, [items]);
+}), [items]);
 
 return (
 <>
@@ -83,7 +69,7 @@ New vehicle
 </div>
 <AdminCard
 flush
-title={`${items?.length ?? 0} ${items?.length === 1 ? "vehicle" : "vehicles"}`}
+title={`${items.length} ${items.length === 1 ? "vehicle" : "vehicles"}`}
 headerActions={
 <FilterToolbar
 searchValue={q}
@@ -97,21 +83,21 @@ filters={
 </select>
 }
 exports={{
-onCsv: () => items && exportCsv(items.map((v) => ({
+onCsv: () => exportCsv(items.map((v) => ({
 name_de: v.name_de, name_en: v.name_en, category: v.category,
 passengers: v.capacity_passengers, luggage: v.capacity_luggage,
 active: v.active ? "yes" : "no", sort_order: v.sort_order,
 })), `vehicles-${new Date().toISOString().slice(0, 10)}.csv`),
-onJson: () => items && exportJson(items, `vehicles-${Date.now()}.json`),
+onJson: () => exportJson(items, `vehicles-${Date.now()}.json`),
 onPrint: () => window.print(),
 }}
 />
 }
 >
 <AdminTable columns={["Vehicle", "Category", "Capacity", "Status", "Sort", ""]}>
-{loading ? (
+{isLoading ? (
 <AdminTableEmpty loading />
-) : !items || items.length === 0 ? (
+) : items.length === 0 ? (
 <AdminTableEmpty message="No vehicles found." />
 ) : (
 items.map((v) => (

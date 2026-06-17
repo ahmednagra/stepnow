@@ -34,7 +34,7 @@ class InvoicesService:
         if not order:
             raise NotFoundError("Order not found", order_id=str(order_id))
 
-        existing = db.query(Invoice).filter(Invoice.order_id == order_id).first()
+        existing = db.query(Invoice).filter(Invoice.order_id == order_id, Invoice.is_deleted == False).first()
         if existing:
             return existing
 

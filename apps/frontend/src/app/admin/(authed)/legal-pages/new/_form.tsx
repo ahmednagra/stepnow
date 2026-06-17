@@ -11,7 +11,7 @@ import {
   adminLegalPageCreateSchema,
   type AdminLegalPageCreateInput,
 } from "@/schemas/admin-legal-page.schema";
-import { createAdminLegalPage } from "@/services/legalPages";
+import { useCreateLegalPage } from "@/hooks/mutations/useLegalPageMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -23,6 +23,7 @@ import {
 export function NewLegalPageForm() {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
+  const createPage = useCreateLegalPage();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -37,7 +38,7 @@ export function NewLegalPageForm() {
   async function onSubmit(values: AdminLegalPageCreateInput) {
     setServerError(null);
     try {
-      const created = await createAdminLegalPage({ slug: values.slug });
+      const created = await createPage.mutateAsync({ slug: values.slug });
       pushToast("success", "Legal page created", `slug: ${created.slug}`);
       router.push(`/admin/legal-pages/${created.slug}`);
       router.refresh();

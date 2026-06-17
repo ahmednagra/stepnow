@@ -1,6 +1,7 @@
 // src/app/api/v0/public/legal-pages/[slug]/route.ts
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { bffHandler, errorResponse, getParam, validateEnum } from "@/lib/bff-helpers";
+import { apiErrorResponse, errorResponse, getParam, validateEnum } from "@/lib/bff-helpers";
 import { getLegalPageServer } from "@/services/legalPages";
 import type { Locale } from "@/types";
 
@@ -12,8 +13,10 @@ export async function GET(
 ) {
   const { slug } = await context.params;
   if (!slug) return errorResponse("BAD_REQUEST", "slug is required", 400);
-  return bffHandler(async () => {
-    const locale = validateEnum<Locale>(getParam(request, "locale"), LOCALES, "de") ?? "de";
-    return getLegalPageServer(slug, locale);
-  });
+  const locale = validateEnum<Locale>(getParam(request, "locale"), LOCALES, "de") ?? "de";
+  try {
+    return NextResponse.json(await getLegalPageServer(slug, locale));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

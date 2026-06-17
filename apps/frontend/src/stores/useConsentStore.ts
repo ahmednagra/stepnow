@@ -1,7 +1,9 @@
 // apps/frontend/src/stores/useConsentStore.ts
-// Zustand store for consent state with per-category selectors so a flag change re-renders only its consumers.
+// Consent state (no zustand). Persistence stays the consent cookie — it must be
+// server-readable, so it is NOT moved to localStorage. Reactivity via createStore;
+// per-category selectors re-render only their consumers.
 "use client";
-import { create } from "zustand";
+import { createStore } from "@/lib/createStore";
 import { buildCookie, readConsentCookie, writeConsentCookie } from "@/lib/consent/cookie";
 import { CONSENT_DEFAULT, type ConsentState } from "@/lib/consent/types";
 
@@ -16,7 +18,7 @@ interface ConsentStore {
   reopen: () => void;
 }
 
-export const useConsentStore = create<ConsentStore>((set) => ({
+export const useConsentStore = createStore<ConsentStore>((set, get) => ({
   decided: false,
   state: CONSENT_DEFAULT,
   hydrated: false,
@@ -25,7 +27,7 @@ export const useConsentStore = create<ConsentStore>((set) => ({
     set({ hydrated: true, decided: c?.decided ?? false, state: c?.state ?? CONSENT_DEFAULT });
   },
   acceptAll: () => {
-    const next = { maps: true, fonts: true, analytics: true };
+    const next: ConsentState = { maps: true, fonts: true, analytics: true };
     writeConsentCookie(buildCookie(next, true));
     set({ decided: true, state: next });
   },
@@ -34,12 +36,9 @@ export const useConsentStore = create<ConsentStore>((set) => ({
     set({ decided: true, state: CONSENT_DEFAULT });
   },
   save: (partial) => {
-    let merged: ConsentState = CONSENT_DEFAULT;
-    set((prev) => {
-      merged = { ...prev.state, ...partial };
-      return { decided: true, state: merged };
-    });
+    const merged: ConsentState = { ...get().state, ...partial };
     writeConsentCookie(buildCookie(merged, true));
+    set({ decided: true, state: merged });
   },
   reopen: () => set({ decided: false }),
 }));

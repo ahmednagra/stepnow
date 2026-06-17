@@ -1,11 +1,17 @@
 // apps/frontend/src/app/api/v0/admin/bookings/heatmap/route.ts
 // BFF handler for the bookings heatmap aggregation endpoint.
 
-import { bffHandler } from "@/lib/bff-helpers";
-import { adminGet } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { BookingsHeatmapResponse } from "@/services/admin-dashboard";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, apiErrorResponse } from "@/lib/bff-helpers";
+import { getAdminBookingsHeatmapServer } from "@/services/bookings/bookings.admin.server";
 
-export async function GET() {
-return bffHandler(() => adminGet<BookingsHeatmapResponse>(ENDPOINTS.ADMIN.BOOKINGS_HEATMAP));
+export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    return NextResponse.json(await getAdminBookingsHeatmapServer(token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

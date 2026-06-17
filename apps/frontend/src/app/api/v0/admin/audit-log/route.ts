@@ -1,11 +1,12 @@
 // src/app/api/v0/admin/audit-log/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler } from "@/lib/bff-helpers";
-import { adminGet } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { PaginatedAuditLog } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, apiErrorResponse } from "@/lib/bff-helpers";
+import { listAuditLogServer } from "@/services/auditLog/auditLog.server";
 
 export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const sp = request.nextUrl.searchParams;
   const params: Record<string, string | number> = {};
   const page = sp.get("page");
@@ -24,5 +25,9 @@ export async function GET(request: NextRequest) {
   if (recordId) params.record_id = recordId;
   if (fromDate) params.from_date = fromDate;
   if (toDate) params.to_date = toDate;
-  return bffHandler(() => adminGet<PaginatedAuditLog>(ENDPOINTS.ADMIN.AUDIT_LOG, params));
+  try {
+    return NextResponse.json(await listAuditLogServer(params, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

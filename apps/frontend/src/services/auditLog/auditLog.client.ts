@@ -1,5 +1,6 @@
 // src/services/auditLog/auditLog.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { AuditLogEntry, PaginatedAuditLog } from "@/types";
 
 export interface ListAuditLogParams {
@@ -14,11 +15,11 @@ export interface ListAuditLogParams {
 }
 
 export async function listAuditLog(params: ListAuditLogParams = {}): Promise<PaginatedAuditLog> {
-  return nextjsApiClient.get<PaginatedAuditLog>("/admin/audit-log", {
+  return nextjsApiClient.get<PaginatedAuditLog>(ENDPOINTS.ADMIN.AUDIT_LOG, {
     params: { ...params },
   });
 }
 
 export async function getAuditLogEntry(id: number): Promise<AuditLogEntry> {
-  return nextjsApiClient.get<AuditLogEntry>(`/admin/audit-log/${id}`);
+  return nextjsApiClient.get<AuditLogEntry>(ENDPOINTS.ADMIN.AUDIT_LOG_BY_ID(String(id)));
 }

@@ -10,11 +10,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Download, AlertTriangle, ChevronDown, Clock, MoreVertical } from "lucide-react";
 import { AdminPageHeader, AdminCard, FilterToolbar } from "@/components/admin";
-import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
+import { useCustomers } from "@/hooks/queries/useCustomers";
 import { formatPriceEur } from "@/utils/decimal";
 import { exportCsv, exportJson, printNode } from "@/utils/exporters";
-import { listAdminCustomers, type CustomerAdmin } from "@/services/customers";
+import { type CustomerAdmin } from "@/services/customers";
 import { cn } from "@/utils/cn";
 
 const PAGE_SIZE = 20;
@@ -56,12 +56,14 @@ const chipCls = (active: boolean) =>
 
 export default function CustomersPage() {
   const pushToast = useAdminToast((s) => s.push);
-  const [customers, setCustomers] = useState<CustomerRow[] | null>(null);
-  const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
+
+  const { data, isLoading: loading } = useCustomers({ q: debouncedQ || undefined, page, size: PAGE_SIZE });
+  const customers = (data?.items ?? null) as CustomerRow[] | null;
+  const pages = data?.pagination.pages ?? 1;
+  const total = data?.pagination.total ?? 0;
 
   const [seg, setSeg] = useState<SegFilter>("all");
   const [due, setDue] = useState<DueFilter>(null);
@@ -93,22 +95,11 @@ export default function CustomersPage() {
     window.addEventListener("pointerup", onUp);
   }, []);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await listAdminCustomers({ page, size: PAGE_SIZE, q: q || undefined });
-      setCustomers(res.items as CustomerRow[]);
-      setPages(res.pagination.pages);
-      setTotal(res.pagination.total);
-    } catch (err) {
-      pushToast("error", "Could not load customers", err instanceof ApiError ? err.message : "Network error");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, q, pushToast]);
-
-  useEffect(() => { void reload(); }, [reload]);
-  useEffect(() => { setPage(1); }, [q]);
+  // Debounce the search input, then reset to the first page on a new query.
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedQ(q); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -242,7 +233,7 @@ export default function CustomersPage() {
           <div className="min-w-[240px] flex-1">
             <FilterToolbar
               searchValue={q}
-              onSearchChange={(v: string) => { setPage(1); setQ(v); }}
+              onSearchChange={(v: string) => setQ(v)}
               searchPlaceholder="Search name, company, email, phone, VAT-ID…"
             />
           </div>

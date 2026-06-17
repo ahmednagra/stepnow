@@ -33,8 +33,27 @@ class PaymentsService:
         return money(total or 0)
 
     @staticmethod
-    def balance_due(db: Session, order: Order) -> Decimal:
-        return money(order.gross_amount - PaymentsService.received_total(db, order.id))
+    def balance_due(db: Session, order: Order, paid: Decimal | None = None) -> Decimal:
+        if paid is None:
+            paid = PaymentsService.received_total(db, order.id)
+        return money(order.gross_amount - paid)
+
+    @staticmethod
+    def totals_for(db: Session, order_ids: list[UUID]) -> dict[UUID, Decimal]:
+        # One grouped SUM for a page of orders — avoids a per-row query in list views.
+        if not order_ids:
+            return {}
+        rows = (
+            db.query(Payment.order_id, func.coalesce(func.sum(Payment.amount), 0))
+            .filter(
+                Payment.order_id.in_(order_ids),
+                Payment.status == "received",
+                Payment.is_deleted == False,  # noqa: E712
+            )
+            .group_by(Payment.order_id)
+            .all()
+        )
+        return {oid: money(total) for oid, total in rows}
 
     @staticmethod
     def list_for_order(db: Session, order_id: UUID) -> list[Payment]:

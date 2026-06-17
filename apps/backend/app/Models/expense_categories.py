@@ -3,13 +3,17 @@
 # lookup. Label kept verbatim from the source (single string — the source has no EN variant);
 # vst_deductible mirrors the source `katVst`.
 
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 from sqlalchemy import Boolean, Index, Integer, String
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
+
+if TYPE_CHECKING:
+    from app.Models.expenses import Expense
 
 
 class ExpenseCategory(Base, TimestampMixin, SoftDeleteMixin):
@@ -25,3 +29,9 @@ class ExpenseCategory(Base, TimestampMixin, SoftDeleteMixin):
     is_private: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    expenses: Mapped[list["Expense"]] = relationship(
+        back_populates="category",
+        primaryjoin="Expense.category_code == ExpenseCategory.code",
+        foreign_keys="Expense.category_code",
+    )

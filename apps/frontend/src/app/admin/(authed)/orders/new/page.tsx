@@ -6,14 +6,17 @@
 // stays German because it mirrors the real German PDFs rendered server-side. Built entirely on
 // the admin design system (AdminPageHeader / AdminCard / AdminFormField + Tailwind tokens).
 //
-// All capture fields persist to real order columns (vehicle_id/vehicle_name, driver_name,
-// client_reference, service_type, preferred_date, distance_km, total_km, occupied_km) — not a
-// packed internal_notes blob.
+// Form state is react-hook-form + zod (admin-order.schema.ts) — the three mappers
+// (emptyDefaults / toPayload) keep the form shape separate from the API payload. The five
+// action-bar actions (save / pdf / whatsapp / email-driver / email-invoice) all run through
+// handleSubmit so zod validation gates every persist, then share ensureSaved().
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   User, Mail, Phone, MapPin, ArrowRight, ArrowLeft, Truck, Route as RouteIcon, Gauge,
   CalendarDays, CalendarClock, Hash, Receipt, Check, X, Eye, EyeOff, Save, FileDown,
@@ -25,17 +28,26 @@ import { useAdminToast } from "@/hooks/useAdminToast";
 import { ApiError } from "@/lib/api-errors";
 import { cn } from "@/utils/cn";
 import { normalizeDecimalInput, formatPriceEur } from "@/utils/decimal";
+import { z } from "zod";
+import { adminOrderSchema, type AdminOrderInput } from "@/schemas/admin-order.schema";
+import { adminDriverSchema } from "@/schemas/admin-driver.schema";
 import { searchCustomers, type CustomerAdmin } from "@/services/customers";
-import { listFleetVehicles, vehicleLabel } from "@/services/vehicles";
-import {
-  listAdminDrivers, createAdminDriver, updateAdminDriver, type DriverAdmin,
-} from "@/services/drivers";
+import { vehicleLabel } from "@/services/vehicles";
+import { type DriverAdmin } from "@/services/drivers";
+import { useVehicles, useDrivers } from "@/hooks/queries";
 import type { VehicleAdmin } from "@/types";
 import {
-  createParcelOrder, updateParcelOrder, sendDriverSlipWhatsApp, sendDocuments,
+  sendDriverSlipWhatsApp, sendDocuments, slipPdfHref,
   type CourierOrder, type ParcelOrderInput, type ServiceType,
 } from "@/services/courier";
 import { createOrderInvoice } from "@/services/orders";
+import { useCreateParcelOrder, useUpdateParcelOrder, useCreateDriver, useUpdateDriver } from "@/hooks/mutations";
+
+// Inline quick-add driver sub-form reuses the driver schema's field rules (subset).
+const quickDriverSchema = adminDriverSchema.pick({
+  full_name: true, phone: true, email: true, vehicle_label: true, active: true,
+});
+type QuickDriverInput = z.infer<typeof quickDriverSchema>;
 
 const VAT_PRESETS = ["0", "0.07", "0.19"];
 // Leistungsart — English labels for the admin, German values stored & printed on the invoice.
@@ -62,9 +74,6 @@ const ISSUER = {
   foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · rides@step-now.de",
 };
 
-// Loose but practical email check — mirrors what the backend will accept.
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const deDate = (iso: string) =>
   iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
@@ -73,6 +82,55 @@ const addDaysDE = (iso: string, d: number | string) => {
   const dt = new Date(iso); dt.setDate(dt.getDate() + (Number(d) || 0));
   return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
+
+function emptyDefaults(): AdminOrderInput {
+  return {
+    order_date: todayISO(), preferred_date: "",
+    vehicle_id: "", driver_name: "", driver_id: null,
+    customer_id: null, first_name: "", last_name: "",
+    street: "", plz: "", ort: "", email: "", phone: "", vat_id: "", client_reference: "",
+    pickup: "", dropoff: "", route_km: "", service_type: "",
+    net: "", vat: "0.19",
+    km_total: "", km_occupied: "",
+    term: null, service_description: "",
+  };
+}
+
+// Form values → create/update payload. Mirrors the original buildPayload() exactly.
+function toPayload(v: AdminOrderInput): ParcelOrderInput {
+  return {
+    ...(v.customer_id
+      ? { customer_id: v.customer_id }
+      : {
+          customer: {
+            first_name: v.first_name, last_name: v.last_name,
+            street: v.street, plz: v.plz, ort: v.ort,
+            email: v.email || null, phone: v.phone || null,
+            company_vatid: v.vat_id || null, is_business: !!v.vat_id,
+          },
+        }),
+    // Vehicle is primary; driver is secondary. The driver field autocompletes from the active
+    // drivers — when the typed name matches a real driver we link driver_id (so the order is
+    // attributable to that driver); otherwise it stays a free-text name.
+    vehicle_id: v.vehicle_id,
+    driver_id: v.driver_id,
+    driver_name: v.driver_name.trim() || null,
+    client_reference: v.client_reference.trim() || null,
+    service_type: v.service_type || null,
+    preferred_date: v.preferred_date || null,
+    pickup_address: v.pickup, pickup_city: null,
+    destination_address: v.dropoff, destination_city: null,
+    distance_km: v.route_km ? normalizeDecimalInput(v.route_km) : null,
+    total_km: v.km_total ? normalizeDecimalInput(v.km_total) : null,
+    occupied_km: v.km_occupied ? normalizeDecimalInput(v.km_occupied) : null,
+    scheduled_datetime: v.order_date ? `${v.order_date}T00:00:00` : null,
+    net_amount: normalizeDecimalInput(v.net)!,
+    vat_rate: v.vat,
+    payment_due_days: v.term ?? 14,
+    service_description: v.service_description || null,
+    parcel_quantity: 1,
+  };
+}
 
 /** Unit-suffixed numeric input matching the admin field styling. */
 function AffixInput({ unit, invalid, ...props }: { unit: string; invalid?: boolean } & React.InputHTMLAttributes<HTMLInputElement>) {
@@ -99,48 +157,33 @@ function AffixInput({ unit, invalid, ...props }: { unit: string; invalid?: boole
 export default function NewTransportOrderPage() {
   const pushToast = useAdminToast((s) => s.push);
 
-  // ── Section 1 — Order header ──
-  const [orderDate, setOrderDate] = useState(todayISO());   // order date
-  const [preferredDate, setPreferredDate] = useState("");   // desired date
-  const [vehicles, setVehicles] = useState<VehicleAdmin[]>([]);
-  const [vehicleId, setVehicleId] = useState("");           // vehicle ★ (primary)
-  const [drivers, setDrivers] = useState<DriverAdmin[]>([]); // active drivers for autocomplete
-  const [driverName, setDriverName] = useState("");         // driver (secondary)
-  const [driverId, setDriverId] = useState<string | null>(null); // linked when name matches
+  const {
+    register, handleSubmit, control, watch, setValue, getValues,
+    formState: { errors },
+  } = useForm<AdminOrderInput>({
+    resolver: zodResolver(adminOrderSchema),
+    defaultValues: emptyDefaults(),
+  });
 
-  // ── Section 2 — Customer ──
-  const [first, setFirst] = useState("");
-  const [last, setLast] = useState("");
-  const [street, setStreet] = useState("");
-  const [plz, setPlz] = useState("");
-  const [ort, setOrt] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [vatId, setVatId] = useState("");
-  const [clientRef, setClientRef] = useState("");           // client reference number
-  const [linkedId, setLinkedId] = useState<string | null>(null);
-  const [results, setResults] = useState<CustomerAdmin[]>([]);
-  const [showNameSug, setShowNameSug] = useState(false);
-  const [showPhoneSug, setShowPhoneSug] = useState(false);
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Operational fleet (plate-bearing cars) — the order is anchored to one of these. Mirrors
+  // listFleetVehicles: active, not deleted, plate-bearing, sorted by plate.
+  const { data: vehiclesPage } = useVehicles({ size: 100 });
+  const vehicles = useMemo<VehicleAdmin[]>(() => {
+    return (vehiclesPage?.items ?? [])
+      .filter((v) => v.active && !v.is_deleted && !!v.plate)
+      .sort((a, b) => (a.plate ?? "").localeCompare(b.plate ?? ""));
+  }, [vehiclesPage]);
 
-  // ── Section 3 — Route ──
-  const [pickup, setPickup] = useState("");                 // pickup address
-  const [dropoff, setDropoff] = useState("");               // destination address
-  const [routeKm, setRouteKm] = useState("");               // KM (pickup→destination) → distance_km
-  const [serviceType, setServiceType] = useState<ServiceType | "">("");
-
-  // ── Section 4 — Pricing ──
-  const [net, setNet] = useState("");
-  const [vat, setVat] = useState("0.19");
-
-  // ── Section 5 — Logbook ──
-  const [kmGes, setKmGes] = useState("");                   // total km driven → total_km
-  const [kmBes, setKmBes] = useState("");                   // occupied km → occupied_km
-
-  // ── Section 6 — Payment term + description ──
-  const [term, setTerm] = useState<number | null>(null);    // 15 / 30 / 45
-  const [serviceDescription, setServiceDescription] = useState("");
+  // Active drivers — power the driver-name autocomplete + driver_id linkage. Locally tracked
+  // so the inline add/edit mini-form can append/replace without a refetch.
+  const { data: driversPage } = useDrivers({ active_only: true, size: 100 });
+  const [driverOverrides, setDriverOverrides] = useState<DriverAdmin[]>([]);
+  const drivers = useMemo<DriverAdmin[]>(() => {
+    const base = driversPage?.items ?? [];
+    const byId = new Map(base.map((d) => [d.id, d]));
+    for (const d of driverOverrides) byId.set(d.id, d);
+    return [...byId.values()];
+  }, [driversPage, driverOverrides]);
 
   // ── persisted order + ui ──
   const [order, setOrder] = useState<CourierOrder | null>(null);
@@ -148,30 +191,69 @@ export default function NewTransportOrderPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [previewMode, setPreviewMode] = useState<"driver" | "customer">("driver");
-  const [showErrors, setShowErrors] = useState(false);
 
-  useEffect(() => {
-    // Operational fleet (plate-bearing cars) — the order is anchored to one of these.
-    listFleetVehicles().then(setVehicles).catch(() => {});
-    // Active drivers — power the driver-name autocomplete + driver_id linkage.
-    listAdminDrivers({ active_only: true, size: 100 })
-      .then((r) => setDrivers(r.items))
-      .catch(() => {});
-  }, []);
+  // ── watched form values (preview + derived) ──
+  const orderDate = watch("order_date");
+  const preferredDate = watch("preferred_date");
+  const vehicleId = watch("vehicle_id");
+  const driverName = watch("driver_name");
+  const driverId = watch("driver_id");
+  const first = watch("first_name");
+  const last = watch("last_name");
+  const street = watch("street");
+  const plz = watch("plz");
+  const ort = watch("ort");
+  const email = watch("email");
+  const vatId = watch("vat_id");
+  const clientRef = watch("client_reference");
+  const linkedId = watch("customer_id");
+  const pickup = watch("pickup");
+  const dropoff = watch("dropoff");
+  const routeKm = watch("route_km");
+  const serviceType = watch("service_type");
+  const net = watch("net");
+  const vat = watch("vat");
+  const kmGes = watch("km_total");
+  const kmBes = watch("km_occupied");
+  const term = watch("term");
+  const serviceDescription = watch("service_description");
 
-  // Resolve free-text driver input to a real driver_id when the name matches (case-insensitive).
+  // ── Customer search ──
+  const [results, setResults] = useState<CustomerAdmin[]>([]);
+  const [showNameSug, setShowNameSug] = useState(false);
+  const [showPhoneSug, setShowPhoneSug] = useState(false);
+  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runSearch = useCallback((q: string) => {
+    if (debounce.current) clearTimeout(debounce.current);
+    if (getValues("customer_id") || !q.trim()) { setResults([]); return; }
+    debounce.current = setTimeout(() => { void searchCustomers(q).then(setResults).catch(() => {}); }, 250);
+  }, [getValues]);
+
+  function pickCustomer(c: CustomerAdmin) {
+    setValue("first_name", c.first_name); setValue("last_name", c.last_name);
+    setValue("street", c.street ?? ""); setValue("plz", c.plz ?? ""); setValue("ort", c.ort ?? "");
+    setValue("email", c.email ?? ""); setValue("phone", c.phone ?? ""); setValue("vat_id", c.company_vatid ?? "");
+    setValue("customer_id", c.id, { shouldValidate: true });
+    setShowNameSug(false); setShowPhoneSug(false); setResults([]);
+  }
+  function clearCustomer() {
+    setValue("first_name", ""); setValue("last_name", ""); setValue("street", "");
+    setValue("plz", ""); setValue("ort", ""); setValue("email", ""); setValue("phone", "");
+    setValue("vat_id", ""); setValue("customer_id", null);
+  }
+
+  // ── Driver autocomplete ──
   const [showDriverSug, setShowDriverSug] = useState(false);
   function onDriverNameChange(value: string) {
-    setDriverName(value);
+    setValue("driver_name", value);
     setShowDriverSug(true);
-    const match = drivers.find(
-      (d) => d.full_name.toLowerCase() === value.trim().toLowerCase(),
-    );
-    setDriverId(match ? match.id : null);
+    const match = drivers.find((d) => d.full_name.toLowerCase() === value.trim().toLowerCase());
+    setValue("driver_id", match ? match.id : null);
   }
   function pickDriver(d: DriverAdmin) {
-    setDriverName(d.full_name);
-    setDriverId(d.id);
+    setValue("driver_name", d.full_name);
+    setValue("driver_id", d.id);
     setShowDriverSug(false);
   }
   // Drivers matching the typed text (name or vehicle), capped for a tidy list.
@@ -187,22 +269,24 @@ export default function NewTransportOrderPage() {
     return list.slice(0, 8);
   }, [drivers, driverName]);
 
-  // ── Inline driver add/edit (optional) ───────────────────────────────
+  // ── Inline driver add/edit (optional) — kept as a small local sub-form ─────────────
   // If the typed name isn't a known driver → "Add"; if it matches one → "Edit". Keeps the
   // operator in the order flow instead of bouncing to the drivers screen.
   const [driverPanel, setDriverPanel] = useState<null | "add" | "edit">(null);
-  const [driverSaving, setDriverSaving] = useState(false);
-  const emptyDForm = { full_name: "", phone: "", email: "", vehicle_label: "", active: true };
-  const [dForm, setDForm] = useState(emptyDForm);
+  const emptyDForm: QuickDriverInput = { full_name: "", phone: "", email: "", vehicle_label: "", active: true };
+  const driverForm = useForm<QuickDriverInput>({ resolver: zodResolver(quickDriverSchema), defaultValues: emptyDForm });
+  const createDriver = useCreateDriver();
+  const updateDriver = useUpdateDriver(driverId || "");
+  const driverSaving = createDriver.isPending || updateDriver.isPending;
 
   function openAddDriver() {
-    setDForm({ ...emptyDForm, full_name: driverName.trim() });
+    driverForm.reset({ ...emptyDForm, full_name: driverName.trim() });
     setDriverPanel("add");
   }
   function openEditDriver() {
     const d = drivers.find((x) => x.id === driverId);
     if (!d) return;
-    setDForm({
+    driverForm.reset({
       full_name: d.full_name,
       phone: d.phone ?? "",
       email: d.email ?? "",
@@ -211,116 +295,46 @@ export default function NewTransportOrderPage() {
     });
     setDriverPanel("edit");
   }
-  async function saveDriver() {
-    if (!dForm.full_name.trim()) {
-      pushToast("error", "Driver name is required");
-      return;
-    }
-    setDriverSaving(true);
+  const saveDriver = driverForm.handleSubmit(async (values) => {
     const payload = {
-      full_name: dForm.full_name.trim(),
-      phone: dForm.phone.trim() || null,
-      email: dForm.email.trim() || null,
-      vehicle_label: dForm.vehicle_label.trim() || null,
-      active: dForm.active,
+      full_name: values.full_name.trim(),
+      phone: values.phone?.trim() || null,
+      email: values.email?.trim() || null,
+      vehicle_label: values.vehicle_label?.trim() || null,
+      active: values.active,
     };
     try {
       if (driverPanel === "add") {
-        const created = await createAdminDriver(payload);
-        setDrivers((prev) => [...prev, created]);
-        setDriverId(created.id);
-        setDriverName(created.full_name);
+        const created = await createDriver.mutateAsync(payload);
+        setDriverOverrides((prev) => [...prev, created]);
+        setValue("driver_id", created.id);
+        setValue("driver_name", created.full_name);
         pushToast("success", "Driver added");
       } else if (driverPanel === "edit" && driverId) {
-        const updated = await updateAdminDriver(driverId, payload);
-        setDrivers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-        setDriverName(updated.full_name);
+        const updated = await updateDriver.mutateAsync(payload);
+        setDriverOverrides((prev) => {
+          const rest = prev.filter((x) => x.id !== updated.id);
+          return [...rest, updated];
+        });
+        setValue("driver_name", updated.full_name);
         pushToast("success", "Driver updated");
       }
       setDriverPanel(null);
     } catch (e) {
       pushToast("error", "Could not save driver", e instanceof ApiError ? e.message : "Network error");
-    } finally {
-      setDriverSaving(false);
     }
-  }
+  });
 
-  const runSearch = useCallback((q: string) => {
-    if (debounce.current) clearTimeout(debounce.current);
-    if (linkedId || !q.trim()) { setResults([]); return; }
-    debounce.current = setTimeout(() => { void searchCustomers(q).then(setResults).catch(() => {}); }, 250);
-  }, [linkedId]);
-
-  function pickCustomer(c: CustomerAdmin) {
-    setFirst(c.first_name); setLast(c.last_name);
-    setStreet(c.street ?? ""); setPlz(c.plz ?? ""); setOrt(c.ort ?? "");
-    setEmail(c.email ?? ""); setPhone(c.phone ?? ""); setVatId(c.company_vatid ?? "");
-    setLinkedId(c.id); setShowNameSug(false); setShowPhoneSug(false); setResults([]);
-  }
-  function clearCustomer() {
-    setFirst(""); setLast(""); setStreet(""); setPlz(""); setOrt("");
-    setEmail(""); setPhone(""); setVatId(""); setLinkedId(null);
-  }
-
-  // ── Live validation ───────────────────────────────────────────────
-  const netNorm = useMemo(() => normalizeDecimalInput(net), [net]);
-  const v = useMemo(() => {
-    const netNum = Number(netNorm || "0");
-    const errors: Record<string, string> = {};
-    if (!vehicleId) errors.vehicle = "Vehicle is required";
-    if (!orderDate) errors.orderDate = "Order date is required";
-    if (!first.trim()) errors.first = "First name is required";
-    if (!last.trim()) errors.last = "Last name is required";
-    if (!pickup.trim()) errors.pickup = "Pickup address is required";
-    if (!dropoff.trim()) errors.dropoff = "Destination address is required";
-    if (!netNorm || netNum <= 0) errors.net = "Enter a valid net amount (e.g. 39.00)";
-    if (term == null) errors.term = "Select a payment term (15 / 30 / 45 days)";
-    if (email.trim() && !EMAIL_RE.test(email.trim())) errors.email = "Email format looks invalid";
-    return { errors, isValid: Object.keys(errors).length === 0 };
-  }, [vehicleId, orderDate, first, last, pickup, dropoff, netNorm, term, email]);
-
-  const err = (key: string) => (showErrors ? v.errors[key] : undefined);
-
-  function buildPayload(): ParcelOrderInput | null {
-    if (!v.isValid) {
-      setShowErrors(true);
-      const firstErr = Object.values(v.errors)[0];
-      pushToast("error", "Please fix the highlighted fields", firstErr);
-      return null;
-    }
-    return {
-      ...(linkedId
-        ? { customer_id: linkedId }
-        : { customer: { first_name: first, last_name: last, street, plz, ort, email: email || null, phone: phone || null, company_vatid: vatId || null, is_business: !!vatId } }),
-      // Vehicle is primary; driver is secondary. The driver field autocompletes from the active
-      // drivers — when the typed name matches a real driver we link driver_id (so the order is
-      // attributable to that driver); otherwise it stays a free-text name.
-      vehicle_id: vehicleId,
-      driver_id: driverId,
-      driver_name: driverName.trim() || null,
-      client_reference: clientRef.trim() || null,
-      service_type: serviceType || null,
-      preferred_date: preferredDate || null,
-      pickup_address: pickup, pickup_city: null,
-      destination_address: dropoff, destination_city: null,
-      distance_km: routeKm ? normalizeDecimalInput(routeKm) : null,
-      total_km: kmGes ? normalizeDecimalInput(kmGes) : null,
-      occupied_km: kmBes ? normalizeDecimalInput(kmBes) : null,
-      scheduled_datetime: orderDate ? `${orderDate}T00:00:00` : null,
-      net_amount: netNorm!,
-      vat_rate: vat,
-      payment_due_days: term ?? 14,
-      service_description: serviceDescription || null,
-      parcel_quantity: 1,
-    };
-  }
-
-  async function ensureSaved(): Promise<CourierOrder | null> {
-    const payload = buildPayload();
-    if (!payload) return null;
-    const saved = order ? await updateParcelOrder(order.id, payload) : await createParcelOrder(payload);
+  // ── persist ──
+  const createParcel = useCreateParcelOrder();
+  const updateParcel = useUpdateParcelOrder();
+  async function ensureSaved(values: AdminOrderInput): Promise<CourierOrder> {
+    const payload = toPayload(values);
+    const saved = order
+      ? await updateParcel.mutateAsync({ orderId: order.id, payload })
+      : await createParcel.mutateAsync(payload);
     setOrder(saved);
-    if (!linkedId && saved.customer_id) setLinkedId(saved.customer_id);
+    if (!values.customer_id && saved.customer_id) setValue("customer_id", saved.customer_id);
     // Create-or-reuse the invoice (backend is idempotent) so the order is immediately billable.
     if (!hasInvoice) {
       await createOrderInvoice(saved.id, {});
@@ -329,20 +343,32 @@ export default function NewTransportOrderPage() {
     return saved;
   }
 
-  function wrap(key: string, fn: () => Promise<void>) {
-    setBusy(key);
-    fn().catch((e) => pushToast("error", "Failed", e instanceof ApiError ? e.message : "Network error")).finally(() => setBusy(null));
-  }
+  // Each action runs through handleSubmit so zod validation gates the persist (matching the
+  // original buildPayload gate). onInvalid surfaces the first error like the old toast did.
+  const runAction = (key: string, fn: (saved: CourierOrder) => Promise<void> | void) =>
+    handleSubmit(
+      async (values) => {
+        setBusy(key);
+        try {
+          const saved = await ensureSaved(values);
+          await fn(saved);
+        } catch (e) {
+          pushToast("error", "Failed", e instanceof ApiError ? e.message : "Network error");
+        } finally {
+          setBusy(null);
+        }
+      },
+      (formErrors) => {
+        const firstErr = Object.values(formErrors)[0]?.message as string | undefined;
+        pushToast("error", "Please fix the highlighted fields", firstErr);
+      },
+    );
 
-  const onSave = () => wrap("save", async () => { if (await ensureSaved()) pushToast("success", "Saved"); });
-  const onPdf = () => wrap("pdf", async () => { const o = await ensureSaved(); if (o) window.open(`/api/v0/admin/orders/${o.id}/slip/pdf`, "_blank"); });
-
-  // ── Dispatch actions ──
+  const onSave = runAction("save", () => { pushToast("success", "Saved"); });
+  const onPdf = runAction("pdf", (o) => { window.open(slipPdfHref(o.id), "_blank"); });
   // WhatsApp: opens WhatsApp (Web on laptop, the app on mobile) with the driver's number and a
   // prefilled job briefing — the operator reviews and hits send. Backend moves draft→dispatched.
-  const onWhatsApp = () => wrap("wa", async () => {
-    const o = await ensureSaved();
-    if (!o) return;
+  const onWhatsApp = runAction("wa", async (o) => {
     const res = await sendDriverSlipWhatsApp(o.id);
     setOrder(res);
     if (res.whatsapp_link) {
@@ -353,21 +379,18 @@ export default function NewTransportOrderPage() {
     }
   });
   // Email the driver slip (PDF) to the assigned driver.
-  const onEmailDriver = () => wrap("mailDrv", async () => {
-    const o = await ensureSaved();
-    if (!o) return;
+  const onEmailDriver = runAction("mailDrv", async (o) => {
     setOrder(await sendDocuments(o.id, ["driver"]));
     pushToast("success", "Slip emailed to driver");
   });
   // Email the invoice (PDF) to the client.
-  const onEmailInvoice = () => wrap("mailCust", async () => {
-    const o = await ensureSaved();
-    if (!o) return;
+  const onEmailInvoice = runAction("mailCust", async (o) => {
     setOrder(await sendDocuments(o.id, ["customer"]));
     pushToast("success", "Invoice emailed to client");
   });
 
   // ── derived ──
+  const netNorm = useMemo(() => normalizeDecimalInput(net), [net]);
   const vehicle = vehicles.find((veh) => veh.id === vehicleId) || null;
   const fullName = `${first} ${last}`.trim();
   const netNum = Number(netNorm || "0");
@@ -380,14 +403,14 @@ export default function NewTransportOrderPage() {
 
   // ── Action-bar gating ──
   const saved = order != null;
-  const canSave = v.isValid && !busy;
+  const canSave = !busy;
   const canPdf = saved && !busy;
   // Dispatch gating: WhatsApp/email-to-driver need an assigned driver; email-invoice needs a
   // customer email. All require the order to be saved first.
   const canWhatsApp = saved && !!driverId && !busy;
   const canEmailDriver = saved && !!driverId && !busy;
   const canEmailInvoice = saved && !!email.trim() && !busy;
-  const saveTitle = canSave ? "Save the order" : v.isValid ? "Working…" : "Complete the required fields first";
+  const saveTitle = !busy ? "Save the order" : "Working…";
   const pdfTitle = canPdf ? "Open the driver-slip PDF" : "Save the order first to generate its PDF";
   const waTitle = canWhatsApp ? "Open WhatsApp to the driver with a prefilled job briefing" : !saved ? "Save the order first" : "Assign a driver (with a phone number) first";
   const emailDrvTitle = canEmailDriver ? "Email the driver-slip PDF to the driver" : !saved ? "Save the order first" : "Assign a driver (with an email) first";
@@ -395,7 +418,6 @@ export default function NewTransportOrderPage() {
 
   const barHint = (() => {
     if (busy) return null;
-    if (!v.isValid && showErrors) return Object.values(v.errors)[0];
     if (!saved) return "Save the order to unlock the PDF.";
     return null;
   })();
@@ -474,23 +496,34 @@ export default function NewTransportOrderPage() {
             >
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <AdminFormField label={<span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3 text-slate-400" /> Order date {req}</span>}>
-                  <DatePicker variant="admin" locale="en" value={orderDate} onChange={setOrderDate} invalid={!!err("orderDate")} aria-label="Order date" />
-                  <FieldErr msg={err("orderDate")} />
+                  <Controller
+                    name="order_date"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker variant="admin" locale="en" value={field.value} onChange={field.onChange} invalid={!!errors.order_date} aria-label="Order date" />
+                    )}
+                  />
+                  <FieldErr msg={errors.order_date?.message} />
                 </AdminFormField>
                 <AdminFormField label={<span className="flex items-center gap-1.5"><CalendarClock className="h-3 w-3 text-slate-400" /> Desired date</span>}>
-                  <DatePicker variant="admin" locale="en" value={preferredDate} onChange={setPreferredDate} aria-label="Desired date" />
+                  <Controller
+                    name="preferred_date"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker variant="admin" locale="en" value={field.value} onChange={field.onChange} aria-label="Desired date" />
+                    )}
+                  />
                 </AdminFormField>
                 <AdminFormField label={<span className="flex items-center gap-1.5"><Truck className="h-3 w-3 text-slate-900" /> Vehicle {req}</span>}>
                   <select
-                    className={cn(adminInputClass, err("vehicle") && "border-rose-400 focus:border-rose-500")}
-                    aria-invalid={!!err("vehicle") || undefined}
-                    value={vehicleId}
-                    onChange={(e) => setVehicleId(e.target.value)}
+                    className={cn(adminInputClass, errors.vehicle_id && "border-rose-400 focus:border-rose-500")}
+                    aria-invalid={!!errors.vehicle_id || undefined}
+                    {...register("vehicle_id")}
                   >
                     <option value="">– Select vehicle –</option>
                     {vehicles.map((veh) => <option key={veh.id} value={veh.id}>{vehicleLabel(veh)}</option>)}
                   </select>
-                  <FieldErr msg={err("vehicle")} />
+                  <FieldErr msg={errors.vehicle_id?.message} />
                 </AdminFormField>
                 <AdminFormField label={<span className="flex items-center gap-1.5"><User className="h-3 w-3 text-slate-400" /> Driver <span className="text-slate-400">(optional)</span>{driverId && <span className="text-emerald-600" title="Linked to a registered driver">· verknüpft</span>}</span>}>
                   <div className="relative">
@@ -588,35 +621,30 @@ export default function NewTransportOrderPage() {
                       </div>
                       <input
                         className={adminInputClass}
-                        value={dForm.full_name}
-                        onChange={(e) => setDForm((f) => ({ ...f, full_name: e.target.value }))}
+                        {...driverForm.register("full_name")}
                         placeholder="Full name *"
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           className={adminInputClass}
-                          value={dForm.phone}
-                          onChange={(e) => setDForm((f) => ({ ...f, phone: e.target.value }))}
+                          {...driverForm.register("phone")}
                           placeholder="Phone"
                         />
                         <input
                           className={adminInputClass}
-                          value={dForm.email}
-                          onChange={(e) => setDForm((f) => ({ ...f, email: e.target.value }))}
+                          {...driverForm.register("email")}
                           placeholder="Email"
                         />
                       </div>
                       <input
                         className={adminInputClass}
-                        value={dForm.vehicle_label}
-                        onChange={(e) => setDForm((f) => ({ ...f, vehicle_label: e.target.value }))}
+                        {...driverForm.register("vehicle_label")}
                         placeholder="Vehicle label (e.g. SN 1122)"
                       />
                       <label className="flex items-center gap-1.5 text-[12px] text-slate-600">
                         <input
                           type="checkbox"
-                          checked={dForm.active}
-                          onChange={(e) => setDForm((f) => ({ ...f, active: e.target.checked }))}
+                          {...driverForm.register("active")}
                         />
                         Active
                       </label>
@@ -624,7 +652,7 @@ export default function NewTransportOrderPage() {
                         <button
                           type="button"
                           onClick={saveDriver}
-                          disabled={driverSaving || !dForm.full_name.trim()}
+                          disabled={driverSaving || !driverForm.watch("full_name")?.trim()}
                           className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                         >
                           {driverSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
@@ -661,27 +689,27 @@ export default function NewTransportOrderPage() {
                 <div className="relative grid gap-3 sm:grid-cols-2">
                   <AdminFormField label={<span>First name {req}</span>}>
                     <input
-                      className={cn(adminInputClass, err("first") && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!err("first") || undefined}
+                      className={cn(adminInputClass, errors.first_name && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.first_name || undefined}
                       value={first}
                       placeholder="Type to search or add new…"
-                      onChange={(e) => { setFirst(e.target.value); setLinkedId(null); setShowNameSug(true); runSearch(`${e.target.value} ${last}`.trim()); }}
+                      onChange={(e) => { setValue("first_name", e.target.value); setValue("customer_id", null); setShowNameSug(true); runSearch(`${e.target.value} ${last}`.trim()); }}
                       onFocus={() => setShowNameSug(true)}
                       onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
                     />
-                    <FieldErr msg={err("first")} />
+                    <FieldErr msg={errors.first_name?.message} />
                   </AdminFormField>
                   <AdminFormField label={<span>Last name {req}</span>}>
                     <input
-                      className={cn(adminInputClass, err("last") && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!err("last") || undefined}
+                      className={cn(adminInputClass, errors.last_name && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.last_name || undefined}
                       value={last}
                       placeholder="Last"
-                      onChange={(e) => { setLast(e.target.value); setLinkedId(null); setShowNameSug(true); runSearch(`${first} ${e.target.value}`.trim()); }}
+                      onChange={(e) => { setValue("last_name", e.target.value); setValue("customer_id", null); setShowNameSug(true); runSearch(`${first} ${e.target.value}`.trim()); }}
                       onFocus={() => setShowNameSug(true)}
                       onBlur={() => setTimeout(() => setShowNameSug(false), 180)}
                     />
-                    <FieldErr msg={err("last")} />
+                    <FieldErr msg={errors.last_name?.message} />
                   </AdminFormField>
                   {showNameSug && results.length > 0 && sugList}
                 </div>
@@ -691,8 +719,8 @@ export default function NewTransportOrderPage() {
                     <AdminFormField label={<span className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-slate-400" /> Phone</span>}>
                       <input
                         className={adminInputClass}
-                        value={phone}
-                        onChange={(e) => { setPhone(e.target.value); setLinkedId(null); setShowPhoneSug(true); runSearch(e.target.value); }}
+                        {...register("phone")}
+                        onChange={(e) => { setValue("phone", e.target.value); setValue("customer_id", null); setShowPhoneSug(true); runSearch(e.target.value); }}
                         onFocus={() => setShowPhoneSug(true)}
                         onBlur={() => setTimeout(() => setShowPhoneSug(false), 180)}
                         placeholder="+49 …"
@@ -701,25 +729,24 @@ export default function NewTransportOrderPage() {
                     {showPhoneSug && results.length > 0 && sugList}
                   </div>
                   <AdminFormField label={<span className="flex items-center gap-1.5"><Hash className="h-3 w-3 text-slate-400" /> Client ref. no.</span>}>
-                    <input className={adminInputClass} value={clientRef} onChange={(e) => setClientRef(e.target.value)} placeholder="e.g. 000358066" />
+                    <input className={adminInputClass} {...register("client_reference")} placeholder="e.g. 000358066" />
                   </AdminFormField>
                   <AdminFormField label={<span className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-slate-400" /> Email</span>}>
                     <input
-                      className={cn(adminInputClass, err("email") && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!err("email") || undefined}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      className={cn(adminInputClass, errors.email && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.email || undefined}
+                      {...register("email")}
                       placeholder="customer@company.de"
                     />
-                    <FieldErr msg={err("email")} />
+                    <FieldErr msg={errors.email?.message} />
                   </AdminFormField>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-4">
-                  <AdminFormField label="Street"><input className={adminInputClass} value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Street & no." /></AdminFormField>
-                  <AdminFormField label="Postcode"><input className={adminInputClass} value={plz} onChange={(e) => setPlz(e.target.value)} placeholder="73207" /></AdminFormField>
-                  <AdminFormField label="City"><input className={adminInputClass} value={ort} onChange={(e) => setOrt(e.target.value)} placeholder="Plochingen" /></AdminFormField>
-                  <AdminFormField label="VAT ID"><input className={adminInputClass} value={vatId} onChange={(e) => setVatId(e.target.value)} placeholder="DE… (B2B)" /></AdminFormField>
+                  <AdminFormField label="Street"><input className={adminInputClass} {...register("street")} placeholder="Street & no." /></AdminFormField>
+                  <AdminFormField label="Postcode"><input className={adminInputClass} {...register("plz")} placeholder="73207" /></AdminFormField>
+                  <AdminFormField label="City"><input className={adminInputClass} {...register("ort")} placeholder="Plochingen" /></AdminFormField>
+                  <AdminFormField label="VAT ID"><input className={adminInputClass} {...register("vat_id")} placeholder="DE… (B2B)" /></AdminFormField>
                 </div>
               </div>
             </AdminCard>
@@ -730,30 +757,36 @@ export default function NewTransportOrderPage() {
                 <div className="sm:col-span-2">
                   <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-emerald-600" /> Pickup address {req}</span>}>
                     <input
-                      className={cn(adminInputClass, err("pickup") && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!err("pickup") || undefined}
-                      value={pickup} onChange={(e) => setPickup(e.target.value)}
+                      className={cn(adminInputClass, errors.pickup && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.pickup || undefined}
+                      {...register("pickup")}
                       placeholder="Street, postcode city"
                     />
-                    <FieldErr msg={err("pickup")} />
+                    <FieldErr msg={errors.pickup?.message} />
                   </AdminFormField>
                 </div>
                 <AdminFormField label={<span className="flex items-center gap-1.5"><Gauge className="h-3 w-3 text-slate-400" /> KM (pickup→dest.)</span>}>
-                  <AffixInput unit="km" type="number" min={0} step={1} value={routeKm} onChange={(e) => setRouteKm(e.target.value)} placeholder="0" />
+                  <Controller
+                    name="route_km"
+                    control={control}
+                    render={({ field }) => (
+                      <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
+                    )}
+                  />
                 </AdminFormField>
                 <div className="sm:col-span-2">
                   <AdminFormField label={<span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-rose-600" /> Destination address {req}</span>}>
                     <input
-                      className={cn(adminInputClass, err("dropoff") && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!err("dropoff") || undefined}
-                      value={dropoff} onChange={(e) => setDropoff(e.target.value)}
+                      className={cn(adminInputClass, errors.dropoff && "border-rose-400 focus:border-rose-500")}
+                      aria-invalid={!!errors.dropoff || undefined}
+                      {...register("dropoff")}
                       placeholder="Street, postcode city"
                     />
-                    <FieldErr msg={err("dropoff")} />
+                    <FieldErr msg={errors.dropoff?.message} />
                   </AdminFormField>
                 </div>
                 <AdminFormField label={<span className="flex items-center gap-1.5"><Tag className="h-3 w-3 text-slate-400" /> Service type</span>}>
-                  <select className={adminInputClass} value={serviceType} onChange={(e) => setServiceType(e.target.value as ServiceType | "")}>
+                  <select className={adminInputClass} {...register("service_type")}>
                     <option value="">– Select –</option>
                     {SERVICE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
@@ -769,11 +802,17 @@ export default function NewTransportOrderPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <AdminFormField label={<span>Net amount (€) {req}</span>}>
-                    <AffixInput unit="EUR" type="number" value={net} invalid={!!err("net")} onChange={(e) => setNet(e.target.value)} placeholder="0.00" />
-                    <FieldErr msg={err("net")} />
+                    <Controller
+                      name="net"
+                      control={control}
+                      render={({ field }) => (
+                        <AffixInput unit="EUR" type="number" value={field.value} invalid={!!errors.net} onChange={field.onChange} placeholder="0.00" />
+                      )}
+                    />
+                    <FieldErr msg={errors.net?.message} />
                   </AdminFormField>
                   <AdminFormField label="VAT">
-                    <select className={adminInputClass} value={vat} onChange={(e) => setVat(e.target.value)}>
+                    <select className={adminInputClass} {...register("vat")}>
                       {VAT_PRESETS.map((val) => <option key={val} value={val}>{Math.round(Number(val) * 100)}%</option>)}
                     </select>
                   </AdminFormField>
@@ -808,10 +847,22 @@ export default function NewTransportOrderPage() {
             >
               <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
                 <AdminFormField label="Total km driven">
-                  <AffixInput unit="km" type="number" min={0} step={1} value={kmGes} onChange={(e) => setKmGes(e.target.value)} placeholder="0" />
+                  <Controller
+                    name="km_total"
+                    control={control}
+                    render={({ field }) => (
+                      <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
+                    )}
+                  />
                 </AdminFormField>
                 <AdminFormField label="Occupied km">
-                  <AffixInput unit="km" type="number" min={0} step={1} value={kmBes} onChange={(e) => setKmBes(e.target.value)} placeholder="0" />
+                  <Controller
+                    name="km_occupied"
+                    control={control}
+                    render={({ field }) => (
+                      <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
+                    )}
+                  />
                 </AdminFormField>
                 <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-3 py-2">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Empty km</span>
@@ -830,7 +881,7 @@ export default function NewTransportOrderPage() {
                       <button
                         key={c.days}
                         type="button"
-                        onClick={() => setTerm(c.days)}
+                        onClick={() => setValue("term", c.days, { shouldValidate: true })}
                         className={cn(
                           "flex flex-col items-center border-[1.5px] px-2 py-2.5 text-xs font-bold transition-colors",
                           term === c.days
@@ -848,7 +899,7 @@ export default function NewTransportOrderPage() {
                       Due on: {addDaysDE(orderDate, term)} ({term} days net)
                     </p>
                   ) : (
-                    showErrors && err("term") && <FieldErr msg={err("term")} />
+                    <FieldErr msg={errors.term?.message} />
                   )}
                 </div>
 
@@ -856,8 +907,7 @@ export default function NewTransportOrderPage() {
                   <textarea
                     className={cn(adminInputClass, "h-auto py-2")}
                     rows={3}
-                    value={serviceDescription}
-                    onChange={(e) => setServiceDescription(e.target.value)}
+                    {...register("service_description")}
                     placeholder="Detailed description of the service…"
                   />
                 </AdminFormField>

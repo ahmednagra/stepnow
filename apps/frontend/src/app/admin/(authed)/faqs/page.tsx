@@ -4,41 +4,30 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, PreviewButton, FilterToolbar } from "@/components/admin";
-import { ApiError } from "@/lib/api-errors";
-import { listAdminFaqs } from "@/services/faqs";
-import type { FaqAdmin } from "@/types";
-import { useAdminToast } from "@/hooks/useAdminToast";
+import { useFaqs } from "@/hooks/queries/useFaqs";
 import { faqsPreviewUrl } from "@/utils/preview-urls";
 import { exportCsv, exportJson } from "@/utils/exporters";
 
 type ListFilter = "active" | "deleted" | "all";
 
 export default function FaqsListPage() {
-const pushToast = useAdminToast((s) => s.push);
-const [items, setItems] = useState<FaqAdmin[] | null>(null);
 const [filter, setFilter] = useState<ListFilter>("active");
 const [q, setQ] = useState("");
-const [loading, setLoading] = useState(true);
-
-const reload = useCallback(async (f: ListFilter, search: string) => {
-setLoading(true);
-try {
-const res = await listAdminFaqs({ size: 100, include_deleted: f !== "active", q: search || undefined });
-const filtered = f === "deleted" ? res.items.filter((x) => x.is_deleted) : res.items;
-setItems(filtered);
-} catch (err) {
-pushToast("error", "Could not load FAQs", err instanceof ApiError ? err.message : "Network error");
-setItems([]);
-} finally { setLoading(false); }
-}, [pushToast]);
+const [debouncedQ, setDebouncedQ] = useState("");
 
 useEffect(() => {
-const id = window.setTimeout(() => { void reload(filter, q); }, 300);
+const id = window.setTimeout(() => setDebouncedQ(q), 300);
 return () => window.clearTimeout(id);
-}, [filter, q, reload]);
+}, [q]);
+
+const { data, isLoading } = useFaqs({ size: 100, include_deleted: filter !== "active", q: debouncedQ || undefined });
+const items = useMemo(() => {
+const rows = data?.items ?? [];
+return filter === "deleted" ? rows.filter((x) => x.is_deleted) : rows;
+}, [data, filter]);
 
 return (
 <>
@@ -59,7 +48,7 @@ New FAQ
 <div className="p-6">
 <AdminCard
 flush
-title={`${items?.length ?? 0} ${items?.length === 1 ? "FAQ" : "FAQs"}`}
+title={`${items.length} ${items.length === 1 ? "FAQ" : "FAQs"}`}
 headerActions={
 <FilterToolbar
 searchValue={q}
@@ -73,21 +62,21 @@ filters={
 </select>
 }
 exports={{
-onCsv: () => items && exportCsv(items.map((x) => ({
+onCsv: () => exportCsv(items.map((x) => ({
 question_de: x.question_de, answer_de: x.answer_de,
 question_en: x.question_en, answer_en: x.answer_en,
 category: x.category ?? "", sort_order: x.sort_order,
 })), `faqs-${new Date().toISOString().slice(0, 10)}.csv`),
-onJson: () => items && exportJson(items, `faqs-${Date.now()}.json`),
+onJson: () => exportJson(items, `faqs-${Date.now()}.json`),
 onPrint: () => window.print(),
 }}
 />
 }
 >
 <AdminTable columns={["Question (DE)", "Category", "Status", "Sort", ""]}>
-{loading ? (
+{isLoading ? (
 <AdminTableEmpty loading />
-) : !items || items.length === 0 ? (
+) : items.length === 0 ? (
 <AdminTableEmpty message="No FAQs found." />
 ) : (
 items.map((x) => (

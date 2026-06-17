@@ -15,7 +15,7 @@ import {
 import {
   BOOKING_STATUSES, type BookingStatus, type BookingAdmin, type ServiceAdmin,
 } from "@/types";
-import { updateAdminBooking, deleteAdminBooking } from "@/services/bookings";
+import { useUpdateBooking, useDeleteBooking } from "@/hooks/mutations/useBookingMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { normalizeDecimalInput } from "@/utils/decimal";
@@ -58,6 +58,8 @@ function StatusPill({ status }: { status: BookingStatus }) {
 export function BookingDetail({ initial, service }: Props) {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
+  const updateBooking = useUpdateBooking(initial.id);
+  const deleteBooking = useDeleteBooking();
   const [booking, setBooking] = useState<BookingAdmin>(initial);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<BookingStatus>(initial.status);
@@ -83,8 +85,9 @@ export function BookingDetail({ initial, service }: Props) {
       }
     }
     try {
-      const updated = await updateAdminBooking(booking.id, {
-        status, quoted_price_eur: normalized, internal_notes: internalNotes.trim() || null,
+      const updated = await updateBooking.mutateAsync({
+        id: booking.id,
+        payload: { status, quoted_price_eur: normalized, internal_notes: internalNotes.trim() || null },
       });
       setBooking(updated);
       setStatus(updated.status);
@@ -100,7 +103,7 @@ export function BookingDetail({ initial, service }: Props) {
   async function onDelete() {
     setBusy(true);
     try {
-      await deleteAdminBooking(booking.id);
+      await deleteBooking.mutateAsync(booking.id);
       pushToast("success", "Booking deleted");
       router.push("/admin/bookings");
       router.refresh();

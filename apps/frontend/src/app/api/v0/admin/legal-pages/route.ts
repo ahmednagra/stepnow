@@ -1,22 +1,34 @@
 // src/app/api/v0/admin/legal-pages/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPost } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { LegalPageAdmin } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import {
+  listAdminLegalPagesServer,
+  createAdminLegalPageServer,
+} from "@/services/legalPages/legalPages.admin.server";
+import type { LegalPageCreateInput } from "@/services/legalPages/legalPages.admin.client";
 
 export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const sp = request.nextUrl.searchParams;
   const params: Record<string, string | number | boolean> = {};
-  const includeDeleted = sp.get("include_deleted");
-  if (includeDeleted === "true") params.include_deleted = true;
-  return bffHandler(() =>
-    adminGet<{ items: LegalPageAdmin[] }>(ENDPOINTS.ADMIN.LEGAL_PAGES, params),
-  );
+  if (sp.get("include_deleted") === "true") params.include_deleted = true;
+  try {
+    return NextResponse.json(await listAdminLegalPagesServer(params, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() => adminPost<LegalPageAdmin>(ENDPOINTS.ADMIN.LEGAL_PAGES, body));
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<LegalPageCreateInput>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await createAdminLegalPageServer(body, token), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

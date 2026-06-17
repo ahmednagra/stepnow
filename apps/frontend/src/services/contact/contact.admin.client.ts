@@ -1,5 +1,6 @@
 // src/services/contact/contact.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, ContactMessageAdmin } from "@/types";
 
 export interface ListAdminContactMessagesParams {
@@ -27,13 +28,13 @@ export async function listAdminContactMessages(
     if (v == null) continue;
     flat[k] = typeof v === "boolean" ? String(v) : (v as string | number);
   }
-  return nextjsApiClient.get<Paginated<ContactMessageAdmin>>("/admin/contact-messages", {
+  return nextjsApiClient.get<Paginated<ContactMessageAdmin>>(ENDPOINTS.ADMIN.CONTACT_MESSAGES, {
     params: flat,
   });
 }
 
 export async function getAdminContactMessage(id: string): Promise<ContactMessageAdmin> {
-  return nextjsApiClient.get<ContactMessageAdmin>(`/admin/contact-messages/${id}`);
+  return nextjsApiClient.get<ContactMessageAdmin>(ENDPOINTS.ADMIN.CONTACT_MESSAGE_BY_ID(id));
 }
 
 export async function updateAdminContactMessage(
@@ -41,11 +42,11 @@ export async function updateAdminContactMessage(
   payload: ContactMessageUpdateInput,
 ): Promise<ContactMessageAdmin> {
   return nextjsApiClient.patch<ContactMessageAdmin>(
-    `/admin/contact-messages/${id}`,
+    ENDPOINTS.ADMIN.CONTACT_MESSAGE_BY_ID(id),
     payload,
   );
 }
 
 export async function deleteAdminContactMessage(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/contact-messages/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.CONTACT_MESSAGE_BY_ID(id));
 }

@@ -37,7 +37,7 @@ class LegalPagesService:
 
     @staticmethod
     def create_page(db: Session, slug: str, actor: AdminUser, request: Request | None = None) -> LegalPage:
-        if db.query(LegalPage).filter(LegalPage.slug == slug).first():
+        if db.query(LegalPage).filter(LegalPage.slug == slug, LegalPage.is_deleted == False).first():
             raise ConflictError("Legal page with this slug already exists", slug=slug)
         page = LegalPage(slug=slug)
         db.add(page)

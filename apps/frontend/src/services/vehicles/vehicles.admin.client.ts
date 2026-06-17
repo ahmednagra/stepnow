@@ -1,5 +1,6 @@
 // src/services/vehicles/vehicles.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, VehicleAdmin } from "@/types";
 
 export interface ListAdminVehiclesParams {
@@ -30,13 +31,13 @@ export type VehicleUpdateInput = Partial<VehicleCreateInput>;
 export async function listAdminVehicles(
   params: ListAdminVehiclesParams = {},
 ): Promise<Paginated<VehicleAdmin>> {
-  return nextjsApiClient.get<Paginated<VehicleAdmin>>("/admin/vehicles", {
+  return nextjsApiClient.get<Paginated<VehicleAdmin>>(ENDPOINTS.ADMIN.VEHICLES, {
     params: { ...params },
   });
 }
 
 export async function getAdminVehicle(id: string): Promise<VehicleAdmin> {
-  return nextjsApiClient.get<VehicleAdmin>(`/admin/vehicles/${id}`);
+  return nextjsApiClient.get<VehicleAdmin>(ENDPOINTS.ADMIN.VEHICLE_BY_ID(id));
 }
 
 /**
@@ -68,20 +69,20 @@ export function vehicleLabel(v: VehicleAdmin): string {
 }
 
 export async function createAdminVehicle(payload: VehicleCreateInput): Promise<VehicleAdmin> {
-  return nextjsApiClient.post<VehicleAdmin>("/admin/vehicles", payload);
+  return nextjsApiClient.post<VehicleAdmin>(ENDPOINTS.ADMIN.VEHICLES, payload);
 }
 
 export async function updateAdminVehicle(
   id: string,
   payload: VehicleUpdateInput,
 ): Promise<VehicleAdmin> {
-  return nextjsApiClient.patch<VehicleAdmin>(`/admin/vehicles/${id}`, payload);
+  return nextjsApiClient.patch<VehicleAdmin>(ENDPOINTS.ADMIN.VEHICLE_BY_ID(id), payload);
 }
 
 export async function deleteAdminVehicle(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/vehicles/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.VEHICLE_BY_ID(id));
 }
 
 export async function restoreAdminVehicle(id: string): Promise<VehicleAdmin> {
-  return nextjsApiClient.post<VehicleAdmin>(`/admin/vehicles/${id}/restore`);
+  return nextjsApiClient.post<VehicleAdmin>(ENDPOINTS.ADMIN.VEHICLE_RESTORE(id));
 }

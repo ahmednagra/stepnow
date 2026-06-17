@@ -1,4 +1,5 @@
 # apps/backend/app/Schemas/common.py
+import math
 from typing import Any, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,6 +16,11 @@ class PaginationInfo(BaseModel):
 class PaginatedResponse(BaseModel, Generic[T]):
     items: list[T]
     pagination: PaginationInfo
+
+    @classmethod
+    def build(cls, items: list[T], page: int, size: int, total: int) -> "PaginatedResponse[T]":
+        pages = max(1, math.ceil(total / size)) if total else 0
+        return cls(items=items, pagination=PaginationInfo(page=page, size=size, total=total, pages=pages))
 
 
 class ApiErrorBody(BaseModel):

@@ -10,10 +10,10 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw, Eye } from "lucide-react";
 import { adminServiceSchema, type AdminServiceInput } from "@/schemas/admin-service.schema";
+import { type ServiceCreateInput } from "@/services/services";
 import {
-  createAdminService, updateAdminService, deleteAdminService, restoreAdminService,
-  type ServiceCreateInput,
-} from "@/services/services";
+  useCreateService, useUpdateService, useDeleteService, useRestoreService,
+} from "@/hooks/mutations/useServiceMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -89,6 +89,11 @@ export function ServiceForm({ mode, initial }: ServiceFormProps) {
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const createService = useCreateService();
+  const updateService = useUpdateService(initial?.id ?? "");
+  const deleteService = useDeleteService();
+  const restoreService = useRestoreService();
+
   const {
     register, handleSubmit, reset, control, watch,
     formState: { errors, isSubmitting, isDirty },
@@ -105,12 +110,12 @@ export function ServiceForm({ mode, initial }: ServiceFormProps) {
     setServerError(null);
     try {
       if (mode === "create") {
-        const created = await createAdminService(toPayload(values));
+        const created = await createService.mutateAsync(toPayload(values));
         pushToast("success", "Service created", created.title_de);
         router.push(`/admin/services/${created.id}`);
         router.refresh();
       } else if (initial) {
-        const updated = await updateAdminService(initial.id, toPayload(values));
+        const updated = await updateService.mutateAsync(toPayload(values));
         reset(fromService(updated));
         pushToast("success", "Service saved");
         router.refresh();
@@ -126,7 +131,7 @@ export function ServiceForm({ mode, initial }: ServiceFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      await deleteAdminService(initial.id);
+      await deleteService.mutateAsync(initial.id);
       pushToast("success", "Service deleted", "Soft-deleted; you can restore it.");
       router.push("/admin/services");
       router.refresh();
@@ -140,7 +145,7 @@ export function ServiceForm({ mode, initial }: ServiceFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      const restored = await restoreAdminService(initial.id);
+      const restored = await restoreService.mutateAsync(initial.id);
       reset(fromService(restored));
       pushToast("success", "Service restored");
       router.refresh();

@@ -22,9 +22,9 @@ import { ConfirmDialog } from "@/components/admin";
 import { CategoryModal } from "./_category_modal";
 import { ItemModal } from "./_item_modal";
 import {
-  updateAdminPricingCategory, deleteAdminPricingCategory, restoreAdminPricingCategory,
-  updateAdminPricingItem, deleteAdminPricingItem, restoreAdminPricingItem,
-} from "@/services/pricing";
+  useUpdatePricingCategory, useDeletePricingCategory, useRestorePricingCategory,
+  useUpdatePricingItem, useDeletePricingItem, useRestorePricingItem,
+} from "@/hooks/mutations/usePricingMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { formatPriceEur } from "@/utils/decimal";
@@ -39,6 +39,12 @@ interface PricingEditorProps {
 export function PricingEditor({ service, initialCategories }: PricingEditorProps) {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
+  const updateCategory = useUpdatePricingCategory(service.id);
+  const deleteCategory = useDeletePricingCategory(service.id);
+  const restoreCategory = useRestorePricingCategory(service.id);
+  const updateItem = useUpdatePricingItem(service.id);
+  const deleteItem = useDeletePricingItem(service.id);
+  const restoreItem = useRestorePricingItem(service.id);
   const [categories, setCategories] = useState<PricingCategoryAdmin[]>(initialCategories);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     new Set(initialCategories.filter((c) => !c.is_deleted).map((c) => c.id)),
@@ -87,7 +93,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
     try {
       await Promise.all(
         reordered.map((c, idx) =>
-          c.sort_order === idx ? Promise.resolve(c) : updateAdminPricingCategory(c.id, { sort_order: idx }),
+          c.sort_order === idx ? Promise.resolve(c) : updateCategory.mutateAsync({ categoryId: c.id, payload: { sort_order: idx } }),
         ),
       );
       pushToast("success", "Categories reordered");
@@ -116,7 +122,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
     try {
       await Promise.all(
         reordered.map((i, idx) =>
-          i.sort_order === idx ? Promise.resolve(i) : updateAdminPricingItem(i.id, { sort_order: idx }),
+          i.sort_order === idx ? Promise.resolve(i) : updateItem.mutateAsync({ itemId: i.id, payload: { sort_order: idx } }),
         ),
       );
       pushToast("success", "Items reordered");
@@ -170,7 +176,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
 
   async function onDeleteCategory(c: PricingCategoryAdmin) {
     try {
-      await deleteAdminPricingCategory(c.id);
+      await deleteCategory.mutateAsync(c.id);
       setCategories((cats) => cats.map((x) => (x.id === c.id ? { ...x, is_deleted: true } : x)));
       pushToast("success", "Category deleted", "Soft-deleted; restore to undo.");
       router.refresh();
@@ -181,7 +187,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
 
   async function onRestoreCategory(c: PricingCategoryAdmin) {
     try {
-      const restored = await restoreAdminPricingCategory(c.id);
+      const restored = await restoreCategory.mutateAsync(c.id);
       setCategories((cats) => cats.map((x) => (x.id === c.id ? { ...x, ...restored } : x)));
       pushToast("success", "Category restored");
       router.refresh();
@@ -192,7 +198,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
 
   async function onDeleteItem(item: PricingItemAdmin) {
     try {
-      await deleteAdminPricingItem(item.id);
+      await deleteItem.mutateAsync(item.id);
       setCategories((cats) =>
         cats.map((c) =>
           c.id === item.category_id
@@ -209,7 +215,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
 
   async function onRestoreItem(item: PricingItemAdmin) {
     try {
-      const restored = await restoreAdminPricingItem(item.id);
+      const restored = await restoreItem.mutateAsync(item.id);
       setCategories((cats) =>
         cats.map((c) =>
           c.id === item.category_id
@@ -312,6 +318,7 @@ export function PricingEditor({ service, initialCategories }: PricingEditorProps
       {itemModal && (
         <ItemModal
           mode={itemModal.mode}
+          serviceId={service.id}
           categoryId={itemModal.mode === "create" ? itemModal.categoryId : itemModal.item.category_id}
           item={itemModal.mode === "edit" ? itemModal.item : undefined}
           nextSortOrder={(() => {

@@ -1,5 +1,6 @@
 // src/services/uploads/uploads.admin.client.ts
 import { ApiError, ERROR_CODES, type ApiErrorBody } from "@/lib/api-errors";
+import { getAccessToken } from "@/lib/auth-storage";
 
 export interface UploadedFile {
   url: string;
@@ -21,12 +22,13 @@ export async function uploadAdminFile(file: File): Promise<UploadedFile> {
   const formData = new FormData();
   formData.append("file", file, file.name);
 
+  const token = getAccessToken();
   let res: Response;
   try {
     res = await fetch("/api/v0/admin/uploads", {
       method: "POST",
       body: formData,
-      credentials: "same-origin",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
   } catch {
     throw new ApiError(ERROR_CODES.BACKEND_UNREACHABLE, "Network error during upload", 0);

@@ -2,6 +2,7 @@
 // Browser BFF client. Auto-aborts stale in-flight requests to the same URL.
 
 import { ApiError, ApiErrorBody, ERROR_CODES } from "./api-errors";
+import { getAccessToken } from "./auth-storage";
 
 const BFF_BASE = "/api/v0";
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -37,12 +38,13 @@ async function request<T>(
 
   const headers: Record<string, string> = { Accept: "application/json", ...opts.headers };
   if (body !== undefined) headers["Content-Type"] = "application/json";
+  const token = getAccessToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   try {
     const res = await fetch(url, {
       method,
       headers,
-      credentials: "same-origin",
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });

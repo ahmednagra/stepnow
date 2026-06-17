@@ -12,7 +12,7 @@ import {
   AdminCard, AdminFormField, ConfirmDialog, adminTextareaClass,
 } from "@/components/admin";
 import type { ContactMessageAdmin } from "@/types";
-import { updateAdminContactMessage, deleteAdminContactMessage } from "@/services/contact";
+import { useUpdateContactMessage, useDeleteContactMessage } from "@/hooks/mutations/useContactMessageMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { printNode } from "@/utils/exporters";
@@ -22,6 +22,8 @@ interface Props { initial: ContactMessageAdmin; }
 export function MessageDetail({ initial }: Props) {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
+  const updateMessage = useUpdateContactMessage(initial.id);
+  const deleteMessage = useDeleteContactMessage();
   const [msg, setMsg] = useState<ContactMessageAdmin>(initial);
   const [busy, setBusy] = useState(false);
   const [notes, setNotes] = useState(initial.internal_notes ?? "");
@@ -31,7 +33,7 @@ export function MessageDetail({ initial }: Props) {
   async function onToggleHandled() {
     setBusy(true);
     try {
-      const updated = await updateAdminContactMessage(msg.id, { is_handled: !msg.is_handled });
+      const updated = await updateMessage.mutateAsync({ id: msg.id, payload: { is_handled: !msg.is_handled } });
       setMsg(updated);
       pushToast("success", updated.is_handled ? "Marked handled" : "Marked unhandled");
       router.refresh();
@@ -43,7 +45,7 @@ export function MessageDetail({ initial }: Props) {
   async function onSaveNotes() {
     setBusy(true);
     try {
-      const updated = await updateAdminContactMessage(msg.id, { internal_notes: notes.trim() || null });
+      const updated = await updateMessage.mutateAsync({ id: msg.id, payload: { internal_notes: notes.trim() || null } });
       setMsg(updated);
       setNotes(updated.internal_notes ?? "");
       pushToast("success", "Notes saved");
@@ -56,7 +58,7 @@ export function MessageDetail({ initial }: Props) {
   async function onDelete() {
     setBusy(true);
     try {
-      await deleteAdminContactMessage(msg.id);
+      await deleteMessage.mutateAsync(msg.id);
       pushToast("success", "Message deleted");
       router.push("/admin/contact-messages");
       router.refresh();

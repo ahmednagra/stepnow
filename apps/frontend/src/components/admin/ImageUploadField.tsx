@@ -55,7 +55,7 @@ export function ImageUploadField({
       <div className="relative">
         {previewUrl ? (
           <div className={cn("relative w-full overflow-hidden border border-slate-200 bg-slate-100", aspect)}>
-            <Image src={previewUrl} alt="" fill className="object-cover" sizes="(min-width: 768px) 30vw, 90vw" />
+            <Image src={previewUrl} alt={`${label} preview`} fill className="object-cover" sizes="(min-width: 768px) 30vw, 90vw" />
             <button
               type="button"
               onClick={() => onChange(null)}

@@ -10,10 +10,10 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw, Eye } from "lucide-react";
 import { adminTestimonialSchema, type AdminTestimonialInput } from "@/schemas/admin-testimonial.schema";
+import { type TestimonialCreateInput } from "@/services/testimonials";
 import {
-  createAdminTestimonial, updateAdminTestimonial, deleteAdminTestimonial, restoreAdminTestimonial,
-  type TestimonialCreateInput,
-} from "@/services/testimonials";
+  useCreateTestimonial, useUpdateTestimonial, useDeleteTestimonial, useRestoreTestimonial,
+} from "@/hooks/mutations/useTestimonialMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -79,6 +79,11 @@ export function TestimonialForm({ mode, initial }: TestimonialFormProps) {
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const createTestimonial = useCreateTestimonial();
+  const updateTestimonial = useUpdateTestimonial(initial?.id ?? "");
+  const deleteTestimonial = useDeleteTestimonial();
+  const restoreTestimonial = useRestoreTestimonial();
+
   const {
     register, handleSubmit, reset, control, watch,
     formState: { errors, isSubmitting, isDirty },
@@ -93,12 +98,12 @@ export function TestimonialForm({ mode, initial }: TestimonialFormProps) {
     setServerError(null);
     try {
       if (mode === "create") {
-        const created = await createAdminTestimonial(toPayload(values));
+        const created = await createTestimonial.mutateAsync(toPayload(values));
         pushToast("success", "Testimonial created", created.author_name);
         router.push(`/admin/testimonials/${created.id}`);
         router.refresh();
       } else if (initial) {
-        const updated = await updateAdminTestimonial(initial.id, toPayload(values));
+        const updated = await updateTestimonial.mutateAsync(toPayload(values));
         reset(fromTestimonial(updated));
         pushToast("success", "Testimonial saved");
         router.refresh();
@@ -114,7 +119,7 @@ export function TestimonialForm({ mode, initial }: TestimonialFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      await deleteAdminTestimonial(initial.id);
+      await deleteTestimonial.mutateAsync(initial.id);
       pushToast("success", "Testimonial deleted");
       router.push("/admin/testimonials");
       router.refresh();
@@ -128,7 +133,7 @@ export function TestimonialForm({ mode, initial }: TestimonialFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      const restored = await restoreAdminTestimonial(initial.id);
+      const restored = await restoreTestimonial.mutateAsync(initial.id);
       reset(fromTestimonial(restored));
       pushToast("success", "Testimonial restored");
       router.refresh();

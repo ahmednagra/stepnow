@@ -2,22 +2,9 @@
 from datetime import datetime, timezone
 from fastapi import BackgroundTasks, Request
 from sqlalchemy.orm import Session
-from config.database import SessionLocal
 from app.Schemas.forms import BookingCreate, BookingSubmitted, ContactCreate, ContactSubmitted
-from app.Services.EmailService import EmailService
 from app.Services.FormsService import FormsService
-
-
-def _dispatch_emails(email_log_ids: list[int]) -> None:
-    # Runs after response is sent. Opens its own DB session per architecture §6.
-    if not email_log_ids:
-        return
-    db = SessionLocal()
-    try:
-        for log_id in email_log_ids:
-            EmailService.dispatch_pending(db, log_id)
-    finally:
-        db.close()
+from app.Http.Controllers._background import dispatch_emails as _dispatch_emails
 
 
 class FormsController:

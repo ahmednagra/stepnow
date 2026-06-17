@@ -1,10 +1,9 @@
 # apps/backend/app/Http/Controllers/admin/DriversController.py
-import math
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
 from app.Models.admin import AdminUser
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.drivers_admin import (
     DriverCreate, DriverResponse, DriverUpdate, LicenseCheckCreate,
 )
@@ -29,11 +28,9 @@ class DriversController:
         db: Session, page: int, size: int, q: str | None, active_only: bool, include_deleted: bool,
     ) -> PaginatedResponse[DriverResponse]:
         items, total = DriversService.driver_list(db, page, size, q, active_only, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
         aggregates = DriversService.aggregates_for(db, [d.id for d in items])
-        return PaginatedResponse[DriverResponse](
-            items=[DriversController._enrich(db, d, aggregates) for d in items],
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
+        return PaginatedResponse[DriverResponse].build(
+            [DriversController._enrich(db, d, aggregates) for d in items], page, size, total
         )
 
     @staticmethod

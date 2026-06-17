@@ -1,10 +1,9 @@
 # apps/backend/app/Http/Controllers/admin/CustomersController.py
-import math
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
 from app.Models.admin import AdminUser
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.customers_admin import (
     CustomerCreate,
     CustomerResponse,
@@ -20,7 +19,6 @@ class CustomersController:
         db: Session, page: int, size: int, q: str | None, include_deleted: bool
     ) -> PaginatedResponse[CustomerResponse]:
         items, total = CustomersService.customers_list(db, page, size, q, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
 
         # One grouped query for the loaded page → per-customer rollups (no N+1).
         aggregates = CustomersService.aggregates_for(db, [c.id for c in items])
@@ -39,10 +37,7 @@ class CustomersController:
                 )
             rows.append(CustomerResponse(**base))
 
-        return PaginatedResponse[CustomerResponse](
-            items=rows,
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
-        )
+        return PaginatedResponse[CustomerResponse].build(rows, page, size, total)
 
     @staticmethod
     def get(db: Session, customer_id: UUID) -> CustomerResponse:

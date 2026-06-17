@@ -5,16 +5,14 @@
 # operations feed + the per-order channel, and an in-app notification to all admins. A failed
 # emit is logged inside the subsystem and never affects the HTTP response.
 
-import math
 from datetime import date
 from pathlib import Path
 from uuid import UUID
 from fastapi import BackgroundTasks, Request
 from sqlalchemy.orm import Session
-from config.database import SessionLocal
-from app.Core.Exceptions import NotFoundError
+from app.Core.Exceptions import AppError, NotFoundError
 from app.Models.admin import AdminUser
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.orders_admin import (
     InvoiceAdminResponse,
     InvoiceCreateFromOrder,
@@ -29,27 +27,18 @@ from app.Services.OrdersService import OrdersService
 from app.Services.InvoicesService import InvoicesService
 from app.Services.PaymentsService import PaymentsService
 from app.Services.InvoicePdfService import InvoicePdfService
-from app.Services.Notifications import NotificationService
+from app.Http.Controllers._background import notify_admins as _notify_admins
+from app.Utils.finance import money
+from app.Utils.Logger import get_logger
 from app.WebSocket.events.orders import OrderEvent, dispatch_order_event
+
+logger = get_logger("orders_controller")
 
 
 # ── Post-commit side-effects (run on BackgroundTasks, never block the response) ──
 def _emit_order_event(event_type: str, order_id: str, data: dict, actor_id: str | None) -> None:
     # WebSocket fan-out (admin feed + order:{id}). Best-effort; swallows its own errors.
     dispatch_order_event(event_type, order_id, data, actor_id)
-
-
-def _notify_admins(type_code: str, title: str, body: str | None, link: str, data: dict, actor_id: UUID | None) -> None:
-    # In-app notification to every active admin (excludes the actor who triggered it). Opens its
-    # own session, mirroring CourierController._dispatch_emails. Owns its commit.
-    db = SessionLocal()
-    try:
-        NotificationService.notify_all_admins(
-            db, type_code, title, body=body, link=link, data=data, exclude_id=actor_id
-        )
-        db.commit()
-    finally:
-        db.close()
 
 
 class OrdersController:
@@ -85,16 +74,15 @@ class OrdersController:
         include_deleted: bool,
     ) -> PaginatedResponse[OrderAdminResponse]:
         items, total = OrdersService.list(db, page, size, status, q, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
         today = date.today()
+        # One grouped SUM for the whole page + invoices eager-loaded in OrdersService.list,
+        # so the per-row derivation below issues NO queries (was 3 SUMs + 1 lazy-load per row).
+        paid_map = PaymentsService.totals_for(db, [o.id for o in items])
         rows: list[OrderAdminResponse] = []
         for o in items:
-            # Derive payment + invoice state per row so the list view can show balance/overdue
-            # without a round-trip to the detail endpoint. Same PaymentsService calls used in
-            # _detail; the page size cap (≤100) keeps this cheap.
-            paid = PaymentsService.received_total(db, o.id)
-            balance = PaymentsService.balance_due(db, o)
-            invoice = o.invoice  # one-to-one relationship (may be None)
+            paid = paid_map.get(o.id, money(0))
+            balance = money(o.gross_amount - paid)
+            invoice = o.invoice  # eager-loaded (selectinload); one-to-one, may be None
             is_overdue = bool(
                 balance > 0 and o.due_date is not None and o.due_date < today
             )
@@ -107,10 +95,7 @@ class OrdersController:
                 invoice_status=invoice.status if invoice else None,
             )
             rows.append(OrderAdminResponse(**base))
-        return PaginatedResponse[OrderAdminResponse](
-            items=rows,
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
-        )
+        return PaginatedResponse[OrderAdminResponse].build(rows, page, size, total)
 
     @staticmethod
     def get(db: Session, order_id: UUID) -> OrderDetailResponse:
@@ -168,10 +153,16 @@ class OrdersController:
         invoice = InvoicesService.create_from_order(
             db, order_id, payload, actor, request
         )
-        # Render the PDF immediately and store its (non-public) path.
-        invoice.pdf_url = InvoicePdfService.render(db, invoice)
-        db.commit()
-        db.refresh(invoice)
+        # Render the PDF immediately and store its (non-public) path. The invoice is already
+        # committed by the service, so a render failure must not fail the request — roll back the
+        # pdf_url write and let it regenerate on download (invoice_pdf_path handles missing PDFs).
+        try:
+            invoice.pdf_url = InvoicePdfService.render(db, invoice)
+            db.commit()
+            db.refresh(invoice)
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error rendering invoice PDF for invoice {invoice.invoice_number}: {e}")
         data = {"invoice_number": invoice.invoice_number, "order_id": str(order_id)}
         link = f"/admin/orders/{order_id}"
         background_tasks.add_task(_emit_order_event, OrderEvent.INVOICE_CREATED, str(order_id), data, str(actor.id))
@@ -190,9 +181,14 @@ class OrdersController:
             raise NotFoundError("Order has no invoice", order_id=str(order_id))
         path = inv.pdf_url
         if not path or not Path(path).exists():
-            inv.pdf_url = InvoicePdfService.render(db, inv)
-            db.commit()
-            db.refresh(inv)
+            try:
+                inv.pdf_url = InvoicePdfService.render(db, inv)
+                db.commit()
+                db.refresh(inv)
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
+                raise AppError("Failed to generate the invoice PDF")
             path = inv.pdf_url
         return str(Path(path).resolve())
 
@@ -227,7 +223,7 @@ class OrdersController:
     @staticmethod
     def _detail(db: Session, order) -> OrderDetailResponse:
         paid = PaymentsService.received_total(db, order.id)
-        balance = PaymentsService.balance_due(db, order)
+        balance = PaymentsService.balance_due(db, order, paid)
         payments = [
             PaymentResponse.model_validate(p)
             for p in PaymentsService.list_for_order(db, order.id)

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "Pre-booked transfers in the Plochingen/Esslingen. Fixed prices. Licensed under § 49 PBefG.",
   openGraph: {
-    locale: "en_US",
+    locale: "en_GB",
     type: "website",
     siteName: "StepNow Rides & Movers",
   },
@@ -26,7 +26,8 @@ export const metadata: Metadata = {
     canonical: "/en",
     languages: {
       "de-DE": "/",
-      "en-US": "/en",
+      "en-GB": "/en",
+      "x-default": "/",
     },
   },
 };
@@ -39,6 +40,9 @@ export default async function PublicLayoutEn({ children }: { children: ReactNode
 
   return (
     <UiStringsProvider locale="en" strings={stringsRes.strings}>
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-slate-900 focus:shadow">
+        Skip to main content
+      </a>
       <Header settings={settings} />
       <main id="main">{children}</main>
       <Footer settings={settings} />

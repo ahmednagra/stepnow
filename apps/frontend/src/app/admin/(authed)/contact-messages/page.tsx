@@ -1,14 +1,14 @@
 // apps/frontend/src/app/admin/(authed)/contact-messages/page.tsx
-// Contact messages list. Search input now debounced 300ms via inline setTimeout cleanup (no new hook file); markSelected's direct reload call is unaffected.
+// Contact messages list. Search input debounced 300ms into debouncedQ; data via useContactMessages React Query hook.
 
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, Mail, ArrowRight } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, Pagination, FilterToolbar } from "@/components/admin";
-import { listAdminContactMessages, updateAdminContactMessage } from "@/services/contact";
-import type { ContactMessageAdmin, Pagination as PaginationInfo } from "@/types";
+import { useContactMessages } from "@/hooks/queries/useContactMessages";
+import { useUpdateContactMessage } from "@/hooks/mutations/useContactMessageMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { exportCsv, exportJson, printNode } from "@/utils/exporters";
@@ -18,36 +18,30 @@ const PAGE_SIZE = 25;
 
 export default function ContactMessagesPage() {
 const pushToast = useAdminToast((s) => s.push);
-const [items, setItems] = useState<ContactMessageAdmin[] | null>(null);
-const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+const updateMessage = useUpdateContactMessage();
 const [page, setPage] = useState(1);
 const [handled, setHandled] = useState<HandledFilter>("unhandled");
 const [q, setQ] = useState("");
-const [loading, setLoading] = useState(true);
+const [debouncedQ, setDebouncedQ] = useState("");
 const [selected, setSelected] = useState<Set<string>>(new Set());
 
-const reload = useCallback(async () => {
-setLoading(true);
-try {
-const params: Parameters<typeof listAdminContactMessages>[0] = { page, size: PAGE_SIZE, q: q || undefined };
-if (handled === "unhandled") params.is_handled = false;
-else if (handled === "handled") params.is_handled = true;
-const res = await listAdminContactMessages(params);
-setItems(res.items);
-setPagination(res.pagination);
-setSelected(new Set());
-} catch (err) {
-pushToast("error", "Could not load messages", err instanceof ApiError ? err.message : "Network error");
-setItems([]);
-} finally { setLoading(false); }
-}, [page, handled, q, pushToast]);
-
 useEffect(() => {
-const id = window.setTimeout(() => { void reload(); }, 300);
+const id = window.setTimeout(() => setDebouncedQ(q), 300);
 return () => window.clearTimeout(id);
-}, [reload]);
+}, [q]);
 
-useEffect(() => { setPage(1); }, [handled, q]);
+useEffect(() => { setPage(1); }, [handled, debouncedQ]);
+
+const { data, isLoading: loading } = useContactMessages({
+page,
+size: PAGE_SIZE,
+q: debouncedQ || undefined,
+is_handled: handled === "all" ? undefined : handled === "handled",
+});
+const items = data?.items ?? [];
+const pagination = data?.pagination ?? null;
+
+useEffect(() => { setSelected(new Set()); }, [data]);
 
 function toggle(id: string) {
 setSelected((prev) => {
@@ -62,9 +56,8 @@ async function markSelected(asHandled: boolean) {
 if (selected.size === 0) return;
 const ids = Array.from(selected);
 try {
-await Promise.all(ids.map((id) => updateAdminContactMessage(id, { is_handled: asHandled })));
+await Promise.all(ids.map((id) => updateMessage.mutateAsync({ id, payload: { is_handled: asHandled } })));
 pushToast("success", `${ids.length} ${ids.length === 1 ? "message" : "messages"} updated`);
-void reload();
 } catch (err) {
 pushToast("error", "Bulk update failed", err instanceof ApiError ? err.message : "Network error");
 }

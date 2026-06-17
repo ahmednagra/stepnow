@@ -5,53 +5,38 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, PreviewButton, FilterToolbar } from "@/components/admin";
-import { ApiError } from "@/lib/api-errors";
-import { listAdminServices } from "@/services/services";
-import type { ServiceAdmin } from "@/types";
-import { useAdminToast } from "@/hooks/useAdminToast";
+import { useServices } from "@/hooks/queries";
 import { servicePreviewUrl } from "@/utils/preview-urls";
 import { exportCsv, exportJson } from "@/utils/exporters";
 
 type ListFilter = "active" | "deleted" | "all";
 
 export default function ServicesListPage() {
-  const pushToast = useAdminToast((s) => s.push);
-  const [items, setItems] = useState<ServiceAdmin[] | null>(null);
   const [filter, setFilter] = useState<ListFilter>("active");
   const [q, setQ] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const reload = useCallback(async (f: ListFilter, search: string) => {
-    setLoading(true);
-    try {
-      const res = await listAdminServices({ size: 100, include_deleted: f !== "active", q: search || undefined });
-      const filtered = f === "deleted" ? res.items.filter((s) => s.is_deleted) : res.items;
-      setItems(filtered);
-    } catch (err) {
-      pushToast("error", "Could not load services", err instanceof ApiError ? err.message : "Network error");
-      setItems([]);
-    } finally { setLoading(false); }
-  }, [pushToast]);
+  const [debouncedQ, setDebouncedQ] = useState("");
 
   useEffect(() => {
-    const id = window.setTimeout(() => { void reload(filter, q); }, 300);
+    const id = window.setTimeout(() => setDebouncedQ(q), 300);
     return () => window.clearTimeout(id);
-  }, [filter, q, reload]);
+  }, [q]);
 
-  const stats = useMemo(() => {
-    if (!items) return { total: 0, active: 0, deleted: 0 };
-    return {
-      total: items.length,
-      active: items.filter((s) => s.active && !s.is_deleted).length,
-      deleted: items.filter((s) => s.is_deleted).length,
-    };
-  }, [items]);
+  const { data, isLoading } = useServices({ size: 100, include_deleted: filter !== "active", q: debouncedQ || undefined });
+  const items = useMemo(() => {
+    const rows = data?.items ?? [];
+    return filter === "deleted" ? rows.filter((s) => s.is_deleted) : rows;
+  }, [data, filter]);
+
+  const stats = useMemo(() => ({
+    total: items.length,
+    active: items.filter((s) => s.active && !s.is_deleted).length,
+    deleted: items.filter((s) => s.is_deleted).length,
+  }), [items]);
 
   function doExportCsv() {
-    if (!items) return;
     exportCsv(items.map((s) => ({
       title_de: s.title_de, title_en: s.title_en, slug_de: s.slug_de, slug_en: s.slug_en,
       active: s.active ? "yes" : "no", sort_order: s.sort_order, updated_at: s.updated_at,
@@ -79,7 +64,7 @@ export default function ServicesListPage() {
               }
               exports={{
                 onCsv: doExportCsv,
-                onJson: () => items && exportJson(items, `services-${Date.now()}.json`),
+                onJson: () => exportJson(items, `services-${Date.now()}.json`),
                 onPrint: () => window.print(),
               }}
             />
@@ -109,9 +94,9 @@ export default function ServicesListPage() {
             table — no in-between "N services" header line. */}
         <AdminCard flush>
           <AdminTable columns={["Title", "Slug", "Status", "Sort", "Updated", ""]}>
-            {loading ? (
+            {isLoading ? (
               <AdminTableEmpty loading />
-            ) : !items || items.length === 0 ? (
+            ) : items.length === 0 ? (
               <AdminTableEmpty message="No services found." />
             ) : (
               items.map((s) => (

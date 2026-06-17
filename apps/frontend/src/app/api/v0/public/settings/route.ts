@@ -1,14 +1,17 @@
 // src/app/api/v0/public/settings/route.ts
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { bffHandler, getParam, validateEnum } from "@/lib/bff-helpers";
+import { apiErrorResponse, getParam, validateEnum } from "@/lib/bff-helpers";
 import { getSettingsServer } from "@/services/settings";
 import type { Locale } from "@/types";
 
 const LOCALES: readonly Locale[] = ["de", "en"];
 
 export async function GET(request: NextRequest) {
-  return bffHandler(async () => {
-    const locale = validateEnum<Locale>(getParam(request, "locale"), LOCALES, "de") ?? "de";
-    return getSettingsServer(locale);
-  });
+  const locale = validateEnum<Locale>(getParam(request, "locale"), LOCALES, "de") ?? "de";
+  try {
+    return NextResponse.json(await getSettingsServer(locale));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

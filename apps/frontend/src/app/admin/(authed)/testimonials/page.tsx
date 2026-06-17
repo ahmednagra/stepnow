@@ -1,16 +1,13 @@
 // apps/frontend/src/app/admin/(authed)/testimonials/page.tsx
-// Testimonials list. Search input now debounced 300ms via inline setTimeout cleanup (no new hook file).
+// Testimonials list. Search input debounced 300ms into debouncedQ; data via useTestimonials React Query hook.
 
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Star } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, PreviewButton, FilterToolbar } from "@/components/admin";
-import { ApiError } from "@/lib/api-errors";
-import { listAdminTestimonials } from "@/services/testimonials";
-import type { TestimonialAdmin } from "@/types";
-import { useAdminToast } from "@/hooks/useAdminToast";
+import { useTestimonials } from "@/hooks/queries/useTestimonials";
 import { testimonialsPreviewUrl, homePreviewUrl } from "@/utils/preview-urls";
 import { exportCsv, exportJson } from "@/utils/exporters";
 
@@ -28,28 +25,20 @@ return (
 }
 
 export default function TestimonialsListPage() {
-const pushToast = useAdminToast((s) => s.push);
-const [items, setItems] = useState<TestimonialAdmin[] | null>(null);
 const [filter, setFilter] = useState<ListFilter>("active");
 const [q, setQ] = useState("");
-const [loading, setLoading] = useState(true);
-
-const reload = useCallback(async (f: ListFilter, search: string) => {
-setLoading(true);
-try {
-const res = await listAdminTestimonials({ size: 100, include_deleted: f !== "active", q: search || undefined });
-const filtered = f === "deleted" ? res.items.filter((t) => t.is_deleted) : res.items;
-setItems(filtered);
-} catch (err) {
-pushToast("error", "Could not load testimonials", err instanceof ApiError ? err.message : "Network error");
-setItems([]);
-} finally { setLoading(false); }
-}, [pushToast]);
+const [debouncedQ, setDebouncedQ] = useState("");
 
 useEffect(() => {
-const id = window.setTimeout(() => { void reload(filter, q); }, 300);
+const id = window.setTimeout(() => setDebouncedQ(q), 300);
 return () => window.clearTimeout(id);
-}, [filter, q, reload]);
+}, [q]);
+
+const { data, isLoading } = useTestimonials({ size: 100, include_deleted: filter !== "active", q: debouncedQ || undefined });
+const items = useMemo(() => {
+const raw = data?.items ?? [];
+return filter === "deleted" ? raw.filter((t) => t.is_deleted) : raw;
+}, [data, filter]);
 
 return (
 <>
@@ -70,7 +59,7 @@ New testimonial
 <div className="p-6">
 <AdminCard
 flush
-title={`${items?.length ?? 0} ${items?.length === 1 ? "testimonial" : "testimonials"}`}
+title={`${items.length} ${items.length === 1 ? "testimonial" : "testimonials"}`}
 headerActions={
 <FilterToolbar
 searchValue={q}
@@ -84,20 +73,20 @@ filters={
 </select>
 }
 exports={{
-onCsv: () => items && exportCsv(items.map((t) => ({
+onCsv: () => items.length && exportCsv(items.map((t) => ({
 author: t.author_name, role_de: t.author_role_de, quote_de: t.quote_de,
 quote_en: t.quote_en, rating: t.rating ?? "", active: t.active ? "yes" : "no",
 })), `testimonials-${new Date().toISOString().slice(0, 10)}.csv`),
-onJson: () => items && exportJson(items, `testimonials-${Date.now()}.json`),
+onJson: () => items.length && exportJson(items, `testimonials-${Date.now()}.json`),
 onPrint: () => window.print(),
 }}
 />
 }
 >
 <AdminTable columns={["Author", "Quote", "Rating", "Status", ""]}>
-{loading ? (
+{isLoading ? (
 <AdminTableEmpty loading />
-) : !items || items.length === 0 ? (
+) : items.length === 0 ? (
 <AdminTableEmpty message="No testimonials found." />
 ) : (
 items.map((t) => (

@@ -6,14 +6,14 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.Core.Exceptions import ConflictError, NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.bookings import BookingRequest
 from app.Models.orders import Order
 from app.Services.AuditService import AuditService
 from app.Services.EmailService import EmailService
-from app.Utils.finance import compute_totals, next_sequence_number, order_date_sequence_number, year_prefix
+from app.Utils.finance import compute_totals, order_date_sequence_number
 
 DEFAULT_VAT_RATE = Decimal("0.0700")  # reduced rate (PBefG short-distance passenger transport)
 
@@ -40,7 +40,7 @@ class OrdersService:
             raise NotFoundError("Booking not found", booking_id=str(booking_id))
 
         # idempotency — one order per booking (also enforced by uq_orders_booking_id)
-        existing = db.query(Order).filter(Order.booking_id == booking_id).first()
+        existing = db.query(Order).filter(Order.booking_id == booking_id, Order.is_deleted == False).first()
         if existing:
             raise ConflictError("Booking already converted to an order", order_number=existing.order_number)
 
@@ -111,7 +111,13 @@ class OrdersService:
                 | (Order.customer_email.ilike(like))
             )
         total = query.count()
-        items = query.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
+        items = (
+            query.options(selectinload(Order.invoice))
+            .order_by(Order.created_at.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+            .all()
+        )
         return items, total
 
     @staticmethod

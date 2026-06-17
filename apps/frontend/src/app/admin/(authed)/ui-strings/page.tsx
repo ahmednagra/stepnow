@@ -1,15 +1,16 @@
 // apps/frontend/src/app/admin/(authed)/ui-strings/page.tsx
-// UI strings — search by key/value, edit inline, export. Self-contained (replaces the old _table.tsx workflow).
+// UI strings — search by key/value, edit inline, export. Data via useUiStrings (React Query). Self-contained.
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 import {
   AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty,
   FilterToolbar,
 } from "@/components/admin";
-import { listAdminUiStrings, updateAdminUiString } from "@/services/uiStrings";
+import { useUiStrings } from "@/hooks/queries/useUiStrings";
+import { useUpdateUiString } from "@/hooks/mutations/useUiStringMutations";
 import type { UiStringAdmin } from "@/types";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
@@ -17,46 +18,33 @@ import { exportCsv, exportJson } from "@/utils/exporters";
 
 export default function UiStringsPage() {
   const pushToast = useAdminToast((s) => s.push);
-  const [items, setItems] = useState<UiStringAdmin[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const updateString = useUpdateUiString();
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [drafts, setDrafts] = useState<Record<string, { de: string; en: string }>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await listAdminUiStrings({ size: 500 });
-      setItems(res.items);
-      const d: Record<string, { de: string; en: string }> = {};
-      for (const s of res.items) d[s.id] = { de: s.value_de, en: s.value_en };
-      setDrafts(d);
-    } catch (err) {
-      pushToast("error", "Could not load UI strings", err instanceof ApiError ? err.message : "Network error");
-      setItems([]);
-    } finally { setLoading(false); }
-  }, [pushToast]);
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQ(q), 300);
+    return () => window.clearTimeout(id);
+  }, [q]);
 
-  useEffect(() => { void reload(); }, [reload]);
+  const { data, isLoading } = useUiStrings({ q: debouncedQ || undefined, size: 500 });
+  const items = data?.items ?? [];
 
-  const filtered = useMemo(() => {
-    if (!items) return [];
-    const term = q.trim().toLowerCase();
-    if (!term) return items;
-    return items.filter((s) =>
-      s.key.toLowerCase().includes(term) ||
-      s.value_de.toLowerCase().includes(term) ||
-      s.value_en.toLowerCase().includes(term),
-    );
-  }, [items, q]);
+  useEffect(() => {
+    const d: Record<string, { de: string; en: string }> = {};
+    for (const s of items) d[s.id] = { de: s.value_de, en: s.value_en };
+    setDrafts(d);
+  }, [items]);
 
   async function onSave(s: UiStringAdmin) {
     setSavingId(s.id);
     try {
-      const updated = await updateAdminUiString(s.id, {
-        value_de: drafts[s.id].de, value_en: drafts[s.id].en,
+      await updateString.mutateAsync({
+        id: s.id,
+        payload: { value_de: drafts[s.id].de, value_en: drafts[s.id].en },
       });
-      setItems((prev) => prev ? prev.map((x) => x.id === s.id ? updated : x) : prev);
       pushToast("success", "String saved");
     } catch (err) {
       pushToast("error", "Save failed", err instanceof ApiError ? err.message : "Network error");
@@ -73,28 +61,28 @@ export default function UiStringsPage() {
       <div className="p-6">
         <AdminCard
           flush
-          title={`${filtered.length} string${filtered.length === 1 ? "" : "s"}`}
+          title={`${items.length} string${items.length === 1 ? "" : "s"}`}
           headerActions={
             <FilterToolbar
               searchValue={q}
               onSearchChange={setQ}
               searchPlaceholder="Search key or value…"
               exports={{
-                onCsv: () => items && exportCsv(items.map((s) => ({
+                onCsv: () => items.length > 0 && exportCsv(items.map((s) => ({
                   key: s.key, value_de: s.value_de, value_en: s.value_en,
                 })), `ui-strings-${new Date().toISOString().slice(0, 10)}.csv`),
-                onJson: () => items && exportJson(items, `ui-strings-${Date.now()}.json`),
+                onJson: () => items.length > 0 && exportJson(items, `ui-strings-${Date.now()}.json`),
               }}
             />
           }
         >
           <AdminTable columns={["Key", "DE", "EN", ""]} stickyHeader>
-            {loading ? (
+            {isLoading ? (
               <AdminTableEmpty message="Loading…" />
-            ) : filtered.length === 0 ? (
+            ) : items.length === 0 ? (
               <AdminTableEmpty message="No strings found." />
             ) : (
-              filtered.map((s) => {
+              items.map((s) => {
                 const draft = drafts[s.id] ?? { de: s.value_de, en: s.value_en };
                 const dirty = draft.de !== s.value_de || draft.en !== s.value_en;
                 return (

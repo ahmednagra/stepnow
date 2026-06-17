@@ -6,7 +6,7 @@ import { getUiStringsServer } from "@/services/uiStrings";
 import { getSettingsServer } from "@/services/settings";
 import { listFaqsServer } from "@/services/faqs";
 import { createT } from "@/lib/i18n/t";
-import { buildLocalBusinessJsonLd, buildFaqPageJsonLd, buildMetadata } from "@/lib/seo";
+import { buildLocalBusinessJsonLd, buildFaqPageJsonLd, buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { Container } from "@/components/shared";
 import {
@@ -178,6 +178,12 @@ export default async function ContactPageEn() {
 
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />
       {topFaqs.length > 0 && <JsonLd data={buildFaqPageJsonLd(topFaqs)} />}
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: pickT(t, "nav.home", "Home"), href: "/en" },
+          { name: t("contact.page.title"), href: "/en/contact" },
+        ])}
+      />
     </>
   );
 }

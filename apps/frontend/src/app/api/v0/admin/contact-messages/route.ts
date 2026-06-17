@@ -1,30 +1,26 @@
 // src/app/api/v0/admin/contact-messages/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler } from "@/lib/bff-helpers";
-import { adminGet } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { Paginated, ContactMessageAdmin } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, apiErrorResponse } from "@/lib/bff-helpers";
+import { listAdminContactMessagesServer } from "@/services/contact/contact.admin.server";
 
 export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const sp = request.nextUrl.searchParams;
   const params: Record<string, string | number | boolean> = {};
-  const page = sp.get("page");
-  const size = sp.get("size");
+  if (sp.get("page")) params.page = Number(sp.get("page"));
+  if (sp.get("size")) params.size = Number(sp.get("size"));
   const isHandled = sp.get("is_handled");
-  const cat = sp.get("subject_category");
-  const q = sp.get("q");
-  const fromDate = sp.get("from_date");
-  const toDate = sp.get("to_date");
-  const includeDeleted = sp.get("include_deleted");
-  if (page) params.page = Number(page);
-  if (size) params.size = Number(size);
   if (isHandled === "true" || isHandled === "false") params.is_handled = isHandled === "true";
-  if (cat) params.subject_category = cat;
-  if (q) params.q = q;
-  if (fromDate) params.from_date = fromDate;
-  if (toDate) params.to_date = toDate;
-  if (includeDeleted === "true") params.include_deleted = true;
-  return bffHandler(() =>
-    adminGet<Paginated<ContactMessageAdmin>>(ENDPOINTS.ADMIN.CONTACT_MESSAGES, params),
-  );
+  if (sp.get("subject_category")) params.subject_category = sp.get("subject_category")!;
+  if (sp.get("q")) params.q = sp.get("q")!;
+  if (sp.get("from_date")) params.from_date = sp.get("from_date")!;
+  if (sp.get("to_date")) params.to_date = sp.get("to_date")!;
+  if (sp.get("include_deleted") === "true") params.include_deleted = true;
+  try {
+    return NextResponse.json(await listAdminContactMessagesServer(params, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

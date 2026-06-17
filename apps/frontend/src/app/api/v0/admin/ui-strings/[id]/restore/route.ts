@@ -1,10 +1,15 @@
 // src/app/api/v0/admin/ui-strings/[id]/restore/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler } from "@/lib/bff-helpers";
-import { adminPost } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { UiStringAdmin } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, apiErrorResponse } from "@/lib/bff-helpers";
+import { restoreAdminUiStringServer } from "@/services/uiStrings/uiStrings.admin.server";
 
-export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(() => adminPost<UiStringAdmin>(ENDPOINTS.ADMIN.UI_STRING_RESTORE(params.id)));
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    return NextResponse.json(await restoreAdminUiStringServer(params.id, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

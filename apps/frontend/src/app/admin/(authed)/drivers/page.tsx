@@ -12,9 +12,10 @@ import { Plus, Download, AlertTriangle, ChevronDown, Clock, CheckCheck, MoreVert
 import { AdminPageHeader, AdminCard, FilterToolbar } from "@/components/admin";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
+import { useDrivers } from "@/hooks/queries/useDrivers";
+import { useRecordLicenseCheck } from "@/hooks/mutations/useDriverMutations";
 import { exportCsv, exportJson, printNode } from "@/utils/exporters";
 import {
-  listAdminDrivers, recordLicenseCheck,
   type DriverAdmin, type ComplianceStatus,
 } from "@/services/drivers";
 import { cn } from "@/utils/cn";
@@ -59,12 +60,15 @@ const chipCls = (active: boolean) =>
 
 export default function DriversPage() {
   const pushToast = useAdminToast((s) => s.push);
-  const [drivers, setDrivers] = useState<DriverAdmin[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const recordCheck = useRecordLicenseCheck();
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
+
+  const { data, isLoading: loading } = useDrivers({ q: debouncedQ || undefined, page, size: PAGE_SIZE });
+  const drivers = data?.items ?? null;
+  const pages = data?.pagination.pages ?? 1;
+  const total = data?.pagination.total ?? 0;
 
   const [statusF, setStatusF] = useState<StatusFilter>("all");
   const [compF, setCompF] = useState<CompFilter>(null);
@@ -92,18 +96,11 @@ export default function DriversPage() {
     window.addEventListener("pointerup", onUp);
   }, []);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await listAdminDrivers({ page, size: PAGE_SIZE, q: q || undefined });
-      setDrivers(res.items); setPages(res.pagination.pages); setTotal(res.pagination.total);
-    } catch (err) {
-      pushToast("error", "Could not load drivers", err instanceof ApiError ? err.message : "Network error");
-    } finally { setLoading(false); }
-  }, [page, q, pushToast]);
-
-  useEffect(() => { void reload(); }, [reload]);
-  useEffect(() => { setPage(1); }, [q]);
+  // Debounce the search input, then reset to the first page on a new query.
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedQ(q); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -159,8 +156,7 @@ export default function DriversPage() {
     setCheckingId(id);
     setOpenMenuId(null);
     try {
-      const updated = await recordLicenseCheck(id, {});
-      setDrivers((list) => (list ?? []).map((d) => (d.id === id ? updated : d)));
+      const updated = await recordCheck.mutateAsync({ id });
       pushToast("success", "Licence check recorded", `${name} · next due ${deDate(updated.next_license_check_due)}`);
     } catch (err) {
       pushToast("error", "Could not record check", err instanceof ApiError ? err.message : "Network error");
@@ -243,7 +239,7 @@ export default function DriversPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-[240px] flex-1">
-            <FilterToolbar searchValue={q} onSearchChange={(v: string) => { setPage(1); setQ(v); }} searchPlaceholder="Search name, email, phone, licence no…" />
+            <FilterToolbar searchValue={q} onSearchChange={(v: string) => setQ(v)} searchPlaceholder="Search name, email, phone, licence no…" />
           </div>
           <div className="relative" ref={exportRef}>
             <button type="button" onClick={() => setExportOpen((v) => !v)}

@@ -18,6 +18,7 @@ from app.Models.orders import Order
 
 if TYPE_CHECKING:
     from app.Models.driver_vehicle_assignments import DriverVehicleAssignment
+    from app.Models.vehicles import Vehicle
 
 
 class Driver(Base, TimestampMixin, SoftDeleteMixin):
@@ -52,6 +53,10 @@ class Driver(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     orders: Mapped[list["Order"]] = relationship(back_populates="driver")  # noqa: F821
+
+    # The driver's current/default fleet car (legacy vehicle_id snapshot). One-directional;
+    # foreign_keys disambiguates the multiple driver/vehicle FK paths in the registry.
+    vehicle: Mapped["Vehicle | None"] = relationship(foreign_keys=[vehicle_id])
 
     # Full history of fleet cars this driver was assigned to (weekly rotation etc.). The OPEN
     # assignment (end_date IS NULL) is the current car. This is the source of truth for the

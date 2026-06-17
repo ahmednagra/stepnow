@@ -1,27 +1,43 @@
 // src/app/api/v0/admin/pricing-categories/[id]/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPatch, adminDelete } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { PricingCategoryAdmin } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import {
+  getAdminPricingCategoryServer,
+  updateAdminPricingCategoryServer,
+  deleteAdminPricingCategoryServer,
+} from "@/services/pricing/pricing.admin.server";
+import type { PricingCategoryUpdateInput } from "@/services/pricing/pricing.admin.client";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(() =>
-    adminGet<PricingCategoryAdmin>(ENDPOINTS.ADMIN.PRICING_CATEGORY(params.id)),
-  );
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    return NextResponse.json(await getAdminPricingCategoryServer(params.id, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() =>
-    adminPatch<PricingCategoryAdmin>(ENDPOINTS.ADMIN.PRICING_CATEGORY(params.id), body),
-  );
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<PricingCategoryUpdateInput>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await updateAdminPricingCategoryServer(params.id, body, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(async () => {
-    await adminDelete(ENDPOINTS.ADMIN.PRICING_CATEGORY(params.id));
-    return undefined as unknown as void;
-  }, 204);
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    await deleteAdminPricingCategoryServer(params.id, token);
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

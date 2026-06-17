@@ -2,6 +2,7 @@
 // Admin client calls. Used by the admin UI components via the BFF passthroughs.
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { SettingsAdmin } from "@/types";
 
 export interface SettingsUpdate {
@@ -33,9 +34,9 @@ export interface SettingsUpdate {
 }
 
 export async function fetchAdminSettings(): Promise<SettingsAdmin> {
-  return nextjsApiClient.get<SettingsAdmin>("/admin/settings");
+  return nextjsApiClient.get<SettingsAdmin>(ENDPOINTS.ADMIN.SETTINGS);
 }
 
 export async function updateAdminSettings(payload: SettingsUpdate): Promise<SettingsAdmin> {
-  return nextjsApiClient.patch<SettingsAdmin>("/admin/settings", payload);
+  return nextjsApiClient.patch<SettingsAdmin>(ENDPOINTS.ADMIN.SETTINGS, payload);
 }

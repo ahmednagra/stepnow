@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from config.settings import settings
 from config.database import SessionLocal
-from app.Core.Exceptions import ConflictError, NotFoundError
+from app.Core.Exceptions import ConflictError, GoneError, NotFoundError
 from app.Models.message_delivery import MessageDelivery
 from app.Models.orders import Order
 from app.Services.Notifications import NotificationService
@@ -186,7 +186,7 @@ class MessageDeliveryService:
 
         now = datetime.now(timezone.utc)
         if row.token_expires_at and row.token_expires_at < now:
-            raise ConflictError("This link has expired")
+            raise GoneError("This link has expired")
         return row
 
     @staticmethod
@@ -231,7 +231,7 @@ class MessageDeliveryService:
             row = db.get(MessageDelivery, delivery_id)
             if not row:
                 return
-            order = db.query(Order).filter(Order.id == row.source_entity_id).first()
+            order = db.query(Order).filter(Order.id == row.source_entity_id, Order.is_deleted == False).first()
             if not order:
                 return
 

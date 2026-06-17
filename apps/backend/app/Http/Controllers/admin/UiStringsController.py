@@ -1,11 +1,10 @@
 # apps/backend/app/Http/Controllers/admin/UiStringsController.py
-import math
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
 from app.Models.admin import AdminUser
 from app.Schemas.admin.ui_strings import UiStringAdminResponse, UiStringCreate, UiStringUpdate
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Services.UiStringsService import UiStringsService
 
 
@@ -14,10 +13,8 @@ class UiStringsController:
     @staticmethod
     def list_strings(db: Session, page: int, size: int, q: str | None, namespace: str | None, include_deleted: bool) -> PaginatedResponse[UiStringAdminResponse]:
         items, total = UiStringsService.list_strings(db, page, size, q, namespace, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
-        return PaginatedResponse[UiStringAdminResponse](
-            items=[UiStringAdminResponse.model_validate(s) for s in items],
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
+        return PaginatedResponse[UiStringAdminResponse].build(
+            [UiStringAdminResponse.model_validate(s) for s in items], page, size, total
         )
 
     @staticmethod

@@ -1,24 +1,45 @@
 // src/app/api/v0/admin/drivers/[id]/route.ts
 // BFF handler for a single driver. Forwards to FastAPI /admin/drivers/{id}.
 
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPatch, adminDelete } from "@/lib/admin-bff";
-import type { DriverAdmin } from "@/services/drivers";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import {
+  getAdminDriverServer,
+  updateAdminDriverServer,
+  deleteAdminDriverServer,
+} from "@/services/drivers/drivers.admin.server";
+import type { DriverInput } from "@/services/drivers/drivers.admin.client";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(() => adminGet<DriverAdmin>(`/admin/drivers/${params.id}`));
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    return NextResponse.json(await getAdminDriverServer(params.id, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() => adminPatch<DriverAdmin>(`/admin/drivers/${params.id}`, body));
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<Partial<DriverInput>>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await updateAdminDriverServer(params.id, body, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(async () => {
-    await adminDelete(`/admin/drivers/${params.id}`);
-    return undefined as unknown as void;
-  }, 204);
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    await deleteAdminDriverServer(params.id, token);
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

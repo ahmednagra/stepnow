@@ -1,13 +1,18 @@
 // src/app/api/v0/admin/notifications/[id]/archive/route.ts
 // BFF handler to archive one notification. Forwards to FastAPI POST /admin/notifications/{id}/archive.
 
-import type { NextRequest } from "next/server";
-import { bffHandler } from "@/lib/bff-helpers";
-import { adminPost } from "@/lib/admin-bff";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, apiErrorResponse } from "@/lib/bff-helpers";
+import { archiveAdminNotificationServer } from "@/services/notifications/notifications.admin.server";
 
-export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(async () => {
-    await adminPost<void>(`/admin/notifications/${params.id}/archive`);
-    return undefined as unknown as void;
-  }, 204);
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    await archiveAdminNotificationServer(params.id, token);
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

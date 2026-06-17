@@ -20,7 +20,7 @@ from __future__ import annotations
 from decimal import Decimal
 from uuid import UUID
 from sqlalchemy import Date, and_, cast, func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.Models.driver_vehicle_assignments import DriverVehicleAssignment
 from app.Models.orders import Order
@@ -84,9 +84,6 @@ class FleetService:
             sort_order=0,
             image_url=None,
         )
-        if notes:
-            # Vehicle has no notes column; carry provenance on the English name only if useful.
-            pass
         db.add(vehicle)
         db.flush()
         return vehicle
@@ -193,9 +190,9 @@ class FleetService:
     @staticmethod
     def driver_vehicle_summary(db: Session, driver_id: UUID) -> list[dict]:
         """One row per car the driver was assigned to: window(s), orders count, gross total."""
-        out: list[dict] = []
         assignments = (
             db.query(DriverVehicleAssignment)
+            .options(joinedload(DriverVehicleAssignment.vehicle))
             .filter(
                 DriverVehicleAssignment.driver_id == driver_id,
                 DriverVehicleAssignment.is_deleted == False,  # noqa: E712
@@ -203,17 +200,25 @@ class FleetService:
             .order_by(DriverVehicleAssignment.start_date)
             .all()
         )
-        for a in assignments:
-            orders = FleetService.driver_vehicle_orders(db, driver_id, a.vehicle_id)
-            out.append(
-                {
-                    "vehicle_id": a.vehicle_id,
-                    "plate": a.vehicle.plate if a.vehicle else None,
-                    "start_date": a.start_date,
-                    "end_date": a.end_date,
-                    "is_primary": a.is_primary,
-                    "orders_count": len(orders),
-                    "gross_total": sum((o.gross_amount for o in orders), Decimal("0.00")),
-                }
-            )
-        return out
+        # Fetch the driver's attributed orders ONCE, then bucket by vehicle in Python. An attributed
+        # order's window (or direct link) already constrains Order.vehicle_id, so an order in the
+        # bucket for vehicle V is exactly one the old per-V driver_vehicle_orders call returned —
+        # the grouped count/total is value-identical. Two windows on the same car still emit two
+        # rows (one per assignment), each carrying that car's full bucket, as before.
+        by_vehicle: dict[UUID, list[Order]] = {}
+        for o in FleetService.driver_orders(db, driver_id):
+            by_vehicle.setdefault(o.vehicle_id, []).append(o)
+        return [
+            {
+                "vehicle_id": a.vehicle_id,
+                "plate": a.vehicle.plate if a.vehicle else None,
+                "start_date": a.start_date,
+                "end_date": a.end_date,
+                "is_primary": a.is_primary,
+                "orders_count": len(by_vehicle.get(a.vehicle_id, [])),
+                "gross_total": sum(
+                    (o.gross_amount for o in by_vehicle.get(a.vehicle_id, [])), Decimal("0.00")
+                ),
+            }
+            for a in assignments
+        ]

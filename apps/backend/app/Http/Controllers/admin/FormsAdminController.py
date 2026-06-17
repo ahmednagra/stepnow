@@ -1,7 +1,6 @@
 # apps/backend/app/Http/Controllers/admin/FormsAdminController.py
 # Forms admin controller. Adds revenue_series() and service_mix() for the dashboard aggregation routes.
 
-import math
 from datetime import date
 from uuid import UUID
 from fastapi import Request
@@ -17,7 +16,7 @@ from app.Schemas.admin.forms_admin import (
     ServiceMixResponse,
     ServiceMixSlice,
 )
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Services.FormsAdminService import FormsAdminService
 
 
@@ -26,10 +25,8 @@ class FormsAdminController:
     @staticmethod
     def list_bookings(db: Session, page: int, size: int, status: str | None, q: str | None, include_deleted: bool) -> PaginatedResponse[BookingAdminResponse]:
         items, total = FormsAdminService.list_bookings(db, page, size, status, q, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
-        return PaginatedResponse[BookingAdminResponse](
-            items=[BookingAdminResponse.model_validate(b) for b in items],
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
+        return PaginatedResponse[BookingAdminResponse].build(
+            [BookingAdminResponse.model_validate(b) for b in items], page, size, total
         )
 
     @staticmethod
@@ -50,10 +47,8 @@ class FormsAdminController:
     @staticmethod
     def list_contact_messages(db: Session, page: int, size: int, category: str | None, is_handled: bool | None, q: str | None, include_deleted: bool) -> PaginatedResponse[ContactMessageAdminResponse]:
         items, total = FormsAdminService.list_contact_messages(db, page, size, category, is_handled, q, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
-        return PaginatedResponse[ContactMessageAdminResponse](
-            items=[ContactMessageAdminResponse.model_validate(m) for m in items],
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
+        return PaginatedResponse[ContactMessageAdminResponse].build(
+            [ContactMessageAdminResponse.model_validate(m) for m in items], page, size, total
         )
 
     @staticmethod

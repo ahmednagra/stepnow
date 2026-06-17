@@ -3,6 +3,8 @@
 // self-contained types in the spirit of services/admin-stats/index.ts).
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
+import { getAccessToken } from "@/lib/auth-storage";
 import type { Paginated } from "@/types";
 
 export type OrderStatus = "open" | "completed" | "cancelled";
@@ -124,46 +126,49 @@ export interface ListAdminOrdersParams {
 }
 
 export async function convertBookingToOrder(bookingId: string, payload: ConvertBookingInput): Promise<OrderDetail> {
-  return nextjsApiClient.post<OrderDetail>(`/admin/bookings/${bookingId}/convert-to-order`, payload);
+  return nextjsApiClient.post<OrderDetail>(ENDPOINTS.ADMIN.BOOKING_CONVERT_TO_ORDER(bookingId), payload);
 }
 
 export async function listAdminOrders(params: ListAdminOrdersParams = {}): Promise<Paginated<OrderAdmin>> {
-  return nextjsApiClient.get<Paginated<OrderAdmin>>("/admin/orders", { params: { ...params } });
+  return nextjsApiClient.get<Paginated<OrderAdmin>>(ENDPOINTS.ADMIN.ORDERS, { params: { ...params } });
 }
 
 export async function getAdminOrder(id: string): Promise<OrderDetail> {
-  return nextjsApiClient.get<OrderDetail>(`/admin/orders/${id}`);
+  return nextjsApiClient.get<OrderDetail>(ENDPOINTS.ADMIN.ORDER_BY_ID(id));
 }
 
 export async function updateAdminOrder(
   id: string,
   payload: { status?: OrderStatus; driver_name?: string | null; internal_notes?: string | null },
 ): Promise<OrderDetail> {
-  return nextjsApiClient.patch<OrderDetail>(`/admin/orders/${id}`, payload);
+  return nextjsApiClient.patch<OrderDetail>(ENDPOINTS.ADMIN.ORDER_BY_ID(id), payload);
 }
 
 export async function deleteAdminOrder(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/orders/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.ORDER_BY_ID(id));
 }
 
 export async function createOrderInvoice(orderId: string, payload: CreateInvoiceInput): Promise<InvoiceAdmin> {
-  return nextjsApiClient.post<InvoiceAdmin>(`/admin/orders/${orderId}/invoice`, payload);
+  return nextjsApiClient.post<InvoiceAdmin>(ENDPOINTS.ADMIN.ORDER_INVOICE(orderId), payload);
 }
 
 export async function listOrderPayments(orderId: string): Promise<PaymentAdmin[]> {
-  return nextjsApiClient.get<PaymentAdmin[]>(`/admin/orders/${orderId}/payments`);
+  return nextjsApiClient.get<PaymentAdmin[]>(ENDPOINTS.ADMIN.ORDER_PAYMENTS(orderId));
 }
 
 export async function recordOrderPayment(orderId: string, payload: RecordPaymentInput): Promise<PaymentAdmin> {
-  return nextjsApiClient.post<PaymentAdmin>(`/admin/orders/${orderId}/payments`, payload);
+  return nextjsApiClient.post<PaymentAdmin>(ENDPOINTS.ADMIN.ORDER_PAYMENTS(orderId), payload);
 }
 
 /**
  * Authenticated download of the invoice PDF (it streams behind get_current_admin).
- * Goes through the Next BFF with the session cookie. The BFF base is "/api/v0".
+ * Goes through the Next BFF with the bearer token (localStorage). The BFF base is "/api/v0".
  */
 export async function downloadInvoicePdf(orderId: string, invoiceNumber?: string): Promise<void> {
-  const res = await fetch(`/api/v0/admin/orders/${orderId}/invoice/pdf`, { credentials: "include" });
+  const token = getAccessToken();
+  const res = await fetch(`/api/v0${ENDPOINTS.ADMIN.ORDER_INVOICE(orderId)}/pdf`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   if (!res.ok) throw new Error("PDF download failed");
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

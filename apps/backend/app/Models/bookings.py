@@ -3,12 +3,16 @@
 
 from datetime import datetime
 from uuid import UUID, uuid4
+from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
+
+if TYPE_CHECKING:
+    from app.Models.services import Service
 
 
 class BookingRequest(Base, TimestampMixin, SoftDeleteMixin):
@@ -44,3 +48,6 @@ class BookingRequest(Base, TimestampMixin, SoftDeleteMixin):
     quoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     internal_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # One-directional — Service is a content model that shouldn't know about bookings.
+    service: Mapped["Service | None"] = relationship()

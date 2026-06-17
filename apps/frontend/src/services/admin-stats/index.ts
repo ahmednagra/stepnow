@@ -2,6 +2,7 @@
 // Admin stats client. Types and browser fetchers for the new SQL-aggregated dashboard endpoints.
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 
 export interface RevenueSeriesPoint {
 day: string;
@@ -26,13 +27,13 @@ total_bookings: number;
 }
 
 export async function fetchRevenueSeries(fromDate: string, toDate: string): Promise<RevenueSeriesResponse> {
-return nextjsApiClient.get<RevenueSeriesResponse>("/admin/bookings/revenue-series", {
+return nextjsApiClient.get<RevenueSeriesResponse>(ENDPOINTS.ADMIN.BOOKINGS_REVENUE_SERIES, {
 params: { from_date: fromDate, to_date: toDate },
 });
 }
 
 export async function fetchServiceMix(fromDate: string, toDate: string): Promise<ServiceMixResponse> {
-return nextjsApiClient.get<ServiceMixResponse>("/admin/bookings/service-mix", {
+return nextjsApiClient.get<ServiceMixResponse>(ENDPOINTS.ADMIN.BOOKINGS_SERVICE_MIX, {
 params: { from_date: fromDate, to_date: toDate },
 });
 }

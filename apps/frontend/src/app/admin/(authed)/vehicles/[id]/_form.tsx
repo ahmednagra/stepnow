@@ -10,10 +10,10 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw, Eye } from "lucide-react";
 import { adminVehicleSchema, type AdminVehicleInput } from "@/schemas/admin-vehicle.schema";
+import { type VehicleCreateInput } from "@/services/vehicles";
 import {
-  createAdminVehicle, updateAdminVehicle, deleteAdminVehicle, restoreAdminVehicle,
-  type VehicleCreateInput,
-} from "@/services/vehicles";
+  useCreateVehicle, useUpdateVehicle, useDeleteVehicle, useRestoreVehicle,
+} from "@/hooks/mutations/useVehicleMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -78,6 +78,11 @@ export function VehicleForm({ mode, initial }: VehicleFormProps) {
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const createVehicle = useCreateVehicle();
+  const updateVehicle = useUpdateVehicle(initial?.id ?? "");
+  const deleteVehicle = useDeleteVehicle();
+  const restoreVehicle = useRestoreVehicle();
+
   const {
     register, handleSubmit, reset, control, watch,
     formState: { errors, isSubmitting, isDirty },
@@ -92,12 +97,12 @@ export function VehicleForm({ mode, initial }: VehicleFormProps) {
     setServerError(null);
     try {
       if (mode === "create") {
-        const created = await createAdminVehicle(toPayload(values));
+        const created = await createVehicle.mutateAsync(toPayload(values));
         pushToast("success", "Vehicle created", created.name_de);
         router.push(`/admin/vehicles/${created.id}`);
         router.refresh();
       } else if (initial) {
-        const updated = await updateAdminVehicle(initial.id, toPayload(values));
+        const updated = await updateVehicle.mutateAsync(toPayload(values));
         reset(fromVehicle(updated));
         pushToast("success", "Vehicle saved");
         router.refresh();
@@ -113,7 +118,7 @@ export function VehicleForm({ mode, initial }: VehicleFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      await deleteAdminVehicle(initial.id);
+      await deleteVehicle.mutateAsync(initial.id);
       pushToast("success", "Vehicle deleted", "Soft-deleted; you can restore it.");
       router.push("/admin/vehicles");
       router.refresh();
@@ -127,7 +132,7 @@ export function VehicleForm({ mode, initial }: VehicleFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      const restored = await restoreAdminVehicle(initial.id);
+      const restored = await restoreVehicle.mutateAsync(initial.id);
       reset(fromVehicle(restored));
       pushToast("success", "Vehicle restored");
       router.refresh();

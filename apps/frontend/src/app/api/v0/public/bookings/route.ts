@@ -1,6 +1,7 @@
 // src/app/api/v0/public/bookings/route.ts
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { bffHandler, errorResponse, parseJsonBody } from "@/lib/bff-helpers";
+import { apiErrorResponse, errorResponse, parseJsonBody } from "@/lib/bff-helpers";
 import { submitBookingServer } from "@/services/bookings";
 import type { BookingCreate } from "@/types";
 
@@ -25,5 +26,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return bffHandler(() => submitBookingServer(body), 201);
+  try {
+    return NextResponse.json(await submitBookingServer(body), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

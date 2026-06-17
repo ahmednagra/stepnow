@@ -1,5 +1,6 @@
 // src/services/bookings/bookings.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, BookingAdmin, BookingStatus } from "@/types";
 
 export interface ListAdminBookingsParams {
@@ -22,22 +23,22 @@ export interface BookingStatusUpdateInput {
 export async function listAdminBookings(
   params: ListAdminBookingsParams = {},
 ): Promise<Paginated<BookingAdmin>> {
-  return nextjsApiClient.get<Paginated<BookingAdmin>>("/admin/bookings", {
+  return nextjsApiClient.get<Paginated<BookingAdmin>>(ENDPOINTS.ADMIN.BOOKINGS, {
     params: { ...params },
   });
 }
 
 export async function getAdminBooking(id: string): Promise<BookingAdmin> {
-  return nextjsApiClient.get<BookingAdmin>(`/admin/bookings/${id}`);
+  return nextjsApiClient.get<BookingAdmin>(ENDPOINTS.ADMIN.BOOKING_BY_ID(id));
 }
 
 export async function updateAdminBooking(
   id: string,
   payload: BookingStatusUpdateInput,
 ): Promise<BookingAdmin> {
-  return nextjsApiClient.patch<BookingAdmin>(`/admin/bookings/${id}`, payload);
+  return nextjsApiClient.patch<BookingAdmin>(ENDPOINTS.ADMIN.BOOKING_BY_ID(id), payload);
 }
 
 export async function deleteAdminBooking(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/bookings/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.BOOKING_BY_ID(id));
 }

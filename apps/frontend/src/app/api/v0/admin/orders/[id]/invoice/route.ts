@@ -4,12 +4,18 @@
 // NOTE: the invoice *PDF* stream lives at /admin/orders/{id}/invoice/pdf and is
 // fetched directly (authenticated FileResponse), not through this JSON handler.
 
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminPost } from "@/lib/admin-bff";
-import type { InvoiceAdmin } from "@/services/orders";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import { createAdminOrderInvoiceServer } from "@/services/orders/orders.admin.server";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const body = (await parseJsonBody<Record<string, unknown>>(request)) ?? {};
-  return bffHandler(() => adminPost<InvoiceAdmin>(`/admin/orders/${params.id}/invoice`, body), 201);
+  try {
+    return NextResponse.json(await createAdminOrderInvoiceServer(params.id, body, token), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

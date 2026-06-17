@@ -1,5 +1,6 @@
 // src/services/pricing/pricing.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { PricingCategoryAdmin, PricingItemAdmin } from "@/types";
 
 export interface PricingCategoryCreateInput {
@@ -30,7 +31,7 @@ export async function listAdminPricingCategories(
   serviceId: string,
 ): Promise<PricingCategoryAdmin[]> {
   return nextjsApiClient.get<PricingCategoryAdmin[]>(
-    `/admin/services/${serviceId}/pricing-categories`,
+    ENDPOINTS.ADMIN.SERVICE_PRICING_CATEGORIES(serviceId),
   );
 }
 
@@ -39,7 +40,7 @@ export async function createAdminPricingCategory(
   payload: PricingCategoryCreateInput,
 ): Promise<PricingCategoryAdmin> {
   return nextjsApiClient.post<PricingCategoryAdmin>(
-    `/admin/services/${serviceId}/pricing-categories`,
+    ENDPOINTS.ADMIN.SERVICE_PRICING_CATEGORIES(serviceId),
     payload,
   );
 }
@@ -48,7 +49,7 @@ export async function getAdminPricingCategory(
   categoryId: string,
 ): Promise<PricingCategoryAdmin> {
   return nextjsApiClient.get<PricingCategoryAdmin>(
-    `/admin/pricing-categories/${categoryId}`,
+    ENDPOINTS.ADMIN.PRICING_CATEGORY(categoryId),
   );
 }
 
@@ -57,20 +58,20 @@ export async function updateAdminPricingCategory(
   payload: PricingCategoryUpdateInput,
 ): Promise<PricingCategoryAdmin> {
   return nextjsApiClient.patch<PricingCategoryAdmin>(
-    `/admin/pricing-categories/${categoryId}`,
+    ENDPOINTS.ADMIN.PRICING_CATEGORY(categoryId),
     payload,
   );
 }
 
 export async function deleteAdminPricingCategory(categoryId: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/pricing-categories/${categoryId}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.PRICING_CATEGORY(categoryId));
 }
 
 export async function restoreAdminPricingCategory(
   categoryId: string,
 ): Promise<PricingCategoryAdmin> {
   return nextjsApiClient.post<PricingCategoryAdmin>(
-    `/admin/pricing-categories/${categoryId}/restore`,
+    ENDPOINTS.ADMIN.PRICING_CATEGORY_RESTORE(categoryId),
   );
 }
 
@@ -81,7 +82,7 @@ export async function createAdminPricingItem(
   payload: PricingItemCreateInput,
 ): Promise<PricingItemAdmin> {
   return nextjsApiClient.post<PricingItemAdmin>(
-    `/admin/pricing-categories/${categoryId}/items`,
+    ENDPOINTS.ADMIN.PRICING_CATEGORY_ITEMS(categoryId),
     payload,
   );
 }
@@ -91,17 +92,17 @@ export async function updateAdminPricingItem(
   payload: PricingItemUpdateInput,
 ): Promise<PricingItemAdmin> {
   return nextjsApiClient.patch<PricingItemAdmin>(
-    `/admin/pricing-items/${itemId}`,
+    ENDPOINTS.ADMIN.PRICING_ITEM(itemId),
     payload,
   );
 }
 
 export async function deleteAdminPricingItem(itemId: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/pricing-items/${itemId}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.PRICING_ITEM(itemId));
 }
 
 export async function restoreAdminPricingItem(itemId: string): Promise<PricingItemAdmin> {
   return nextjsApiClient.post<PricingItemAdmin>(
-    `/admin/pricing-items/${itemId}/restore`,
+    ENDPOINTS.ADMIN.PRICING_ITEM_RESTORE(itemId),
   );
 }

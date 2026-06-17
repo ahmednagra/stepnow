@@ -1,18 +1,17 @@
 // src/app/api/v0/auth/logout/route.ts
-import { NextResponse } from "next/server";
-import { clearAuthCookies, getRefreshTokenFromCookies } from "@/lib/auth-utils";
+import { NextResponse, type NextRequest } from "next/server";
+import { parseJsonBody } from "@/lib/bff-helpers";
 import { logoutServer } from "@/services/auth";
 
-export async function POST() {
-  const refreshToken = await getRefreshTokenFromCookies();
-  if (refreshToken) {
-    // Tell FastAPI to invalidate. If this fails we still clear cookies locally.
+export async function POST(request: NextRequest) {
+  const body = await parseJsonBody<{ refresh_token?: string }>(request);
+  if (body?.refresh_token) {
+    // Tell FastAPI to invalidate. If this fails the client still clears its tokens.
     try {
-      await logoutServer(refreshToken);
+      await logoutServer(body.refresh_token);
     } catch {
       // intentional swallow — see logoutServer doc
     }
   }
-  await clearAuthCookies();
   return new NextResponse(null, { status: 204 });
 }

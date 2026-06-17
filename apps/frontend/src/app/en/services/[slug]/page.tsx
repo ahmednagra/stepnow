@@ -8,7 +8,7 @@ import { getPricingForServiceServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { ApiError } from "@/lib/api-errors";
 import { createT } from "@/lib/i18n/t";
-import { buildMetadata, buildServiceJsonLd } from "@/lib/seo";
+import { buildMetadata, buildServiceJsonLd, buildBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import {
   Container,
@@ -145,6 +145,13 @@ export default async function ServiceDetailEn({ params }: PageParams) {
       />
       <RelatedServices t={t} services={others} hrefBase="/en/services" />
       <JsonLd data={buildServiceJsonLd(service, settings, `/en/services/${service.slug}`)} />
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: pickT(t, "nav.home", "Home"), href: "/en" },
+          { name: t("services.page.title"), href: "/en/services" },
+          { name: service.title, href: `/en/services/${service.slug_en}` },
+        ])}
+      />
     </>
   );
 }

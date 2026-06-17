@@ -5,7 +5,7 @@ export interface LoginRequest {
   password: string;
 }
 
-/** What FastAPI /auth/login returns. The BFF strips tokens and only returns ok+expires_in. */
+/** What FastAPI /auth/login returns. */
 export interface BackendLoginResponse {
   access_token: string;
   refresh_token: string;
@@ -13,9 +13,11 @@ export interface BackendLoginResponse {
   expires_in: number;
 }
 
-/** What our BFF /api/v0/auth/login returns to the browser. */
+/** What our BFF /api/v0/auth/login returns to the browser — tokens go to localStorage. */
 export interface ClientLoginResponse {
   ok: true;
+  access_token: string;
+  refresh_token: string;
   expires_in: number;
 }
 

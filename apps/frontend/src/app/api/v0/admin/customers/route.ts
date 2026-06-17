@@ -2,28 +2,39 @@
 // BFF handler for customers list + create. Forwards to FastAPI /admin/customers
 // with bearer auth. Also serves the repeat-customer search (?q=...&size=8).
 
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPost } from "@/lib/admin-bff";
-import type { Paginated } from "@/types";
-import type { CustomerAdmin } from "@/services/customers";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import {
+  listAdminCustomersServer,
+  createAdminCustomerServer,
+} from "@/services/customers/customers.admin.server";
+import type { CustomerInput } from "@/services/customers/customers.admin.client";
 
 export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const sp = request.nextUrl.searchParams;
   const params: Record<string, string | number | boolean> = {};
-  const page = sp.get("page");
-  const size = sp.get("size");
-  const q = sp.get("q");
-  const includeDeleted = sp.get("include_deleted");
-  if (page) params.page = Number(page);
-  if (size) params.size = Number(size);
-  if (q) params.q = q;
-  if (includeDeleted === "true") params.include_deleted = true;
-  return bffHandler(() => adminGet<Paginated<CustomerAdmin>>("/admin/customers", params));
+  if (sp.get("page")) params.page = Number(sp.get("page"));
+  if (sp.get("size")) params.size = Number(sp.get("size"));
+  if (sp.get("q")) params.q = sp.get("q")!;
+  if (sp.get("include_deleted") === "true") params.include_deleted = true;
+  try {
+    return NextResponse.json(await listAdminCustomersServer(params, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() => adminPost<CustomerAdmin>("/admin/customers", body), 201);
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<CustomerInput>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await createAdminCustomerServer(body, token), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

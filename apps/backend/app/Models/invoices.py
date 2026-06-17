@@ -26,7 +26,7 @@ class Invoice(Base, TimestampMixin, SoftDeleteMixin):
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     invoice_number: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)
-    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)  # indexed by uq_invoices_order_id
 
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)  # draft | issued | paid | cancelled
     issue_date: Mapped[date] = mapped_column(Date, nullable=False)

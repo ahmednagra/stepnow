@@ -26,7 +26,12 @@ interface QueryOptions {
 export function useOrders(params: ListAdminOrdersParams = {}, options: QueryOptions = {}) {
   return useQuery<Paginated<OrderAdmin>>({
     queryKey: queryKeys.orders.list(params),
-    queryFn: () => listAdminOrders(params),
+    queryFn: async () => {
+      console.log(`🔄 useOrders: Fetching orders`);
+      const res = await listAdminOrders(params);
+      console.log(`✅ useOrders: Fetched ${res.items.length} orders`);
+      return res;
+    },
     enabled: options.enabled ?? true,
     staleTime: STALE_TIMES.DYNAMIC,
     gcTime: GC_TIMES.STANDARD,
@@ -38,7 +43,12 @@ export function useOrders(params: ListAdminOrdersParams = {}, options: QueryOpti
 export function useOrder(orderId: string, options: QueryOptions = {}) {
   return useQuery<OrderDetail>({
     queryKey: queryKeys.orders.detail(orderId),
-    queryFn: () => getAdminOrder(orderId),
+    queryFn: async () => {
+      console.log(`🔄 useOrder: Fetching ${orderId}`);
+      const res = await getAdminOrder(orderId);
+      console.log(`✅ useOrder: Fetched ${orderId}`);
+      return res;
+    },
     enabled: (options.enabled ?? true) && Boolean(orderId),
     staleTime: STALE_TIMES.DYNAMIC,
     gcTime: GC_TIMES.STANDARD,
@@ -50,7 +60,12 @@ export function useOrder(orderId: string, options: QueryOptions = {}) {
 export function useOrderPayments(orderId: string, options: QueryOptions = {}) {
   return useQuery<PaymentAdmin[]>({
     queryKey: queryKeys.orders.payments(orderId),
-    queryFn: () => listOrderPayments(orderId),
+    queryFn: async () => {
+      console.log(`🔄 useOrderPayments: Fetching ${orderId}`);
+      const res = await listOrderPayments(orderId);
+      console.log(`✅ useOrderPayments: Fetched ${res.length} payments`);
+      return res;
+    },
     enabled: (options.enabled ?? true) && Boolean(orderId),
     staleTime: STALE_TIMES.DYNAMIC,
     gcTime: GC_TIMES.SHORT,

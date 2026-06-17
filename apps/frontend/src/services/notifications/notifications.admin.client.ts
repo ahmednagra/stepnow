@@ -3,6 +3,7 @@
 // self-contained types). Browser → /api/v0 BFF → backend /admin/notifications*.
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated } from "@/types";
 
 export interface NotificationItem {
@@ -38,21 +39,21 @@ export async function listNotifications(
   if (params.page) query.page = params.page;
   if (params.size) query.size = params.size;
   if (params.unreadOnly) query.unread_only = true;
-  return nextjsApiClient.get<Paginated<NotificationItem>>("/admin/notifications", { params: query });
+  return nextjsApiClient.get<Paginated<NotificationItem>>(ENDPOINTS.ADMIN.NOTIFICATIONS, { params: query });
 }
 
 export async function getUnreadCount(): Promise<UnreadCount> {
-  return nextjsApiClient.get<UnreadCount>("/admin/notifications/unread-count");
+  return nextjsApiClient.get<UnreadCount>(ENDPOINTS.ADMIN.NOTIFICATIONS_UNREAD_COUNT);
 }
 
 export async function markNotificationsRead(ids: string[]): Promise<UnreadCount> {
-  return nextjsApiClient.post<UnreadCount>("/admin/notifications/read", { ids });
+  return nextjsApiClient.post<UnreadCount>(ENDPOINTS.ADMIN.NOTIFICATIONS_READ, { ids });
 }
 
 export async function markAllNotificationsRead(): Promise<UnreadCount> {
-  return nextjsApiClient.post<UnreadCount>("/admin/notifications/read-all");
+  return nextjsApiClient.post<UnreadCount>(ENDPOINTS.ADMIN.NOTIFICATIONS_READ_ALL);
 }
 
 export async function archiveNotification(id: string): Promise<void> {
-  await nextjsApiClient.post<void>(`/admin/notifications/${id}/archive`);
+  await nextjsApiClient.post<void>(ENDPOINTS.ADMIN.NOTIFICATION_ARCHIVE(id));
 }

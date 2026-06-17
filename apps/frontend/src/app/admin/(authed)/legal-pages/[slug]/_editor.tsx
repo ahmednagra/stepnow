@@ -13,12 +13,12 @@ import {
   adminLegalPageDraftSchema,
   type AdminLegalPageDraftInput,
 } from "@/schemas/admin-legal-page.schema";
+import { listAdminLegalPageVersions } from "@/services/legalPages";
 import {
-  saveAdminLegalPageDraft,
-  publishAdminLegalPage,
-  rollbackAdminLegalPage,
-  listAdminLegalPageVersions,
-} from "@/services/legalPages";
+  useSaveLegalPageDraft,
+  usePublishLegalPage,
+  useRollbackLegalPage,
+} from "@/hooks/mutations/useLegalPageMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -59,6 +59,9 @@ function FieldErr({ msg }: { msg?: string }) {
 export function LegalPageEditor({ initial, versions: initialVersions }: LegalPageEditorProps) {
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
+  const saveDraft = useSaveLegalPageDraft(initial.slug);
+  const publishPage = usePublishLegalPage(initial.slug);
+  const rollbackPage = useRollbackLegalPage(initial.slug);
   const [serverError, setServerError] = useState<string | null>(null);
   const [versions, setVersions] = useState<LegalPageVersionAdmin[]>(initialVersions);
   const [previewLocale, setPreviewLocale] = useState<PreviewLocale>("de");
@@ -94,7 +97,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
   async function onSaveDraft(values: AdminLegalPageDraftInput) {
     setServerError(null);
     try {
-      const updated = await saveAdminLegalPageDraft(initial.slug, {
+      const updated = await saveDraft.mutateAsync({
         title_de: values.title_de,
         title_en: values.title_en,
         body_de: values.body_de,
@@ -118,7 +121,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
     try {
       const values = watch();
       if (isDirty) {
-        await saveAdminLegalPageDraft(initial.slug, {
+        await saveDraft.mutateAsync({
           title_de: values.title_de,
           title_en: values.title_en,
           body_de: values.body_de,
@@ -126,7 +129,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
           changes_summary: values.changes_summary?.trim() || null,
         });
       }
-      const published = await publishAdminLegalPage(initial.slug, {
+      const published = await publishPage.mutateAsync({
         changes_summary: values.changes_summary?.trim() || null,
       });
       reset(pickDraftDefaults(published));
@@ -146,7 +149,7 @@ export function LegalPageEditor({ initial, versions: initialVersions }: LegalPag
     setBusy(true);
     setServerError(null);
     try {
-      const result = await rollbackAdminLegalPage(initial.slug, {
+      const result = await rollbackPage.mutateAsync({
         target_version_id: target.id,
         changes_summary: `Rolled back to v${target.version_number}`,
       });

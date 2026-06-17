@@ -2,30 +2,40 @@
 // BFF handler for the courier (parcel) orders list + manual create.
 // Forwards to FastAPI /admin/parcel-orders with bearer auth.
 
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPost } from "@/lib/admin-bff";
-import type { Paginated } from "@/types";
-import type { CourierOrder } from "@/services/courier";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import {
+  listParcelOrdersServer,
+  createParcelOrderServer,
+} from "@/services/courier/courier.admin.server";
+import type { ParcelOrderInput } from "@/services/courier/courier.admin.client";
 
 export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const sp = request.nextUrl.searchParams;
   const params: Record<string, string | number | boolean> = {};
-  const page = sp.get("page");
-  const size = sp.get("size");
-  const deliveryStatus = sp.get("delivery_status");
-  const q = sp.get("q");
-  const includeDeleted = sp.get("include_deleted");
-  if (page) params.page = Number(page);
-  if (size) params.size = Number(size);
-  if (deliveryStatus) params.delivery_status = deliveryStatus;
-  if (q) params.q = q;
-  if (includeDeleted === "true") params.include_deleted = true;
-  return bffHandler(() => adminGet<Paginated<CourierOrder>>("/admin/parcel-orders", params));
+  if (sp.get("page")) params.page = Number(sp.get("page"));
+  if (sp.get("size")) params.size = Number(sp.get("size"));
+  if (sp.get("delivery_status")) params.delivery_status = sp.get("delivery_status")!;
+  if (sp.get("q")) params.q = sp.get("q")!;
+  if (sp.get("include_deleted") === "true") params.include_deleted = true;
+  try {
+    return NextResponse.json(await listParcelOrdersServer(params, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() => adminPost<CourierOrder>("/admin/parcel-orders", body), 201);
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<ParcelOrderInput>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await createParcelOrderServer(body, token), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

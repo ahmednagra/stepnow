@@ -37,6 +37,11 @@ class ConflictError(AppError):
     error_code = "CONFLICT"
 
 
+class GoneError(AppError):
+    status_code = 410
+    error_code = "GONE"
+
+
 class RateLimitError(AppError):
     status_code = 429
     error_code = "RATE_LIMITED"

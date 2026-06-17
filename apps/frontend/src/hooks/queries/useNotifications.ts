@@ -26,7 +26,12 @@ export function useNotifications(
 ) {
   return useQuery<Paginated<NotificationItem>>({
     queryKey: queryKeys.notifications.list(params.unreadOnly),
-    queryFn: () => listNotifications(params),
+    queryFn: async () => {
+      console.log(`🔄 useNotifications: Fetching notifications`);
+      const res = await listNotifications(params);
+      console.log(`✅ useNotifications: Fetched ${res.items.length} notifications`);
+      return res;
+    },
     enabled: options.enabled ?? true,
     staleTime: STALE_TIMES.DYNAMIC,
     gcTime: GC_TIMES.SHORT,
@@ -38,7 +43,12 @@ export function useNotifications(
 export function useUnreadNotificationCount(options: QueryOptions = {}) {
   return useQuery<UnreadCount>({
     queryKey: queryKeys.notifications.unreadCount(),
-    queryFn: getUnreadCount,
+    queryFn: async () => {
+      console.log(`🔄 useUnreadNotificationCount: Fetching unread count`);
+      const res = await getUnreadCount();
+      console.log(`✅ useUnreadNotificationCount: Fetched`);
+      return res;
+    },
     enabled: options.enabled ?? true,
     staleTime: STALE_TIMES.DYNAMIC,
     gcTime: GC_TIMES.SHORT,

@@ -21,7 +21,8 @@ export const metadata: Metadata = {
     canonical: "/",
     languages: {
       "de-DE": "/",
-      "en-US": "/en",
+      "en-GB": "/en",
+      "x-default": "/",
     },
   },
 };
@@ -34,6 +35,9 @@ export default async function PublicLayoutDe({ children }: { children: ReactNode
 
   return (
     <UiStringsProvider locale="de" strings={stringsRes.strings}>
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-slate-900 focus:shadow">
+        Zum Inhalt springen
+      </a>
       <Header settings={settings} />
       <main id="main">{children}</main>
       <Footer settings={settings} />

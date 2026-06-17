@@ -1,10 +1,15 @@
 // src/app/api/v0/auth/me/route.ts
-import { bffHandler, errorResponse } from "@/lib/bff-helpers";
-import { getAccessTokenFromCookies } from "@/lib/auth-utils";
+import { NextResponse, type NextRequest } from "next/server";
+import { errorResponse, apiErrorResponse } from "@/lib/bff-helpers";
+import { extractBearerToken } from "@/lib/auth-utils";
 import { getMeServer } from "@/services/auth";
 
-export async function GET() {
-  const token = await getAccessTokenFromCookies();
+export async function GET(request: NextRequest) {
+  const token = extractBearerToken(request);
   if (!token) return errorResponse("UNAUTHORIZED", "Not authenticated", 401);
-  return bffHandler(() => getMeServer(token));
+  try {
+    return NextResponse.json(await getMeServer(token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

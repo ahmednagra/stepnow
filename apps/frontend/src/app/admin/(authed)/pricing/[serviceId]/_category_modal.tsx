@@ -12,9 +12,9 @@ import {
   type AdminPricingCategoryInput,
 } from "@/schemas/admin-pricing.schema";
 import {
-  createAdminPricingCategory,
-  updateAdminPricingCategory,
-} from "@/services/pricing";
+  useCreatePricingCategory,
+  useUpdatePricingCategory,
+} from "@/hooks/mutations/usePricingMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -53,6 +53,8 @@ export function CategoryModal({
 }: CategoryModalProps) {
   const pushToast = useAdminToast((s) => s.push);
   const [serverError, setServerError] = useState<string | null>(null);
+  const createCategory = useCreatePricingCategory(serviceId);
+  const updateCategory = useUpdatePricingCategory(serviceId);
 
   const {
     register,
@@ -75,8 +77,8 @@ export function CategoryModal({
     try {
       const saved =
         mode === "create"
-          ? await createAdminPricingCategory(serviceId, payload)
-          : await updateAdminPricingCategory(category!.id, payload);
+          ? await createCategory.mutateAsync(payload)
+          : await updateCategory.mutateAsync({ categoryId: category!.id, payload });
       const withItems: PricingCategoryAdmin = {
         ...saved,
         items: (saved as PricingCategoryAdmin).items ?? category?.items ?? [],

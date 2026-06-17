@@ -5,7 +5,8 @@ import { getUiStringsServer } from "@/services/uiStrings";
 import { getSettingsServer } from "@/services/settings";
 import { listVehiclesServer } from "@/services/vehicles";
 import { createT } from "@/lib/i18n/t";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
+import { JsonLd } from "@/utils/json-ld";
 import { ConcessionBadge, Container } from "@/components/shared";
 import { Credentials, ServiceAreaMap, StorySection, ValuesSection } from "@/components/features/about";
 import { FleetPreview } from "@/components/features/home";
@@ -105,6 +106,12 @@ export default async function AboutPageEn() {
           <ConcessionBadge settings={settings} tone="light" />
         </Container>
       </section>
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: pickT(t, "nav.home", "Home"), href: "/en" },
+          { name: t("about.page.title"), href: "/en/about" },
+        ])}
+      />
     </>
   );
 }

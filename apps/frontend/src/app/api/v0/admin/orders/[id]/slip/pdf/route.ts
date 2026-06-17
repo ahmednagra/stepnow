@@ -2,8 +2,7 @@
 // Binary BFF passthrough for the driver-slip (Fahrauftrag) PDF stream. The client
 
 import { NextResponse, type NextRequest } from "next/server";
-import { requireAdminToken } from "@/lib/admin-bff";
-import { ApiError } from "@/lib/api-errors";
+import { extractBearerToken } from "@/lib/auth-utils";
 
 function getBackendApiUrl(): string {
   const rawBase =
@@ -16,19 +15,11 @@ function getBackendApiUrl(): string {
 
 const BACKEND_API_URL = getBackendApiUrl();
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  let token: string;
-  try {
-    token = await requireAdminToken();
-  } catch (err) {
-    if (err instanceof ApiError) {
-      return NextResponse.json(
-        { error: { code: err.code, message: err.message, extra: err.extra ?? {} } },
-        { status: err.status },
-      );
-    }
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "Not authenticated", extra: {} } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication token is required", extra: {} } },
       { status: 401 },
     );
   }

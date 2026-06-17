@@ -53,8 +53,7 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
         PgUUID(as_uuid=True),
         ForeignKey("booking_requests.id"),
         nullable=True,
-        index=True,
-    )
+    )  # indexed by uq_orders_booking_id
     service_id: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("services.id"), nullable=True, index=True
     )

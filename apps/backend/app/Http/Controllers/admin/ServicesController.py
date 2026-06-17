@@ -1,11 +1,10 @@
 # apps/backend/app/Http/Controllers/admin/ServicesController.py
-import math
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
 from app.Models.admin import AdminUser
 from app.Schemas.admin.services import ServiceAdminResponse, ServiceCreate, ServiceUpdate
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Services.ContentService import ContentService
 
 
@@ -14,10 +13,8 @@ class ServicesController:
     @staticmethod
     def list(db: Session, page: int, size: int, q: str | None, include_inactive: bool, include_deleted: bool) -> PaginatedResponse[ServiceAdminResponse]:
         items, total = ContentService.list_services(db, page, size, q, include_inactive, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
-        return PaginatedResponse[ServiceAdminResponse](
-            items=[ServiceAdminResponse.model_validate(s) for s in items],
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
+        return PaginatedResponse[ServiceAdminResponse].build(
+            [ServiceAdminResponse.model_validate(s) for s in items], page, size, total
         )
 
     @staticmethod

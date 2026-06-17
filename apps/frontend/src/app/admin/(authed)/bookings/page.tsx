@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter,
@@ -15,7 +15,8 @@ import {
   FilterToolbar,
 } from "@/components/admin";
 import { BOOKING_STATUSES, type BookingStatus, type BookingAdmin } from "@/types";
-import { listAdminBookings, updateAdminBooking } from "@/services/bookings";
+import { useBookings } from "@/hooks/queries/useBookings";
+import { useUpdateBooking } from "@/hooks/mutations/useBookingMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { cn } from "@/utils/cn";
@@ -56,51 +57,40 @@ function StatusPill({ status }: { status: BookingStatus }) {
 
 export default function BookingsPage() {
   const pushToast = useAdminToast((s) => s.push);
-  const [bookings, setBookings] = useState<BookingAdmin[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const updateBooking = useUpdateBooking();
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<View>("kanban");
 
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQ(q), 300);
+    return () => window.clearTimeout(id);
+  }, [q]);
+
+  const { data, isLoading: loading } = useBookings({ size: 100, q: debouncedQ || undefined });
+  const bookings = useMemo(() => (data?.items ?? []).filter((b) => !b.is_deleted), [data]);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await listAdminBookings({ size: 100, q: q || undefined });
-      setBookings(res.items.filter((b) => !b.is_deleted));
-    } catch (err) {
-      pushToast("error", "Could not load bookings", err instanceof ApiError ? err.message : "Network error");
-      setBookings([]);
-    } finally { setLoading(false); }
-  }, [q, pushToast]);
-
-  useEffect(() => { void reload(); }, [reload]);
 
   const byStatus = useMemo(() => {
     const map: Record<BookingStatus, BookingAdmin[]> = {
       new: [], contacted: [], quoted: [], confirmed: [], completed: [], cancelled: [],
     };
-    if (bookings) {
-      const sorted = [...bookings].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
-      for (const b of sorted) map[b.status]?.push(b);
-    }
+    const sorted = [...bookings].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    for (const b of sorted) map[b.status]?.push(b);
     return map;
   }, [bookings]);
 
-  const activeBooking = activeId ? bookings?.find((b) => b.id === activeId) ?? null : null;
+  const activeBooking = activeId ? bookings.find((b) => b.id === activeId) ?? null : null;
 
   async function moveBooking(id: string, toStatus: BookingStatus) {
-    const b = bookings?.find((x) => x.id === id);
+    const b = bookings.find((x) => x.id === id);
     if (!b || b.status === toStatus) return;
-    const from = b.status;
-    setBookings((prev) => prev ? prev.map((x) => x.id === id ? { ...x, status: toStatus } : x) : prev);
     try {
-      const updated = await updateAdminBooking(id, { status: toStatus });
-      setBookings((prev) => prev ? prev.map((x) => x.id === id ? updated : x) : prev);
+      await updateBooking.mutateAsync({ id, payload: { status: toStatus } });
       pushToast("success", "Status updated", `${b.reference} → ${STATUS_LABELS[toStatus]}`);
     } catch (err) {
-      setBookings((prev) => prev ? prev.map((x) => x.id === id ? { ...x, status: from } : x) : prev);
       pushToast("error", "Status change failed", err instanceof ApiError ? err.message : "Network error");
     }
   }

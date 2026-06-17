@@ -20,8 +20,7 @@ from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 class Payment(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "payments"
     __table_args__ = (
-        Index("ix_payments_order", "order_id"),
-        Index("ix_payments_invoice", "invoice_id"),
+        # order_id / invoice_id are indexed via index=True on their columns below.
         Index("ix_payments_received", "received_at"),
     )
 

@@ -1,5 +1,6 @@
 // src/services/testimonials/testimonials.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, TestimonialAdmin } from "@/types";
 
 export interface ListAdminTestimonialsParams {
@@ -28,32 +29,32 @@ export type TestimonialUpdateInput = Partial<TestimonialCreateInput>;
 export async function listAdminTestimonials(
   params: ListAdminTestimonialsParams = {},
 ): Promise<Paginated<TestimonialAdmin>> {
-  return nextjsApiClient.get<Paginated<TestimonialAdmin>>("/admin/testimonials", {
+  return nextjsApiClient.get<Paginated<TestimonialAdmin>>(ENDPOINTS.ADMIN.TESTIMONIALS, {
     params: { ...params },
   });
 }
 
 export async function getAdminTestimonial(id: string): Promise<TestimonialAdmin> {
-  return nextjsApiClient.get<TestimonialAdmin>(`/admin/testimonials/${id}`);
+  return nextjsApiClient.get<TestimonialAdmin>(ENDPOINTS.ADMIN.TESTIMONIAL_BY_ID(id));
 }
 
 export async function createAdminTestimonial(
   payload: TestimonialCreateInput,
 ): Promise<TestimonialAdmin> {
-  return nextjsApiClient.post<TestimonialAdmin>("/admin/testimonials", payload);
+  return nextjsApiClient.post<TestimonialAdmin>(ENDPOINTS.ADMIN.TESTIMONIALS, payload);
 }
 
 export async function updateAdminTestimonial(
   id: string,
   payload: TestimonialUpdateInput,
 ): Promise<TestimonialAdmin> {
-  return nextjsApiClient.patch<TestimonialAdmin>(`/admin/testimonials/${id}`, payload);
+  return nextjsApiClient.patch<TestimonialAdmin>(ENDPOINTS.ADMIN.TESTIMONIAL_BY_ID(id), payload);
 }
 
 export async function deleteAdminTestimonial(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/testimonials/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.TESTIMONIAL_BY_ID(id));
 }
 
 export async function restoreAdminTestimonial(id: string): Promise<TestimonialAdmin> {
-  return nextjsApiClient.post<TestimonialAdmin>(`/admin/testimonials/${id}/restore`);
+  return nextjsApiClient.post<TestimonialAdmin>(ENDPOINTS.ADMIN.TESTIMONIAL_RESTORE(id));
 }

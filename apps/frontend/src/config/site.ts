@@ -7,7 +7,9 @@ export const SITE_CONFIG = {
   defaultLocale: "de" as const,
   supportedLocales: ["de", "en"] as const,
   cookieLocaleName: "stepnow_locale",
-  ogImageDefault: "/images/og-default.jpg",
+  // Static brand hero (landscape) used as the default social-share image where a page has no
+  // specific OG image. A real asset (served by Next static) — robust across all platforms.
+  ogImageDefault: "/others/hero.jpg",
 } as const;
 
 export type SiteLocale = (typeof SITE_CONFIG.supportedLocales)[number];

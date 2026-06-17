@@ -1,45 +1,35 @@
 // apps/frontend/src/app/admin/(authed)/audit-log/page.tsx
-// Audit log. Actor-email search now debounced 300ms via inline setTimeout cleanup (no new hook file).
+// Audit log. Data via useAuditLog (React Query); actor-email search debounced 300ms via inline setTimeout.
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, Pagination, FilterToolbar } from "@/components/admin";
-import { listAuditLog } from "@/services/auditLog";
-import type { AuditLogEntry, Pagination as PaginationInfo } from "@/types";
-import { ApiError } from "@/lib/api-errors";
-import { useAdminToast } from "@/hooks/useAdminToast";
+import { useAuditLog } from "@/hooks/queries/useAuditLog";
 import { exportCsv, exportJson } from "@/utils/exporters";
 
 const PAGE_SIZE = 50;
 
 export default function AuditLogPage() {
-const pushToast = useAdminToast((s) => s.push);
-const [items, setItems] = useState<AuditLogEntry[] | null>(null);
-const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 const [page, setPage] = useState(1);
 const [actorEmail, setActorEmail] = useState("");
+const [debouncedActor, setDebouncedActor] = useState("");
 const [table, setTable] = useState("");
-const [loading, setLoading] = useState(true);
-
-const reload = useCallback(async () => {
-setLoading(true);
-try {
-const res = await listAuditLog({ page, size: PAGE_SIZE, actor_email: actorEmail || undefined, table_name: table || undefined });
-setItems(res.items);
-setPagination(res.pagination);
-} catch (err) {
-pushToast("error", "Could not load audit log", err instanceof ApiError ? err.message : "Network error");
-setItems([]);
-} finally { setLoading(false); }
-}, [page, actorEmail, table, pushToast]);
 
 useEffect(() => {
-const id = window.setTimeout(() => { void reload(); }, 300);
+const id = window.setTimeout(() => setDebouncedActor(actorEmail), 300);
 return () => window.clearTimeout(id);
-}, [reload]);
+}, [actorEmail]);
 
-useEffect(() => { setPage(1); }, [actorEmail, table]);
+useEffect(() => { setPage(1); }, [debouncedActor, table]);
+
+const { data, isLoading } = useAuditLog({
+page, size: PAGE_SIZE,
+actor_email: debouncedActor || undefined,
+table_name: table || undefined,
+});
+const items = data?.items ?? [];
+const pagination = data?.pagination ?? null;
 
 return (
 <>
@@ -71,19 +61,19 @@ filters={
 </select>
 }
 exports={{
-onCsv: () => items && exportCsv(items.map((e) => ({
+onCsv: () => items.length > 0 && exportCsv(items.map((e) => ({
 created_at: e.created_at, actor: e.actor_email ?? "system",
 action: e.action, table: e.table_name, record_id: e.record_id ?? "",
 })), `audit-log-${new Date().toISOString().slice(0, 10)}.csv`),
-onJson: () => items && exportJson(items, `audit-log-${Date.now()}.json`),
+onJson: () => items.length > 0 && exportJson(items, `audit-log-${Date.now()}.json`),
 onPrint: () => window.print(),
 }}
 />
 <AdminCard flush title={`${pagination?.total ?? 0} entries`}>
 <AdminTable columns={["When", "Actor", "Action", "Table", "Record"]} stickyHeader>
-{loading ? (
+{isLoading ? (
 <AdminTableEmpty message="Loading…" />
-) : !items || items.length === 0 ? (
+) : items.length === 0 ? (
 <AdminTableEmpty message="No audit entries match." />
 ) : (
 items.map((e) => (

@@ -1,16 +1,20 @@
 // src/stores/useBookingWizardStore.ts
-// Single Zustand store for the booking wizard. Persists to sessionStorage so
-// state survives refresh within the same tab. Cleared after successful submit
-// or when the user explicitly resets.
+// Booking wizard state on raw localStorage (no zustand). Persists across tabs/sessions;
+// cleared after a successful submit or explicit reset. Reactivity via createStore.
 
 "use client";
 
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createStore } from "@/lib/createStore";
 import type { BookingWizardDraft, WizardStep } from "@/types/booking-wizard";
 import { WIZARD_STEPS } from "@/types/booking-wizard";
 
 const STORAGE_KEY = "stepnow.booking_wizard.v1";
+
+const INITIAL_DRAFT: BookingWizardDraft = {
+  passenger_count: 1,
+  luggage_count: 0,
+  is_business: false,
+};
 
 interface BookingWizardState {
   step: WizardStep;
@@ -23,86 +27,73 @@ interface BookingWizardState {
   reset: () => void;
 }
 
-const INITIAL_DRAFT: BookingWizardDraft = {
-  passenger_count: 1,
-  luggage_count: 0,
-  is_business: false,
-};
-
-function safeStorage(): Storage | undefined {
-  if (typeof window === "undefined") return undefined;
+function readStorage(): { step: WizardStep; draft: BookingWizardDraft } | null {
+  if (typeof window === "undefined") return null;
   try {
-    // Sanity-test sessionStorage access (some iframes/private modes block it)
-    window.sessionStorage.getItem("__sn_probe__");
-    return window.sessionStorage;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { step?: WizardStep; draft?: Partial<BookingWizardDraft> };
+    if (!parsed?.draft) return null;
+    return { step: parsed.step ?? "service", draft: { ...INITIAL_DRAFT, ...parsed.draft } };
   } catch {
-    return undefined;
+    return null;
   }
 }
 
-export const useBookingWizardStore = create<BookingWizardState>()(
-  persist(
-    (set, get) => ({
-      step: "service",
-      draft: { ...INITIAL_DRAFT },
+function writeStorage(step: WizardStep, draft: BookingWizardDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, draft }));
+  } catch {
+    // private mode / blocked storage — non-fatal
+  }
+}
 
-      setStep: (step) => set({ step }),
+export const useBookingWizardStore = createStore<BookingWizardState>((set, get) => ({
+  step: "service",
+  draft: { ...INITIAL_DRAFT },
 
-      goNext: () => {
-        const current = get().step;
-        const idx = WIZARD_STEPS.indexOf(current);
-        if (idx >= 0 && idx < WIZARD_STEPS.length - 1) {
-          set({ step: WIZARD_STEPS[idx + 1] });
-          if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      },
+  setStep: (step) => set({ step }),
 
-      goPrevious: () => {
-        const current = get().step;
-        const idx = WIZARD_STEPS.indexOf(current);
-        if (idx > 0) {
-          set({ step: WIZARD_STEPS[idx - 1] });
-          if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      },
+  goNext: () => {
+    const idx = WIZARD_STEPS.indexOf(get().step);
+    if (idx >= 0 && idx < WIZARD_STEPS.length - 1) {
+      set({ step: WIZARD_STEPS[idx + 1] });
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  },
 
-      updateDraft: (patch) => set((state) => ({ draft: { ...state.draft, ...patch } })),
+  goPrevious: () => {
+    const idx = WIZARD_STEPS.indexOf(get().step);
+    if (idx > 0) {
+      set({ step: WIZARD_STEPS[idx - 1] });
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  },
 
-      /**
-       * Merge an external partial (e.g., from the hero widget's deep link)
-       * into the draft without overwriting existing values. Used once on
-       * wizard mount; later edits use updateDraft.
-       */
-      hydratePartial: (patch) =>
-        set((state) => {
-          const merged: BookingWizardDraft = { ...state.draft };
-          for (const [k, v] of Object.entries(patch)) {
-            if (v === undefined || v === null || v === "") continue;
-            // Don't overwrite a field the user has already filled
-            if ((merged as Record<string, unknown>)[k]) continue;
-            (merged as Record<string, unknown>)[k] = v;
-          }
-          return { draft: merged };
-        }),
+  updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
 
-      reset: () => set({ step: "service", draft: { ...INITIAL_DRAFT } }),
+  // Merge an external partial (e.g. hero deep-link) without overwriting filled fields.
+  hydratePartial: (patch) =>
+    set((s) => {
+      const merged: BookingWizardDraft = { ...s.draft };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined || v === null || v === "") continue;
+        if ((merged as Record<string, unknown>)[k]) continue;
+        (merged as Record<string, unknown>)[k] = v;
+      }
+      return { draft: merged };
     }),
-    {
-      name: STORAGE_KEY,
-      storage: createJSONStorage(() => safeStorage() ?? noopStorage),
-      // Only persist the fields we need; never accidentally serialize functions
-      partialize: (state) => ({ step: state.step, draft: state.draft }),
-      version: 1,
-    },
-  ),
-);
 
-/** Stub storage for SSR / blocked-storage environments. */
-const noopStorage: Storage = {
-  getItem: () => null,
-  setItem: () => undefined,
-  removeItem: () => undefined,
-  clear: () => undefined,
-  key: () => null,
-  length: 0,
-};
+  reset: () => set({ step: "service", draft: { ...INITIAL_DRAFT } }),
+}));
+
+// Client-only: hydrate from localStorage, then mirror every change back to it.
+if (typeof window !== "undefined") {
+  const stored = readStorage();
+  if (stored) useBookingWizardStore.setState(stored);
+  useBookingWizardStore.subscribe(() => {
+    const s = useBookingWizardStore.getState();
+    writeStorage(s.step, s.draft);
+  });
+}

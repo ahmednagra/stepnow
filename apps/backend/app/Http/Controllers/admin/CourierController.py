@@ -2,17 +2,15 @@
 # Thin controller for the parcel-dispatch feature. Logic lives in CourierOrdersService /
 # DriverSlipPdfService; email follows the queue + BackgroundTasks pattern from FormsController.
 
-import math
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 from fastapi import BackgroundTasks, Request
 from sqlalchemy.orm import Session
-from config.database import SessionLocal
-from app.Core.Exceptions import ConflictError
+from app.Core.Exceptions import AppError, ConflictError
 from app.Models.admin import AdminUser
 from app.Models.drivers import Driver
-from app.Schemas.common import PaginatedResponse, PaginationInfo
+from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.courier_admin import (
     CourierOrderResponse, DeliveryStatusUpdate, ParcelOrderCreate, SendSlipRequest,
 )
@@ -21,33 +19,11 @@ from app.Services.CourierOrdersService import CourierOrdersService
 from app.Services.DriverSlipPdfService import DriverSlipPdfService
 from app.Services.EmailService import EmailService
 from app.Services.OrdersService import OrdersService
-from app.Services.Notifications import NotificationService
+from app.Http.Controllers._background import notify_admins as _notify_admins, dispatch_emails as _dispatch_emails
 from app.Services.message_delivery.MessageDeliveryService import MessageDeliveryService
+from app.Utils.Logger import get_logger
 
-
-def _dispatch_emails(email_log_ids: list[int]) -> None:
-    # Runs after the response is sent; opens its own DB session (mirrors FormsController).
-    if not email_log_ids:
-        return
-    db = SessionLocal()
-    try:
-        for log_id in email_log_ids:
-            EmailService.dispatch_pending(db, log_id)
-    finally:
-        db.close()
-
-
-def _notify_admins(type_code: str, title: str, body: str | None, link: str, data: dict, actor_id) -> None:
-    # In-app notification to every active admin (excludes the actor). Own session + commit,
-    # best-effort — mirrors OrdersController._notify_admins. Runs on BackgroundTasks post-commit.
-    db = SessionLocal()
-    try:
-        NotificationService.notify_all_admins(
-            db, type_code, title, body=body, link=link, data=data, exclude_id=actor_id
-        )
-        db.commit()
-    finally:
-        db.close()
+logger = get_logger("courier_controller")
 
 
 class CourierController:
@@ -72,10 +48,8 @@ class CourierController:
     @staticmethod
     def list(db: Session, page: int, size: int, delivery_status: str | None, q: str | None, include_deleted: bool) -> PaginatedResponse[CourierOrderResponse]:
         items, total = CourierOrdersService.list(db, page, size, delivery_status, q, include_deleted)
-        pages = max(1, math.ceil(total / size)) if total else 0
-        return PaginatedResponse[CourierOrderResponse](
-            items=[CourierOrderResponse.model_validate(o) for o in items],
-            pagination=PaginationInfo(page=page, size=size, total=total, pages=pages),
+        return PaginatedResponse[CourierOrderResponse].build(
+            [CourierOrderResponse.model_validate(o) for o in items], page, size, total
         )
 
     @staticmethod
@@ -154,7 +128,12 @@ class CourierController:
                 raise ConflictError("Assigned driver has no email address")
             # ensure the slip PDF exists (stored, authed-streamed; not attached by the log-only provider)
             if not order.driver_slip_pdf_url or not Path(order.driver_slip_pdf_url).exists():
-                order.driver_slip_pdf_url = DriverSlipPdfService.render(db, order)
+                try:
+                    order.driver_slip_pdf_url = DriverSlipPdfService.render(db, order)
+                except Exception as e:
+                    db.rollback()
+                    logger.error(f"Error rendering driver slip PDF for order {order.order_number}: {e}")
+                    raise AppError("Failed to generate the driver slip PDF")
             order.driver_emailed_at = now
             if order.delivery_status == "draft":
                 order.delivery_status = "dispatched"

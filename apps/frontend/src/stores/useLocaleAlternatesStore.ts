@@ -1,7 +1,9 @@
 // apps/frontend/src/stores/useLocaleAlternatesStore.ts
+// Per-path alternate-URL map (no zustand). Ephemeral in-memory only — set on mount,
+// cleared on unmount/route change; NOT persisted (stored slug maps would go stale).
 "use client";
 
-import { create } from "zustand";
+import { createStore } from "@/lib/createStore";
 
 interface LocaleAlternatesState {
   /**
@@ -17,7 +19,7 @@ interface LocaleAlternatesState {
   clearSlugMap: () => void;
 }
 
-export const useLocaleAlternatesStore = create<LocaleAlternatesState>((set) => ({
+export const useLocaleAlternatesStore = createStore<LocaleAlternatesState>((set) => ({
   slugMap: {},
   setSlugMap: (map) => set({ slugMap: map }),
   clearSlugMap: () => set({ slugMap: {} }),

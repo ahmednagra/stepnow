@@ -2,13 +2,19 @@
 // BFF handler to email the driver slip (and optionally the invoice to the customer).
 // Forwards to FastAPI POST /admin/orders/{id}/send with bearer auth.
 
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminPost } from "@/lib/admin-bff";
-import type { CourierOrder } from "@/services/courier";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import { sendAdminOrderServer } from "@/services/orders/orders.admin.server";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
   const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() => adminPost<CourierOrder>(`/admin/orders/${params.id}/send`, body));
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await sendAdminOrderServer(params.id, body, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

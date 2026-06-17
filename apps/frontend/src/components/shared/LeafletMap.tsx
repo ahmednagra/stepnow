@@ -3,6 +3,7 @@
 "use client";
 import "leaflet/dist/leaflet.css";
 import { memo, useEffect, useRef } from "react";
+import type { Map as LeafletMapInstance, LayerGroup } from "leaflet";
 import { cn } from "@/utils/cn";
 
 export interface LeafletMarker { lat: number; lng: number; label?: string }
@@ -18,8 +19,8 @@ const ICON_URL = "data:image/svg+xml;utf8," + encodeURIComponent(ICON_SVG);
 
 function LeafletMapImpl({ markers, center, zoom = 13, className }: LeafletMapProps) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const layerRef = useRef<any>(null);
+  const mapRef = useRef<LeafletMapInstance | null>(null);
+  const layerRef = useRef<LayerGroup | null>(null);
   const lastKey = useRef<string>("");
 
   useEffect(() => {
@@ -39,12 +40,14 @@ function LeafletMapImpl({ markers, center, zoom = 13, className }: LeafletMapPro
         mapRef.current = map;
       } else {
         mapRef.current.setView(center, zoom, { animate: false });
-        layerRef.current.clearLayers();
+        layerRef.current?.clearLayers();
       }
+      const layer = layerRef.current;
+      if (!layer) return;
       for (const m of markers) {
         const marker = L.marker([m.lat, m.lng]);
         if (m.label) marker.bindPopup(m.label);
-        marker.addTo(layerRef.current);
+        marker.addTo(layer);
       }
     })();
     return () => { cancelled = true; };

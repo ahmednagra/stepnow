@@ -2,6 +2,7 @@
 // Admin client for customers + the repeat-customer search (name OR phone).
 
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated } from "@/types";
 
 export interface CustomerAdmin {
@@ -41,37 +42,30 @@ export interface CustomerInput {
   internal_notes?: string | null;
 }
 
-function qs(params: Record<string, unknown>): string {
-  const s = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") s.set(k, String(v));
-  const str = s.toString();
-  return str ? `?${str}` : "";
-}
-
 export async function listAdminCustomers(params: { page?: number; size?: number; q?: string } = {}): Promise<Paginated<CustomerAdmin>> {
-  return nextjsApiClient.get<Paginated<CustomerAdmin>>(`/admin/customers${qs(params)}`);
+  return nextjsApiClient.get<Paginated<CustomerAdmin>>(ENDPOINTS.ADMIN.CUSTOMERS, { params });
 }
 /** Debounced repeat-customer search by name or phone (returns the page items). */
 export async function searchCustomers(q: string): Promise<CustomerAdmin[]> {
   if (!q.trim()) return [];
-  const res = await nextjsApiClient.get<Paginated<CustomerAdmin>>(`/admin/customers${qs({ q, size: 8 })}`);
+  const res = await nextjsApiClient.get<Paginated<CustomerAdmin>>(ENDPOINTS.ADMIN.CUSTOMERS, { params: { q, size: 8 } });
   return res.items;
 }
 export async function getAdminCustomer(id: string): Promise<CustomerAdmin> {
-  return nextjsApiClient.get<CustomerAdmin>(`/admin/customers/${id}`);
+  return nextjsApiClient.get<CustomerAdmin>(ENDPOINTS.ADMIN.CUSTOMER_BY_ID(id));
 }
 export async function createAdminCustomer(payload: CustomerInput): Promise<CustomerAdmin> {
-  return nextjsApiClient.post<CustomerAdmin>(`/admin/customers`, payload);
+  return nextjsApiClient.post<CustomerAdmin>(ENDPOINTS.ADMIN.CUSTOMERS, payload);
 }
 export async function updateAdminCustomer(id: string, payload: Partial<CustomerInput>): Promise<CustomerAdmin> {
-  return nextjsApiClient.patch<CustomerAdmin>(`/admin/customers/${id}`, payload);
+  return nextjsApiClient.patch<CustomerAdmin>(ENDPOINTS.ADMIN.CUSTOMER_BY_ID(id), payload);
 }
 export async function deleteAdminCustomer(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/customers/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.CUSTOMER_BY_ID(id));
 }
 
 import type { CourierOrder } from "@/services/courier";
 /** Order history for a customer (for the detail page + outstanding balance). */
 export async function listCustomerOrders(id: string): Promise<CourierOrder[]> {
-  return nextjsApiClient.get<CourierOrder[]>(`/admin/customers/${id}/orders`);
+  return nextjsApiClient.get<CourierOrder[]>(ENDPOINTS.ADMIN.CUSTOMER_ORDERS(id));
 }

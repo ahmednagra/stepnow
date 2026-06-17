@@ -1,10 +1,9 @@
 // src/app/api/v0/admin/uploads/route.ts
-// Multipart BFF passthrough. Unlike JSON admin routes which use adminPost,
+// Multipart BFF passthrough. Unlike JSON admin routes which call per-resource server services,
 // this forwards the raw multipart body to the backend with the admin Bearer
 // token attached. Body streaming is preserved by Next.js's NextRequest.
 import { NextResponse, type NextRequest } from "next/server";
-import { requireAdminToken } from "@/lib/admin-bff";
-import { ApiError } from "@/lib/api-errors";
+import { extractBearerToken } from "@/lib/auth-utils";
 
 function getBackendApiUrl(): string {
   const rawBase =
@@ -19,18 +18,10 @@ function getBackendApiUrl(): string {
 const BACKEND_API_URL = getBackendApiUrl();
 
 export async function POST(request: NextRequest) {
-  let token: string;
-  try {
-    token = await requireAdminToken();
-  } catch (err) {
-    if (err instanceof ApiError) {
-      return NextResponse.json(
-        { error: { code: err.code, message: err.message, extra: err.extra ?? {} } },
-        { status: err.status },
-      );
-    }
+  const token = extractBearerToken(request);
+  if (!token) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "Not authenticated", extra: {} } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication token is required", extra: {} } },
       { status: 401 },
     );
   }

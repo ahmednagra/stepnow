@@ -10,9 +10,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, Trash2, RotateCcw, Eye } from "lucide-react";
 import { adminFaqSchema, type AdminFaqInput } from "@/schemas/admin-faq.schema";
+import { type FaqCreateInput } from "@/services/faqs";
 import {
-  createAdminFaq, updateAdminFaq, deleteAdminFaq, restoreAdminFaq, type FaqCreateInput,
-} from "@/services/faqs";
+  useCreateFaq, useUpdateFaq, useDeleteFaq, useRestoreFaq,
+} from "@/hooks/mutations/useFaqMutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import {
@@ -62,6 +63,11 @@ export function FaqForm({ mode, initial }: FaqFormProps) {
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const createFaq = useCreateFaq();
+  const updateFaq = useUpdateFaq(initial?.id ?? "");
+  const deleteFaq = useDeleteFaq();
+  const restoreFaq = useRestoreFaq();
+
   const {
     register, handleSubmit, reset, watch,
     formState: { errors, isSubmitting, isDirty },
@@ -76,12 +82,12 @@ export function FaqForm({ mode, initial }: FaqFormProps) {
     setServerError(null);
     try {
       if (mode === "create") {
-        const created = await createAdminFaq(toPayload(values));
+        const created = await createFaq.mutateAsync(toPayload(values));
         pushToast("success", "FAQ created");
         router.push(`/admin/faqs/${created.id}`);
         router.refresh();
       } else if (initial) {
-        const updated = await updateAdminFaq(initial.id, toPayload(values));
+        const updated = await updateFaq.mutateAsync(toPayload(values));
         reset(fromFaq(updated));
         pushToast("success", "FAQ saved");
         router.refresh();
@@ -97,7 +103,7 @@ export function FaqForm({ mode, initial }: FaqFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      await deleteAdminFaq(initial.id);
+      await deleteFaq.mutateAsync(initial.id);
       pushToast("success", "FAQ deleted");
       router.push("/admin/faqs");
       router.refresh();
@@ -111,7 +117,7 @@ export function FaqForm({ mode, initial }: FaqFormProps) {
     if (!initial) return;
     setBusy(true);
     try {
-      const restored = await restoreAdminFaq(initial.id);
+      const restored = await restoreFaq.mutateAsync(initial.id);
       reset(fromFaq(restored));
       pushToast("success", "FAQ restored");
       router.refresh();

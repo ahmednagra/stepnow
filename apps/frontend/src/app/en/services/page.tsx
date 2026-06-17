@@ -9,7 +9,8 @@ import { listServicesServer } from "@/services/services";
 import { listAllPricingServer } from "@/services/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
+import { JsonLd } from "@/utils/json-ld";
 import { ConcessionBadge, Container } from "@/components/shared";
 import { ServicesIndex, ServiceRichRow, HowItWorksBeat, ServicesEditorialClose, findLowestPrice, type ServiceWithPricing } from "@/components/features/services";
 import { pickT } from "@/lib/i18n/pick";
@@ -80,6 +81,12 @@ return (
 <ServiceRichRow key={service.id} t={t} locale="en" service={service} index={idx + 2} detailHref={`/en/services/${service.slug}`} lowestPrice={lowestPrice} lowestRouteLabel={lowestRouteLabel} />
 ))}
 <ServicesEditorialClose t={t} locale="en" settings={settings} pricingHref="/en/pricing" />
+<JsonLd
+data={buildBreadcrumbJsonLd([
+{ name: pickT(t, "nav.home", "Home"), href: "/en" },
+{ name: t("services.page.title"), href: "/en/services" },
+])}
+/>
 </>
 );
 }

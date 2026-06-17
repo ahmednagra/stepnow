@@ -1,29 +1,29 @@
 // src/app/api/v0/admin/services/[id]/pricing-categories/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPost } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { PricingCategoryAdmin } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import { listServicePricingCategoriesServer } from "@/services/services/services.admin.server";
+import { createAdminPricingCategoryServer } from "@/services/pricing/pricing.admin.server";
+import type { PricingCategoryCreateInput } from "@/services/pricing/pricing.admin.client";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
-  return bffHandler(() =>
-    adminGet<PricingCategoryAdmin[]>(ENDPOINTS.ADMIN.SERVICE_PRICING_CATEGORIES(params.id)),
-  );
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    return NextResponse.json(await listServicePricingCategoriesServer(params.id, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() =>
-    adminPost<PricingCategoryAdmin>(
-      ENDPOINTS.ADMIN.SERVICE_PRICING_CATEGORIES(params.id),
-      body,
-    ),
-  );
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<PricingCategoryCreateInput>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await createAdminPricingCategoryServer(params.id, body, token), { status: 201 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

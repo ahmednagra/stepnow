@@ -1,23 +1,43 @@
 // src/app/api/v0/admin/faqs/[id]/route.ts
-import type { NextRequest } from "next/server";
-import { bffHandler, parseJsonBody } from "@/lib/bff-helpers";
-import { adminGet, adminPatch, adminDelete } from "@/lib/admin-bff";
-import { ENDPOINTS } from "@/services/api/endpoints";
-import type { FaqAdmin } from "@/types";
+import { NextResponse, type NextRequest } from "next/server";
+import { extractBearerToken } from "@/lib/auth-utils";
+import { errorResponse, parseJsonBody, apiErrorResponse } from "@/lib/bff-helpers";
+import {
+  getAdminFaqServer,
+  updateAdminFaqServer,
+  deleteAdminFaqServer,
+} from "@/services/faqs/faqs.admin.server";
+import type { FaqUpdateInput } from "@/services/faqs/faqs.admin.client";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(() => adminGet<FaqAdmin>(ENDPOINTS.ADMIN.FAQ_BY_ID(params.id)));
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    return NextResponse.json(await getAdminFaqServer(params.id, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const body = await parseJsonBody<Record<string, unknown>>(request);
-  if (!body) return bffHandler(async () => Promise.reject(new Error("Empty body")));
-  return bffHandler(() => adminPatch<FaqAdmin>(ENDPOINTS.ADMIN.FAQ_BY_ID(params.id), body));
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const body = await parseJsonBody<FaqUpdateInput>(request);
+  if (!body) return errorResponse("BAD_REQUEST", "Empty body", 400);
+  try {
+    return NextResponse.json(await updateAdminFaqServer(params.id, body, token));
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  return bffHandler(async () => {
-    await adminDelete(ENDPOINTS.ADMIN.FAQ_BY_ID(params.id));
-    return undefined as unknown as void;
-  }, 204);
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const token = extractBearerToken(request);
+  if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  try {
+    await deleteAdminFaqServer(params.id, token);
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

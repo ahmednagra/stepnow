@@ -1,5 +1,6 @@
 // src/services/services/services.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
+import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, ServiceAdmin } from "@/types";
 
 export interface ListAdminServicesParams {
@@ -7,6 +8,7 @@ export interface ListAdminServicesParams {
   size?: number;
   q?: string;
   include_deleted?: boolean;
+  include_inactive?: boolean;
 }
 
 export interface ServiceCreateInput {
@@ -34,30 +36,30 @@ export type ServiceUpdateInput = Partial<ServiceCreateInput>;
 export async function listAdminServices(
   params: ListAdminServicesParams = {},
 ): Promise<Paginated<ServiceAdmin>> {
-  return nextjsApiClient.get<Paginated<ServiceAdmin>>("/admin/services", {
+  return nextjsApiClient.get<Paginated<ServiceAdmin>>(ENDPOINTS.ADMIN.SERVICES, {
     params: { ...params },
   });
 }
 
 export async function getAdminService(id: string): Promise<ServiceAdmin> {
-  return nextjsApiClient.get<ServiceAdmin>(`/admin/services/${id}`);
+  return nextjsApiClient.get<ServiceAdmin>(ENDPOINTS.ADMIN.SERVICE_BY_ID(id));
 }
 
 export async function createAdminService(payload: ServiceCreateInput): Promise<ServiceAdmin> {
-  return nextjsApiClient.post<ServiceAdmin>("/admin/services", payload);
+  return nextjsApiClient.post<ServiceAdmin>(ENDPOINTS.ADMIN.SERVICES, payload);
 }
 
 export async function updateAdminService(
   id: string,
   payload: ServiceUpdateInput,
 ): Promise<ServiceAdmin> {
-  return nextjsApiClient.patch<ServiceAdmin>(`/admin/services/${id}`, payload);
+  return nextjsApiClient.patch<ServiceAdmin>(ENDPOINTS.ADMIN.SERVICE_BY_ID(id), payload);
 }
 
 export async function deleteAdminService(id: string): Promise<void> {
-  await nextjsApiClient.delete<void>(`/admin/services/${id}`);
+  await nextjsApiClient.delete<void>(ENDPOINTS.ADMIN.SERVICE_BY_ID(id));
 }
 
 export async function restoreAdminService(id: string): Promise<ServiceAdmin> {
-  return nextjsApiClient.post<ServiceAdmin>(`/admin/services/${id}/restore`);
+  return nextjsApiClient.post<ServiceAdmin>(ENDPOINTS.ADMIN.SERVICE_RESTORE(id));
 }

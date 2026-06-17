@@ -1,5 +1,6 @@
 // apps/frontend/src/lib/bff-helpers.ts
-// Shared helpers for BFF Route Handlers. Standard error envelope, JSON body parse, query helpers. Production hides raw error messages.
+// Shared route-handler helpers (API Flow guide pattern): standard error envelope, JSON body parse,
+// query helpers. Production hides raw error messages.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -9,23 +10,13 @@ export function errorResponse(code: string, message: string, status: number, ext
 return NextResponse.json({ error: { code, message, extra } }, { status });
 }
 
-export function errorFromApiError(err: ApiError): NextResponse {
-return errorResponse(err.code, err.message, err.status || 500, err.extra);
-}
-
-export async function bffHandler<T>(fn: () => Promise<T>, successStatus = 200): Promise<NextResponse> {
-try {
-const data = await fn();
-if (data === undefined || successStatus === 204) return new NextResponse(null, { status: 204 });
-return NextResponse.json(data, { status: successStatus });
-} catch (err) {
-if (err instanceof ApiError) return errorFromApiError(err);
-const rawMessage = err instanceof Error ? err.message : "Unexpected error";
-// eslint-disable-next-line no-console
-console.error("[BFF] Unhandled error:", err);
-const safeMessage = process.env.NODE_ENV === "production" ? "Unexpected error" : rawMessage;
-return errorResponse("INTERNAL", safeMessage, 500);
-}
+/** Map a thrown error to the standard error envelope. Used in the catch of every route handler. */
+export function apiErrorResponse(err: unknown): NextResponse {
+	if (err instanceof ApiError) return errorResponse(err.code, err.message, err.status || 500, err.extra);
+	// eslint-disable-next-line no-console
+	console.error("[API] Unhandled error:", err);
+	const raw = err instanceof Error ? err.message : "Unexpected error";
+	return errorResponse("INTERNAL", process.env.NODE_ENV === "production" ? "Unexpected error" : raw, 500);
 }
 
 export async function parseJsonBody<T>(request: NextRequest): Promise<T | null> {

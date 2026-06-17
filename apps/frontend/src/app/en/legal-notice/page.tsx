@@ -5,7 +5,7 @@ import { getUiStringsServer } from "@/services/uiStrings";
 import { getLegalPageServer } from "@/services/legalPages";
 import { ApiError } from "@/lib/api-errors";
 import { createT } from "@/lib/i18n/t";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, metaDescription } from "@/lib/seo";
 import { LegalPageRenderer } from "@/components/features/legal";
 
 const SLUG = "impressum";
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const page = await getLegalPageServer(SLUG, "en");
     return buildMetadata({
       title: page.title,
-      description: page.title,
+      description: metaDescription(page.body),
       path: PATH,
       alternatePath: ALT_PATH,
       locale: "en",
