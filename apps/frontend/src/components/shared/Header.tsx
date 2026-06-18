@@ -134,7 +134,7 @@ export function Header({ settings }: HeaderProps) {
       >
         <Container
           as="div"
-          className="flex h-[4.5rem] items-center justify-between gap-5 lg:h-[5.25rem]"
+          className="flex h-[4.5rem] items-center justify-between gap-5 lg:h-[4rem]"
         >
           <Link
             href={homeHref}

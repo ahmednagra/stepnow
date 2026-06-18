@@ -49,12 +49,12 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-7">
-      <div className="border-b border-[color:var(--color-border-soft)] pb-4">
+    <div className="flex flex-col gap-4 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
+      <div className="border-b border-[color:var(--color-border-soft)] pb-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
           {t("hero_widget.heading")}
         </p>
-        <p className="mt-2 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
+        <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
           {pickT(
             t,
             "hero_widget.note",
@@ -63,7 +63,7 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <WidgetField
           label={t("hero_widget.from_label")}
           placeholder={t("hero_widget.from_placeholder")}
@@ -78,7 +78,7 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
           onChange={setDestination}
           icon
         />
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
             {t("hero_widget.when_label")}
           </label>
@@ -94,14 +94,14 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
               max={bounds?.max}
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="h-11 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] pl-9 pr-3 text-[14px] text-[var(--color-text-primary)] transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none"
+              className="h-10 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] pl-9 pr-3 text-[14px] text-[var(--color-text-primary)] transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none"
             />
           </div>
         </div>
       </div>
 
       <Button
-        size="lg"
+        size="md"
         variant="primary"
         onClick={submit}
         trailingIcon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
@@ -124,7 +124,7 @@ interface WidgetFieldProps {
 
 function WidgetField({ label, placeholder, value, onChange, icon }: WidgetFieldProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1">
       <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
         {label}
       </label>
@@ -141,7 +141,7 @@ function WidgetField({ label, placeholder, value, onChange, icon }: WidgetFieldP
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className={`h-11 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none ${
+          className={`h-10 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none ${
             icon ? "pl-9 pr-3" : "px-3"
           }`}
         />

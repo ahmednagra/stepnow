@@ -14,10 +14,10 @@ interface HomeServicesSectionProps {
 export function HomeServicesSection({ t, locale, services }: HomeServicesSectionProps) {
   return (
     <section className="bg-[var(--color-bg-page)]">
-      <Container className="py-10 md:py-14">
+      <Container className="py-9 md:py-12">
         <ScrollReveal
           as="header"
-          className="mb-7 flex flex-col items-start gap-4 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12"
+          className="mb-6 flex flex-col items-start gap-4 md:mb-7 md:flex-row md:items-end md:justify-between md:gap-12"
         >
           <div className="max-w-2xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">

@@ -57,7 +57,7 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
       aria-label={t("home.trust.licensed")}
       className="border-b border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]"
     >
-      <Container className="grid grid-cols-2 gap-x-6 gap-y-6 py-5 md:grid-cols-4 md:gap-x-10 md:py-6">
+      <Container className="grid grid-cols-2 gap-x-6 gap-y-5 py-4 md:grid-cols-4 md:gap-x-10 md:py-5">
         {ITEMS.map(({ key, Icon }) => (
           <div key={key} className="flex items-center gap-4">
             <span
@@ -75,19 +75,19 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
 
       {stats.length > 0 && (
         <div className="border-t border-[color:var(--color-border-soft)]">
-          <Container className="grid grid-cols-2 gap-x-6 gap-y-5 py-5 md:grid-cols-4 md:gap-x-10 md:py-6">
+          <Container className="grid grid-cols-2 gap-x-6 gap-y-4 py-4 md:grid-cols-4 md:gap-x-10 md:py-5">
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col">
-                <span className="inline-flex items-center gap-2 font-serif text-[36px] leading-none tracking-tight text-[var(--color-accent-primary)] md:text-[46px]">
+                <span className="inline-flex items-center gap-2 font-serif text-[30px] leading-none tracking-tight text-[var(--color-accent-primary)] md:text-[38px]">
                   {s.star && (
                     <Star
-                      className="h-6 w-6 fill-[var(--color-accent-secondary)] text-[var(--color-accent-secondary)] md:h-7 md:w-7"
+                      className="h-5 w-5 fill-[var(--color-accent-secondary)] text-[var(--color-accent-secondary)] md:h-6 md:w-6"
                       aria-hidden="true"
                     />
                   )}
                   {s.value}
                 </span>
-                <span className="mt-1.5 text-[12px] leading-snug text-[var(--color-text-secondary)] md:text-[12.5px]">
+                <span className="mt-1 text-[12px] leading-snug text-[var(--color-text-secondary)] md:text-[12.5px]">
                   {s.label}
                 </span>
               </div>
