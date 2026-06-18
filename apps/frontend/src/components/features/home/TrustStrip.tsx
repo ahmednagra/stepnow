@@ -57,14 +57,14 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
       aria-label={t("home.trust.licensed")}
       className="border-b border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]"
     >
-      <Container className="grid grid-cols-2 gap-x-6 gap-y-5 py-4 md:grid-cols-4 md:gap-x-10 md:py-5">
+      <Container className="grid grid-cols-2 gap-x-6 gap-y-4 py-3 md:grid-cols-4 md:gap-x-10 md:py-4">
         {ITEMS.map(({ key, Icon }) => (
-          <div key={key} className="flex items-center gap-4">
+          <div key={key} className="flex items-center gap-3">
             <span
               aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]"
             >
-              <Icon strokeWidth={1.25} className="h-5 w-5" />
+              <Icon strokeWidth={1.25} className="h-[18px] w-[18px]" />
             </span>
             <span className="text-[13.5px] leading-snug text-[var(--color-text-primary)] md:text-[14px]">
               {t(key)}
@@ -75,13 +75,13 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
 
       {stats.length > 0 && (
         <div className="border-t border-[color:var(--color-border-soft)]">
-          <Container className="grid grid-cols-2 gap-x-6 gap-y-4 py-4 md:grid-cols-4 md:gap-x-10 md:py-5">
+          <Container className="grid grid-cols-2 gap-x-6 gap-y-3 py-3 md:grid-cols-4 md:gap-x-10 md:py-4">
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col">
-                <span className="inline-flex items-center gap-2 font-serif text-[30px] leading-none tracking-tight text-[var(--color-accent-primary)] md:text-[38px]">
+                <span className="inline-flex items-center gap-2 font-serif text-[26px] leading-none tracking-tight text-[var(--color-accent-primary)] md:text-[32px]">
                   {s.star && (
                     <Star
-                      className="h-5 w-5 fill-[var(--color-accent-secondary)] text-[var(--color-accent-secondary)] md:h-6 md:w-6"
+                      className="h-4 w-4 fill-[var(--color-accent-secondary)] text-[var(--color-accent-secondary)] md:h-5 md:w-5"
                       aria-hidden="true"
                     />
                   )}
