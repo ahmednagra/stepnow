@@ -110,14 +110,6 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
       >
         {t("hero_widget.cta")}
       </Button>
-
-      <p className="border-t border-[color:var(--color-border-soft)] pt-4 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
-        {pickT(
-          t,
-          "hero_widget.note",
-          "Fixed-price reply during our service hours.",
-        )}
-      </p>
     </div>
   );
 }
