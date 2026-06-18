@@ -15,7 +15,7 @@ interface FaqTeaserProps {
 }
 
 const FAQ_IMAGE =
-  "/others/faq.avif";
+  "/others/faq-driver.jpg";
 
 export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   const items = faqs.filter((f) => f.category === "general").slice(0, 5);
