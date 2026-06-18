@@ -39,7 +39,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
   return (
     <section className="border-y border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
       <Container className="py-section">
-        <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
+        <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] shadow-premium">
           <div className="grid gap-8 border-b border-[color:var(--color-border-soft)] px-6 py-7 md:px-8 md:py-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
@@ -48,6 +48,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
               <h2 className="mt-3 max-w-2xl font-serif text-section text-[var(--color-text-primary)] md:text-display-md">
                 {t("home.how.heading")}
               </h2>
+              <span className="accent-rule mt-5" aria-hidden="true" />
             </div>
 
             <div className="flex items-start gap-3 lg:max-w-sm lg:justify-self-end">

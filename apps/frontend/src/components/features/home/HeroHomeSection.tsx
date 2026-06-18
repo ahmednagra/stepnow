@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Clock3, Plane, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Clock3, Plane, ShieldCheck } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, SettingsPublic } from "@/types";
 import { ConcessionBadge, Container } from "@/components/shared";
@@ -19,6 +19,11 @@ const HERO_IMAGE =
 
 export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
   const bookingHref = locale === "de" ? "/buchen" : "/en/book";
+
+  const trustChips =
+    locale === "de"
+      ? ["§ 49 PBefG", "Festpreis", "Antwort in 30 Min"]
+      : ["§ 49 PBefG", "Fixed price", "Reply within 30 min"];
 
   const servicePoints = [
     {
@@ -62,11 +67,12 @@ export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[68%_center]"
+            className="object-cover object-[68%_center] animate-hero-zoom"
           />
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,17,21,0.74)_0%,rgba(15,17,21,0.62)_38%,rgba(15,17,21,0.30)_66%,rgba(15,17,21,0.12)_100%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08)_0%,rgba(15,17,21,0.06)_40%,rgba(15,17,21,0.48)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_0%,transparent_55%,rgba(15,17,21,0.42)_100%)]" />
 
         <Container className="relative flex min-h-[calc(100svh-10rem)] items-center py-10 md:py-12 lg:min-h-[46rem] lg:py-16">
           <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.05fr)_24rem] lg:items-end xl:grid-cols-[minmax(0,1fr)_26rem]">
@@ -103,11 +109,17 @@ export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
                 </a>
               </div>
 
-              <p className="mt-4 text-[12px] font-medium tracking-[0.04em] text-[color:rgba(247,244,234,0.82)]">
-                {locale === "de"
-                  ? "§ 49 PBefG · Festpreis · Antwort in 30 Min"
-                  : "§ 49 PBefG · Fixed price · Reply within 30 min"}
-              </p>
+              <ul className="mt-5 flex flex-wrap gap-2">
+                {trustChips.map((chip) => (
+                  <li
+                    key={chip}
+                    className="inline-flex items-center gap-1.5 border border-[color:rgba(194,166,117,0.4)] bg-[color:rgba(168,134,90,0.14)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-accent-secondary)] backdrop-blur-sm"
+                  >
+                    <Check className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
+                    {chip}
+                  </li>
+                ))}
+              </ul>
 
               <ConcessionBadge
                 settings={settings}

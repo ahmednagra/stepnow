@@ -30,6 +30,7 @@ export function HomeServicesSection({ t, locale, services }: HomeServicesSection
             <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
               {t("home.services.heading")}
             </h2>
+            <span className="accent-rule mt-4" aria-hidden="true" />
           </div>
           <p className="max-w-sm text-[13.5px] leading-relaxed text-[var(--color-text-secondary)] md:text-right">
             {t("home.services.subheading")}
@@ -39,7 +40,7 @@ export function HomeServicesSection({ t, locale, services }: HomeServicesSection
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
           <ScrollReveal
             as="div"
-            className="relative min-h-[320px] overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] md:min-h-[420px]"
+            className="relative min-h-[320px] overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] shadow-premium md:min-h-[420px]"
           >
             <Image
               src={SERVICES_IMAGE}
@@ -54,7 +55,7 @@ export function HomeServicesSection({ t, locale, services }: HomeServicesSection
           <ScrollReveal
             as="ul"
             stagger
-            className="grid gap-px overflow-hidden border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] md:grid-cols-2"
+            className="grid gap-px overflow-hidden border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] shadow-premium md:grid-cols-2"
           >
             {services.map((service) => {
               const Icon = getServiceIcon(service.icon, service.slug);

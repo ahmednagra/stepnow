@@ -132,6 +132,31 @@
     transform: translateY(-2px);
   }
 
+  /* Resting depth for standalone marketing cards (fleet, services), lifting to a
+     premium shadow + gold border on hover. Pairs with the shadow-premium-* scale. */
+  .card-elevated {
+    box-shadow: 0 1px 2px 0 rgba(10, 10, 10, 0.04);
+    transition-property: box-shadow, transform, border-color;
+    transition-duration: 250ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-elevated:hover {
+    box-shadow:
+      0 8px 16px -4px rgba(10, 10, 10, 0.06),
+      0 16px 40px -8px rgba(10, 10, 10, 0.10);
+    transform: translateY(-3px);
+    border-color: rgba(168, 134, 90, 0.45);
+  }
+
+  /* Gold underline accent beneath section headings — pays off the gold palette. */
+  .accent-rule {
+    display: block;
+    height: 2px;
+    width: 2.5rem;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-secondary));
+  }
+
   .hairline-gold {
     height: 1px;
     width: 3rem;
@@ -205,6 +230,16 @@
 
   .pb-safe { padding-bottom: var(--safe-bottom); }
 
+  /* Slow Ken-Burns drift on the hero image for a cinematic, premium feel. */
+  @keyframes hero-zoom {
+    from { transform: scale(1.04); }
+    to { transform: scale(1.12); }
+  }
+  .animate-hero-zoom {
+    animation: hero-zoom 30s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+    will-change: transform;
+  }
+
   @keyframes route-loader-line {
     0% {
       transform: translateX(-120%);
@@ -271,7 +306,8 @@
     .animate-fade-in,
     .animate-fade-up,
     .animate-fade-up-slow,
-    .animate-nudge {
+    .animate-nudge,
+    .animate-hero-zoom {
       animation: none !important;
     }
     *, *::before, *::after {

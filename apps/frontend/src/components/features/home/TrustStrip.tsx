@@ -78,10 +78,10 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
           <Container className="grid grid-cols-2 gap-x-6 gap-y-5 py-5 md:grid-cols-4 md:gap-x-10 md:py-6">
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col">
-                <span className="inline-flex items-center gap-1.5 font-serif text-[26px] leading-none tracking-tight text-[var(--color-text-primary)] md:text-[30px]">
+                <span className="inline-flex items-center gap-2 font-serif text-[36px] leading-none tracking-tight text-[var(--color-accent-primary)] md:text-[46px]">
                   {s.star && (
                     <Star
-                      className="h-5 w-5 fill-[var(--color-accent-primary)] text-[var(--color-accent-primary)]"
+                      className="h-6 w-6 fill-[var(--color-accent-secondary)] text-[var(--color-accent-secondary)] md:h-7 md:w-7"
                       aria-hidden="true"
                     />
                   )}

@@ -123,6 +123,7 @@ export function FleetPreview({ t, vehicles, locale = "de" }: FleetPreviewProps) 
               <br />
               <span className="italic text-[var(--color-accent-primary)]">{headingPart2}</span>
             </h2>
+            <span className="accent-rule mt-4" aria-hidden="true" />
           </div>
           <p className="max-w-sm text-[13.5px] leading-relaxed text-[var(--color-text-secondary)] md:text-right">
             {lead}
@@ -152,7 +153,7 @@ function VehicleCard({ vehicle, locale }: { vehicle: VehiclePublic; locale: Loca
   const categoryLabel = (vehicle.category ?? "").trim();
 
   return (
-    <li className="group flex flex-col border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
+    <li className="card-elevated group flex flex-col border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
       <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
         {strategy.kind === "image" ? (
           <>
