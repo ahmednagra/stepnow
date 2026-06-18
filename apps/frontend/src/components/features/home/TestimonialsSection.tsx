@@ -73,7 +73,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
       ref={sectionRef}
       className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]"
     >
-      <Container className="py-section">
+      <Container className="py-10 md:py-14">
         <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10">
           <div className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
             <div className="bg-[var(--color-bg-surface)] p-6 md:p-8">

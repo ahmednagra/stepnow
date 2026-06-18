@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
-import { listVehiclesServer } from "@/services/vehicles";
 import { listTestimonialsServer } from "@/services/testimonials";
 import { listFaqsServer } from "@/services/faqs";
 import { getSettingsServer } from "@/services/settings";
@@ -14,7 +13,7 @@ import { buildLocalBusinessJsonLd, buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { MobileStickyBar, ScrollReveal } from "@/components/shared";
 import {
-  FaqTeaser, FleetPreview, HeroHomeSection, HomeServicesSection, HowItWorks, TestimonialsSection, TrustStrip, WhyStepNow,
+  FaqTeaser, HeroHomeSection, HomeServicesSection, TestimonialsSection, TrustStrip,
 } from "@/components/features/home";
 
 export const revalidate = 300;
@@ -31,12 +30,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const SectionFallback = () => <div className="min-h-[420px] bg-cream" aria-hidden="true" />;
-
-async function DeferredFleet({ locale }: { locale: "en" }) {
-  const [stringsRes, vehicles] = await Promise.all([getUiStringsServer(locale), listVehiclesServer(locale)]);
-  const t = createT(stringsRes.strings, locale);
-  return <ScrollReveal><FleetPreview t={t} vehicles={vehicles} /></ScrollReveal>;
-}
 
 async function DeferredTestimonials({ locale }: { locale: "en" }) {
   const testimonials = await listTestimonialsServer(locale);
@@ -65,10 +58,6 @@ export default async function HomePageEn() {
 
       <HomeServicesSection t={t} locale="en" services={services} />
 
-      <ScrollReveal><HowItWorks t={t} /></ScrollReveal>
-      <ScrollReveal><WhyStepNow t={t} /></ScrollReveal>
-
-      <Suspense fallback={<SectionFallback />}><DeferredFleet locale="en" /></Suspense>
       <Suspense fallback={<SectionFallback />}><DeferredTestimonials locale="en" /></Suspense>
       <Suspense fallback={<SectionFallback />}><DeferredFaq locale="en" /></Suspense>
 

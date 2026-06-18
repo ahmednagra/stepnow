@@ -18,7 +18,7 @@ const SERVICES_IMAGE =
 export function HomeServicesSection({ t, locale, services }: HomeServicesSectionProps) {
   return (
     <section className="bg-[var(--color-bg-page)]">
-      <Container className="py-section">
+      <Container className="py-10 md:py-14">
         <ScrollReveal
           as="header"
           className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12"

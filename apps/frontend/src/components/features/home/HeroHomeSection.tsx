@@ -74,7 +74,7 @@ export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08)_0%,rgba(15,17,21,0.06)_40%,rgba(15,17,21,0.48)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_0%,transparent_55%,rgba(15,17,21,0.42)_100%)]" />
 
-        <Container className="relative flex min-h-[calc(100svh-10rem)] items-center py-10 md:py-12 lg:min-h-[46rem] lg:py-16">
+        <Container className="relative flex min-h-[78svh] items-center py-8 md:py-10 lg:min-h-[40rem] lg:py-12">
           <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.05fr)_24rem] lg:items-end xl:grid-cols-[minmax(0,1fr)_26rem]">
             <div className="max-w-3xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-secondary)]">
