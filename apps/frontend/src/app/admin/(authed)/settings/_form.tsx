@@ -46,6 +46,12 @@ function defaultValues(s: SettingsAdmin): AdminSettingsInput {
     whatsapp_url: s.whatsapp_url ?? "",
     tax_number: s.tax_number ?? "",
     vat_id: s.vat_id ?? "",
+    commercial_register: s.commercial_register ?? "",
+    register_court: s.register_court ?? "",
+    iban: s.iban ?? "",
+    bic: s.bic ?? "",
+    bank_account_holder: s.bank_account_holder ?? "",
+    website: s.website ?? "",
     concession_number: s.concession_number ?? "",
     concession_authority: s.concession_authority ?? "",
     concession_date: s.concession_date ?? "",
@@ -81,6 +87,12 @@ function toPatchPayload(values: AdminSettingsInput): SettingsUpdate {
     whatsapp_url: values.whatsapp_url?.trim() || null,
     tax_number: values.tax_number?.trim() || null,
     vat_id: values.vat_id?.trim() || null,
+    commercial_register: values.commercial_register?.trim() || null,
+    register_court: values.register_court?.trim() || null,
+    iban: values.iban?.trim() || null,
+    bic: values.bic?.trim() || null,
+    bank_account_holder: values.bank_account_holder?.trim() || null,
+    website: values.website?.trim() || null,
     concession_number: values.concession_number?.trim() || null,
     concession_authority: values.concession_authority?.trim() || null,
     concession_date: values.concession_date?.trim() || null,
@@ -247,6 +259,12 @@ export function SettingsForm({ initial }: SettingsFormProps) {
           <AdminFormField id="vat_id" label="VAT ID" hint="optional" error={errors.vat_id?.message}>
             <input id="vat_id" className={adminInputClass} {...register("vat_id")} />
           </AdminFormField>
+          <AdminFormField id="commercial_register" label="Handelsregister" hint="optional · e.g. HRA 742905" error={errors.commercial_register?.message}>
+            <input id="commercial_register" className={adminInputClass} {...register("commercial_register")} />
+          </AdminFormField>
+          <AdminFormField id="register_court" label="Registergericht" hint="optional · e.g. AG Stuttgart" error={errors.register_court?.message}>
+            <input id="register_court" className={adminInputClass} {...register("register_court")} />
+          </AdminFormField>
           <AdminFormField id="concession_number" label="Concession number" hint="optional" error={errors.concession_number?.message}>
             <input id="concession_number" className={adminInputClass} {...register("concession_number")} />
           </AdminFormField>
@@ -260,6 +278,24 @@ export function SettingsForm({ initial }: SettingsFormProps) {
             error={errors.concession_date?.message}
           >
             <input id="concession_date" type="date" className={adminInputClass} {...register("concession_date")} />
+          </AdminFormField>
+        </div>
+      </AdminCard>
+
+      {/* Banking — printed in the Rechnung Zahlungsbedingungen block */}
+      <AdminCard title="Bank details" description="Shown on the invoice payment block (IBAN/BIC) and footers.">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AdminFormField id="iban" label="IBAN" hint="optional" error={errors.iban?.message}>
+            <input id="iban" className={adminInputClass} {...register("iban")} />
+          </AdminFormField>
+          <AdminFormField id="bic" label="BIC" hint="optional" error={errors.bic?.message}>
+            <input id="bic" className={adminInputClass} {...register("bic")} />
+          </AdminFormField>
+          <AdminFormField id="bank_account_holder" label="Account holder" hint="optional" error={errors.bank_account_holder?.message}>
+            <input id="bank_account_holder" className={adminInputClass} {...register("bank_account_holder")} />
+          </AdminFormField>
+          <AdminFormField id="website" label="Website" hint="optional · invoice footer" error={errors.website?.message}>
+            <input id="website" className={adminInputClass} {...register("website")} />
           </AdminFormField>
         </div>
       </AdminCard>

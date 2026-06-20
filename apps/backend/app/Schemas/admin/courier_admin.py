@@ -35,6 +35,7 @@ class _InlineCustomer(BaseModel):
 class OrderStopCreate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     stop_type: StopType
+    company: str | None = Field(default=None, max_length=200)  # Firma at Beladeort/Entladeort
     address: str = Field(min_length=1, max_length=500)
     postcode: str | None = Field(default=None, max_length=10)
     city: str | None = Field(default=None, max_length=100)
@@ -53,6 +54,7 @@ class OrderStopResponse(BaseModel):
     sequence: int
     stop_type: str
     status: str
+    company: str | None
     address: str
     postcode: str | None
     city: str | None
@@ -95,6 +97,9 @@ class ParcelOrderCreate(BaseModel):
     distance_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
     total_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
     occupied_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
+    # Transportauftrag km legs (Anfahrt to load / leg after unload).
+    km_to_load: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
+    km_to_unload: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
 
     scheduled_datetime: datetime | None = None
 
@@ -160,6 +165,8 @@ class CourierOrderResponse(BaseModel):
     distance_km: Decimal | None
     total_km: Decimal | None
     occupied_km: Decimal | None
+    km_to_load: Decimal | None
+    km_to_unload: Decimal | None
     scheduled_datetime: datetime | None
     net_amount: Decimal
     vat_rate: Decimal

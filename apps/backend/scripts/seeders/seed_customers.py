@@ -205,8 +205,8 @@ def run() -> None:
                 "ort": raw["ort"] or None,
                 "email": None,
                 "phone": None,
-                # Legacy customer number — seed_legacy_orders.py looks orders up by this tag.
-                "internal_notes": f"Legacy: {legacy_nr}",
+                # Canonical Kunden-Nr. — seed_legacy_orders.py links orders by this.
+                "customer_number": legacy_nr,
             }
             c = CustomersService.create(db, data, actor, request=None)
             log_create(f"customer '{legacy_nr}'", f"id={c.id}, company={company}")

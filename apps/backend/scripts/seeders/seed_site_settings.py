@@ -20,8 +20,15 @@ SETTINGS_DATA = {
     "phone_mobile": "+49 159 01225850",
     "email": "info@step-now.de",
     "whatsapp_url": "https://wa.me/4915901225850",
-    "tax_number": None,
+    "tax_number": "59500/72609",
     "vat_id": None,
+    # Handelsregister (e.K.) + bank — printed on the Transportauftrag/Rechnung legal + payment blocks.
+    "commercial_register": "HRA 742905",
+    "register_court": "AG Stuttgart",
+    "iban": "DE10 1001 7997 7961 0444 47",
+    "bic": "HOLVDEB1",
+    "bank_account_holder": "Naeem Ahmad",
+    "website": "www.step-now.de",
     "concession_number": "GE-2026-001",
     "concession_authority": "Landratsamt Esslingen",
     "concession_date": date(2026, 1, 15),
@@ -64,7 +71,11 @@ def run() -> None:
             # DB picks up the mock figures without a reset, and any value the owner has already set
             # in admin is never overwritten (mock now, accurate later).
             filled = [
-                f for f in ("years_active", "rides_completed", "fleet_size", "google_rating", "google_review_count")
+                f for f in (
+                    "years_active", "rides_completed", "fleet_size", "google_rating", "google_review_count",
+                    "tax_number", "commercial_register", "register_court", "iban", "bic",
+                    "bank_account_holder", "website",
+                )
                 if getattr(existing, f) is None and SETTINGS_DATA[f] is not None
             ]
             for f in filled:

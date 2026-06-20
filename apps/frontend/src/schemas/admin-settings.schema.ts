@@ -30,6 +30,12 @@ export const adminSettingsSchema = z.object({
   whatsapp_url: optionalUrl,
   tax_number: optionalString,
   vat_id: optionalString,
+  commercial_register: optionalString,
+  register_court: optionalString,
+  iban: optionalString,
+  bic: optionalString,
+  bank_account_holder: optionalString,
+  website: optionalUrl,
   concession_number: optionalString,
   concession_authority: optionalString,
   concession_date: z.string().trim().optional().or(z.literal(""))

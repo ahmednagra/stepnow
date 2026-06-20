@@ -16,6 +16,7 @@ export interface OrderStop {
   sequence: number;
   stop_type: StopType;
   status: string;
+  company: string | null;
   address: string;
   postcode: string | null;
   city: string | null;
@@ -30,6 +31,7 @@ export interface OrderStop {
 
 export interface OrderStopInput {
   stop_type: StopType;
+  company?: string | null;
   address: string;
   postcode?: string | null;
   city?: string | null;
@@ -71,6 +73,8 @@ export interface CourierOrder {
   distance_km: string | null;
   total_km: string | null;
   occupied_km: string | null;
+  km_to_load: string | null;
+  km_to_unload: string | null;
   scheduled_datetime: string | null;
   net_amount: string;
   vat_rate: string;
@@ -122,6 +126,8 @@ export interface ParcelOrderInput {
   distance_km?: string | null;
   total_km?: string | null;
   occupied_km?: string | null;
+  km_to_load?: string | null;
+  km_to_unload?: string | null;
   scheduled_datetime?: string | null;
   net_amount: string;
   vat_rate?: string;

@@ -112,7 +112,9 @@ def create(db: Session, payload: VehicleCreate, actor: AdminUser) -> Vehicle:
 | Tables | plural snake_case: `orders` `vehicles` `customers` |
 | Models | singular PascalCase: `Order` `Vehicle` `Customer` |
 | Money | `NUMERIC(10,2)` → `Decimal` — never `float`. EUR default. |
-| VAT | 7% passenger (PBefG), 19% courier — set per order |
+| VAT | 7% passenger (PBefG); **19% courier — default on the order→Rechnung path** — set per order |
+| Docs | **Transportauftrag** (driver slip, no price, `A-…`) · **Rechnung** (§14 invoice, `R…`, IBAN/BIC + HRA footer). Issuer/bank/register from `site_settings`. Must match `Refrence Material/Docs/` templates. |
+| Kunden-Nr | `customers.customer_number` — K911-series (e.g. `K911053`), generated in `CustomersService.create` |
 | Delivery status | string: `draft → dispatched → picked_up → delivered` |
 | JSONB attrs | never `metadata` — use `order_metadata` etc. |
 

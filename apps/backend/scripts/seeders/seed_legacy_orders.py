@@ -214,12 +214,11 @@ TAX_NUMBER = "59500/72609"
 
 
 def _find_customer(db, cust_nr: str):
-    """Look up Customer by 'Legacy: K911XXX' tag in internal_notes."""
+    """Look up Customer by canonical Kunden-Nr. (customer_number)."""
     from app.Models.customers import Customer
-    tag = f"Legacy: {cust_nr}"
     return (
         db.query(Customer)
-        .filter(Customer.internal_notes.like(f"%{tag}%"))
+        .filter(Customer.customer_number == cust_nr)
         .first()
     )
 
@@ -335,6 +334,9 @@ def run() -> None:
                 pickup_city=None,
                 destination_address=a["nch"],
                 destination_city=None,
+                client_reference=a["ref_nr"] or None,
+                distance_km=Decimal(a["km"]) if a["km"] else None,
+                service_type="Sonderfahrt",
                 consignee=None,
                 parcel_description=None,
                 parcel_quantity=1,

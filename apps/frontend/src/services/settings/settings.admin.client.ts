@@ -19,6 +19,12 @@ export interface SettingsUpdate {
   whatsapp_url?: string | null;
   tax_number?: string | null;
   vat_id?: string | null;
+  commercial_register?: string | null;
+  register_court?: string | null;
+  iban?: string | null;
+  bic?: string | null;
+  bank_account_holder?: string | null;
+  website?: string | null;
   concession_number?: string | null;
   concession_authority?: string | null;
   concession_date?: string | null;     // YYYY-MM-DD

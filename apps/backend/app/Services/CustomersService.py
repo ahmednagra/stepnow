@@ -15,7 +15,7 @@ from app.Models.customers import Customer
 from app.Models.orders import Order
 from app.Models.payments import Payment
 from app.Services.AuditService import AuditService
-from app.Utils.finance import money
+from app.Utils.finance import money, next_customer_number
 
 
 class CustomersService:
@@ -125,6 +125,8 @@ class CustomersService:
 
     @staticmethod
     def create(db: Session, data: dict, actor: AdminUser, request: Request) -> Customer:
+        if not data.get("customer_number"):
+            data["customer_number"] = next_customer_number(db, Customer.customer_number)
         c = Customer(**data)
         db.add(c)
         db.flush()

@@ -67,10 +67,10 @@ const TERM_OPTIONS = [
 // from SiteSettings — these strings never reach the actual document.
 const ISSUER = {
   name: "StepNow Rides & Movers",
-  sub: "Naeem Ahmad e.K. · Plochingen/Esslingen",
+  sub: "Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau",
   steuer: "Steuer-Nr. 59500/72609",
-  bank: "IBAN DE12 6005 0101 0001 2345 67 · BIC SOLADEST600 · Kreissparkasse Esslingen",
-  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · +49 (0) 1590 1225850 · rides@step-now.de",
+  bank: "IBAN DE10 1001 7997 7961 0444 47 · BIC HOLVDEB1 · Naeem Ahmad",
+  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · HRA 742905 AG Stuttgart · www.step-now.de",
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -82,7 +82,7 @@ const addDaysDE = (iso: string, d: number | string) => {
   return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-const emptyStop = () => ({ address: "", plz: "", ort: "", contact_name: "", contact_phone: "", notes: "" });
+const emptyStop = () => ({ company: "", address: "", plz: "", ort: "", contact_name: "", contact_phone: "", time_from: "", time_to: "", notes: "" });
 
 function emptyDefaults(): AdminOrderInput {
   return {
@@ -92,7 +92,8 @@ function emptyDefaults(): AdminOrderInput {
     street: "", plz: "", ort: "", email: "", phone: "", vat_id: "", client_reference: "",
     pickups: [emptyStop()], dropoff: emptyStop(), route_km: "", service_type: "",
     net: "", vat: "0.19",
-    km_total: "", km_occupied: "",
+    km_to_load: "", km_to_unload: "", km_total: "", km_occupied: "",
+    surcharge_label: "", surcharge_net: "", skonto_pct: "", skonto_days: "",
     term: null, service_description: "",
   };
 }
@@ -102,11 +103,14 @@ function toPayload(v: AdminOrderInput): ParcelOrderInput {
   const orNull = (s: string | undefined) => (s?.trim() ? s.trim() : null);
   const toStop = (s: AdminOrderInput["dropoff"], type: "pickup" | "drop"): OrderStopInput => ({
     stop_type: type,
+    company: orNull(s.company),
     address: s.address.trim(),
     postcode: orNull(s.plz),
     city: orNull(s.ort),
     contact_name: orNull(s.contact_name),
     contact_phone: orNull(s.contact_phone),
+    time_from: orNull(s.time_from),
+    time_to: orNull(s.time_to),
     notes: orNull(s.notes),
   });
   return {
@@ -134,6 +138,8 @@ function toPayload(v: AdminOrderInput): ParcelOrderInput {
     distance_km: v.route_km ? normalizeDecimalInput(v.route_km) : null,
     total_km: v.km_total ? normalizeDecimalInput(v.km_total) : null,
     occupied_km: v.km_occupied ? normalizeDecimalInput(v.km_occupied) : null,
+    km_to_load: v.km_to_load ? normalizeDecimalInput(v.km_to_load) : null,
+    km_to_unload: v.km_to_unload ? normalizeDecimalInput(v.km_to_unload) : null,
     scheduled_datetime: v.order_date ? `${v.order_date}T00:00:00` : null,
     net_amount: normalizeDecimalInput(v.net)!,
     vat_rate: v.vat,
@@ -234,10 +240,18 @@ export default function NewTransportOrderPage() {
   const serviceType = watch("service_type");
   const net = watch("net");
   const vat = watch("vat");
+  const kmToLoad = watch("km_to_load");
+  const kmToUnload = watch("km_to_unload");
   const kmGes = watch("km_total");
   const kmBes = watch("km_occupied");
+  const surchargeLabel = watch("surcharge_label");
+  const surchargeNet = watch("surcharge_net");
+  const skontoPct = watch("skonto_pct");
+  const skontoDays = watch("skonto_days");
   const term = watch("term");
   const serviceDescription = watch("service_description");
+  // Kunden-Nr. of a linked saved customer (new customers get theirs assigned on save).
+  const [customerNumber, setCustomerNumber] = useState<string | null>(null);
 
   // ── Customer search ──
   const [results, setResults] = useState<CustomerAdmin[]>([]);
@@ -256,12 +270,14 @@ export default function NewTransportOrderPage() {
     setValue("street", c.street ?? ""); setValue("plz", c.plz ?? ""); setValue("ort", c.ort ?? "");
     setValue("email", c.email ?? ""); setValue("phone", c.phone ?? ""); setValue("vat_id", c.company_vatid ?? "");
     setValue("customer_id", c.id, { shouldValidate: true });
+    setCustomerNumber(c.customer_number ?? null);
     setShowNameSug(false); setShowPhoneSug(false); setResults([]);
   }
   function clearCustomer() {
     setValue("company_name", ""); setValue("contact_person", ""); setValue("street", "");
     setValue("plz", ""); setValue("ort", ""); setValue("email", ""); setValue("phone", "");
     setValue("vat_id", ""); setValue("customer_id", null);
+    setCustomerNumber(null);
   }
 
   // ── Driver autocomplete ──
@@ -357,8 +373,14 @@ export default function NewTransportOrderPage() {
     setOrder(saved);
     if (!values.customer_id && saved.customer_id) setValue("customer_id", saved.customer_id);
     // Create-or-reuse the invoice (backend is idempotent) so the order is immediately billable.
+    // Optional surcharge + Skonto are captured here and printed on the Rechnung.
     if (!hasInvoice) {
-      await createOrderInvoice(saved.id, {});
+      await createOrderInvoice(saved.id, {
+        surcharge_label: values.surcharge_label.trim() || undefined,
+        surcharge_net: values.surcharge_net ? normalizeDecimalInput(values.surcharge_net) ?? undefined : undefined,
+        skonto_pct: values.skonto_pct ? normalizeDecimalInput(values.skonto_pct) ?? undefined : undefined,
+        skonto_days: values.skonto_days ? Number(values.skonto_days) || undefined : undefined,
+      });
       setHasInvoice(true);
     }
     return saved;
@@ -416,9 +438,14 @@ export default function NewTransportOrderPage() {
   const fullName = companyName.trim();
   const netNum = Number(netNorm || "0");
   const rate = Number(vat) || 0;
-  const vatAmt = netNum * rate;
-  const brutto = netNum + vatAmt;
+  // Invoice net includes the optional surcharge line; the driver slip never sees money.
+  const surchargeNum = Number(normalizeDecimalInput(surchargeNet) || "0");
+  const invNet = netNum + surchargeNum;
+  const vatAmt = invNet * rate;
+  const brutto = invNet + vatAmt;
   const vatPct = +(rate * 100).toFixed(2);
+  const skontoNum = Number(normalizeDecimalInput(skontoPct) || "0");
+  const skontoAmt = skontoNum > 0 ? brutto * (skontoNum / 100) : 0;
   const leerKm = Math.max(0, (parseInt(kmGes) || 0) - (parseInt(kmBes) || 0));
   const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
   // Days → weeks for the payment-term hint (whole weeks shown plainly, else one decimal).
@@ -773,24 +800,34 @@ export default function NewTransportOrderPage() {
                     <MapPin className="h-3 w-3" /> Pickups (Abholung) — one or more collection points {req}
                   </p>
                   {pickupFields.map((f, i) => (
-                    <div key={f.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_1fr_auto]">
-                      <input
-                        className={cn(adminInputClass, errors.pickups?.[i]?.address && "border-rose-400 focus:border-rose-500")}
-                        aria-invalid={!!errors.pickups?.[i]?.address || undefined}
-                        {...register(`pickups.${i}.address`)}
-                        placeholder={`Pickup ${i + 1} — street & no.`}
-                      />
-                      <input className={adminInputClass} {...register(`pickups.${i}.plz`)} placeholder="PLZ" />
-                      <input className={adminInputClass} {...register(`pickups.${i}.ort`)} placeholder="City" />
-                      <button
-                        type="button"
-                        onClick={() => removePickup(i)}
-                        disabled={pickupFields.length === 1}
-                        title="Remove pickup"
-                        className="inline-flex h-9 w-9 items-center justify-center border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+                    <div key={f.id} className="space-y-2 border border-slate-200 bg-slate-50/40 p-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-emerald-700">Beladeort {pickupFields.length > 1 ? i + 1 : ""}</span>
+                        <button
+                          type="button"
+                          onClick={() => removePickup(i)}
+                          disabled={pickupFields.length === 1}
+                          title="Remove pickup"
+                          className="ml-auto inline-flex h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <input className={adminInputClass} {...register(`pickups.${i}.company`)} placeholder="Firma / Company (optional)" />
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_1fr]">
+                        <input
+                          className={cn(adminInputClass, errors.pickups?.[i]?.address && "border-rose-400 focus:border-rose-500")}
+                          aria-invalid={!!errors.pickups?.[i]?.address || undefined}
+                          {...register(`pickups.${i}.address`)}
+                          placeholder={`Pickup ${i + 1} — street & no.`}
+                        />
+                        <input className={adminInputClass} {...register(`pickups.${i}.plz`)} placeholder="PLZ" />
+                        <input className={adminInputClass} {...register(`pickups.${i}.ort`)} placeholder="City" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_140px]">
+                        <label className="flex items-center gap-1.5 text-[11px] text-slate-500">von <input type="time" className={adminInputClass} {...register(`pickups.${i}.time_from`)} /></label>
+                        <label className="flex items-center gap-1.5 text-[11px] text-slate-500">bis <input type="time" className={adminInputClass} {...register(`pickups.${i}.time_to`)} /></label>
+                      </div>
                     </div>
                   ))}
                   <button
@@ -806,15 +843,22 @@ export default function NewTransportOrderPage() {
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-600">
                     <MapPin className="h-3 w-3" /> Drop-off (Ziel) — single destination {req}
                   </p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_1fr]">
-                    <input
-                      className={cn(adminInputClass, errors.dropoff?.address && "border-rose-400 focus:border-rose-500")}
-                      aria-invalid={!!errors.dropoff?.address || undefined}
-                      {...register("dropoff.address")}
-                      placeholder="Destination — street & no."
-                    />
-                    <input className={adminInputClass} {...register("dropoff.plz")} placeholder="PLZ" />
-                    <input className={adminInputClass} {...register("dropoff.ort")} placeholder="City" />
+                  <div className="space-y-2 border border-slate-200 bg-slate-50/40 p-2.5">
+                    <input className={adminInputClass} {...register("dropoff.company")} placeholder="Firma / Company (optional)" />
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_1fr]">
+                      <input
+                        className={cn(adminInputClass, errors.dropoff?.address && "border-rose-400 focus:border-rose-500")}
+                        aria-invalid={!!errors.dropoff?.address || undefined}
+                        {...register("dropoff.address")}
+                        placeholder="Destination — street & no."
+                      />
+                      <input className={adminInputClass} {...register("dropoff.plz")} placeholder="PLZ" />
+                      <input className={adminInputClass} {...register("dropoff.ort")} placeholder="City" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_140px]">
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-500">von <input type="time" className={adminInputClass} {...register("dropoff.time_from")} /></label>
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-500">bis <input type="time" className={adminInputClass} {...register("dropoff.time_to")} /></label>
+                    </div>
                   </div>
                   <FieldErr msg={errors.dropoff?.address?.message} />
                 </div>
@@ -986,35 +1030,57 @@ export default function NewTransportOrderPage() {
                     <p className="mt-0.5 text-[14px] font-semibold text-amber-700">Open</p>
                   </div>
                 </div>
+
+                {/* Optional surcharge + Skonto (early-payment discount) — printed on the invoice */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <AdminFormField label="Surcharge label (Zuschlag)">
+                    <input className={adminInputClass} {...register("surcharge_label")} placeholder="e.g. Wartezeit" />
+                  </AdminFormField>
+                  <AdminFormField label="Surcharge net (€)">
+                    <Controller name="surcharge_net" control={control}
+                      render={({ field }) => <AffixInput unit="EUR" type="number" min={0} step="0.01" value={field.value} onChange={field.onChange} placeholder="0.00" />} />
+                  </AdminFormField>
+                  <AdminFormField label="Skonto (%)">
+                    <Controller name="skonto_pct" control={control}
+                      render={({ field }) => <AffixInput unit="%" type="number" min={0} max={100} step={0.5} value={field.value} onChange={field.onChange} placeholder="e.g. 5" />} />
+                  </AdminFormField>
+                  <AdminFormField label="Skonto within (days)">
+                    <Controller name="skonto_days" control={control}
+                      render={({ field }) => <AffixInput unit="days" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="e.g. 7" />} />
+                  </AdminFormField>
+                </div>
+                {skontoAmt > 0 && skontoDays && (
+                  <p className="bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">
+                    Skonto: bei Zahlung binnen {skontoDays} Tagen {skontoNum}% = {money(skontoAmt)} Abzug.
+                  </p>
+                )}
               </div>
             </AdminCard>
 
             {/* Section 5 — Logbook */}
             <AdminCard
-              title={<span className="flex items-center gap-2"><ClipboardList className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Logbook</span>}
-              description="Total km driven / occupied km (§ 4 Abs. 7 EStG). Empty km is derived."
+              title={<span className="flex items-center gap-2"><ClipboardList className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} /> Logbook (km)</span>}
+              description="Km to load · Km to unload · driven · occupied (Besetzt). Empty km is derived (driven − occupied)."
             >
-              <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
-                <AdminFormField label="Total km driven">
-                  <Controller
-                    name="km_total"
-                    control={control}
-                    render={({ field }) => (
-                      <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
-                    )}
-                  />
+              <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <AdminFormField label="Km to load">
+                  <Controller name="km_to_load" control={control}
+                    render={({ field }) => <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />} />
                 </AdminFormField>
-                <AdminFormField label="Occupied km">
-                  <Controller
-                    name="km_occupied"
-                    control={control}
-                    render={({ field }) => (
-                      <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />
-                    )}
-                  />
+                <AdminFormField label="Km to unload">
+                  <Controller name="km_to_unload" control={control}
+                    render={({ field }) => <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />} />
+                </AdminFormField>
+                <AdminFormField label="Driven km">
+                  <Controller name="km_total" control={control}
+                    render={({ field }) => <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />} />
+                </AdminFormField>
+                <AdminFormField label="Occupied (Besetzt)">
+                  <Controller name="km_occupied" control={control}
+                    render={({ field }) => <AffixInput unit="km" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="0" />} />
                 </AdminFormField>
                 <div className="flex items-center justify-between border border-slate-200 bg-slate-50 px-3 py-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Empty km</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Empty</span>
                   <span className="font-mono text-[14px] font-semibold tabular-nums text-slate-900">{leerKm} km</span>
                 </div>
               </div>
@@ -1066,9 +1132,11 @@ export default function NewTransportOrderPage() {
                     </div>
                     <div className="text-right text-[11px] leading-relaxed text-slate-500">
                       <p className="font-serif text-[16px] font-medium uppercase tracking-wide text-slate-900">
-                        {previewMode === "driver" ? "Fahrauftrag" : "Rechnung"}
+                        {previewMode === "driver" ? "Transportauftrag" : "Rechnung"}
                       </p>
-                      <p className="font-mono text-[12.5px] text-slate-700">{order?.order_number ?? "—"}</p>
+                      <p className="font-mono text-[12.5px] text-slate-700">
+                        {order?.order_number ? `${previewMode === "driver" ? "A-" : "R"}${order.order_number}` : "—"}
+                      </p>
                       <p>{deDate(orderDate)}</p>
                       {previewMode === "customer" && <p>{ISSUER.steuer}</p>}
                     </div>
@@ -1084,28 +1152,37 @@ export default function NewTransportOrderPage() {
                           : <span className="text-[13px] italic text-slate-400">Noch nicht gewählt</span>}
                         {driverName && <span className="ml-auto text-[12px] text-slate-300">Fahrer: <strong className="text-white">{driverName}</strong></span>}
                       </div>
-                      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-start gap-3 border border-slate-200 bg-slate-50 p-3.5">
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Abholung{pickups.length > 1 ? ` (${pickups.length})` : ""}</p>
-                          {pickups.some((p) => p.address.trim()) ? (
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        <div className="border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Beladeort{pickups.length > 1 ? ` (${pickups.length})` : ""}</p>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            <span className="font-semibold">Datum &amp; Uhrzeit:</span> {deDate(preferredDate || orderDate)}
+                            {pickups[0]?.time_from ? ` · ${pickups[0].time_from}${pickups[0]?.time_to ? `–${pickups[0].time_to}` : ""} Uhr` : ""}
+                          </p>
+                          {pickups.some((p) => p.address.trim() || p.company?.trim()) ? (
                             <ol className="mt-1 space-y-0.5">
                               {pickups.map((p, i) => (
-                                <li key={i} className="text-[13px] font-medium leading-snug text-slate-900">
-                                  {(pickups.length > 1 ? `${i + 1}. ` : "") + (p.address || "—") + (p.ort ? `, ${p.ort}` : "")}
+                                <li key={i} className="text-[12.5px] font-medium leading-snug text-slate-900">
+                                  {(pickups.length > 1 ? `${i + 1}. ` : "")}
+                                  {[p.company, p.address, [p.plz, p.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "—"}
                                 </li>
                               ))}
                             </ol>
-                          ) : <p className="mt-1 text-[13px] italic text-slate-400">—</p>}
+                          ) : <p className="mt-1 text-[12.5px] italic text-slate-400">—</p>}
                         </div>
-                        <ArrowRight className="mt-1 h-4 w-4 text-slate-400" />
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-600">Ziel</p>
-                          <p className="mt-1 text-[13px] font-medium leading-snug text-slate-900">{dropoff.address ? `${dropoff.address}${dropoff.ort ? `, ${dropoff.ort}` : ""}` : <span className="italic text-slate-400">—</span>}</p>
+                        <div className="border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-600">Entladeort</p>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            <span className="font-semibold">Datum &amp; Uhrzeit:</span> {deDate(preferredDate || orderDate)}
+                            {dropoff.time_from ? ` · ${dropoff.time_from}${dropoff.time_to ? `–${dropoff.time_to}` : ""} Uhr` : ""}
+                          </p>
+                          <p className="mt-1 text-[12.5px] font-medium leading-snug text-slate-900">
+                            {[dropoff.company, dropoff.address, [dropoff.plz, dropoff.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ") || <span className="italic text-slate-400">—</span>}
+                          </p>
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 border border-dashed border-slate-300 px-3.5 py-2.5 text-[12px] text-slate-500">
                         <span>Auftraggeber: <strong className="text-slate-900">{fullName || "—"}</strong></span>
-                        <span>Termin: <strong className="text-slate-900">{preferredDate ? deDate(preferredDate) : deDate(orderDate)}</strong></span>
                         <span>Strecke: <strong className="text-slate-900">{routeKm ? `${routeKm} km` : "—"}</strong></span>
                       </div>
                       {serviceType && (
@@ -1114,16 +1191,19 @@ export default function NewTransportOrderPage() {
                       {serviceDescription && (
                         <p className="mt-1 text-[12px] text-slate-600">{serviceDescription}</p>
                       )}
-                      <div className="mt-3 flex flex-wrap gap-x-4 text-[11px] text-slate-500">
-                        <span>Gefahrene KM: <strong className="text-slate-700">{kmGes || "—"}</strong></span>
-                        <span>Besetzt: <strong className="text-slate-700">{kmBes || "—"}</strong></span>
-                        <span>Leer: <strong className="text-slate-700">{leerKm} km</strong></span>
+                      <div className="mt-3 grid grid-cols-5 gap-1.5 text-center text-[10.5px] text-slate-500">
+                        {[["Km to load", kmToLoad], ["Km to Unload", kmToUnload], ["driven Km", kmGes], ["Besetzt", kmBes], ["Leer", `${leerKm}`]].map(([lbl, val]) => (
+                          <div key={lbl as string} className="border border-slate-200 px-1 py-1.5">
+                            <p className="uppercase tracking-[0.06em]">{lbl}</p>
+                            <p className="mt-0.5 font-mono text-[12px] font-semibold text-slate-800">{val ? `${val} km` : "—"}</p>
+                          </div>
+                        ))}
                       </div>
                       <div className="mt-8 grid grid-cols-2 gap-6">
                         <div className="border-t border-slate-900 pt-1.5 text-[11px] font-semibold text-slate-500">Unterschrift Fahrer</div>
                         <div className="border-t border-slate-900 pt-1.5 text-[11px] font-semibold text-slate-500">Unterschrift Auftraggeber</div>
                       </div>
-                      <p className="mt-4 text-center text-[11px] italic text-slate-500">Belegart Fahrauftrag — enthält bewusst keine Preisangaben.</p>
+                      <p className="mt-4 text-center text-[11px] italic text-slate-500">Belegart Transportauftrag — enthält bewusst keine Preisangaben.</p>
                     </>
                   ) : (
                     <>
@@ -1137,51 +1217,76 @@ export default function NewTransportOrderPage() {
                                 {street && <div>{street}</div>}
                                 {(plz || ort) && <div>{plz} {ort}</div>}
                                 {vatId && <div className="mt-0.5 text-[11px] text-slate-500">USt-IdNr: {vatId}</div>}
-                                {clientRef && <div className="mt-0.5 text-[11px] text-slate-500">Ref.-Nr.: {clientRef}</div>}
                               </>
                             ) : <span className="italic text-slate-400">Kunde wählen…</span>}
                           </div>
                         </div>
-                        <dl className="min-w-[170px] space-y-1 text-[12px]">
-                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Leistungsdatum</dt><dd className="text-slate-800">{deDate(preferredDate || orderDate)}</dd></div>
-                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Fällig bis</dt><dd className="text-slate-800">{term != null ? addDaysDE(orderDate, term) : "—"}</dd></div>
+                        <dl className="min-w-[190px] space-y-1 text-[12px]">
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Kunden-Nr.</dt><dd className="text-slate-800">{customerNumber ?? (linkedId ? "—" : "wird vergeben")}</dd></div>
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Rechnungs-Nr.</dt><dd className="font-mono text-slate-800">{order?.order_number ? `R${order.order_number}` : "—"}</dd></div>
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Datum</dt><dd className="text-slate-800">{deDate(orderDate)}</dd></div>
+                          {clientRef && <div className="flex justify-between gap-6"><dt className="text-slate-500">Referenz-Nr.</dt><dd className="text-slate-800">{clientRef}</dd></div>}
                         </dl>
                       </div>
 
-                      <table className="mt-5 w-full border-collapse">
+                      <p className="mt-4 text-[12px] leading-relaxed text-slate-600">
+                        Sehr geehrte Damen und Herren, vielen Dank für Ihren Auftrag. Für die Transportleistung vom{" "}
+                        <strong className="text-slate-900">{deDate(preferredDate || orderDate)}</strong>
+                        {" "}({pickups[0]?.ort || pickups[0]?.address || "—"} nach {dropoff.ort || dropoff.address || "—"}) stellen wir folgende Rechnung:
+                      </p>
+
+                      <table className="mt-4 w-full border-collapse">
                         <thead><tr className="border-b-2 border-slate-900 text-[10px] uppercase tracking-wide text-slate-500">
                           <th className="py-1.5 pr-2 text-left font-semibold">Pos.</th>
-                          <th className="py-1.5 pr-2 text-left font-semibold">Bezeichnung</th>
-                          <th className="py-1.5 pl-2 text-right font-semibold">Netto</th>
+                          <th className="py-1.5 pr-2 text-left font-semibold">Beschreibung</th>
+                          <th className="py-1.5 pl-2 text-right font-semibold">Einzelpreis</th>
                           <th className="py-1.5 pl-2 text-right font-semibold">MwSt</th>
-                          <th className="py-1.5 pl-2 text-right font-semibold">Gesamt</th>
+                          <th className="py-1.5 pl-2 text-right font-semibold">Gesamtpreis</th>
                         </tr></thead>
-                        <tbody><tr className="border-b border-slate-100 align-top">
-                          <td className="py-2.5 pr-2 text-[13px]">1</td>
-                          <td className="py-2.5 pr-2 text-[13px]">
-                            <strong className="text-slate-900">{serviceType || "Transportleistung"}</strong>
-                            {(pickups[0]?.address || dropoff.address) && <div className="text-[11px] text-slate-500">{(pickups[0]?.address || "—") + (pickups.length > 1 ? ` (+${pickups.length - 1})` : "") + " → " + (dropoff.address || "—")}</div>}
-                            {serviceDescription && <div className="text-[11px] text-slate-500">{serviceDescription}</div>}
-                          </td>
-                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum)}</td>
-                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{vatPct}%</td>
-                          <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum)}</td>
-                        </tr></tbody>
+                        <tbody>
+                          <tr className="border-b border-slate-100 align-top">
+                            <td className="py-2.5 pr-2 text-[13px]">1</td>
+                            <td className="py-2.5 pr-2 text-[13px]">
+                              <strong className="text-slate-900">{serviceType || "Transportleistung"}</strong>
+                              {(pickups[0]?.address || dropoff.address) && <div className="text-[11px] text-slate-500">{(pickups[0]?.ort || pickups[0]?.address || "—") + " → " + (dropoff.ort || dropoff.address || "—")}</div>}
+                              {serviceDescription && <div className="text-[11px] text-slate-500">{serviceDescription}</div>}
+                            </td>
+                            <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum)}</td>
+                            <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{vatPct}%</td>
+                            <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum * (1 + rate))}</td>
+                          </tr>
+                          {surchargeNum > 0 && (
+                            <tr className="border-b border-slate-100 align-top">
+                              <td className="py-2.5 pr-2 text-[13px]">2</td>
+                              <td className="py-2.5 pr-2 text-[13px]"><strong className="text-slate-900">{surchargeLabel || "Zuschlag"}</strong></td>
+                              <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(surchargeNum)}</td>
+                              <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{vatPct}%</td>
+                              <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(surchargeNum * (1 + rate))}</td>
+                            </tr>
+                          )}
+                        </tbody>
                       </table>
 
                       <div className="mt-4 flex justify-end">
                         <div className="w-64 text-[13px]">
-                          <div className="flex justify-between py-0.5"><span className="text-slate-500">Zwischensumme (netto)</span><span className="font-mono">{money(netNum)}</span></div>
-                          <div className="flex justify-between py-0.5"><span className="text-slate-500">zzgl. MwSt {vatPct}%</span><span className="font-mono">{money(vatAmt)}</span></div>
+                          <div className="flex justify-between py-0.5"><span className="text-slate-500">Summe Netto</span><span className="font-mono">{money(invNet)}</span></div>
+                          <div className="flex justify-between py-0.5"><span className="text-slate-500">zzgl. USt. {vatPct}%</span><span className="font-mono">{money(vatAmt)}</span></div>
                           <div className="mt-1 flex justify-between border-t-2 border-slate-900 bg-slate-50 px-2 py-2 text-[15px] font-semibold text-slate-900"><span>Gesamtbetrag</span><span className="font-mono">{money(brutto)}</span></div>
                         </div>
                       </div>
 
-                      <p className="mt-5 text-[12px] leading-relaxed text-slate-600">
-                        Zahlbar ohne Abzug bis <strong className="text-slate-900">{term != null ? addDaysDE(orderDate, term) : "—"}</strong> ({term ?? 0} Tage netto).
-                        Bitte geben Sie bei der Zahlung die Rechnungsnummer <span className="font-mono">{order?.order_number ?? "—"}</span> an.
+                      {skontoAmt > 0 && skontoDays && (
+                        <p className="mt-3 text-[12px] text-slate-600">Skonto: Bei Zahlung binnen {skontoDays} Tagen {skontoNum}% = <strong className="text-slate-900">{money(skontoAmt)}</strong> Abzug möglich.</p>
+                      )}
+
+                      <p className="mt-4 text-[12px] font-semibold text-slate-700">Zahlungsbedingungen</p>
+                      <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
+                        Bitte überweisen Sie den Rechnungsbetrag von <strong className="text-slate-900">{money(brutto)}</strong> innerhalb von {term ?? 0} Tagen ohne Abzug.
+                        Verwendungszweck: Rechnungsnummer <span className="font-mono">{order?.order_number ? `R${order.order_number}` : "—"}</span>.
+                        {" "}Fälligkeitsdatum: <strong className="text-slate-900">{term != null ? addDaysDE(orderDate, term) : "—"}</strong>.
                       </p>
-                      <p className="mt-2 border-t border-dashed border-slate-300 pt-2 text-[11px] text-slate-500">{ISSUER.bank}</p>
+                      <p className="mt-2 text-[11px] text-slate-500">{ISSUER.bank}</p>
+                      <p className="mt-3 text-[12px] text-slate-700">Mit freundlichen Grüßen<br />Naeem Ahmad</p>
                     </>
                   )}
 

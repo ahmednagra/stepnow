@@ -17,12 +17,16 @@ const SERVICE_TYPE_VALUES = [
 ] as const;
 
 // One route stop — address required; the rest optional. Same shape for pickups + the drop.
+// company + time windows mirror the Transportauftrag Beladeort/Entladeort block.
 const stopSchema = z.object({
+  company: z.string().trim().optional().or(z.literal("")),
   address: z.string().trim().min(1, "Address is required"),
   plz: z.string().trim().optional().or(z.literal("")),
   ort: z.string().trim().optional().or(z.literal("")),
   contact_name: z.string().trim().optional().or(z.literal("")),
   contact_phone: z.string().trim().optional().or(z.literal("")),
+  time_from: z.string().trim().optional().or(z.literal("")),
+  time_to: z.string().trim().optional().or(z.literal("")),
   notes: z.string().trim().optional().or(z.literal("")),
 });
 
@@ -70,9 +74,17 @@ export const adminOrderSchema = z
         return v !== "" && Number.isFinite(n) && n >= 0 && n <= 1;
       }, "Enter a VAT rate (0–100%)"),
 
-    // ── Logbook ──
+    // ── Logbook (km legs: Anfahrt, leg after unload, driven, occupied) ──
+    km_to_load: z.string(),
+    km_to_unload: z.string(),
     km_total: z.string(),
     km_occupied: z.string(),
+
+    // ── Optional invoice surcharge + Skonto (early-payment discount) ──
+    surcharge_label: z.string(),
+    surcharge_net: z.string(),
+    skonto_pct: z.string(),
+    skonto_days: z.string(),
 
     // ── Payment + description ──
     term: z.number().nullable(),

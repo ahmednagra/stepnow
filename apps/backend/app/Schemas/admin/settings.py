@@ -22,6 +22,12 @@ class SettingsUpdate(BaseModel):
     whatsapp_url: str | None = Field(default=None, max_length=500)
     tax_number: str | None = Field(default=None, max_length=50)
     vat_id: str | None = Field(default=None, max_length=50)
+    commercial_register: str | None = Field(default=None, max_length=50)
+    register_court: str | None = Field(default=None, max_length=100)
+    iban: str | None = Field(default=None, max_length=34)
+    bic: str | None = Field(default=None, max_length=11)
+    bank_account_holder: str | None = Field(default=None, max_length=200)
+    website: str | None = Field(default=None, max_length=200)
     concession_number: str | None = Field(default=None, max_length=100)
     concession_authority: str | None = Field(default=None, max_length=200)
     concession_date: date | None = None
@@ -59,6 +65,12 @@ class SettingsAdminResponse(BaseModel):
     whatsapp_url: str | None
     tax_number: str | None
     vat_id: str | None
+    commercial_register: str | None
+    register_court: str | None
+    iban: str | None
+    bic: str | None
+    bank_account_holder: str | None
+    website: str | None
     concession_number: str | None
     concession_authority: str | None
     concession_date: date | None

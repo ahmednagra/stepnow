@@ -121,6 +121,8 @@ class CourierOrdersService:
             distance_km=payload.distance_km,
             total_km=payload.total_km,
             occupied_km=payload.occupied_km,
+            km_to_load=payload.km_to_load,
+            km_to_unload=payload.km_to_unload,
             service_description=payload.service_description,
             net_amount=net, vat_rate=rate, vat_amount=vat, gross_amount=gross,
             payment_due_days=payload.payment_due_days, due_date=due_date,
@@ -131,8 +133,8 @@ class CourierOrdersService:
         # Persist the ordered route stops (pickups first, drop last; sequence 1..N).
         db.add_all([
             OrderStop(
-                order_id=order.id, sequence=i, stop_type=s.stop_type, address=s.address,
-                postcode=s.postcode, city=s.city, contact_name=s.contact_name,
+                order_id=order.id, sequence=i, stop_type=s.stop_type, company=s.company,
+                address=s.address, postcode=s.postcode, city=s.city, contact_name=s.contact_name,
                 contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
                 package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
             )
@@ -164,7 +166,7 @@ class CourierOrdersService:
         for f in ("consignee", "parcel_description", "parcel_quantity", "parcel_weight_kg",
                   "scheduled_datetime", "service_description", "internal_notes",
                   "client_reference", "service_type", "preferred_date",
-                  "distance_km", "total_km", "occupied_km"):
+                  "distance_km", "total_km", "occupied_km", "km_to_load", "km_to_unload"):
             setattr(o, f, getattr(payload, f))
         # Replace the route stops (N pickups → 1 drop) and re-mirror the legacy columns.
         pickups = [s for s in payload.stops if s.stop_type == "pickup"]
@@ -175,10 +177,10 @@ class CourierOrdersService:
         db.flush()
         for i, s in enumerate([*pickups, drop], start=1):
             o.stops.append(OrderStop(
-                sequence=i, stop_type=s.stop_type, address=s.address, postcode=s.postcode,
-                city=s.city, contact_name=s.contact_name, contact_phone=s.contact_phone,
-                time_from=s.time_from, time_to=s.time_to, package_count=s.package_count,
-                weight_kg=s.weight_kg, notes=s.notes,
+                sequence=i, stop_type=s.stop_type, company=s.company, address=s.address,
+                postcode=s.postcode, city=s.city, contact_name=s.contact_name,
+                contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
+                package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
             ))
         rate = payload.vat_rate if payload.vat_rate is not None else o.vat_rate
         net, vat, gross = compute_totals(payload.net_amount, rate)

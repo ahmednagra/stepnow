@@ -27,6 +27,20 @@ class SiteSettings(Base, TimestampMixin):
     whatsapp_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     tax_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     vat_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Handelsregister (e.K.) — printed in the legal footer of the Transportauftrag + Rechnung.
+    commercial_register: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, comment="Handelsregister-Nr., e.g. 'HRA 742905'"
+    )
+    register_court: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, comment="Registergericht, e.g. 'AG Stuttgart'"
+    )
+    # Bank details — Zahlungsbedingungen block on the Rechnung (§14 UStG payment instructions).
+    iban: Mapped[str | None] = mapped_column(String(34), nullable=True)
+    bic: Mapped[str | None] = mapped_column(String(11), nullable=True)
+    bank_account_holder: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    website: Mapped[str | None] = mapped_column(
+        String(200), nullable=True, comment="Public site URL for the invoice footer"
+    )
     concession_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
     concession_authority: Mapped[str | None] = mapped_column(String(200), nullable=True)
     concession_date: Mapped[date | None] = mapped_column(Date, nullable=True)

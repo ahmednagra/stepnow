@@ -19,9 +19,15 @@ class Customer(Base, TimestampMixin, SoftDeleteMixin):
         Index("ix_customers_company", "company_name"),
         Index("ix_customers_name", "last_name", "first_name"),
         Index("ix_customers_phone", "phone"),
+        Index("ix_customers_number", "customer_number", unique=True),
     )
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
+    # Kunden-Nr. (K911-series) — canonical customer number shown on the Rechnung. Generated on
+    # create (CustomersService); nullable so an inline draft can exist before assignment.
+    customer_number: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, comment="Kunden-Nr., e.g. 'K911053'"
+    )
     # B2B: the customer is a company. company_name is the primary identity; contact_person is the
     # optional Ansprechpartner. first/last are legacy, nullable, and unused by the UI (kept only so
     # a fresh schema can still hold any imported historical rows).
