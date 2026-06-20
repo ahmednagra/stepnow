@@ -28,9 +28,9 @@ export function WhyStepNow({ t }: WhyStepNowProps) {
   return (
     <section className="bg-[var(--color-bg-footer)] text-[var(--color-text-on-strong)]">
       <Container className="py-section">
-        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10">
+        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8">
           <div className="grid gap-px border border-[color:var(--color-border-footer)] bg-[color:var(--color-border-footer)]">
-            <div className="bg-[var(--color-bg-footer-surface)] p-6 md:p-8">
+            <div className="bg-[var(--color-bg-footer-surface)] p-5 md:p-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-secondary)]">
                 {pickT(t, "home.why.pre_heading", "Differenzierung")}
               </p>

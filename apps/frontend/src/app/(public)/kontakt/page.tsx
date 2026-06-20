@@ -56,7 +56,7 @@ export default async function ContactPageDe() {
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.84),rgba(24,26,23,0.58))]" />
         </div>
-        <Container className="relative py-16 md:py-20">
+        <Container className="relative py-10 md:py-12">
           <nav aria-label="Breadcrumb" className="mb-8">
             <ol className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(247,244,234,0.72)]">
               <li>
@@ -87,7 +87,7 @@ export default async function ContactPageDe() {
 
       <section className="bg-[var(--color-bg-page)]">
         <Container className="py-section">
-          <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+          <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-8">
             <div className="max-w-2xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
                 {pickT(t, "contact.form.eyebrow", "Anfrage")}
@@ -105,12 +105,12 @@ export default async function ContactPageDe() {
             </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10">
-            <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8">
+            <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
               <ContactForm id="contact-form" />
             </div>
 
-            <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+            <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
                 {pickT(t, "contact.methods.eyebrow", "Direkt")}
               </p>
@@ -130,7 +130,7 @@ export default async function ContactPageDe() {
             </div>
           </div>
 
-          <div className="mt-8 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:mt-10 md:p-8">
+          <div className="mt-6 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:mt-8 md:p-8">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
@@ -152,8 +152,8 @@ export default async function ContactPageDe() {
           </div>
 
           {topFaqs.length > 0 && (
-            <div id="faq" className="mt-12 border-t border-[color:var(--color-border-soft)] pt-10 md:mt-14 md:pt-12">
-              <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+            <div id="faq" className="mt-8 border-t border-[color:var(--color-border-soft)] pt-8 md:mt-10 md:pt-10">
+              <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-8">
                 <div className="max-w-2xl">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
                     {pickT(t, "contact.faq.eyebrow", "Haeufige Fragen")}

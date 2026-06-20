@@ -68,7 +68,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
           <ol className="grid gap-px bg-[color:var(--color-border-soft)] md:grid-cols-3">
             {steps.map((step) => (
               <li key={step.number} className="bg-[var(--color-bg-surface)]">
-                <article className="flex h-full flex-col p-6 md:p-8">
+                <article className="flex h-full flex-col p-5 md:p-6">
                   <div className="flex items-end justify-between gap-4">
                     <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(168,134,90,0.34)] md:text-[56px]">
                       {step.number}

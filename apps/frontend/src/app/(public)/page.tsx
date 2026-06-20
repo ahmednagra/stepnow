@@ -6,14 +6,13 @@ import { Suspense } from "react";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { listTestimonialsServer } from "@/services/testimonials";
-import { listFaqsServer } from "@/services/faqs";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildLocalBusinessJsonLd, buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { MobileStickyBar, ScrollReveal } from "@/components/shared";
 import {
-  FaqTeaser, HeroHomeSection, HomeServicesSection, TestimonialsSection, TrustStrip,
+  HeroHomeSection, HomeServicesSection, TestimonialsSection, TrustStrip,
 } from "@/components/features/home";
 
 export const revalidate = 300;
@@ -36,12 +35,6 @@ async function DeferredTestimonials({ locale }: { locale: "de" }) {
   return <ScrollReveal><TestimonialsSection testimonials={testimonials} /></ScrollReveal>;
 }
 
-async function DeferredFaq({ locale }: { locale: "de" }) {
-  const [stringsRes, faqs] = await Promise.all([getUiStringsServer(locale), listFaqsServer(locale)]);
-  const t = createT(stringsRes.strings, locale);
-  return <ScrollReveal><FaqTeaser t={t} faqs={faqs} locale={locale} /></ScrollReveal>;
-}
-
 export default async function HomePageDe() {
   const [stringsRes, services, settings] = await Promise.all([
     getUiStringsServer("de"),
@@ -54,12 +47,11 @@ export default async function HomePageDe() {
     <>
       <HeroHomeSection t={t} settings={settings} locale="de" />
 
-      <TrustStrip t={t} settings={settings} locale="de" />
+      <TrustStrip settings={settings} />
 
       <HomeServicesSection t={t} locale="de" services={services} />
 
       <Suspense fallback={<SectionFallback />}><DeferredTestimonials locale="de" /></Suspense>
-      <Suspense fallback={<SectionFallback />}><DeferredFaq locale="de" /></Suspense>
 
       <MobileStickyBar settings={settings} />
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />

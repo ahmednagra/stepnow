@@ -100,7 +100,7 @@ export function WizardShell({
   if (!mounted) {
     return (
       <Container className="py-section">
-        <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
+        <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-8">
           <div className="h-[680px] animate-pulse border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]" aria-hidden="true" />
           <div className="hidden lg:block h-[680px] animate-pulse border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]" aria-hidden="true" />
         </div>
@@ -112,7 +112,7 @@ export function WizardShell({
 
   return (
     <Container className="py-section">
-      <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
+      <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-8">
         <div ref={formCardRef} className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
           <div className="border-b border-[color:var(--color-border-soft)] px-6 py-7 md:px-8 md:py-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -191,7 +191,7 @@ export function WizardShell({
         </div>
 
         <aside className="flex flex-col gap-6">
-          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+          <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "booking.sidebar.eyebrow", locale === "de" ? "Warum StepNow" : "Why StepNow")}
             </p>
@@ -215,7 +215,7 @@ export function WizardShell({
           </div>
 
           {settings?.phone && (
-            <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+            <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
                 {pickT(t, "booking.help.eyebrow", locale === "de" ? "Direkte Hilfe" : "Direct help")}
               </p>

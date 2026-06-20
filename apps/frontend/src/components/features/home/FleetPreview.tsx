@@ -113,7 +113,7 @@ export function FleetPreview({ t, vehicles, locale = "de" }: FleetPreviewProps) 
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
       <Container className="py-section">
-        <header className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+        <header className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-8">
           <div className="max-w-2xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "home.fleet.pre_heading", locale === "de" ? "Die Flotte" : "The fleet")}

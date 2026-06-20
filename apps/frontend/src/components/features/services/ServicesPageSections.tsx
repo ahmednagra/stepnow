@@ -313,7 +313,7 @@ export function ServiceRichRow({
     >
       <Container
         className={cn(
-          "grid items-center gap-10 py-16 md:py-20",
+          "grid items-center gap-8 py-8 md:py-10",
           isReversed ? "md:grid-cols-[7fr_5fr]" : "md:grid-cols-[5fr_7fr]",
         )}
       >
@@ -500,6 +500,7 @@ export function HowItWorksBeat({ t, locale }: { t: TFunction; locale: Locale }) 
                   )}
                 </span>
               </h2>
+              <span className="accent-rule mt-5" aria-hidden="true" />
             </div>
 
             <div className="flex items-start gap-3 lg:max-w-sm lg:justify-self-end">
@@ -521,8 +522,8 @@ export function HowItWorksBeat({ t, locale }: { t: TFunction; locale: Locale }) 
           <ol className="grid gap-px bg-[color:var(--color-border-soft)] md:grid-cols-3">
             {HIW_STEPS.map((step) => (
               <li key={step.num} className="bg-[var(--color-bg-surface)]">
-                <article className="flex h-full flex-col p-6 md:p-8">
-                  <div className="items-end. flex justify-between gap-4">
+                <article className="flex h-full flex-col p-5 md:p-6">
+                  <div className="flex items-end justify-between gap-4">
                     <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(168,134,90,0.34)] md:text-[56px]">
                       {step.num}
                     </span>
@@ -564,7 +565,7 @@ export function ServicesEditorialClose({
 }) {
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-      <Container className="py-14 text-center md:py-16">
+      <Container className="py-10 text-center md:py-12">
         <span
           aria-hidden="true"
           className="mx-auto mb-6 block h-px w-9 bg-[var(--color-accent-primary)]"

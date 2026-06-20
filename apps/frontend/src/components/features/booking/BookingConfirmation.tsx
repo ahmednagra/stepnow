@@ -43,7 +43,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
 
   return (
     <Container className="py-section">
-      <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
+      <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-8">
         <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
           <div className="border-b border-[color:var(--color-border-soft)] px-6 py-7 md:px-8 md:py-8">
             <div className="flex items-start gap-5">
@@ -150,7 +150,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
         </div>
 
         <aside className="flex flex-col gap-6">
-          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+          <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "booking.confirmation.sidebar.eyebrow", locale === "de" ? "Ihre Anfrage" : "Your request")}
             </p>
@@ -168,7 +168,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
             </p>
           </div>
 
-          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+          <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "booking.confirmation.contact.eyebrow", locale === "de" ? "Direkter Kontakt" : "Direct contact")}
             </p>

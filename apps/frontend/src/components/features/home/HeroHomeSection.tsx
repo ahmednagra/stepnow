@@ -48,7 +48,7 @@ export function HeroHomeSection({ t, settings, locale }: HeroHomeSectionProps) {
 
         <Container className="relative flex items-center py-8 md:py-10 lg:min-h-[28rem]">
           <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.05fr)_24rem] lg:items-center xl:grid-cols-[minmax(0,1fr)_26rem]">
-            <div className="max-w-3xl">
+            <div className="max-w-3xl animate-fade-up">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-secondary)]">
                 {t("home.hero.pre_heading")}
               </p>

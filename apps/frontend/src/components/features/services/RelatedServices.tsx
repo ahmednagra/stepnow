@@ -20,18 +20,19 @@ export function RelatedServices({ t, services, hrefBase }: RelatedServicesProps)
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
       <Container className="py-section">
-        <header className="mb-10 max-w-3xl">
+        <header className="mb-6 max-w-3xl">
           <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">{pickT(t, "services.related.eyebrow", "Weitere Leistungen")}</p>
-          <h2 className="mt-3 font-serif text-section text-[var(--color-text-primary)]">
+          <h2 className="mt-2 font-serif text-section text-[var(--color-text-primary)]">
             {pickT(t, "services.related.heading", "Weitere Leistungen")}
           </h2>
+          <span className="accent-rule mt-4" aria-hidden="true" />
         </header>
-        <ul className="grid gap-px overflow-hidden border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] md:grid-cols-3">
+        <ul className="grid gap-4 md:grid-cols-3">
           {services.map((s) => (
-            <li key={s.id} className="bg-[var(--color-bg-surface)]">
+            <li key={s.id}>
               <Link
                 href={`${hrefBase}/${s.slug}`}
-                className="group flex h-full flex-col gap-3 p-7 transition-colors duration-base ease-out-premium hover:bg-[var(--color-bg-page)]"
+                className="card-elevated group flex h-full flex-col gap-3 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6"
               >
                 <h3 className="font-serif text-xl tracking-tight text-[var(--color-text-primary)]">{s.title}</h3>
                 <p className="line-clamp-3 text-[14.5px] leading-relaxed text-[var(--color-text-secondary)]">

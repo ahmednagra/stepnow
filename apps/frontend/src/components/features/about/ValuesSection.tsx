@@ -73,6 +73,7 @@ export function ValuesSection({ t, locale = "de" }: ValuesSectionProps) {
       <h2 className="mt-2 font-serif text-[30px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
         {heading}
       </h2>
+      <span className="accent-rule mt-4" aria-hidden="true" />
       <ul className="mt-6 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
         {VALUES.map((v, idx) => {
           const title = pickT(t, v.titleKey, v.defaults[locale].title);

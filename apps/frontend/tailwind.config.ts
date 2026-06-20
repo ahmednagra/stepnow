@@ -46,12 +46,12 @@ const config: Config = {
         "label-sm": ["0.75rem", { lineHeight: "1.2", letterSpacing: "0.16em" }],
       },
       spacing: {
-        section: "3.5rem",
-        "section-mobile": "2.5rem",
-        "section-lg": "4.5rem",
-        "section-hero": "2.5rem",
-        "section-hero-md": "3.5rem",
-        "section-hero-lg": "4rem",
+        section: "2rem",
+        "section-mobile": "1.5rem",
+        "section-lg": "2.75rem",
+        "section-hero": "1.5rem",
+        "section-hero-md": "2.25rem",
+        "section-hero-lg": "2.75rem",
       },
       maxWidth: {
         container: "82rem",

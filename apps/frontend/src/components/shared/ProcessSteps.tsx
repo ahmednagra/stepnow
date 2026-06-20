@@ -16,7 +16,7 @@ interface ProcessStepsProps {
 
 export function ProcessSteps({ steps, tone = "light", className }: ProcessStepsProps) {
   return (
-    <ol className={cn("grid gap-12 md:grid-cols-3 md:gap-10", className)}>
+    <ol className={cn("grid gap-8 md:grid-cols-3 md:gap-8", className)}>
       {steps.map((step) => (
         <li key={String(step.number)} className="flex flex-col">
           <span

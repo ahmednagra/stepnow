@@ -12,7 +12,7 @@ export function RouteLoader({ locale: _locale = "de" }: RouteLoaderProps) {
         <span className="route-loader-line block h-full w-[22%] bg-[var(--color-accent-primary)]" />
       </div>
 
-      <Container className="py-16 md:py-20">
+      <Container className="py-10 md:py-12">
         <div className="route-loader-shell mx-auto flex min-h-[320px] max-w-[920px] items-center justify-center px-6 py-10 md:min-h-[380px]">
           <div className="flex w-full max-w-[560px] flex-col items-center justify-center">
             <div className="flex h-20 w-20 items-center justify-center md:h-24 md:w-24">

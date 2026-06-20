@@ -37,7 +37,7 @@ export function ServiceListItem({ t, service, detailHref, index }: ServiceListIt
 
   return (
     <article className="border-b border-line">
-      <Container className="grid gap-12 py-section md:grid-cols-12 md:gap-12">
+      <Container className="grid gap-8 py-section md:grid-cols-12 md:gap-8">
         {/* Visual block */}
         <div
           className={cn(
@@ -76,13 +76,14 @@ export function ServiceListItem({ t, service, detailHref, index }: ServiceListIt
           <h2 className="font-serif text-display-md tracking-tight md:text-[3.5rem]">
             {service.title}
           </h2>
+          <span className="accent-rule" aria-hidden="true" />
           <p className="max-w-xl text-body-lg text-mute">{service.short_description}</p>
           {excerpt && (
             <p className="max-w-prose text-[15px] leading-relaxed text-mute">{excerpt}</p>
           )}
           <Link
             href={detailHref}
-            className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.20em] text-gold-deep transition-colors duration-base hover:text-ink"
+            className="group mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.20em] text-gold-deep transition-colors duration-base hover:text-ink"
           >
             {t("services.card.learn_more")}
             <ArrowUpRight

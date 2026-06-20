@@ -26,14 +26,15 @@ export function ServiceDetailHeader({ t, service, bookingPath }: ServiceDetailHe
   return (
     <section className="bg-[var(--color-bg-page)]">
       <Container className="py-section">
-        <div className="grid gap-8 lg:grid-cols-[0.98fr_1.02fr] lg:gap-10">
-          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6 md:p-8">
+        <div className="grid gap-8 lg:grid-cols-[0.98fr_1.02fr] lg:gap-8">
+          <div className="shadow-premium border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5 md:p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {t("services.page.title")}
             </p>
             <h2 className="mt-2 font-serif text-[32px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[38px]">
               {service.title}
             </h2>
+            <span className="accent-rule mt-4" aria-hidden="true" />
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
               {service.short_description}
             </p>

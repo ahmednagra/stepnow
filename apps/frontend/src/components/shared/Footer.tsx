@@ -21,14 +21,15 @@ interface FooterLink {
   key: string;
   hrefDe: string;
   hrefEn: string;
+  fallback?: string;
 }
 
 const QUICK_LINKS: FooterLink[] = [
   { key: "nav.home", hrefDe: "/", hrefEn: "/en" },
   { key: "nav.about", hrefDe: "/ueber-uns", hrefEn: "/en/about" },
-  { key: "footer.legal.impressum", hrefDe: "/impressum", hrefEn: "/en/legal-notice" },
   { key: "nav.pricing", hrefDe: "/preise", hrefEn: "/en/pricing" },
   { key: "nav.contact", hrefDe: "/kontakt", hrefEn: "/en/contact" },
+  { key: "nav.faq", hrefDe: "/kontakt#faq", hrefEn: "/en/contact#faq", fallback: "FAQ" },
 ];
 
 const SERVICE_LINKS: FooterLink[] = [
@@ -108,9 +109,9 @@ export function Footer({ settings }: FooterProps) {
     <footer className="bg-[var(--color-bg-footer)] text-[var(--color-text-footer)]">
       <div className="border-t border-[var(--color-border-footer)]">
         {showCta && (
-          <Container as="div" className="py-10 md:py-12">
-            <section className="border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-surface)]">
-              <div className="flex flex-col gap-6 p-6 md:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:p-10">
+          <Container as="div" className="py-6 md:py-7">
+            <section className="border border-l-2 border-[var(--color-border-footer)] border-l-[color:rgba(194,166,117,0.7)] bg-[var(--color-bg-footer-surface)]">
+              <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between md:gap-8 md:p-6">
                 <div className="max-w-2xl">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-secondary)]">
                     {pickT(
@@ -119,7 +120,7 @@ export function Footer({ settings }: FooterProps) {
                       locale === "de" ? "Direkt erreichbar" : "Directly reachable",
                     )}
                   </p>
-                  <h2 className="mt-3 max-w-xl font-serif text-[30px] leading-[1.08] tracking-tight md:text-[36px]">
+                  <h2 className="mt-2 max-w-xl font-serif text-[26px] leading-[1.08] tracking-tight md:text-[30px]">
                     {pickT(
                       t,
                       "footer.cta.heading",
@@ -128,7 +129,7 @@ export function Footer({ settings }: FooterProps) {
                         : "Ready for your next ride?",
                     )}
                   </h2>
-                  <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--color-text-footer-muted)]">
+                  <p className="mt-2.5 max-w-2xl text-[14px] leading-relaxed text-[var(--color-text-footer-muted)]">
                     {pickT(
                       t,
                       "footer.cta.sub",
@@ -143,7 +144,7 @@ export function Footer({ settings }: FooterProps) {
                   <Link
                     href={bookHref}
                     className={cn(
-                      "group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
+                      "group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
                       "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                       "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                       "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",
@@ -160,7 +161,7 @@ export function Footer({ settings }: FooterProps) {
                   </Link>
                   <a
                     href={toTelHref(settings.phone)}
-                    className="inline-flex h-12 items-center justify-center gap-2 border border-[var(--color-border-footer)] bg-transparent px-5 text-[12px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-footer)] transition-colors duration-base hover:border-[var(--color-accent-secondary)] hover:text-[var(--color-accent-secondary)]"
+                    className="inline-flex h-11 items-center justify-center gap-2 border border-[var(--color-border-footer)] bg-transparent px-5 text-[12px] font-medium uppercase tracking-[0.16em] text-[var(--color-text-footer)] transition-colors duration-base hover:border-[var(--color-accent-secondary)] hover:text-[var(--color-accent-secondary)]"
                   >
                     <Phone className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden="true" />
                     <span className="normal-case tabular-nums tracking-[0.04em]">
@@ -174,13 +175,13 @@ export function Footer({ settings }: FooterProps) {
         )}
 
         <div className={cn(showCta && "border-t border-[var(--color-border-footer)]")}>
-          <Container as="div" className="py-12 md:py-14">
-            <div className="grid gap-8 md:grid-cols-12 md:gap-6 lg:gap-10">
+          <Container as="div" className="py-7 md:py-9">
+            <div className="grid gap-7 md:grid-cols-12 md:gap-6 lg:gap-8">
               <div className="md:col-span-4 lg:col-span-5">
-                <div className="inline-flex border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-surface)] px-4 py-3">
-                  <Logo height={42} tone="light" />
+                <div className="inline-flex border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-surface)] px-3.5 py-2.5">
+                  <Logo height={36} tone="light" />
                 </div>
-                <p className="mt-5 max-w-md text-[14px] leading-relaxed text-[var(--color-text-footer-muted)]">
+                <p className="mt-4 max-w-md text-[14px] leading-relaxed text-[var(--color-text-footer-muted)]">
                   {t("footer.col.brand")}
                 </p>
                 {settings.concession_number && (
@@ -281,11 +282,11 @@ function LinkColumn({ heading, items, hrefFor, t, dark = false }: LinkColumnProp
       <span
         className={cn(
           "mt-2 block h-px w-8",
-          dark ? "bg-[var(--color-border-footer)]" : "bg-[var(--color-border-soft)]",
+          dark ? "bg-[color:rgba(194,166,117,0.55)]" : "bg-[var(--color-border-soft)]",
         )}
         aria-hidden="true"
       />
-      <ul className="mt-4 space-y-2.5">
+      <ul className="mt-3 space-y-2">
         {items.map((item) => (
           <li key={item.key}>
             <Link
@@ -297,7 +298,7 @@ function LinkColumn({ heading, items, hrefFor, t, dark = false }: LinkColumnProp
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
               )}
             >
-              {t(item.key)}
+              {item.fallback ? pickT(t, item.key, item.fallback) : t(item.key)}
             </Link>
           </li>
         ))}
@@ -326,13 +327,13 @@ function ContactColumn({ heading, settings, dark = false }: ContactColumnProps) 
       <span
         className={cn(
           "mt-2 block h-px w-8",
-          dark ? "bg-[var(--color-border-footer)]" : "bg-[var(--color-border-soft)]",
+          dark ? "bg-[color:rgba(194,166,117,0.55)]" : "bg-[var(--color-border-soft)]",
         )}
         aria-hidden="true"
       />
       <address
         className={cn(
-          "mt-4 space-y-2.5 text-[14px] not-italic leading-relaxed",
+          "mt-3 space-y-2 text-[14px] not-italic leading-relaxed",
           dark ? "text-[var(--color-text-footer-muted)]" : "text-[var(--color-text-secondary)]",
         )}
       >

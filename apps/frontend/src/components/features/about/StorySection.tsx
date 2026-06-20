@@ -62,7 +62,8 @@ export function StorySection({ t, settings }: StorySectionProps) {
       <h2 className="mt-2 font-serif text-[30px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
         {heading}
       </h2>
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+      <span className="accent-rule mt-4" aria-hidden="true" />
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
         {ownerName}
         {resolve(t, "about.story.role") && (
           <>

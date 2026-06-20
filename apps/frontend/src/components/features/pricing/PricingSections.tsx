@@ -99,7 +99,7 @@ export function PricingFeaturedHero({
         }}
       />
       <Container className="relative z-10 py-14 md:py-20">
-        <div className="grid items-center gap-10 md:grid-cols-[1.4fr_1fr] md:gap-14">
+        <div className="grid items-center gap-8 md:grid-cols-[1.4fr_1fr] md:gap-14">
           <div>
             <span className="inline-flex items-center gap-2.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-secondary)]">
               <span
@@ -283,7 +283,7 @@ interface PricingIncludedMomentProps {
 export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps) {
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
-      <Container className="grid items-center gap-10 py-14 md:grid-cols-[5fr_7fr] md:gap-16 md:py-16">
+      <Container className="grid items-center gap-8 py-14 md:grid-cols-[5fr_7fr] md:gap-16 md:py-16">
         <div className="text-center md:text-left">
           <p
             aria-hidden="true"

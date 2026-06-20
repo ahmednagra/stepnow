@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Quote, Star } from "lucide-react";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import type { TestimonialPublic } from "@/types";
 import { Container } from "@/components/shared";
@@ -28,8 +28,8 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
 
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-      <Container className="py-10 md:py-14">
-        <header className="mb-7 flex flex-col items-start gap-4 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+      <Container className="py-8 md:py-10">
+        <header className="mb-6 flex flex-col items-start gap-3 md:mb-7 md:flex-row md:items-end md:justify-between md:gap-8">
           <div className="max-w-2xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "home.testimonials.pre_heading", "Kundenstimmen")}
@@ -48,18 +48,23 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
           </p>
         </header>
 
-        <ul className="grid gap-6 md:grid-cols-3">
+        <ul className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {items.map((item, i) => (
             <li
               key={item.id}
-              className="card-elevated flex flex-col gap-4 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-6"
+              className="card-elevated group relative flex flex-col gap-3 overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] p-5"
             >
+              <Quote
+                className="pointer-events-none absolute -right-2 -top-2 h-16 w-16 rotate-180 text-[color:rgba(168,134,90,0.10)]"
+                strokeWidth={1}
+                aria-hidden="true"
+              />
               {item.rating !== null && item.rating > 0 && <RatingStars value={item.rating} />}
-              <blockquote className="font-serif text-[18px] leading-[1.5] text-[var(--color-text-primary)] md:text-[20px]">
+              <blockquote className="relative font-serif text-[16px] leading-[1.5] text-[var(--color-text-primary)] md:text-[18px]">
                 {item.quote}
               </blockquote>
-              <figcaption className="mt-auto flex items-center gap-3 border-t border-[color:var(--color-border-soft)] pt-4">
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
+              <figcaption className="mt-auto flex items-center gap-3 border-t border-[color:var(--color-border-soft)] pt-3">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-1 ring-[color:rgba(194,166,117,0.5)]">
                   <Image
                     src={resolvePortrait(item, i)}
                     alt={item.author_name}

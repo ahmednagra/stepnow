@@ -52,7 +52,7 @@ export default async function BookingConfirmationEn({ searchParams }: PageProps)
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.84),rgba(24,26,23,0.58))]" />
         </div>
-        <Container className="relative py-16 md:py-20">
+        <Container className="relative py-10 md:py-12">
           <nav aria-label="Breadcrumb" className="mb-8">
             <ol className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(247,244,234,0.72)]">
               <li>

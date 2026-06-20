@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { FaqPublic, Locale } from "@/types";
 import { Container } from "@/components/shared";
@@ -14,51 +14,45 @@ interface FaqTeaserProps {
   locale: Locale;
 }
 
-const FAQ_IMAGE =
-  "/others/faq-driver.jpg";
-
 export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
-  const items = faqs.filter((f) => f.category === "general").slice(0, 5);
+  const items = faqs.filter((f) => f.category === "general").slice(0, 3);
   if (items.length === 0) return null;
 
   const allFaqHref = locale === "de" ? "/kontakt#faq" : "/en/contact#faq";
+  const lead = pickT(
+    t,
+    "home.faq.lead",
+    locale === "de"
+      ? "Kurze Antworten auf häufige Fragen rund um Buchung, Preise und Ablauf."
+      : "Quick answers to common questions on booking, pricing and how it works.",
+  );
 
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-      <Container className="py-10 md:py-14">
-        <header className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
-          <div className="max-w-2xl">
+      <Container className="py-8 md:py-10">
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
+          <div className="lg:sticky lg:top-24 lg:self-start">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "home.faq.pre_heading", "FAQ")}
             </p>
             <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
               {t("home.faq.heading")}
             </h2>
-          </div>
-          <div className="md:text-right">
+            <span className="accent-rule mt-4" aria-hidden="true" />
+            <p className="mt-4 max-w-md text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
+              {lead}
+            </p>
             <Link
               href={allFaqHref}
-              className="inline-flex text-[13px] font-medium uppercase tracking-[0.18em] text-[var(--color-accent-primary)] transition-colors duration-base hover:text-[var(--color-text-primary)]"
+              className="mt-6 inline-flex items-center gap-2 border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent-primary)] transition-colors duration-base ease-out-premium hover:border-[color:var(--color-accent-primary)] hover:text-[var(--color-text-primary)]"
             >
-              {t("home.faq.view_all")} →
+              {t("home.faq.view_all")}
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
-        </header>
 
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
-          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
+          <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] shadow-premium">
             <FaqTeaserAccordion items={items} />
-          </div>
-
-          <div className="relative min-h-[340px] overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] lg:min-h-full">
-            <Image
-              src={FAQ_IMAGE}
-              alt="Customer support conversation"
-              fill
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08),rgba(15,17,21,0.48))]" />
           </div>
         </div>
       </Container>

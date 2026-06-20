@@ -30,7 +30,7 @@ export function StepDetails({ t, registerValidator }: StepDetailsProps) {
   }, [registerValidator]);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       <div>
         <h2 className="font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">{t("booking.details.heading")}</h2>
         <p className="mt-2 text-[var(--color-text-secondary)]">{t("booking.details.subhead")}</p>

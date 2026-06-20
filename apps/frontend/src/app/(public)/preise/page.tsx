@@ -64,7 +64,7 @@ export default async function PricingPageDe() {
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.84),rgba(24,26,23,0.58))]" />
         </div>
-        <Container className="relative py-16 md:py-20">
+        <Container className="relative py-10 md:py-12">
           <nav aria-label="Breadcrumb" className="mb-8">
             <ol className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[rgba(247,244,234,0.72)]">
               <li>
@@ -95,9 +95,9 @@ export default async function PricingPageDe() {
       </section>
 
       <section className="bg-[var(--color-bg-page)]">
-        <Container className="pt-8 pb-section md:pt-10">
+        <Container className="pt-5 pb-section md:pt-6">
           <ConcessionBadge settings={settings} tone="light" />
-          <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+          <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-8">
             <div className="max-w-2xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
                 {pickT(t, "pricing.tabs.eyebrow", "Vollstaendige Preisliste")}
