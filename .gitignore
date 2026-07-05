@@ -269,3 +269,5 @@ infra/*.local.conf
 .agents
 AI-Notes
 
+*.md
+claude*
