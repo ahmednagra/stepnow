@@ -52,6 +52,8 @@ function defaultValues(s: SettingsAdmin): AdminSettingsInput {
     bic: s.bic ?? "",
     bank_account_holder: s.bank_account_holder ?? "",
     website: s.website ?? "",
+    logo_url: s.logo_url ?? "",
+    staff_access_code: s.staff_access_code ?? "",
     concession_number: s.concession_number ?? "",
     concession_authority: s.concession_authority ?? "",
     concession_date: s.concession_date ?? "",
@@ -93,6 +95,8 @@ function toPatchPayload(values: AdminSettingsInput): SettingsUpdate {
     bic: values.bic?.trim() || null,
     bank_account_holder: values.bank_account_holder?.trim() || null,
     website: values.website?.trim() || null,
+    logo_url: values.logo_url?.trim() || null,
+    staff_access_code: values.staff_access_code?.trim() || null,
     concession_number: values.concession_number?.trim() || null,
     concession_authority: values.concession_authority?.trim() || null,
     concession_date: values.concession_date?.trim() || null,
@@ -296,6 +300,29 @@ export function SettingsForm({ initial }: SettingsFormProps) {
           </AdminFormField>
           <AdminFormField id="website" label="Website" hint="optional · invoice footer" error={errors.website?.message}>
             <input id="website" className={adminInputClass} {...register("website")} />
+          </AdminFormField>
+        </div>
+      </AdminCard>
+
+      {/* Branding & worker access — logo on PDFs + the shared code for the no-login order form */}
+      <AdminCard title="Branding & worker access" description="Logo printed on the Transportauftrag/Rechnung, and the shared code workers use to create orders without logging in.">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AdminFormField label="Company logo" hint="Shown on all generated PDFs (PNG/JPG)." error={errors.logo_url?.message}>
+            <Controller
+              name="logo_url"
+              control={control}
+              render={({ field }) => (
+                <ImageUploadField
+                  label=""
+                  value={field.value ? field.value : null}
+                  onChange={(next) => field.onChange(next ?? "")}
+                  onUpload={uploadHandler}
+                />
+              )}
+            />
+          </AdminFormField>
+          <AdminFormField id="staff_access_code" label="Worker access code" hint="Shared code for the no-login create-order page. Leave empty to disable public creation." error={errors.staff_access_code?.message}>
+            <input id="staff_access_code" className={adminInputClass} {...register("staff_access_code")} placeholder="e.g. SN-2026" />
           </AdminFormField>
         </div>
       </AdminCard>

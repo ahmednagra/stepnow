@@ -41,6 +41,12 @@ class SiteSettings(Base, TimestampMixin):
     website: Mapped[str | None] = mapped_column(
         String(200), nullable=True, comment="Public site URL for the invoice footer"
     )
+    # Logo printed on the Transportauftrag/Rechnung/ledger PDFs (uploaded via admin Settings).
+    logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Shared worker PIN gating the no-login public order-creation form.
+    staff_access_code: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, comment="Shared code workers enter to create orders without login"
+    )
     concession_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
     concession_authority: Mapped[str | None] = mapped_column(String(200), nullable=True)
     concession_date: Mapped[date | None] = mapped_column(Date, nullable=True)

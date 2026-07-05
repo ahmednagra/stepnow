@@ -17,7 +17,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Image, Paragraph, Spacer, Table, TableStyle
 from app.Models.invoices import Invoice
 from app.Models.settings import SiteSettings
 from app.Utils.finance import money
@@ -26,6 +26,25 @@ STORAGE_DIR = Path("storage/invoices")  # gitignored (apps/backend/storage/)
 _INK = colors.HexColor("#0F1115")
 _GOLD = colors.HexColor("#A8865A")
 _MUTE = colors.HexColor("#64748B")
+
+
+def logo_flowable(s, max_w_mm: float = 42, max_h_mm: float = 18):
+    """Shared across the three PDFs: a size-capped logo Image from SiteSettings.logo_url (a local
+    /uploads path), aspect preserved, or None to fall back to the text header."""
+    url = getattr(s, "logo_url", None) if s else None
+    if not url or url.startswith("http"):
+        return None
+    p = Path(url.lstrip("/"))  # "/uploads/x.png" → "uploads/x.png" (relative to apps/backend)
+    if not p.exists():
+        return None
+    try:
+        img = Image(str(p))
+        scale = min((max_w_mm * mm) / img.imageWidth, (max_h_mm * mm) / img.imageHeight)
+        img.drawWidth, img.drawHeight = img.imageWidth * scale, img.imageHeight * scale
+        img.hAlign = "LEFT"
+        return img
+    except Exception:
+        return None
 
 
 def _eur(value) -> str:
@@ -77,7 +96,11 @@ class InvoicePdfService:
         )
         story = []
 
-        # Header — issuer right-aligned with Steuer-Nr (template puts it top-right)
+        # Header — logo (left) + issuer right-aligned with Steuer-Nr (template puts it top-right)
+        logo = logo_flowable(s)
+        if logo:
+            story.append(logo)
+            story.append(Spacer(1, 2 * mm))
         story.append(Paragraph(issuer_line, h_right))
         if contact_line:
             story.append(Paragraph(contact_line, h_right_s))
@@ -121,17 +144,19 @@ class InvoicePdfService:
             f"folgende Rechnung zu stellen:", body))
         story.append(Spacer(1, 4 * mm))
 
-        # Line items — Pos. / Beschreibung / Einzelpreis / MwSt / Gesamtpreis
-        rate_pct = f"{(Decimal(invoice.vat_rate) * 100):.0f}%"
-        base_net = Decimal(invoice.net_amount) - (Decimal(invoice.surcharge_net) if invoice.surcharge_net else Decimal("0"))
+        # Line items — Pos. / Beschreibung / Einzelpreis / MwSt / Gesamtpreis. Base service line
+        # first, then the ad-hoc charge/discount rows (Waiting Time, Rabatt …).
+        rate = Decimal(invoice.vat_rate)
+        rate_pct = f"{(rate * 100):.0f}%"
+        base_net = Decimal(invoice.base_net)
         rows = [["Pos.", "Beschreibung", "Einzelpreis", "MwSt", "Gesamtpreis"]]
         desc = order.service_description or "Transportleistung"
         route = f"{_from_city} → {_to_city}"
         rows.append(["1", Paragraph(f"{desc}<br/><font size=7 color='#64748B'>{route}</font>", small),
-                     _eur(base_net), rate_pct, _eur(base_net * (1 + Decimal(invoice.vat_rate)))])
-        if invoice.surcharge_net:
-            sn = Decimal(invoice.surcharge_net)
-            rows.append(["2", invoice.surcharge_label or "Zuschlag", _eur(sn), rate_pct, _eur(sn * (1 + Decimal(invoice.vat_rate)))])
+                     _eur(base_net), rate_pct, _eur(base_net * (1 + rate))])
+        for n, item in enumerate((it for it in invoice.items if not it.is_deleted), start=2):
+            signed = item.net_amount if item.kind == "charge" else -item.net_amount
+            rows.append([str(n), item.label, _eur(signed), rate_pct, _eur(signed * (1 + rate))])
 
         items = Table(rows, colWidths=[12 * mm, 80 * mm, 26 * mm, 16 * mm, 28 * mm])
         items.setStyle(TableStyle([

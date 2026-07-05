@@ -116,8 +116,8 @@ class ParcelOrderCreate(BaseModel):
         drops = [s for s in self.stops if s.stop_type == "drop"]
         if len(pickups) < 1:
             raise ValueError("At least one pickup stop is required")
-        if len(drops) != 1:
-            raise ValueError("Exactly one drop (destination) stop is required")
+        if len(drops) < 1:
+            raise ValueError("At least one drop (destination) stop is required")
         return self
 
 

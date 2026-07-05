@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Wallet } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, PreviewButton, FilterToolbar } from "@/components/admin";
 import { useVehicles } from "@/hooks/queries/useVehicles";
 import { vehiclesPreviewUrl } from "@/utils/preview-urls";
@@ -139,6 +139,9 @@ items.map((v) => (
 {!v.is_deleted && v.active && (
 <PreviewButton variant="icon" url={vehiclesPreviewUrl()} title={v.name_de} subtitle={`/fahrzeuge`} />
 )}
+<Link href={`/admin/vehicles/${v.id}/ledger`} aria-label="Account" title="Account (orders & prices)" className="grid h-7 w-7 place-items-center border border-slate-200 bg-white text-slate-500 hover:border-slate-400 hover:text-slate-900">
+<Wallet className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+</Link>
 <Link href={`/admin/vehicles/${v.id}`} aria-label="Edit" title="Edit" className="grid h-7 w-7 place-items-center border border-slate-200 bg-white text-slate-500 hover:border-slate-400 hover:text-slate-900">
 <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
 </Link>

@@ -11,10 +11,14 @@ import {
   listAdminOrders,
   getAdminOrder,
   listOrderPayments,
+  listInvoices,
+  getInvoice,
   type ListAdminOrdersParams,
   type OrderAdmin,
   type OrderDetail,
   type PaymentAdmin,
+  type InvoiceAdmin,
+  type InvoiceListItem,
 } from "@/services/orders";
 import type { Paginated } from "@/types";
 
@@ -53,6 +57,40 @@ export function useOrder(orderId: string, options: QueryOptions = {}) {
     staleTime: STALE_TIMES.DYNAMIC,
     gcTime: GC_TIMES.STANDARD,
     refetchOnWindowFocus: true,
+  });
+}
+
+/** Bills (invoices) list for the bills console. */
+export function useInvoices(params: { page?: number; size?: number; status?: string; q?: string } = {}, options: QueryOptions = {}) {
+  return useQuery<Paginated<InvoiceListItem>>({
+    queryKey: queryKeys.invoices.list(params),
+    queryFn: async () => {
+      console.log(`🔄 useInvoices: Fetching bills`);
+      const res = await listInvoices(params);
+      console.log(`✅ useInvoices: Fetched ${res.items.length} bills`);
+      return res;
+    },
+    enabled: options.enabled ?? true,
+    staleTime: STALE_TIMES.DYNAMIC,
+    gcTime: GC_TIMES.STANDARD,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/** A single bill (invoice) for the editor. */
+export function useInvoice(invoiceId: string, options: QueryOptions = {}) {
+  return useQuery<InvoiceAdmin>({
+    queryKey: queryKeys.invoices.detail(invoiceId),
+    queryFn: async () => {
+      console.log(`🔄 useInvoice: Fetching ${invoiceId}`);
+      const res = await getInvoice(invoiceId);
+      console.log(`✅ useInvoice: Fetched ${invoiceId}`);
+      return res;
+    },
+    enabled: (options.enabled ?? true) && Boolean(invoiceId),
+    staleTime: STALE_TIMES.DYNAMIC,
+    gcTime: GC_TIMES.STANDARD,
+    refetchOnWindowFocus: false,
   });
 }
 

@@ -40,7 +40,6 @@ import {
   sendDriverSlipWhatsApp, sendDocuments, downloadSlipPdf,
   type CourierOrder, type ParcelOrderInput, type ServiceType, type OrderStopInput,
 } from "@/services/courier";
-import { createOrderInvoice } from "@/services/orders";
 import { useCreateParcelOrder, useUpdateParcelOrder, useCreateDriver, useUpdateDriver } from "@/hooks/mutations";
 
 // Inline quick-add driver sub-form reuses the driver schema's field rules (subset).
@@ -93,7 +92,6 @@ function emptyDefaults(): AdminOrderInput {
     pickups: [emptyStop()], dropoff: emptyStop(), route_km: "", service_type: "",
     net: "", vat: "0.19",
     km_to_load: "", km_to_unload: "", km_total: "", km_occupied: "",
-    surcharge_label: "", surcharge_net: "", skonto_pct: "", skonto_days: "",
     term: null, service_description: "",
   };
 }
@@ -207,7 +205,6 @@ export default function NewTransportOrderPage() {
 
   // ── persisted order + ui ──
   const [order, setOrder] = useState<CourierOrder | null>(null);
-  const [hasInvoice, setHasInvoice] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [previewMode, setPreviewMode] = useState<"driver" | "customer">("driver");
@@ -230,7 +227,6 @@ export default function NewTransportOrderPage() {
   const street = watch("street");
   const plz = watch("plz");
   const ort = watch("ort");
-  const email = watch("email");
   const vatId = watch("vat_id");
   const clientRef = watch("client_reference");
   const linkedId = watch("customer_id");
@@ -244,10 +240,6 @@ export default function NewTransportOrderPage() {
   const kmToUnload = watch("km_to_unload");
   const kmGes = watch("km_total");
   const kmBes = watch("km_occupied");
-  const surchargeLabel = watch("surcharge_label");
-  const surchargeNet = watch("surcharge_net");
-  const skontoPct = watch("skonto_pct");
-  const skontoDays = watch("skonto_days");
   const term = watch("term");
   const serviceDescription = watch("service_description");
   // Kunden-Nr. of a linked saved customer (new customers get theirs assigned on save).
@@ -372,17 +364,8 @@ export default function NewTransportOrderPage() {
       : await createParcel.mutateAsync(payload);
     setOrder(saved);
     if (!values.customer_id && saved.customer_id) setValue("customer_id", saved.customer_id);
-    // Create-or-reuse the invoice (backend is idempotent) so the order is immediately billable.
-    // Optional surcharge + Skonto are captured here and printed on the Rechnung.
-    if (!hasInvoice) {
-      await createOrderInvoice(saved.id, {
-        surcharge_label: values.surcharge_label.trim() || undefined,
-        surcharge_net: values.surcharge_net ? normalizeDecimalInput(values.surcharge_net) ?? undefined : undefined,
-        skonto_pct: values.skonto_pct ? normalizeDecimalInput(values.skonto_pct) ?? undefined : undefined,
-        skonto_days: values.skonto_days ? Number(values.skonto_days) || undefined : undefined,
-      });
-      setHasInvoice(true);
-    }
+    // Billing is a separate admin step (Bills page) — order creation never auto-creates an invoice,
+    // so a worker-created order and the company bill stay independent accounts.
     return saved;
   }
 
@@ -426,26 +409,16 @@ export default function NewTransportOrderPage() {
     setOrder(await sendDocuments(o.id, ["driver"]));
     pushToast("success", "Slip emailed to driver");
   });
-  // Email the invoice (PDF) to the client.
-  const onEmailInvoice = runAction("mailCust", async (o) => {
-    setOrder(await sendDocuments(o.id, ["customer"]));
-    pushToast("success", "Invoice emailed to client");
-  });
 
-  // ── derived ──
+  // ── derived ── (this form quotes the base price only; charges/discounts live in the bill editor)
   const netNorm = useMemo(() => normalizeDecimalInput(net), [net]);
   const vehicle = vehicles.find((veh) => veh.id === vehicleId) || null;
   const fullName = companyName.trim();
   const netNum = Number(netNorm || "0");
   const rate = Number(vat) || 0;
-  // Invoice net includes the optional surcharge line; the driver slip never sees money.
-  const surchargeNum = Number(normalizeDecimalInput(surchargeNet) || "0");
-  const invNet = netNum + surchargeNum;
-  const vatAmt = invNet * rate;
-  const brutto = invNet + vatAmt;
+  const vatAmt = netNum * rate;
+  const brutto = netNum + vatAmt;
   const vatPct = +(rate * 100).toFixed(2);
-  const skontoNum = Number(normalizeDecimalInput(skontoPct) || "0");
-  const skontoAmt = skontoNum > 0 ? brutto * (skontoNum / 100) : 0;
   const leerKm = Math.max(0, (parseInt(kmGes) || 0) - (parseInt(kmBes) || 0));
   const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
   // Days → weeks for the payment-term hint (whole weeks shown plainly, else one decimal).
@@ -460,12 +433,10 @@ export default function NewTransportOrderPage() {
   // customer email. All require the order to be saved first.
   const canWhatsApp = saved && !!driverId && !busy;
   const canEmailDriver = saved && !!driverId && !busy;
-  const canEmailInvoice = saved && !!email.trim() && !busy;
   const saveTitle = !busy ? "Save the order" : "Working…";
   const pdfTitle = canPdf ? "Open the driver-slip PDF" : "Save the order first to generate its PDF";
   const waTitle = canWhatsApp ? "Open WhatsApp to the driver with a prefilled job briefing" : !saved ? "Save the order first" : "Assign a driver (with a phone number) first";
   const emailDrvTitle = canEmailDriver ? "Email the driver-slip PDF to the driver" : !saved ? "Save the order first" : "Assign a driver (with an email) first";
-  const emailCustTitle = canEmailInvoice ? "Email the invoice PDF to the client" : !saved ? "Save the order first" : "Add a customer email first";
 
   const barHint = (() => {
     if (busy) return null;
@@ -1030,30 +1001,7 @@ export default function NewTransportOrderPage() {
                     <p className="mt-0.5 text-[14px] font-semibold text-amber-700">Open</p>
                   </div>
                 </div>
-
-                {/* Optional surcharge + Skonto (early-payment discount) — printed on the invoice */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <AdminFormField label="Surcharge label (Zuschlag)">
-                    <input className={adminInputClass} {...register("surcharge_label")} placeholder="e.g. Wartezeit" />
-                  </AdminFormField>
-                  <AdminFormField label="Surcharge net (€)">
-                    <Controller name="surcharge_net" control={control}
-                      render={({ field }) => <AffixInput unit="EUR" type="number" min={0} step="0.01" value={field.value} onChange={field.onChange} placeholder="0.00" />} />
-                  </AdminFormField>
-                  <AdminFormField label="Skonto (%)">
-                    <Controller name="skonto_pct" control={control}
-                      render={({ field }) => <AffixInput unit="%" type="number" min={0} max={100} step={0.5} value={field.value} onChange={field.onChange} placeholder="e.g. 5" />} />
-                  </AdminFormField>
-                  <AdminFormField label="Skonto within (days)">
-                    <Controller name="skonto_days" control={control}
-                      render={({ field }) => <AffixInput unit="days" type="number" min={0} step={1} value={field.value} onChange={field.onChange} placeholder="e.g. 7" />} />
-                  </AdminFormField>
-                </div>
-                {skontoAmt > 0 && skontoDays && (
-                  <p className="bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">
-                    Skonto: bei Zahlung binnen {skontoDays} Tagen {skontoNum}% = {money(skontoAmt)} Abzug.
-                  </p>
-                )}
+                <p className="text-[11px] text-slate-400">Discounts &amp; extra charges (e.g. Wartezeit) are added later on the bill — they don&apos;t affect this order&apos;s vehicle account.</p>
               </div>
             </AdminCard>
 
@@ -1255,29 +1203,18 @@ export default function NewTransportOrderPage() {
                             <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{vatPct}%</td>
                             <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(netNum * (1 + rate))}</td>
                           </tr>
-                          {surchargeNum > 0 && (
-                            <tr className="border-b border-slate-100 align-top">
-                              <td className="py-2.5 pr-2 text-[13px]">2</td>
-                              <td className="py-2.5 pr-2 text-[13px]"><strong className="text-slate-900">{surchargeLabel || "Zuschlag"}</strong></td>
-                              <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(surchargeNum)}</td>
-                              <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{vatPct}%</td>
-                              <td className="py-2.5 pl-2 text-right font-mono text-[12.5px]">{money(surchargeNum * (1 + rate))}</td>
-                            </tr>
-                          )}
                         </tbody>
                       </table>
 
                       <div className="mt-4 flex justify-end">
                         <div className="w-64 text-[13px]">
-                          <div className="flex justify-between py-0.5"><span className="text-slate-500">Summe Netto</span><span className="font-mono">{money(invNet)}</span></div>
+                          <div className="flex justify-between py-0.5"><span className="text-slate-500">Summe Netto</span><span className="font-mono">{money(netNum)}</span></div>
                           <div className="flex justify-between py-0.5"><span className="text-slate-500">zzgl. USt. {vatPct}%</span><span className="font-mono">{money(vatAmt)}</span></div>
                           <div className="mt-1 flex justify-between border-t-2 border-slate-900 bg-slate-50 px-2 py-2 text-[15px] font-semibold text-slate-900"><span>Gesamtbetrag</span><span className="font-mono">{money(brutto)}</span></div>
                         </div>
                       </div>
 
-                      {skontoAmt > 0 && skontoDays && (
-                        <p className="mt-3 text-[12px] text-slate-600">Skonto: Bei Zahlung binnen {skontoDays} Tagen {skontoNum}% = <strong className="text-slate-900">{money(skontoAmt)}</strong> Abzug möglich.</p>
-                      )}
+                      <p className="mt-3 text-[11px] italic text-slate-400">Estimate — final discounts/charges are set on the bill.</p>
 
                       <p className="mt-4 text-[12px] font-semibold text-slate-700">Zahlungsbedingungen</p>
                       <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
@@ -1372,23 +1309,6 @@ export default function NewTransportOrderPage() {
               )}
             >
               {busy === "mailDrv" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" strokeWidth={1.5} />} Email slip
-            </button>
-
-            {/* Email the invoice to the client */}
-            <button
-              type="button"
-              onClick={onEmailInvoice}
-              disabled={!canEmailInvoice}
-              title={emailCustTitle}
-              aria-disabled={!canEmailInvoice}
-              className={cn(
-                "inline-flex h-9 items-center gap-1.5 border px-3 text-[12.5px] font-medium transition-colors",
-                canEmailInvoice
-                  ? "border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
-                  : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400",
-              )}
-            >
-              {busy === "mailCust" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Receipt className="h-3.5 w-3.5" strokeWidth={1.5} />} Email invoice
             </button>
           </div>
         </div>

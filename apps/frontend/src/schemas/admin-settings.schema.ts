@@ -36,6 +36,8 @@ export const adminSettingsSchema = z.object({
   bic: optionalString,
   bank_account_holder: optionalString,
   website: optionalUrl,
+  logo_url: optionalString,
+  staff_access_code: optionalString,
   concession_number: optionalString,
   concession_authority: optionalString,
   concession_date: z.string().trim().optional().or(z.literal(""))

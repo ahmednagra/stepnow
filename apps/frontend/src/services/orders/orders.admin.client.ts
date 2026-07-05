@@ -68,16 +68,76 @@ export interface PaymentAdmin {
   notes: string | null;
 }
 
+export type InvoiceItemKind = "charge" | "discount";
+
+export interface InvoiceItem {
+  id: string;
+  kind: InvoiceItemKind;
+  label: string;
+  net_amount: string;
+  sort_order: number;
+}
+
+export interface InvoiceItemInput {
+  kind: InvoiceItemKind;
+  label: string;
+  net_amount: string;
+  sort_order?: number;
+}
+
 export interface InvoiceAdmin {
   id: string;
   invoice_number: string;
   order_id: string;
   status: string;
   issue_date: string;
+  recipient_block: string | null;
+  tax_number: string | null;
+  base_net: string;
   net_amount: string;
+  vat_rate: string;
   vat_amount: string;
   gross_amount: string;
+  skonto_pct: string | null;
+  skonto_days: number | null;
+  payment_due_days: number;
   due_date: string | null;
+  paid_at: string | null;
+  pdf_url: string | null;
+  items: InvoiceItem[];
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Row for the bills list + Excel export. */
+export interface InvoiceListItem {
+  id: string;
+  invoice_number: string;
+  order_id: string;
+  order_number: string;
+  status: string;
+  issue_date: string;
+  due_date: string | null;
+  customer_name: string;
+  route_from: string | null;
+  route_to: string | null;
+  gross_amount: string;
+  amount_paid: string;
+  balance_due: string;
+  is_overdue: boolean;
+}
+
+export interface InvoiceUpdateInput {
+  issue_date?: string;
+  payment_due_days?: number;
+  recipient_block?: string | null;
+  tax_number?: string | null;
+  base_net?: string;
+  vat_rate?: string;
+  skonto_pct?: string | null;
+  skonto_days?: number | null;
+  items?: InvoiceItemInput[];
 }
 
 export interface OrderDetail extends OrderAdmin {
@@ -111,8 +171,6 @@ export interface CreateInvoiceInput {
   payment_due_days?: number;
   recipient_block?: string;
   tax_number?: string;
-  surcharge_label?: string;
-  surcharge_net?: string;
   skonto_pct?: string;
   skonto_days?: number;
 }
@@ -175,6 +233,34 @@ export async function downloadInvoicePdf(orderId: string, invoiceNumber?: string
   const a = document.createElement("a");
   a.href = url;
   a.download = `${invoiceNumber ?? "invoice"}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+// ── Bills (invoices): list · fetch · edit · PDF. Editing a bill never touches order amounts. ──
+export async function listInvoices(params: { page?: number; size?: number; status?: string; q?: string } = {}): Promise<Paginated<InvoiceListItem>> {
+  return nextjsApiClient.get<Paginated<InvoiceListItem>>(ENDPOINTS.ADMIN.INVOICES, { params });
+}
+export async function getInvoice(id: string): Promise<InvoiceAdmin> {
+  return nextjsApiClient.get<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_BY_ID(id));
+}
+export async function updateInvoice(id: string, payload: InvoiceUpdateInput): Promise<InvoiceAdmin> {
+  return nextjsApiClient.patch<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_BY_ID(id), payload);
+}
+
+/** Authenticated bill PDF download by invoice id (the bearer header can't ride a plain link). */
+export async function downloadInvoicePdfById(id: string, invoiceNumber?: string): Promise<void> {
+  const token = getAccessToken();
+  const res = await fetch(`/api/v0${ENDPOINTS.ADMIN.INVOICE_PDF(id)}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!res.ok) throw new Error("PDF download failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${invoiceNumber ?? "Rechnung"}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();

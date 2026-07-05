@@ -69,6 +69,10 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="open", index=True
     )  # open | completed | cancelled
+    # How the order was created: admin console vs the no-login public worker form.
+    created_via: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="admin", server_default="admin"
+    )  # admin | public
 
     # ── Customer snapshot (copied at conversion, immutable afterward) ──
     customer_name: Mapped[str] = mapped_column(String(200), nullable=False)

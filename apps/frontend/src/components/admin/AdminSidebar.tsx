@@ -62,7 +62,7 @@ const NAV: NavItem[] = [
   { href: "/admin/customers", label: "Customers", icon: Contact },
   { href: "/admin/drivers", label: "Drivers", icon: UserCheck },
   { href: "/admin/contact-messages", label: "Messages", icon: Mail, badgeKey: "messages" },
-  { href: "/admin/invoices", label: "Invoices", icon: Receipt, comingSoon: true },
+  { href: "/admin/invoices", label: "Bills", icon: Receipt },
   { href: "/admin/settings", label: "Business settings", icon: Settings, group: "System" },
   { href: "/admin/admin-users", label: "Admin users", icon: Users, comingSoon: true },
   { href: "/admin/email-logs", label: "Email logs", icon: AtSign, comingSoon: true },

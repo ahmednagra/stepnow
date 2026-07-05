@@ -4,7 +4,8 @@
 from decimal import Decimal
 from uuid import UUID
 from datetime import date, datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from app.Schemas.admin.courier_admin import ParcelOrderCreate
 
 
 class ServicePublicListItem(BaseModel):
@@ -123,3 +124,37 @@ class PricingGroupedByServicePublic(BaseModel):
     service_id: UUID
     service_slug: str
     categories: list[PricingCategoryPublicResponse]
+
+# ── Public order creation (no-login worker form, gated by the shared staff code) ──
+class PublicFleetVehicle(BaseModel):
+    """Vehicle option for the public create-order dropdown (operational, plate-bearing cars)."""
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    label: str
+
+
+class StaffGateCheck(BaseModel):
+    code: str = Field(min_length=1, max_length=50)
+
+
+class StaffGateResult(BaseModel):
+    ok: bool
+
+
+class PublicOrderCreate(ParcelOrderCreate):
+    """Worker create-order payload: the shared staff code plus an inline customer (no saved-
+    customer reference is possible without auth)."""
+    staff_access_code: str = Field(min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def _public_requires_inline_customer(self):
+        if self.customer_id is not None:
+            raise ValueError("customer_id is not allowed on public orders")
+        if self.customer is None:
+            raise ValueError("customer is required")
+        return self
+
+
+class PublicOrderSubmitted(BaseModel):
+    id: UUID
+    order_number: str

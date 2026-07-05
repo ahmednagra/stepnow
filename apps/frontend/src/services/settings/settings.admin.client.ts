@@ -25,6 +25,8 @@ export interface SettingsUpdate {
   bic?: string | null;
   bank_account_holder?: string | null;
   website?: string | null;
+  logo_url?: string | null;
+  staff_access_code?: string | null;
   concession_number?: string | null;
   concession_authority?: string | null;
   concession_date?: string | null;     // YYYY-MM-DD

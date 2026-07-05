@@ -28,6 +28,8 @@ class SettingsUpdate(BaseModel):
     bic: str | None = Field(default=None, max_length=11)
     bank_account_holder: str | None = Field(default=None, max_length=200)
     website: str | None = Field(default=None, max_length=200)
+    logo_url: str | None = Field(default=None, max_length=500)
+    staff_access_code: str | None = Field(default=None, max_length=50)
     concession_number: str | None = Field(default=None, max_length=100)
     concession_authority: str | None = Field(default=None, max_length=200)
     concession_date: date | None = None
@@ -71,6 +73,8 @@ class SettingsAdminResponse(BaseModel):
     bic: str | None
     bank_account_holder: str | None
     website: str | None
+    logo_url: str | None
+    staff_access_code: str | None
     concession_number: str | None
     concession_authority: str | None
     concession_date: date | None

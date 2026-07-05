@@ -372,8 +372,6 @@ def run() -> None:
                 payment_due_days=a["r_zz"],
                 recipient_block=a["empfaenger"],
                 tax_number=TAX_NUMBER,
-                surcharge_label=None,
-                surcharge_net=None,
                 skonto_pct=a["r_skonto"] if a["r_skonto"] > 0 else None,
                 skonto_days=None,
             )

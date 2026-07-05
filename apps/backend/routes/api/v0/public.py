@@ -14,6 +14,7 @@ from app.Http.Controllers.FormsController import FormsController
 from app.Http.Controllers.PublicController import PublicController
 from app.Http.Controllers.public.PublicSlipController import PublicSlipController
 from app.Schemas.forms import BookingCreate, BookingSubmitted, ContactCreate, ContactSubmitted
+from app.Schemas.public import PublicFleetVehicle, PublicOrderCreate, PublicOrderSubmitted, StaffGateCheck, StaffGateResult
 from app.Utils.i18n import Locale, get_locale
 from app.Utils.rate_limit import limiter
 
@@ -114,6 +115,24 @@ async def submit_booking(request: Request, payload: BookingCreate, background_ta
 @limiter.limit("3/minute;10/hour")
 async def submit_contact(request: Request, payload: ContactCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ContactSubmitted:
     return FormsController.submit_contact(db, payload, request, background_tasks)
+
+
+# ── No-login order creation for field workers (shared staff code gate) ──
+@router.get("/fleet-vehicles", response_model=list[PublicFleetVehicle])
+async def public_fleet_vehicles(db: Session = Depends(get_db)) -> list[PublicFleetVehicle]:
+    return FormsController.fleet_vehicles(db)
+
+
+@router.post("/staff-gate", response_model=StaffGateResult)
+@limiter.limit("10/minute;60/hour")
+async def public_staff_gate(request: Request, payload: StaffGateCheck, db: Session = Depends(get_db)) -> StaffGateResult:
+    return FormsController.verify_staff_code(db, payload.code)
+
+
+@router.post("/orders", response_model=PublicOrderSubmitted, status_code=status.HTTP_201_CREATED)
+@limiter.limit("6/minute;60/hour")
+async def public_create_order(request: Request, payload: PublicOrderCreate, db: Session = Depends(get_db)) -> PublicOrderSubmitted:
+    return FormsController.create_public_order(db, payload, request)
 
 
 @router.get("/slips/{public_code}")

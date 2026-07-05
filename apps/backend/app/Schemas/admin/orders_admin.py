@@ -93,10 +93,39 @@ class InvoiceCreateFromOrder(BaseModel):
     payment_due_days: int = Field(default=14, ge=0, le=365)
     recipient_block: str | None = Field(default=None, max_length=1000)
     tax_number: str | None = Field(default=None, max_length=50)
-    surcharge_label: str | None = Field(default=None, max_length=200)
-    surcharge_net: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     skonto_pct: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
     skonto_days: int | None = Field(default=None, ge=0, le=365)
+
+
+class InvoiceItemInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    kind: str = Field(pattern=r"^(charge|discount)$")
+    label: str = Field(min_length=1, max_length=200)
+    net_amount: Decimal = Field(ge=0, max_digits=10, decimal_places=2)
+    sort_order: int = Field(default=0, ge=0)
+
+
+class InvoiceItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    kind: str
+    label: str
+    net_amount: Decimal
+    sort_order: int
+
+
+class InvoiceUpdate(BaseModel):
+    """Edit a bill before or after issue. All fields optional (PATCH). Line items replace-all."""
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    issue_date: date | None = None
+    payment_due_days: int | None = Field(default=None, ge=0, le=365)
+    recipient_block: str | None = Field(default=None, max_length=1000)
+    tax_number: str | None = Field(default=None, max_length=50)
+    base_net: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
+    vat_rate: Decimal | None = Field(default=None, ge=0, le=1, max_digits=5, decimal_places=4)
+    skonto_pct: Decimal | None = Field(default=None, ge=0, le=100, max_digits=5, decimal_places=2)
+    skonto_days: int | None = Field(default=None, ge=0, le=365)
+    items: list[InvoiceItemInput] | None = None
 
 
 class InvoiceAdminResponse(BaseModel):
@@ -108,21 +137,40 @@ class InvoiceAdminResponse(BaseModel):
     issue_date: date
     recipient_block: str | None
     tax_number: str | None
+    base_net: Decimal
     net_amount: Decimal
     vat_rate: Decimal
     vat_amount: Decimal
     gross_amount: Decimal
-    surcharge_label: str | None
-    surcharge_net: Decimal | None
     skonto_pct: Decimal | None
     skonto_days: int | None
     payment_due_days: int
     due_date: date | None
     paid_at: datetime | None
     pdf_url: str | None
+    items: list[InvoiceItemResponse] = []
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+
+
+class InvoiceListResponse(BaseModel):
+    """Row for the bills list + Excel export (bill no · customer · from→to · amount)."""
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    invoice_number: str
+    order_id: UUID
+    order_number: str
+    status: str
+    issue_date: date
+    due_date: date | None
+    customer_name: str
+    route_from: str | None
+    route_to: str | None
+    gross_amount: Decimal
+    amount_paid: Decimal = Decimal("0.00")
+    balance_due: Decimal = Decimal("0.00")
+    is_overdue: bool = False
 
 
 # ─────────────────────────── Payments ───────────────────────────

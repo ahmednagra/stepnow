@@ -13,8 +13,10 @@ import {
   deleteAdminOrder,
   createOrderInvoice,
   recordOrderPayment,
+  updateInvoice,
   type ConvertBookingInput,
   type CreateInvoiceInput,
+  type InvoiceUpdateInput,
   type RecordPaymentInput,
   type OrderDetail,
   type OrderStatus,
@@ -86,6 +88,18 @@ export function useCreateOrderInvoice(orderId: string) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.orders.detail(orderId) });
       void qc.invalidateQueries({ queryKey: queryKeys.orders.lists() });
+    },
+  });
+}
+
+/** Edit a bill (recipient, base net, line items, Skonto…). Invalidates the bill + lists. */
+export function useUpdateInvoice(invoiceId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: InvoiceUpdateInput) => updateInvoice(invoiceId, payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.invoices.detail(invoiceId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.invoices.lists() });
     },
   });
 }

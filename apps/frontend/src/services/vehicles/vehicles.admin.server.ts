@@ -7,7 +7,7 @@ import { ApiError, type ApiResponse } from "@/lib/api-errors";
 import { revalidateForPath } from "@/lib/revalidate";
 import { ENDPOINTS } from "@/services/api/endpoints";
 import type { Paginated, VehicleAdmin } from "@/types";
-import type { VehicleCreateInput, VehicleUpdateInput } from "./vehicles.admin.client";
+import type { VehicleCreateInput, VehicleUpdateInput, VehicleLedger } from "./vehicles.admin.client";
 
 function unwrap<T>(result: ApiResponse<T>): T {
   if (result.error || result.data === undefined) {
@@ -51,4 +51,8 @@ export async function restoreAdminVehicleServer(id: string, authToken: string): 
   const v = unwrap(await serverApiClient.post<VehicleAdmin>(ENDPOINTS.ADMIN.VEHICLE_RESTORE(id), undefined, undefined, authToken));
   revalidateForPath(ENDPOINTS.ADMIN.VEHICLES);
   return v;
+}
+
+export async function getVehicleLedgerServer(id: string, params: Record<string, string | number | boolean | null | undefined>, authToken: string): Promise<VehicleLedger> {
+  return unwrap(await serverApiClient.get<VehicleLedger>(ENDPOINTS.ADMIN.VEHICLE_LEDGER(id), { params }, authToken));
 }

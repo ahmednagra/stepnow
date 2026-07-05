@@ -42,6 +42,8 @@ export interface SettingsAdmin extends Omit<SettingsPublic, "opening_hours" | "d
   bic: string | null;
   bank_account_holder: string | null;
   website: string | null;
+  logo_url: string | null;
+  staff_access_code: string | null;
   opening_hours_de: string;
   opening_hours_en: string;
   default_meta_title_de: string;

@@ -42,6 +42,34 @@ class VehiclesService:
         return v
 
     @staticmethod
+    def get_ledger(db: Session, vehicle_id: UUID, date_from=None, date_to=None):
+        """Per-vehicle account: that vehicle's orders with their ORDER amounts (frozen — never the
+        editable invoice amounts). Returns (vehicle, [(order, paid, balance)], totals)."""
+        from app.Services.FleetService import FleetService
+        from app.Services.PaymentsService import PaymentsService
+        from app.Utils.finance import money
+        vehicle = VehiclesService.get_vehicle(db, vehicle_id, allow_deleted=True)
+        orders = FleetService.vehicle_orders(db, vehicle_id)
+
+        def _d(o):
+            return o.preferred_date or (o.scheduled_datetime.date() if o.scheduled_datetime else None)
+        if date_from:
+            orders = [o for o in orders if _d(o) and _d(o) >= date_from]
+        if date_to:
+            orders = [o for o in orders if _d(o) and _d(o) <= date_to]
+
+        paid_map = PaymentsService.totals_for(db, [o.id for o in orders])
+        rows = [(o, paid_map.get(o.id, money(0)), money(o.gross_amount - paid_map.get(o.id, money(0)))) for o in orders]
+        totals = {
+            "count": len(rows),
+            "net": money(sum((o.net_amount for o in orders), money(0))),
+            "gross": money(sum((o.gross_amount for o in orders), money(0))),
+            "paid": money(sum((p for _, p, _ in rows), money(0))),
+            "balance": money(sum((b for _, _, b in rows), money(0))),
+        }
+        return vehicle, rows, totals
+
+    @staticmethod
     def create_vehicle(db: Session, data: dict[str, Any], actor: AdminUser, request: Request | None = None) -> Vehicle:
         v = Vehicle(**data)
         db.add(v)

@@ -12,6 +12,7 @@ import type {
   OrderAdmin,
   OrderDetail,
   InvoiceAdmin,
+  InvoiceListItem,
   PaymentAdmin,
 } from "./orders.admin.client";
 
@@ -56,6 +57,20 @@ export async function sendAdminOrderServer(id: string, data: Record<string, unkn
 export async function createAdminOrderInvoiceServer(id: string, data: Record<string, unknown>, authToken: string): Promise<InvoiceAdmin> {
   const inv = unwrap(await serverApiClient.post<InvoiceAdmin>(ENDPOINTS.ADMIN.ORDER_INVOICE(id), data, undefined, authToken));
   revalidateForPath(ENDPOINTS.ADMIN.ORDERS);
+  return inv;
+}
+
+export async function listInvoicesServer(params: Record<string, string | number | boolean | null | undefined>, authToken: string): Promise<Paginated<InvoiceListItem>> {
+  return unwrap(await serverApiClient.get<Paginated<InvoiceListItem>>(ENDPOINTS.ADMIN.INVOICES, { params }, authToken));
+}
+
+export async function getInvoiceServer(id: string, authToken: string): Promise<InvoiceAdmin> {
+  return unwrap(await serverApiClient.get<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_BY_ID(id), undefined, authToken));
+}
+
+export async function updateInvoiceServer(id: string, data: Record<string, unknown>, authToken: string): Promise<InvoiceAdmin> {
+  const inv = unwrap(await serverApiClient.patch<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_BY_ID(id), data, undefined, authToken));
+  revalidateForPath(ENDPOINTS.ADMIN.INVOICES);
   return inv;
 }
 

@@ -80,12 +80,6 @@ export const adminOrderSchema = z
     km_total: z.string(),
     km_occupied: z.string(),
 
-    // ── Optional invoice surcharge + Skonto (early-payment discount) ──
-    surcharge_label: z.string(),
-    surcharge_net: z.string(),
-    skonto_pct: z.string(),
-    skonto_days: z.string(),
-
     // ── Payment + description ──
     term: z.number().nullable(),
     service_description: z.string(),

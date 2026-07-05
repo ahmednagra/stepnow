@@ -18,6 +18,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from app.Models.orders import Order
 from app.Models.settings import SiteSettings
+from app.Services.InvoicePdfService import logo_flowable
 
 STORAGE_DIR = Path("storage/slips")  # gitignored (apps/backend/storage/)
 _INK = colors.HexColor("#0F1115")
@@ -112,6 +113,10 @@ class DriverSlipPdfService:
         story = []
 
         # Header
+        logo = logo_flowable(s)
+        if logo:
+            story.append(logo)
+            story.append(Spacer(1, 3 * mm))
         story.append(Paragraph(issuer_line, ParagraphStyle("issuer", parent=body, fontSize=10, textColor=_INK)))
         if contact_line:
             story.append(Paragraph(contact_line, small))
@@ -153,25 +158,27 @@ class DriverSlipPdfService:
         # columns are the fallback for older single-pickup orders that predate order_stops.
         stops = [st for st in (order.stops or []) if not st.is_deleted]
         pickups = [st for st in stops if st.stop_type == "pickup"]
-        drop = next((st for st in stops if st.stop_type == "drop"), None)
+        drops = [st for st in stops if st.stop_type == "drop"]
         fallback_date = order.preferred_date or (order.scheduled_datetime.date() if order.scheduled_datetime else None)
 
+        def _side_addr(side_stops, legacy_addr, legacy_pc, legacy_city):
+            if len(side_stops) > 1:
+                return "<br/><br/>".join(
+                    f"{i}. " + DriverSlipPdfService._addr_lines(st, None, None, None)
+                    for i, st in enumerate(side_stops, start=1)
+                )
+            return DriverSlipPdfService._addr_lines(
+                side_stops[0] if side_stops else None, legacy_addr, legacy_pc, legacy_city)
+
         load_win = DriverSlipPdfService._window(pickups[0], fallback_date) if pickups else DriverSlipPdfService._de_date(fallback_date)
-        unload_win = DriverSlipPdfService._window(drop, fallback_date) if drop else DriverSlipPdfService._de_date(fallback_date)
-        if len(pickups) > 1:
-            load_addr = "<br/><br/>".join(
-                f"{i}. " + DriverSlipPdfService._addr_lines(st, None, None, None)
-                for i, st in enumerate(pickups, start=1)
-            )
-        else:
-            load_addr = DriverSlipPdfService._addr_lines(
-                pickups[0] if pickups else None, order.pickup_address, order.pickup_postcode, order.pickup_city)
-        unload_addr = DriverSlipPdfService._addr_lines(
-            drop, order.destination_address, order.destination_postcode, order.destination_city)
+        unload_win = DriverSlipPdfService._window(drops[0], fallback_date) if drops else DriverSlipPdfService._de_date(fallback_date)
+        load_addr = _side_addr(pickups, order.pickup_address, order.pickup_postcode, order.pickup_city)
+        unload_addr = _side_addr(drops, order.destination_address, order.destination_postcode, order.destination_city)
 
         load_header = f"BELADEORT ({len(pickups)})" if len(pickups) > 1 else "BELADEORT"
+        unload_header = f"ENTLADEORT ({len(drops)})" if len(drops) > 1 else "ENTLADEORT"
         route = Table(
-            [[Paragraph(load_header, label), Paragraph("ENTLADEORT", label)],
+            [[Paragraph(load_header, label), Paragraph(unload_header, label)],
              [Paragraph(f"<b>Datum &amp; Uhrzeit:</b> {load_win}", small), Paragraph(f"<b>Datum &amp; Uhrzeit:</b> {unload_win}", small)],
              [Paragraph(load_addr, body), Paragraph(unload_addr, body)]],
             colWidths=[85 * mm, 85 * mm],

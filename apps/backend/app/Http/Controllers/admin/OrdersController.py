@@ -16,6 +16,8 @@ from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.orders_admin import (
     InvoiceAdminResponse,
     InvoiceCreateFromOrder,
+    InvoiceListResponse,
+    InvoiceUpdate,
     OrderAdminResponse,
     OrderCreateFromBooking,
     OrderDetailResponse,
@@ -179,6 +181,59 @@ class OrdersController:
         inv = order.invoice
         if not inv:
             raise NotFoundError("Order has no invoice", order_id=str(order_id))
+        path = inv.pdf_url
+        if not path or not Path(path).exists():
+            try:
+                inv.pdf_url = InvoicePdfService.render(db, inv)
+                db.commit()
+                db.refresh(inv)
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
+                raise AppError("Failed to generate the invoice PDF")
+            path = inv.pdf_url
+        return str(Path(path).resolve())
+
+    # ── Bills (invoices): list · get · edit · PDF. Edits never touch order amounts. ──
+    @staticmethod
+    def list_invoices(db: Session, page: int, size: int, status: str | None, q: str | None) -> PaginatedResponse[InvoiceListResponse]:
+        items, total = InvoicesService.list_invoices(db, page, size, status, q)
+        today = date.today()
+        paid_map = PaymentsService.totals_for(db, [inv.order_id for inv in items])
+        rows = []
+        for inv in items:
+            o = inv.order
+            paid = paid_map.get(inv.order_id, money(0))
+            balance = money(inv.gross_amount - paid)
+            rows.append(InvoiceListResponse(
+                id=inv.id, invoice_number=inv.invoice_number, order_id=inv.order_id,
+                order_number=o.order_number, status=inv.status, issue_date=inv.issue_date,
+                due_date=inv.due_date, customer_name=o.customer_name,
+                route_from=o.pickup_city or o.pickup_address, route_to=o.destination_city or o.destination_address,
+                gross_amount=inv.gross_amount, amount_paid=paid, balance_due=balance,
+                is_overdue=bool(balance > 0 and inv.due_date is not None and inv.due_date < today),
+            ))
+        return PaginatedResponse[InvoiceListResponse].build(rows, page, size, total)
+
+    @staticmethod
+    def get_invoice(db: Session, invoice_id: UUID) -> InvoiceAdminResponse:
+        return InvoiceAdminResponse.model_validate(InvoicesService.get(db, invoice_id))
+
+    @staticmethod
+    def update_invoice(db: Session, invoice_id: UUID, payload: InvoiceUpdate, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
+        inv = InvoicesService.update(db, invoice_id, payload, actor, request)
+        try:
+            inv.pdf_url = InvoicePdfService.render(db, inv)
+            db.commit()
+            db.refresh(inv)
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
+        return InvoiceAdminResponse.model_validate(inv)
+
+    @staticmethod
+    def invoice_pdf_path_by_id(db: Session, invoice_id: UUID) -> str:
+        inv = InvoicesService.get(db, invoice_id)
         path = inv.pdf_url
         if not path or not Path(path).exists():
             try:
