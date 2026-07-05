@@ -16,6 +16,16 @@ cd "$BACKEND_DIR"
 ./venv/bin/pip install --upgrade pip
 ./venv/bin/pip install -r requirements.txt
 
+echo "    Apply schema migrations (idempotent ALTER TABLE ... ADD COLUMN IF NOT EXISTS)"
+# create_all() only creates new TABLES; new COLUMNS on existing tables need these scripts.
+# Each migrate_*.py is idempotent, so running the whole set every deploy is safe and self-healing.
+for m in scripts/migrate_*.py; do
+  [ -e "$m" ] || continue
+  name="scripts.$(basename "${m%.py}")"
+  echo "    -> $name"
+  ./venv/bin/python -m "$name"
+done
+
 echo "==> [3/8] Stop frontend (avoid reading a half-built .next)"
 systemctl stop stepnow-frontend || true
 
