@@ -1,11 +1,14 @@
 # apps/backend/routes/api/v0/admin/vehicles.py
+from datetime import date
+from pathlib import Path
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from config.database import get_db
 from app.Http.Controllers.admin.VehiclesController import VehiclesController
 from app.Models.admin import AdminUser
-from app.Schemas.admin.vehicles import VehicleAdminResponse, VehicleCreate, VehicleUpdate
+from app.Schemas.admin.vehicles import VehicleAdminResponse, VehicleCreate, VehicleUpdate, VehicleLedgerResponse
 from app.Schemas.common import PaginatedResponse
 from app.Utils.Helpers import get_current_admin
 
@@ -49,3 +52,27 @@ async def delete_vehicle(request: Request, vehicle_id: UUID, db: Session = Depen
 @router.post("/{vehicle_id}/restore", response_model=VehicleAdminResponse)
 async def restore_vehicle(request: Request, vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
     return VehiclesController.restore(db, vehicle_id, actor, request)
+
+
+# ── Per-vehicle account (ledger) — order list + order prices + totals ──
+@router.get("/{vehicle_id}/ledger", response_model=VehicleLedgerResponse)
+async def vehicle_ledger(
+    vehicle_id: UUID,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+) -> VehicleLedgerResponse:
+    return VehiclesController.ledger(db, vehicle_id, date_from, date_to)
+
+
+@router.get("/{vehicle_id}/ledger/pdf")
+async def vehicle_ledger_pdf(
+    vehicle_id: UUID,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+) -> FileResponse:
+    path = VehiclesController.ledger_pdf_path(db, vehicle_id, date_from, date_to)
+    return FileResponse(path, media_type="application/pdf", filename=Path(path).name)

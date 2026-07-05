@@ -4,7 +4,7 @@
 // ============================================
 // ORDERS QUERIES
 // ============================================
-export { useOrders, useOrder, useOrderPayments } from "./useOrders";
+export { useOrders, useOrder, useOrderPayments, useInvoices, useInvoice } from "./useOrders";
 
 // ============================================
 // NOTIFICATIONS QUERIES
@@ -21,7 +21,7 @@ export { useDashboard } from "./useDashboard";
 // ============================================
 // CONTENT / ADMIN RESOURCE QUERIES
 // ============================================
-export { useVehicles, useVehicle } from "./useVehicles";
+export { useVehicles, useVehicle, useVehicleLedger } from "./useVehicles";
 export { useFaqs, useFaq } from "./useFaqs";
 export { useServices, useService, useServicePricingCategories } from "./useServices";
 export { useTestimonials, useTestimonial } from "./useTestimonials";

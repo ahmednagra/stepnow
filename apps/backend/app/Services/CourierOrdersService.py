@@ -64,7 +64,7 @@ class CourierOrdersService:
         return vehicle
 
     @staticmethod
-    def create_manual(db: Session, payload, actor: AdminUser, request: Request | None = None) -> Order:
+    def create_manual(db: Session, payload, actor: AdminUser, request: Request | None = None, created_via: str = "admin") -> Order:
         customer = CourierOrdersService._resolve_customer(db, payload, actor, request)
 
         vehicle = CourierOrdersService._resolve_vehicle(db, payload.vehicle_id)
@@ -83,14 +83,15 @@ class CourierOrdersService:
         # Route: N pickups → 1 drop. Mirror the first pickup + the drop into the legacy
         # single-address columns so PDFs/list keep working; order_stops is the full source.
         pickups = [s for s in payload.stops if s.stop_type == "pickup"]
-        drop = next(s for s in payload.stops if s.stop_type == "drop")
-        first_pickup = pickups[0]
+        drops = [s for s in payload.stops if s.stop_type == "drop"]
+        first_pickup, drop = pickups[0], drops[0]
 
         order = Order(
             order_number=order_date_sequence_number(db, Order.order_number),
             booking_id=None,
             status="open",
             delivery_status="draft",
+            created_via=created_via,
             customer_id=customer.id,
             driver_id=driver.id if driver else None,
             customer_name=display_name,
@@ -121,6 +122,8 @@ class CourierOrdersService:
             distance_km=payload.distance_km,
             total_km=payload.total_km,
             occupied_km=payload.occupied_km,
+            km_to_load=payload.km_to_load,
+            km_to_unload=payload.km_to_unload,
             service_description=payload.service_description,
             net_amount=net, vat_rate=rate, vat_amount=vat, gross_amount=gross,
             payment_due_days=payload.payment_due_days, due_date=due_date,
@@ -128,15 +131,15 @@ class CourierOrdersService:
         )
         db.add(order)
         db.flush()
-        # Persist the ordered route stops (pickups first, drop last; sequence 1..N).
+        # Persist the ordered route stops (pickups first, then drops; sequence 1..N).
         db.add_all([
             OrderStop(
-                order_id=order.id, sequence=i, stop_type=s.stop_type, address=s.address,
-                postcode=s.postcode, city=s.city, contact_name=s.contact_name,
+                order_id=order.id, sequence=i, stop_type=s.stop_type, company=s.company,
+                address=s.address, postcode=s.postcode, city=s.city, contact_name=s.contact_name,
                 contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
                 package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
             )
-            for i, s in enumerate([*pickups, drop], start=1)
+            for i, s in enumerate([*pickups, *drops], start=1)
         ])
         db.flush()
         db.refresh(order)
@@ -164,21 +167,21 @@ class CourierOrdersService:
         for f in ("consignee", "parcel_description", "parcel_quantity", "parcel_weight_kg",
                   "scheduled_datetime", "service_description", "internal_notes",
                   "client_reference", "service_type", "preferred_date",
-                  "distance_km", "total_km", "occupied_km"):
+                  "distance_km", "total_km", "occupied_km", "km_to_load", "km_to_unload"):
             setattr(o, f, getattr(payload, f))
         # Replace the route stops (N pickups → 1 drop) and re-mirror the legacy columns.
         pickups = [s for s in payload.stops if s.stop_type == "pickup"]
-        drop = next(s for s in payload.stops if s.stop_type == "drop")
+        drops = [s for s in payload.stops if s.stop_type == "drop"]
         o.pickup_address, o.pickup_city = pickups[0].address, pickups[0].city
-        o.destination_address, o.destination_city = drop.address, drop.city
+        o.destination_address, o.destination_city = drops[0].address, drops[0].city
         o.stops.clear()
         db.flush()
-        for i, s in enumerate([*pickups, drop], start=1):
+        for i, s in enumerate([*pickups, *drops], start=1):
             o.stops.append(OrderStop(
-                sequence=i, stop_type=s.stop_type, address=s.address, postcode=s.postcode,
-                city=s.city, contact_name=s.contact_name, contact_phone=s.contact_phone,
-                time_from=s.time_from, time_to=s.time_to, package_count=s.package_count,
-                weight_kg=s.weight_kg, notes=s.notes,
+                sequence=i, stop_type=s.stop_type, company=s.company, address=s.address,
+                postcode=s.postcode, city=s.city, contact_name=s.contact_name,
+                contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
+                package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
             ))
         rate = payload.vat_rate if payload.vat_rate is not None else o.vat_rate
         net, vat, gross = compute_totals(payload.net_amount, rate)

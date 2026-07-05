@@ -69,6 +69,10 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="open", index=True
     )  # open | completed | cancelled
+    # How the order was created: admin console vs the no-login public worker form.
+    created_via: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="admin", server_default="admin"
+    )  # admin | public
 
     # ── Customer snapshot (copied at conversion, immutable afterward) ──
     customer_name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -109,6 +113,14 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     # never stored. distance_km (above) is the planned pickup→destination route distance.
     total_km: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
     occupied_km: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    # Transportauftrag km legs: Anfahrt to the loading point and the leg after unloading.
+    # The driver slip prints these as "Km to load" / "Km to Unload" alongside driven/Besetzt.
+    km_to_load: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 2), nullable=True, comment="Anfahrt-KM to the loading point (Transportauftrag)"
+    )
+    km_to_unload: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 2), nullable=True, comment="KM leg to/after the unloading point (Transportauftrag)"
+    )
 
     service_description: Mapped[str | None] = mapped_column(Text, nullable=True)
 

@@ -1,7 +1,31 @@
 // src/services/vehicles/vehicles.admin.client.ts
 import { nextjsApiClient } from "@/lib/nextjs-api";
 import { ENDPOINTS } from "@/services/api/endpoints";
+import { getAccessToken } from "@/lib/auth-storage";
 import type { Paginated, VehicleAdmin } from "@/types";
+
+// ── Per-vehicle ledger (account): order list + ORDER prices + totals ──
+export interface VehicleLedgerOrder {
+  order_id: string;
+  order_number: string;
+  date: string | null;
+  customer_name: string;
+  route_from: string | null;
+  route_to: string | null;
+  net_amount: string;
+  gross_amount: string;
+  amount_paid: string;
+  balance_due: string;
+  status: string;
+}
+export interface VehicleLedger {
+  vehicle_id: string;
+  vehicle_label: string;
+  date_from: string | null;
+  date_to: string | null;
+  orders: VehicleLedgerOrder[];
+  totals: { count: number; net: string; gross: string; paid: string; balance: string };
+}
 
 export interface ListAdminVehiclesParams {
   page?: number;
@@ -85,4 +109,27 @@ export async function deleteAdminVehicle(id: string): Promise<void> {
 
 export async function restoreAdminVehicle(id: string): Promise<VehicleAdmin> {
   return nextjsApiClient.post<VehicleAdmin>(ENDPOINTS.ADMIN.VEHICLE_RESTORE(id));
+}
+
+export async function getVehicleLedger(id: string, params: { date_from?: string; date_to?: string } = {}): Promise<VehicleLedger> {
+  return nextjsApiClient.get<VehicleLedger>(ENDPOINTS.ADMIN.VEHICLE_LEDGER(id), { params });
+}
+
+/** Authenticated vehicle-account PDF download (bearer header can't ride a plain link). */
+export async function downloadVehicleLedgerPdf(id: string, label?: string, params: { date_from?: string; date_to?: string } = {}): Promise<void> {
+  const token = getAccessToken();
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
+  const res = await fetch(`/api/v0${ENDPOINTS.ADMIN.VEHICLE_LEDGER_PDF(id)}${qs ? `?${qs}` : ""}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!res.ok) throw new Error("PDF download failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Fahrzeugkonto_${label ?? id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

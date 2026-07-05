@@ -35,6 +35,15 @@ export interface SettingsPublic {
 
 export interface SettingsAdmin extends Omit<SettingsPublic, "opening_hours" | "default_meta_title"> {
   id: number;
+  // §14 register + bank block — admin-only, printed on the Transportauftrag/Rechnung.
+  commercial_register: string | null;
+  register_court: string | null;
+  iban: string | null;
+  bic: string | null;
+  bank_account_holder: string | null;
+  website: string | null;
+  logo_url: string | null;
+  staff_access_code: string | null;
   opening_hours_de: string;
   opening_hours_en: string;
   default_meta_title_de: string;

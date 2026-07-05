@@ -22,6 +22,25 @@ export const queryKeys = {
   },
 
   // ============================================
+  // INVOICES (bills)
+  // ============================================
+  invoices: {
+    all: ["invoices"] as const,
+    lists: () => [...queryKeys.invoices.all, "list"] as const,
+    list: (p?: Record<string, unknown>) => (p ? [...queryKeys.invoices.lists(), p] as const : queryKeys.invoices.lists()),
+    detail: (id: string) => [...queryKeys.invoices.all, "detail", id] as const,
+  },
+
+  // ============================================
+  // VEHICLE LEDGER (per-vehicle account)
+  // ============================================
+  vehicleLedger: {
+    all: ["vehicle-ledger"] as const,
+    detail: (id: string, p?: Record<string, unknown>) =>
+      (p ? [...queryKeys.vehicleLedger.all, id, p] as const : [...queryKeys.vehicleLedger.all, id] as const),
+  },
+
+  // ============================================
   // NOTIFICATIONS
   // ============================================
   notifications: {

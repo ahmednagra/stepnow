@@ -17,6 +17,8 @@ from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.orders_admin import (
     InvoiceAdminResponse,
     InvoiceCreateFromOrder,
+    InvoiceListResponse,
+    InvoiceUpdate,
     OrderAdminResponse,
     OrderCreateFromBooking,
     OrderDetailResponse,
@@ -68,6 +70,35 @@ async def delete_order(request: Request, order_id: UUID, background_tasks: Backg
 @router.post("/admin/orders/{order_id}/invoice", response_model=InvoiceAdminResponse, status_code=status.HTTP_201_CREATED)
 async def create_invoice(request: Request, order_id: UUID, payload: InvoiceCreateFromOrder, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.create_invoice(db, order_id, payload, actor, request, background_tasks)
+
+
+# ── Bills (invoices) — list, edit, PDF. The vehicle account is unaffected by edits here. ──
+@router.get("/admin/invoices", response_model=PaginatedResponse[InvoiceListResponse])
+async def list_invoices(
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    status: str | None = Query(None, max_length=20),
+    q: str | None = Query(None, max_length=200),
+) -> PaginatedResponse[InvoiceListResponse]:
+    return OrdersController.list_invoices(db, page, size, status, q)
+
+
+@router.get("/admin/invoices/{invoice_id}", response_model=InvoiceAdminResponse)
+async def get_invoice(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+    return OrdersController.get_invoice(db, invoice_id)
+
+
+@router.patch("/admin/invoices/{invoice_id}", response_model=InvoiceAdminResponse)
+async def update_invoice(request: Request, invoice_id: UUID, payload: InvoiceUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+    return OrdersController.update_invoice(db, invoice_id, payload, actor, request)
+
+
+@router.get("/admin/invoices/{invoice_id}/pdf")
+async def invoice_pdf_by_id(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
+    path = OrdersController.invoice_pdf_path_by_id(db, invoice_id)
+    return FileResponse(path, media_type="application/pdf", filename=Path(path).name)
 
 
 # ── Payments ──

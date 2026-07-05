@@ -112,7 +112,11 @@ def create(db: Session, payload: VehicleCreate, actor: AdminUser) -> Vehicle:
 | Tables | plural snake_case: `orders` `vehicles` `customers` |
 | Models | singular PascalCase: `Order` `Vehicle` `Customer` |
 | Money | `NUMERIC(10,2)` → `Decimal` — never `float`. EUR default. |
-| VAT | 7% passenger (PBefG), 19% courier — set per order |
+| VAT | 7% passenger (PBefG); **19% courier — default on the order→Rechnung path** — set per order |
+| Docs | **Transportauftrag** (driver slip, no price, `A-…`) · **Rechnung** (§14 invoice, `R…`, IBAN/BIC + HRA footer). Issuer/bank/register from `site_settings`. Must match `Refrence Material/Docs/` templates. |
+| Kunden-Nr | `customers.customer_number` — K911-series (e.g. `K911053`), generated in `CustomersService.create` |
+| Accounts | **Vehicle account = `Order.*` amounts (frozen at create); company account = `Invoice.*` (editable).** Editing a bill (base_net/items/discount via `InvoicesService.update`) never writes order amounts — the two stay independent. Bill adjustments only vary the company account. |
+| Public create | Field workers create orders with NO login via `POST /public/orders`, gated by `site_settings.staff_access_code`; `Order.created_via="public"`. Billing stays admin-only. |
 | Delivery status | string: `draft → dispatched → picked_up → delivered` |
 | JSONB attrs | never `metadata` — use `order_metadata` etc. |
 

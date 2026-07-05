@@ -42,6 +42,7 @@ class OrderStop(Base, TimestampMixin, SoftDeleteMixin):
         comment="Per-stop lifecycle: pending | arrived | completed | failed",
     )
 
+    company: Mapped[str | None] = mapped_column(String(200), nullable=True, comment="Firma at this stop (Beladeort/Entladeort)")
     address: Mapped[str] = mapped_column(String(500), nullable=False, comment="Straße + Hausnummer")
     postcode: Mapped[str | None] = mapped_column(String(10), nullable=True, comment="PLZ")
     city: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="Ort")

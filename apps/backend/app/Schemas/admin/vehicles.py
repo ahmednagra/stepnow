@@ -1,5 +1,6 @@
 # apps/backend/app/Schemas/admin/vehicles.py
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -58,3 +59,34 @@ class VehicleAdminResponse(BaseModel):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+
+# ── Per-vehicle ledger (account) — uses ORDER amounts, never invoice amounts ──
+class VehicleLedgerOrder(BaseModel):
+    order_id: UUID
+    order_number: str
+    date: "date | None"
+    customer_name: str
+    route_from: str | None
+    route_to: str | None
+    net_amount: "Decimal"
+    gross_amount: "Decimal"
+    amount_paid: "Decimal"
+    balance_due: "Decimal"
+    status: str
+
+
+class VehicleLedgerTotals(BaseModel):
+    count: int
+    net: "Decimal"
+    gross: "Decimal"
+    paid: "Decimal"
+    balance: "Decimal"
+
+
+class VehicleLedgerResponse(BaseModel):
+    vehicle_id: UUID
+    vehicle_label: str
+    date_from: "date | None" = None
+    date_to: "date | None" = None
+    orders: list[VehicleLedgerOrder]
+    totals: VehicleLedgerTotals

@@ -63,6 +63,20 @@ def order_date_sequence_number(db: Session, column, for_date: date | None = None
     return f"{counter}{date_suffix}"
 
 
+def next_customer_number(db: Session, column) -> str:
+    """Kunden-Nr. in the legacy K911-series: 'K911' + 3-digit counter, e.g. 'K911070'.
+    Continues from the current max (K911069 → K911070), matching nextCustId in the export.
+    Includes soft-deleted rows so a number is never reused."""
+    last = (
+        db.query(column)
+        .filter(column.like("K911%"))
+        .order_by(column.desc())
+        .first()
+    )
+    seq = (int(last[0][4:]) + 1) if last else 1
+    return f"K911{seq:03d}"
+
+
 def invoice_number_from_order(order_number: str) -> str:
     """Derive invoice number from order number: 'R' + order_number.
     e.g. '01260326' → 'R01260326'

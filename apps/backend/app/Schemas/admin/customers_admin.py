@@ -41,6 +41,7 @@ class CustomerUpdate(BaseModel):
 class CustomerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
+    customer_number: str | None
     company_name: str
     contact_person: str | None
     is_business: bool

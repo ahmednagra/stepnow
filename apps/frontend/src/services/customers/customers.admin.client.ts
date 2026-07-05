@@ -7,6 +7,7 @@ import type { Paginated } from "@/types";
 
 export interface CustomerAdmin {
   id: string;
+  customer_number: string | null;
   company_name: string;
   contact_person: string | null;
   is_business: boolean;
