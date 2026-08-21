@@ -18,82 +18,72 @@ const SERVICES_IMAGE =
 export function HomeServicesSection({ t, locale, services }: HomeServicesSectionProps) {
   return (
     <section className="bg-[var(--color-bg-page)]">
-      <Container className="py-section">
+      <Container className="py-10 md:py-12">
         <ScrollReveal
           as="header"
-          className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12"
+          className="mb-5 flex flex-col items-start gap-3 md:mb-6 md:flex-row md:items-end md:justify-between md:gap-12"
         >
           <div className="max-w-2xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
-              {t("home.services.pre_heading")}
-            </p>
-            <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
+            <h2 className="font-serif text-[26px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[32px]">
               {t("home.services.heading")}
             </h2>
           </div>
-          <p className="max-w-sm text-[13.5px] leading-relaxed text-[var(--color-text-secondary)] md:text-right">
+          <p className="max-w-sm text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:max-w-none md:whitespace-nowrap md:text-right">
             {t("home.services.subheading")}
           </p>
         </ScrollReveal>
 
-        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
-          <ScrollReveal
-            as="div"
-            className="relative min-h-[320px] overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] md:min-h-[420px]"
-          >
+        <ScrollReveal
+          as="ul"
+          stagger
+          className="grid gap-px overflow-hidden border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-2 lg:grid-cols-6"
+        >
+          <li aria-hidden="true" className="relative hidden min-h-[200px] overflow-hidden bg-[var(--color-bg-surface)] lg:block">
             <Image
               src={SERVICES_IMAGE}
               alt="Professional transport service vehicle"
               fill
-              sizes="(max-width: 1024px) 100vw, 40vw"
+              sizes="16vw"
               className="object-cover"
             />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.08),rgba(15,17,21,0.44))]" />
-          </ScrollReveal>
+          </li>
 
-          <ScrollReveal
-            as="ul"
-            stagger
-            className="grid gap-px overflow-hidden border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] md:grid-cols-2"
-          >
-            {services.map((service) => {
-              const Icon = getServiceIcon(service.icon, service.slug);
-              const href = locale === "de" ? `/dienstleistungen/${service.slug}` : `/en/services/${service.slug}`;
+          {services.map((service) => {
+            const Icon = getServiceIcon(service.icon, service.slug);
+            const href = locale === "de" ? `/dienstleistungen/${service.slug}` : `/en/services/${service.slug}`;
 
-              return (
-                <li key={service.id} className="bg-[var(--color-bg-surface)]">
-                  <Link
-                    href={href}
-                    className="group flex h-full flex-col gap-5 p-7 transition-colors duration-base ease-out-premium hover:bg-[var(--color-bg-page)] md:p-9"
-                  >
-                    <div className="flex items-start gap-4">
-                      <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)] transition-colors duration-base group-hover:border-[color:var(--color-accent-primary)] group-hover:text-[var(--color-accent-primary)]">
-                        <Icon className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
-                      </span>
-                    </div>
+            return (
+              <li key={service.id} className="bg-[var(--color-bg-surface)]">
+                <Link
+                  href={href}
+                  className="group flex h-full flex-col gap-3 p-5 transition-colors duration-base ease-out-premium hover:bg-[var(--color-bg-page)]"
+                >
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)] transition-colors duration-base group-hover:border-[color:var(--color-accent-primary)] group-hover:text-[var(--color-accent-primary)]">
+                    <Icon className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
+                  </span>
 
-                    <div className="flex flex-1 flex-col gap-3">
-                      <h3 className="text-[22px] font-semibold tracking-tight text-[var(--color-text-primary)] md:text-[24px]">
-                        {service.title}
-                      </h3>
-                      <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
-                        {service.short_description}
-                      </p>
-                    </div>
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-[var(--color-text-primary)]">
+                      {service.title}
+                    </h3>
+                    <p className="line-clamp-2 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
+                      {service.short_description}
+                    </p>
+                  </div>
 
-                    <span className="mt-auto inline-flex items-center gap-1.5 pt-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)] transition-colors duration-base group-hover:text-[var(--color-text-primary)]">
-                      {t("services.card.learn_more")}
-                      <ArrowUpRight
-                        className="h-3.5 w-3.5 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ScrollReveal>
-        </div>
+                  <span className="mt-auto inline-flex items-center gap-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent-primary)] transition-colors duration-base group-hover:text-[var(--color-text-primary)]">
+                    {t("services.card.learn_more")}
+                    <ArrowUpRight
+                      className="h-3 w-3 transition-transform duration-base ease-out-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ScrollReveal>
       </Container>
     </section>
   );

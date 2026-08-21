@@ -57,14 +57,14 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
       aria-label={t("home.trust.licensed")}
       className="border-b border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]"
     >
-      <Container className="grid grid-cols-2 gap-x-6 gap-y-6 py-5 md:grid-cols-4 md:gap-x-10 md:py-6">
+      <Container className="grid grid-cols-2 gap-x-6 gap-y-4 py-3 md:grid-cols-4 md:gap-x-10 md:py-4">
         {ITEMS.map(({ key, Icon }) => (
-          <div key={key} className="flex items-center gap-4">
+          <div key={key} className="flex items-center gap-3">
             <span
               aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]"
+              className="flex h-8 w-8 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]"
             >
-              <Icon strokeWidth={1.25} className="h-5 w-5" />
+              <Icon strokeWidth={1.25} className="h-4 w-4" />
             </span>
             <span className="text-[13.5px] leading-snug text-[var(--color-text-primary)] md:text-[14px]">
               {t(key)}
@@ -75,19 +75,19 @@ export function TrustStrip({ t, settings, locale }: TrustStripProps) {
 
       {stats.length > 0 && (
         <div className="border-t border-[color:var(--color-border-soft)]">
-          <Container className="grid grid-cols-2 gap-x-6 gap-y-5 py-5 md:grid-cols-4 md:gap-x-10 md:py-6">
+          <Container className="grid grid-cols-2 gap-x-6 gap-y-3 py-3 md:grid-cols-4 md:gap-x-10 md:py-4">
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col">
-                <span className="inline-flex items-center gap-1.5 font-serif text-[26px] leading-none tracking-tight text-[var(--color-text-primary)] md:text-[30px]">
+                <span className="inline-flex items-center gap-1.5 font-serif text-[20px] leading-none tracking-tight text-[var(--color-text-primary)] md:text-[24px]">
                   {s.star && (
                     <Star
-                      className="h-5 w-5 fill-[var(--color-accent-primary)] text-[var(--color-accent-primary)]"
+                      className="h-4 w-4 fill-[var(--color-accent-primary)] text-[var(--color-accent-primary)]"
                       aria-hidden="true"
                     />
                   )}
                   {s.value}
                 </span>
-                <span className="mt-1.5 text-[12px] leading-snug text-[var(--color-text-secondary)] md:text-[12.5px]">
+                <span className="mt-1 text-[12px] leading-snug text-[var(--color-text-secondary)] md:text-[12.5px]">
                   {s.label}
                 </span>
               </div>
