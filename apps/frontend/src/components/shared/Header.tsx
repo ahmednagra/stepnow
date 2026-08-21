@@ -85,9 +85,9 @@ export function Header({ settings }: HeaderProps) {
       <div className="hidden border-b border-[color:var(--color-border-soft)] lg:block">
         <Container
           as="div"
-          className="flex h-10 items-center justify-between text-[11px] font-medium tracking-[0.05em] text-[var(--color-text-secondary)]"
+          className="flex h-8 items-center justify-between text-[11px] font-medium tracking-[0.05em] text-[var(--color-text-secondary)]"
         >
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-2">
               <MapPin
                 className="h-3.5 w-3.5 text-[var(--color-accent-primary)]"
@@ -134,19 +134,19 @@ export function Header({ settings }: HeaderProps) {
       >
         <Container
           as="div"
-          className="flex h-[4.5rem] items-center justify-between gap-5 lg:h-[5.25rem]"
+          className="flex h-10 items-center justify-between gap-5 lg:h-[3.5rem]"
         >
           <Link
             href={homeHref}
             aria-label={displayName}
             className="flex shrink-0 items-center transition-opacity duration-base hover:opacity-85"
           >
-            <Logo height={48} priority />
+            <Logo height={35} priority />
           </Link>
 
           <nav
             aria-label="Primary"
-            className="hidden lg:flex lg:items-center lg:justify-center lg:gap-8"
+            className="hidden lg:flex lg:h-full lg:items-stretch lg:justify-center lg:gap-8"
           >
             {navItems.map((item) => {
               const active = isNavActive(pathname, item.href);
@@ -155,7 +155,7 @@ export function Header({ settings }: HeaderProps) {
                   key={item.key}
                   href={item.href}
                   className={cn(
-                    "relative py-2 text-[14px] font-semibold tracking-[0.02em] transition-colors duration-base",
+                    "relative flex items-end pb-2 text-[14px] font-semibold tracking-[0.02em] transition-colors duration-base",
                     active
                       ? "text-[var(--color-text-primary)]"
                       : "text-[color:rgba(15,17,21,0.72)] hover:text-[var(--color-text-primary)]",
@@ -165,7 +165,7 @@ export function Header({ settings }: HeaderProps) {
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "ease-out-premium absolute inset-x-0 -bottom-[10px] h-px origin-left transition-transform duration-base",
+                      "ease-out-premium absolute inset-x-0 bottom-0 h-px origin-left transition-transform duration-base",
                       "bg-[var(--color-accent-primary)]",
                       active ? "scale-x-100" : "scale-x-0",
                     )}
@@ -179,7 +179,7 @@ export function Header({ settings }: HeaderProps) {
             <Link
               href={bookingHref}
               className={cn(
-                "group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
+                "group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-none border px-5 text-[12px] font-medium uppercase tracking-[0.16em]",
                 "border-[color:var(--color-bg-strong)] bg-[var(--color-bg-strong)] text-[var(--color-text-on-strong)] shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                 "ease-out-premium transition-all duration-base hover:border-[color:var(--color-bg-strong-hover)] hover:shadow-[0_6px_16px_rgba(15,17,21,0.12)] active:translate-y-px active:shadow-[0_2px_8px_rgba(15,17,21,0.08)]",
                 "before:ease-out-premium before:absolute before:inset-0 before:origin-left before:scale-x-0 before:bg-[var(--color-bg-strong-hover)] before:transition-transform before:duration-base hover:before:scale-x-100",

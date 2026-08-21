@@ -16,7 +16,7 @@ SETTINGS_DATA = {
     "address_country": "Deutschland",
     "address_lat": Decimal("48.715500"),
     "address_lng": Decimal("9.373500"),
-    "phone": "+49 7153 9292841",
+    "phone": "+4915510669395",
     "phone_mobile": "+49 159 01225850",
     "email": "info@step-now.de",
     "whatsapp_url": "https://wa.me/4915901225850",

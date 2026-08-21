@@ -62,8 +62,8 @@ FAQS = [
         "category": "booking",
         "question_de": "Wie buche ich eine Fahrt?",
         "question_en": "How do I book a ride?",
-        "answer_de": "Drei Wege: (1) Online über unser Buchungsformular innerhalb von 30 Minuten erhalten Sie ein verbindliches Pauschalpreis-Angebot. (2) Telefonisch unter +49 7153 9292841. (3) Per WhatsApp für schnelle Anfragen.",
-        "answer_en": "Three ways: (1) Online via our booking form within 30 minutes you receive a binding price quote. (2) By phone at +49 7153 9292841. (3) By WhatsApp for quick inquiries.",
+        "answer_de": "Drei Wege: (1) Online über unser Buchungsformular innerhalb von 30 Minuten erhalten Sie ein verbindliches Pauschalpreis-Angebot. (2) Telefonisch unter +4915510669395. (3) Per WhatsApp für schnelle Anfragen.",
+        "answer_en": "Three ways: (1) Online via our booking form within 30 minutes you receive a binding price quote. (2) By phone at +4915510669395. (3) By WhatsApp for quick inquiries.",
     },
     {
         "sort_order": 20,
