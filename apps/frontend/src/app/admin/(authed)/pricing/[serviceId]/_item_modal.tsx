@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Loader2 } from "lucide-react";
 import {
   adminPricingItemSchema,
+  SUPPORTED_CURRENCIES,
   type AdminPricingItemInput,
 } from "@/schemas/admin-pricing.schema";
 import {
@@ -44,6 +45,7 @@ function defaults(it: PricingItemAdmin | undefined, nextSortOrder: number): Admi
     to_location_de: it?.to_location_de ?? "",
     to_location_en: it?.to_location_en ?? "",
     price_eur: formatDecimalForInput(it?.price_eur),
+    currency: (it?.currency ?? "EUR") as AdminPricingItemInput["currency"],
     note_de: it?.note_de ?? "",
     note_en: it?.note_en ?? "",
   };
@@ -168,9 +170,16 @@ export function ItemModal({
             }
           />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <AdminFormField label="Currency" required error={errors.currency?.message} hint="ISO 4217">
+              <select className={adminInputClass} {...register("currency")}>
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </AdminFormField>
             <AdminFormField
-              label="Price (EUR)"
+              label="Amount"
               required
               error={errors.price_eur?.message}
               hint="e.g. 45.50 or 45,50"

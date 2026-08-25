@@ -80,6 +80,7 @@ export interface CourierOrder {
   vat_rate: string;
   vat_amount: string;
   gross_amount: string;
+  currency: string;
   payment_due_days: number;
   due_date: string | null;
   dispatched_at: string | null;

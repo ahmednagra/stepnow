@@ -1,7 +1,7 @@
 // apps/frontend/src/app/admin/(authed)/orders/page.tsx
 // Orders list — operations console. Adds a KPI strip (revenue / outstanding / overdue /
 // awaiting-dispatch / delivered), financial + delivery + overdue filters, per-row delivery &
-// payment state with aging, and client-side export (CSV / XLSX / JSON / PDF) computed from the
+// payment state with aging, and client-side export (CSV / Excel / JSON / PDF) computed from the
 // currently filtered + sorted rows — no extra endpoint. Built on the admin design system
 // (AdminPageHeader / AdminCard / AdminTable / FilterToolbar / Pagination + Tailwind tokens).
 
@@ -19,11 +19,11 @@ import {
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
 import { type OrderAdmin, type OrderStatus, type DeliveryStatus } from "@/services/orders";
-import { useOrders } from "@/hooks/queries";
+import { useDefaultCurrency, useOrders } from "@/hooks/queries";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
-import { formatPriceEur } from "@/utils/decimal";
-import { exportCsv, exportJson, printNode } from "@/utils/exporters";
+import { formatMoney } from "@/utils/decimal";
+import { exportCsv, exportExcel, exportJson, printNode } from "@/utils/exporters";
 import { cn } from "@/utils/cn";
 
 const PAGE_SIZE = 20;
@@ -75,7 +75,7 @@ function PaymentBadge({ o }: { o: OrderAdmin }) {
       </span>
       {p.balance > 0 && (
         <span className={cn("mt-1 block font-mono text-[10.5px]", p.kind === "overdue" ? "font-semibold text-rose-700" : "text-slate-500")}>
-          {formatPriceEur(p.balance.toFixed(2))} due{p.overdueDays > 0 ? ` · ${p.overdueDays}d overdue` : ""}
+          {formatMoney(p.balance.toFixed(2), o.currency)} due{p.overdueDays > 0 ? ` · ${p.overdueDays}d overdue` : ""}
         </span>
       )}
     </div>
@@ -89,6 +89,7 @@ const chipCls = (active: boolean) =>
   );
 
 export default function OrdersPage() {
+  const cur = useDefaultCurrency();
   const pushToast = useAdminToast((s) => s.push);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -234,19 +235,9 @@ export default function OrdersPage() {
     pushToast("success", `Exported ${view.length} rows to JSON`);
     setExportOpen(false);
   };
-  const doXlsx = async () => {
-    try {
-      const XLSX = await import("xlsx");
-      const rows = exportRows();
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws["!cols"] = Object.keys(rows[0] ?? { a: 1 }).map(() => ({ wch: 16 }));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Orders");
-      XLSX.writeFile(wb, `stepnow-orders-${todayISO()}.xlsx`);
-      pushToast("success", `Exported ${view.length} rows to XLSX`);
-    } catch {
-      pushToast("error", "XLSX export failed", "The spreadsheet library could not be loaded.");
-    }
+  const doXlsx = () => {
+    exportExcel(exportRows(), `stepnow-orders-${todayISO()}.xls`, "Orders");
+    pushToast("success", `Exported ${view.length} rows to Excel`);
     setExportOpen(false);
   };
   const doPrint = () => {
@@ -278,9 +269,9 @@ export default function OrdersPage() {
       <div className="space-y-4 p-6">
         {/* KPI strip */}
         <div className="grid grid-cols-2 border border-slate-200 bg-white md:grid-cols-5">
-          {kpiCard("Revenue (page)", formatPriceEur(kpis.revenue.toFixed(2)), "gross, loaded rows")}
-          {kpiCard("Outstanding", formatPriceEur(kpis.outstanding.toFixed(2)), "unpaid balance", "warn")}
-          {kpiCard("Overdue", formatPriceEur(kpis.overdue.toFixed(2)), `${kpis.overdueCount} past due`, "bad")}
+          {kpiCard("Revenue (page)", formatMoney(kpis.revenue.toFixed(2), cur), "gross, loaded rows")}
+          {kpiCard("Outstanding", formatMoney(kpis.outstanding.toFixed(2), cur), "unpaid balance", "warn")}
+          {kpiCard("Overdue", formatMoney(kpis.overdue.toFixed(2), cur), `${kpis.overdueCount} past due`, "bad")}
           {kpiCard("Awaiting dispatch", String(kpis.awaitingDispatch), "still in draft")}
           {kpiCard("Delivered", String(kpis.delivered), "completed runs", "good")}
         </div>
@@ -331,7 +322,7 @@ export default function OrdersPage() {
               <div className="absolute right-0 top-11 z-40 min-w-[210px] border border-slate-200 bg-white shadow-lg">
                 <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Export current view ({view.length})</p>
                 <button type="button" onClick={doCsv} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-600 py-0.5 text-center text-[9px] font-bold text-white">CSV</span> Comma-separated</button>
-                <button type="button" onClick={doXlsx} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-800 py-0.5 text-center text-[9px] font-bold text-white">XLSX</span> Excel workbook</button>
+                <button type="button" onClick={doXlsx} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-800 py-0.5 text-center text-[9px] font-bold text-white">XLS</span> Excel workbook</button>
                 <button type="button" onClick={doJson} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-slate-700 py-0.5 text-center text-[9px] font-bold text-white">JSON</span> Raw data</button>
                 <button type="button" onClick={doPrint} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-red-600 py-0.5 text-center text-[9px] font-bold text-white">PDF</span> Print / save as PDF</button>
               </div>
@@ -426,7 +417,7 @@ export default function OrdersPage() {
                         <td className={cn("px-3.5", pad)}><OrderStatusBadge status={o.status} /></td>
                         <td className={cn("px-3.5", pad)}><PaymentBadge o={o} /></td>
                         <td className={cn("px-3.5 text-right", pad)}>
-                          <span className="font-mono text-[13px] font-semibold tabular-nums text-slate-900">{formatPriceEur(o.gross_amount)}</span>
+                          <span className="font-mono text-[13px] font-semibold tabular-nums text-slate-900">{formatMoney(o.gross_amount, cur)}</span>
                           {!compact && <span className="block text-[10px] text-slate-400">VAT {Math.round(num(o.vat_rate) * 100)}%</span>}
                         </td>
                         <td className={cn("relative px-3.5 text-right", pad)} data-row-menu>

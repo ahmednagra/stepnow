@@ -75,7 +75,7 @@ export function PricingTable({ t, service, categories, locale, showDivider = tru
                             {item.note && <span className="mt-1 block text-[12.5px] text-mute">{item.note}</span>}
                           </td>
                           <td className="py-4 align-top text-right text-[17px] font-semibold tabular-nums text-gold-deep">
-                            {formatPrice(item.price_eur, locale)}
+                            {formatPrice(item.price_eur, locale, item.currency)}
                           </td>
                         </tr>
                       ))}

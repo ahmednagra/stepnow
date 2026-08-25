@@ -20,8 +20,10 @@ SETTINGS_DATA = {
     "phone_mobile": "+49 159 01225850",
     "email": "info@step-now.de",
     "whatsapp_url": "https://wa.me/4915901225850",
-    "tax_number": "59500/72609",
-    "vat_id": None,
+    "vat_rate_standard": Decimal("0.1900"),
+    "vat_rate_reduced": Decimal("0.0700"),
+    "tax_number": "59002/59899",
+    "vat_id": "DE 463491338",
     # Handelsregister (e.K.) + bank — printed on the Transportauftrag/Rechnung legal + payment blocks.
     "commercial_register": "HRA 742905",
     "register_court": "AG Stuttgart",
@@ -73,7 +75,8 @@ def run() -> None:
             filled = [
                 f for f in (
                     "years_active", "rides_completed", "fleet_size", "google_rating", "google_review_count",
-                    "tax_number", "commercial_register", "register_court", "iban", "bic",
+                    "tax_number", "vat_id", "commercial_register", "register_court", "iban", "bic",
+                    "vat_rate_standard", "vat_rate_reduced",
                     "bank_account_holder", "website",
                 )
                 if getattr(existing, f) is None and SETTINGS_DATA[f] is not None

@@ -5,6 +5,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDefaultCurrency } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowRightCircle } from "lucide-react";
 import { AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function ConvertToOrderCard({ bookingId, suggestedNet }: Props) {
+  const cur = useDefaultCurrency();
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
   const [net, setNet] = useState(suggestedNet ?? "");
@@ -48,7 +50,7 @@ export function ConvertToOrderCard({ bookingId, suggestedNet }: Props) {
   return (
     <AdminCard title="Convert to order" description="Create a confirmed job + optional billing from this booking.">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <AdminFormField label="Net amount (€)">
+        <AdminFormField label={`Net amount (${cur})`}>
           <input className={adminInputClass} inputMode="decimal" placeholder="0.00" value={net} onChange={(e) => setNet(e.target.value)} />
         </AdminFormField>
         <AdminFormField label="VAT rate">

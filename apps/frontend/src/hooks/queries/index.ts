@@ -25,7 +25,7 @@ export { useVehicles, useVehicle, useVehicleLedger } from "./useVehicles";
 export { useFaqs, useFaq } from "./useFaqs";
 export { useServices, useService, useServicePricingCategories } from "./useServices";
 export { useTestimonials, useTestimonial } from "./useTestimonials";
-export { useSettings } from "./useSettings";
+export { useSettings, useDefaultCurrency } from "./useSettings";
 export { useBookings, useBooking } from "./useBookings";
 export { useContactMessages, useContactMessage } from "./useContactMessages";
 export { useLegalPages, useLegalPage, useLegalPageVersions } from "./useLegalPages";

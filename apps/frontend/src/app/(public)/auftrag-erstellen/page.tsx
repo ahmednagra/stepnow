@@ -27,6 +27,7 @@ export default function PublicCreateOrderPage() {
   const [gateError, setGateError] = useState<string | null>(null);
 
   const [vehicles, setVehicles] = useState<FleetVehicle[]>([]);
+  const [currency, setCurrency] = useState("");
   const [vehicleId, setVehicleId] = useState("");
   const [driverName, setDriverName] = useState("");
   const [company, setCompany] = useState("");
@@ -47,8 +48,12 @@ export default function PublicCreateOrderPage() {
     try {
       const res = await nextjsApiClient.post<{ ok: boolean }>(ENDPOINTS.PUBLIC.STAFF_GATE, { code: code.trim() });
       if (!res.ok) { setGateError("Wrong code."); return; }
-      const fleet = await nextjsApiClient.get<FleetVehicle[]>(ENDPOINTS.PUBLIC.FLEET_VEHICLES);
+      const [fleet, settings] = await Promise.all([
+        nextjsApiClient.get<FleetVehicle[]>(ENDPOINTS.PUBLIC.FLEET_VEHICLES),
+        nextjsApiClient.get<{ default_currency: string }>(ENDPOINTS.PUBLIC.SETTINGS),
+      ]);
       setVehicles(fleet);
+      setCurrency(settings.default_currency);
       setUnlocked(true);
     } catch (e) {
       setGateError(e instanceof ApiError ? e.message : "Could not verify the code.");
@@ -171,7 +176,7 @@ export default function PublicCreateOrderPage() {
       ))}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-[12px] text-slate-600">Preis netto (€) *<input type="number" min={0} step="0.01" className={`${input} mt-1`} value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" /></label>
+        <label className="text-[12px] text-slate-600">Preis netto{currency ? ` (${currency})` : ""} *<input type="number" min={0} step="0.01" className={`${input} mt-1`} value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" /></label>
         <label className="text-[12px] text-slate-600 sm:col-span-2">Hinweise<textarea rows={2} className={`${input} mt-1 h-auto py-2`} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
       </section>
 

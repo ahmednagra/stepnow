@@ -4,13 +4,14 @@
 # so they are never placed under the public /uploads mount; they stream via the authenticated
 # admin endpoint. Issuer/bank/legal details come from SiteSettings, not hardcoded. Layout
 # follows the client RECHNUNG template: issuer + Steuer-Nr top-right, Kunden-/Referenz-Nr meta,
-# salutation + route intro, Einzelpreis/Gesamtpreis line table, Skonto with computed €,
+# salutation + route intro, Einzelpreis/Gesamtpreis line table, Skonto with a computed amount,
 # Zahlungsbedingungen (IBAN/BIC/Verwendungszweck/Fälligkeitsdatum), closing + Handelsregister footer.
 #
 # Requires: reportlab  (reportlab==4.2.5 in requirements.txt)
 
 from datetime import date
 from decimal import Decimal
+from babel.numbers import format_currency
 from pathlib import Path
 from sqlalchemy.orm import Session
 from reportlab.lib import colors
@@ -47,8 +48,9 @@ def logo_flowable(s, max_w_mm: float = 42, max_h_mm: float = 18):
         return None
 
 
-def _eur(value) -> str:
-    return f"{Decimal(value):,.2f} €"
+def _money(value, currency: str) -> str:
+    """Symbol and placement come from CLDR, so any ISO 4217 renders correctly — no symbol map."""
+    return format_currency(Decimal(value), currency, locale="de_DE")
 
 
 def _de_date(d) -> str:
@@ -66,6 +68,7 @@ class InvoicePdfService:
         """Generate the PDF, return its (relative) storage path string."""
         STORAGE_DIR.mkdir(parents=True, exist_ok=True)
         out = InvoicePdfService.storage_path(invoice)
+        cur = invoice.currency
         order = invoice.order
         s = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
 
@@ -153,10 +156,10 @@ class InvoicePdfService:
         desc = order.service_description or "Transportleistung"
         route = f"{_from_city} → {_to_city}"
         rows.append(["1", Paragraph(f"{desc}<br/><font size=7 color='#64748B'>{route}</font>", small),
-                     _eur(base_net), rate_pct, _eur(base_net * (1 + rate))])
+                     _money(base_net, cur), rate_pct, _money(base_net * (1 + rate), cur)])
         for n, item in enumerate((it for it in invoice.items if not it.is_deleted), start=2):
             signed = item.net_amount if item.kind == "charge" else -item.net_amount
-            rows.append([str(n), item.label, _eur(signed), rate_pct, _eur(signed * (1 + rate))])
+            rows.append([str(n), item.label, _money(signed, cur), rate_pct, _money(signed * (1 + rate), cur)])
 
         items = Table(rows, colWidths=[12 * mm, 80 * mm, 26 * mm, 16 * mm, 28 * mm])
         items.setStyle(TableStyle([
@@ -174,9 +177,9 @@ class InvoicePdfService:
 
         # Totals — Summe Netto / zzgl. USt. X% / Gesamtbetrag
         totals = [
-            ["Summe Netto", _eur(invoice.net_amount)],
-            [f"zzgl. USt. {rate_pct}", _eur(invoice.vat_amount)],
-            ["Gesamtbetrag", _eur(invoice.gross_amount)],
+            ["Summe Netto", _money(invoice.net_amount, cur)],
+            [f"zzgl. USt. {rate_pct}", _money(invoice.vat_amount, cur)],
+            ["Gesamtbetrag", _money(invoice.gross_amount, cur)],
         ]
         t = Table(totals, colWidths=[44 * mm, 32 * mm], hAlign="RIGHT")
         t.setStyle(TableStyle([
@@ -190,18 +193,18 @@ class InvoicePdfService:
         story.append(t)
         story.append(Spacer(1, 6 * mm))
 
-        # Skonto with computed € amount
+        # Skonto with the computed discount amount
         if invoice.skonto_pct and invoice.skonto_days:
             disc = money(Decimal(invoice.gross_amount) * Decimal(invoice.skonto_pct) / Decimal("100"))
             story.append(Paragraph(
                 f"Skonto: Bei Zahlung binnen {invoice.skonto_days} Tagen {invoice.skonto_pct}% "
-                f"= {_eur(disc)} Abzug möglich.", small))
+                f"= {_money(disc, cur)} Abzug möglich.", small))
             story.append(Spacer(1, 3 * mm))
 
         # Zahlungsbedingungen — bank block + Verwendungszweck + Fälligkeitsdatum
         story.append(Paragraph("<b>Zahlungsbedingungen</b>", body))
         story.append(Paragraph(
-            f"Bitte überweisen Sie den Rechnungsbetrag von {_eur(invoice.gross_amount)} innerhalb von "
+            f"Bitte überweisen Sie den Rechnungsbetrag von {_money(invoice.gross_amount, cur)} innerhalb von "
             f"{invoice.payment_due_days} Tagen ohne Abzug auf das folgende Konto:", small))
         if s and (s.iban or s.bic):
             bank = "  ·  ".join(p for p in (

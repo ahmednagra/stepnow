@@ -3,6 +3,7 @@ from app.Models.base import Base
 from app.Models.message_delivery import MessageDelivery
 from app.Models.admin import AdminUser, RefreshToken
 from app.Models.audit import AuditLog
+from app.Models.counters import Counter
 from app.Models.settings import SiteSettings
 from app.Models.ui_strings import UiString
 from app.Models.services import Service
@@ -30,6 +31,7 @@ __all__ = [
     "AdminUser",
     "RefreshToken",
     "AuditLog",
+    "Counter",
     "SiteSettings",
     "UiString",
     "Service",

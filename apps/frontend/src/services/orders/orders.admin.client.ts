@@ -40,6 +40,7 @@ export interface OrderAdmin {
   vat_rate: string;
   vat_amount: string;
   gross_amount: string;
+  currency: string;
   payment_due_days: number;
   due_date: string | null;
   completed_at: string | null;
@@ -98,6 +99,7 @@ export interface InvoiceAdmin {
   vat_rate: string;
   vat_amount: string;
   gross_amount: string;
+  currency: string;
   skonto_pct: string | null;
   skonto_days: number | null;
   payment_due_days: number;
@@ -123,6 +125,7 @@ export interface InvoiceListItem {
   route_from: string | null;
   route_to: string | null;
   gross_amount: string;
+  currency: string;
   amount_paid: string;
   balance_due: string;
   is_overdue: boolean;

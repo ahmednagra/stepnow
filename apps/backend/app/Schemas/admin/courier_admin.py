@@ -172,6 +172,7 @@ class CourierOrderResponse(BaseModel):
     vat_rate: Decimal
     vat_amount: Decimal
     gross_amount: Decimal
+    currency: str
     payment_due_days: int
     due_date: date | None
     dispatched_at: datetime | None

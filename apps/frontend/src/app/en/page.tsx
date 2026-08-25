@@ -35,7 +35,7 @@ const SectionFallback = () => <div className="min-h-[420px] bg-cream" aria-hidde
 async function DeferredFleet({ locale }: { locale: "en" }) {
   const [stringsRes, vehicles] = await Promise.all([getUiStringsServer(locale), listVehiclesServer(locale)]);
   const t = createT(stringsRes.strings, locale);
-  return <ScrollReveal><FleetPreview t={t} vehicles={vehicles} /></ScrollReveal>;
+  return <ScrollReveal><FleetPreview t={t} vehicles={vehicles} locale={locale} /></ScrollReveal>;
 }
 
 async function DeferredTestimonials({ locale }: { locale: "en" }) {
@@ -59,7 +59,7 @@ export default async function HomePageEn() {
 
   return (
     <>
-      <HeroHomeSection t={t} settings={settings} locale="en" />
+      <HeroHomeSection t={t} locale="en" />
 
       <TrustStrip t={t} settings={settings} locale="en" />
 

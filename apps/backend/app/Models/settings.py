@@ -2,7 +2,7 @@
 # SQLAlchemy model for the singleton site_settings row (business info + map coords).
 from datetime import date
 from decimal import Decimal
-from sqlalchemy import CheckConstraint, Date, Integer, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, Integer, Numeric, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.Models.base import Base
 from app.Mixins.TimestampMixin import TimestampMixin
@@ -46,6 +46,18 @@ class SiteSettings(Base, TimestampMixin):
     # Shared worker PIN gating the no-login public order-creation form.
     staff_access_code: Mapped[str | None] = mapped_column(
         String(50), nullable=True, comment="Shared code workers enter to create orders without login"
+    )
+    # VAT rates live here, not in code: 7% is the reduced PBefG passenger rate, 19% the
+    # standard rate that courier / Sonderfahrt work is billed at. Editable in admin Settings.
+    default_currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default=text("'EUR'"),
+        comment="ISO 4217 the business bills in — every money field defaults to this, never to a literal"
+    )
+    vat_rate_standard: Mapped[Decimal] = mapped_column(
+        Numeric(5, 4), nullable=False, server_default=text("0.1900"), comment="Standard VAT rate (courier / Sonderfahrt)"
+    )
+    vat_rate_reduced: Mapped[Decimal] = mapped_column(
+        Numeric(5, 4), nullable=False, server_default=text("0.0700"), comment="Reduced VAT rate (PBefG short-distance passenger transport)"
     )
     concession_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
     concession_authority: Mapped[str | None] = mapped_column(String(200), nullable=True)

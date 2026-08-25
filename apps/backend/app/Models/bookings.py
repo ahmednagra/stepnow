@@ -2,12 +2,13 @@
 # Booking requests with composite index for status+created_at admin queries.
 
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 from typing import TYPE_CHECKING
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
@@ -20,9 +21,10 @@ class BookingRequest(Base, TimestampMixin, SoftDeleteMixin):
     __table_args__ = (
         Index("ix_bookings_status_created", "status", "created_at"),
         Index("ix_bookings_created_at", "created_at"),
+        live_unique("uq_bookings_reference_live", "reference"),
     )
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
-    reference: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    reference: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="new", index=True)
     service_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("services.id"), nullable=True, index=True)
     pickup_address: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -44,7 +46,7 @@ class BookingRequest(Base, TimestampMixin, SoftDeleteMixin):
     language: Mapped[str] = mapped_column(String(2), nullable=False, default="de")
     ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    quoted_price_eur: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    quoted_price_eur: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True, comment="Staff quote for the requested ride")
     quoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     internal_notes: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { listAllPricingServer } from "@/services/pricing";
+import { findLowestPrice } from "@/components/features/services";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
@@ -49,6 +50,9 @@ export default async function PricingPageEn() {
     service: s,
     categories: pricingByServiceId.get(s.id) ?? ([] as PricingCategoryPublic[]),
   }));
+  // Row 1 of the comparison quotes the primary service (first by services.sort_order),
+  // not the global minimum — otherwise it advertises a hospital fare as an airport one.
+  const lowest = findLowestPrice(pricingByService[0]?.categories ?? []);
   return (
     <>
       <section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
@@ -123,7 +127,7 @@ export default async function PricingPageEn() {
       <PricingTrustStrip t={t} locale="en" />
       <PricingIncludedMoment t={t} locale="en" />
       <PricingExcludedStrip t={t} locale="en" />
-      <PricingComparison t={t} locale="en" />
+      <PricingComparison t={t} locale="en" lowestPrice={lowest.price} lowestCurrency={lowest.currency} />
       <PricingPaymentCancellation t={t} locale="en" agbHref="/en/terms" />
 
       <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">

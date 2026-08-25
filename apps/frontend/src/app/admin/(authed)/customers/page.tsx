@@ -1,19 +1,20 @@
 // app/admin/(authed)/customers/page.tsx
 // Customers list — operations CRM. KPI strip (total / lifetime billed / receivables /
 // overdue accounts / B2B split), segment filters, sortable + drag-resizable columns,
-// per-customer value + receivable + recency, and client-side export (CSV/XLSX/JSON/PDF).
+// per-customer value + receivable + recency, and client-side export (CSV/Excel/JSON/PDF).
 // when the backend supplies them; the page degrades gracefully until then.
 
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDefaultCurrency } from "@/hooks/queries";
 import Link from "next/link";
 import { Plus, Download, AlertTriangle, ChevronDown, Clock, MoreVertical } from "lucide-react";
 import { AdminPageHeader, AdminCard, FilterToolbar } from "@/components/admin";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { useCustomers } from "@/hooks/queries/useCustomers";
-import { formatPriceEur } from "@/utils/decimal";
-import { exportCsv, exportJson, printNode } from "@/utils/exporters";
+import { formatMoney } from "@/utils/decimal";
+import { exportCsv, exportExcel, exportJson, printNode } from "@/utils/exporters";
 import { type CustomerAdmin } from "@/services/customers";
 import { cn } from "@/utils/cn";
 
@@ -55,6 +56,7 @@ const chipCls = (active: boolean) =>
   );
 
 export default function CustomersPage() {
+  const cur = useDefaultCurrency();
   const pushToast = useAdminToast((s) => s.push);
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
@@ -167,19 +169,9 @@ export default function CustomersPage() {
 
   const doCsv = () => { exportCsv(exportRows(), `stepnow-customers-${todayISO()}.csv`); pushToast("success", `Exported ${view.length} rows to CSV`); setExportOpen(false); };
   const doJson = () => { exportJson(exportRows(), `stepnow-customers-${todayISO()}.json`); pushToast("success", `Exported ${view.length} rows to JSON`); setExportOpen(false); };
-  const doXlsx = async () => {
-    try {
-      const XLSX = await import("xlsx");
-      const rows = exportRows();
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws["!cols"] = Object.keys(rows[0] ?? { a: 1 }).map(() => ({ wch: 16 }));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Customers");
-      XLSX.writeFile(wb, `stepnow-customers-${todayISO()}.xlsx`);
-      pushToast("success", `Exported ${view.length} rows to XLSX`);
-    } catch {
-      pushToast("error", "XLSX export failed", "The spreadsheet library could not be loaded.");
-    }
+  const doXlsx = () => {
+    exportExcel(exportRows(), `stepnow-customers-${todayISO()}.xls`, "Customers");
+    pushToast("success", `Exported ${view.length} rows to Excel`);
     setExportOpen(false);
   };
   const doPrint = () => { printNode(document.getElementById("customers-printable"), `StepNow Customers ${todayISO()}`); setExportOpen(false); };
@@ -221,9 +213,9 @@ export default function CustomersPage() {
         {/* KPI strip */}
         <div className="grid grid-cols-2 border border-slate-200 bg-white md:grid-cols-5">
           {kpiCard("Total customers", String(total), `${(customers ?? []).length} loaded`)}
-          {kpiCard("Lifetime billed", formatPriceEur(kpis.ltv.toFixed(2)), "gross, loaded rows", "good")}
-          {kpiCard("Receivables", formatPriceEur(kpis.ar.toFixed(2)), `${kpis.withBal} with balance`, "warn")}
-          {kpiCard("Overdue accounts", formatPriceEur(kpis.od.toFixed(2)), `${kpis.odCount} need chasing`, "bad")}
+          {kpiCard("Lifetime billed", formatMoney(kpis.ltv.toFixed(2), cur), "gross, loaded rows", "good")}
+          {kpiCard("Receivables", formatMoney(kpis.ar.toFixed(2), cur), `${kpis.withBal} with balance`, "warn")}
+          {kpiCard("Overdue accounts", formatMoney(kpis.od.toFixed(2), cur), `${kpis.odCount} need chasing`, "bad")}
           {kpiCard("Business / Private", `${kpis.biz} / ${kpis.priv}`, "B2B share")}
         </div>
 
@@ -245,7 +237,7 @@ export default function CustomersPage() {
               <div className="absolute right-0 top-11 z-40 min-w-[210px] border border-slate-200 bg-white shadow-lg">
                 <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Export current view ({view.length})</p>
                 <button type="button" onClick={doCsv} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-600 py-0.5 text-center text-[9px] font-bold text-white">CSV</span> Comma-separated</button>
-                <button type="button" onClick={doXlsx} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-800 py-0.5 text-center text-[9px] font-bold text-white">XLSX</span> Excel workbook</button>
+                <button type="button" onClick={doXlsx} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-800 py-0.5 text-center text-[9px] font-bold text-white">XLS</span> Excel workbook</button>
                 <button type="button" onClick={doJson} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-slate-700 py-0.5 text-center text-[9px] font-bold text-white">JSON</span> Raw data</button>
                 <button type="button" onClick={doPrint} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-red-600 py-0.5 text-center text-[9px] font-bold text-white">PDF</span> Print / save as PDF</button>
               </div>
@@ -341,15 +333,15 @@ export default function CustomersPage() {
                           {c.orders_count != null ? <span className="font-mono text-[13px] tabular-nums text-slate-700">{c.orders_count}</span> : <span className="text-slate-300">—</span>}
                         </td>
                         <td className={cn("px-3.5 text-right", pad)}>
-                          {hasAggregates ? <span className="font-mono text-[13px] font-semibold tabular-nums text-slate-900">{formatPriceEur(num(c.total_billed).toFixed(2))}</span> : <span className="text-slate-300">—</span>}
+                          {hasAggregates ? <span className="font-mono text-[13px] font-semibold tabular-nums text-slate-900">{formatMoney(num(c.total_billed).toFixed(2), cur)}</span> : <span className="text-slate-300">—</span>}
                         </td>
                         <td className={cn("px-3.5", pad)}>
                           {bal <= 0.005 ? (
                             <span className="text-slate-400">—</span>
                           ) : (
                             <span className={cn("font-mono text-[12.5px] font-semibold", overdue ? "text-rose-700" : "text-amber-700")}>
-                              {formatPriceEur(bal.toFixed(2))}
-                              {!compact && <span className="block text-[10px] font-normal">{overdue ? `${formatPriceEur(overdueBal.toFixed(2))} overdue` : "due"}</span>}
+                              {formatMoney(bal.toFixed(2), cur)}
+                              {!compact && <span className="block text-[10px] font-normal">{overdue ? `${formatMoney(overdueBal.toFixed(2), cur)} overdue` : "due"}</span>}
                             </span>
                           )}
                         </td>

@@ -25,6 +25,7 @@ import { getServiceHeroImage } from "@/components/features/pricing/PricingSectio
 export interface ServiceWithPricing {
   service: ServicePublic;
   lowestPrice: string | null;
+  lowestCurrency: string;
   lowestRouteLabel: string | null;
 }
 
@@ -40,9 +41,10 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
 
 export function findLowestPrice(categories: PricingCategoryPublic[]): {
   price: string | null;
+  currency: string;
   routeLabel: string | null;
 } {
-  let cheapest: { price: number; raw: string; label: string } | null = null;
+  let cheapest: { price: number; raw: string; currency: string; label: string } | null = null;
   for (const c of categories) {
     for (const item of c.items) {
       const num = Number(item.price_eur);
@@ -52,12 +54,12 @@ export function findLowestPrice(categories: PricingCategoryPublic[]): {
           ? `${item.from_location} → ${item.to_location}`
           : (item.from_location ?? item.to_location ?? "");
       if (!cheapest || num < cheapest.price) {
-        cheapest = { price: num, raw: item.price_eur, label };
+        cheapest = { price: num, raw: item.price_eur, currency: item.currency, label };
       }
     }
   }
-  if (!cheapest) return { price: null, routeLabel: null };
-  return { price: cheapest.raw, routeLabel: cheapest.label || null };
+  if (!cheapest) return { price: null, currency: "EUR", routeLabel: null };
+  return { price: cheapest.raw, currency: cheapest.currency, routeLabel: cheapest.label || null };
 }
 
 function firstParagraph(md: string | null | undefined): string | null {
@@ -95,7 +97,7 @@ export function ServicesIndex({
           />
         </p>
         <div className="grid grid-cols-1 border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-2 lg:grid-cols-4">
-          {data.map(({ service, lowestPrice }, idx) => {
+          {data.map(({ service, lowestPrice, lowestCurrency }, idx) => {
             const Icon = ICON_BY_SLUG[service.slug] ?? Plane;
             const number = String(idx + 1).padStart(2, "0");
             return (
@@ -130,7 +132,7 @@ export function ServicesIndex({
                         {locale === "de" ? "Ab" : "From"}
                       </span>
                       <span className="font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)] md:text-[22px]">
-                        {formatPrice(lowestPrice, locale)}
+                        {formatPrice(lowestPrice, locale, lowestCurrency)}
                       </span>
                     </>
                   ) : (
@@ -289,6 +291,7 @@ export function ServiceRichRow({
   index,
   detailHref,
   lowestPrice,
+  lowestCurrency,
   lowestRouteLabel,
 }: {
   t: TFunction;
@@ -297,6 +300,7 @@ export function ServiceRichRow({
   index: number;
   detailHref: string;
   lowestPrice: string | null;
+  lowestCurrency: string;
   lowestRouteLabel: string | null;
 }) {
   const isReversed = index % 2 === 1;
@@ -397,7 +401,7 @@ export function ServiceRichRow({
                       : "From"}
                 </span>
                 <span className="font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)]">
-                  {formatPrice(lowestPrice, locale)}
+                  {formatPrice(lowestPrice, locale, lowestCurrency)}
                 </span>
               </span>
             )}

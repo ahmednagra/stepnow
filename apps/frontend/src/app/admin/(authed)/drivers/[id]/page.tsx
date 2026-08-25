@@ -8,12 +8,13 @@ import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty } from "@/components/admin";
 import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
-import { formatPriceEur } from "@/utils/decimal";
-import { useDriver } from "@/hooks/queries";
+import { formatMoney } from "@/utils/decimal";
+import { useDefaultCurrency, useDriver } from "@/hooks/queries";
 import { useDriverOrders } from "@/hooks/queries/useDrivers";
 import { DriverForm } from "../_form";
 
 export default function DriverDetailPage() {
+  const cur = useDefaultCurrency();
   const params = useParams<{ id: string }>();
   const id = params.id;
   const { data: driver, isLoading } = useDriver(id);
@@ -36,7 +37,7 @@ export default function DriverDetailPage() {
                 <AdminTableCell><Link href={`/admin/orders/${o.id}`} className="font-mono hover:underline">{o.order_number}</Link></AdminTableCell>
                 <AdminTableCell>{o.pickup_address} → {o.destination_address}</AdminTableCell>
                 <AdminTableCell><DeliveryStatusBadge status={o.delivery_status} /></AdminTableCell>
-                <AdminTableCell>{formatPriceEur(o.gross_amount)}</AdminTableCell>
+                <AdminTableCell>{formatMoney(o.gross_amount, cur)}</AdminTableCell>
               </AdminTableRow>
             )) : <AdminTableEmpty message="No jobs assigned yet." />}
           </AdminTable>

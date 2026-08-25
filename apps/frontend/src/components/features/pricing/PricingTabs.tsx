@@ -139,7 +139,7 @@ className="object-cover"
 {item.to_location}
 {item.note && <span className="mt-1 block text-[12px] leading-relaxed text-[var(--color-text-secondary)]">{item.note}</span>}
 </td>
-<td className="block py-1 text-left align-top font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)] md:table-cell md:py-3.5 md:text-right md:text-[22px]">{formatPrice(item.price_eur, locale)}</td>
+<td className="block py-1 text-left align-top font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)] md:table-cell md:py-3.5 md:text-right md:text-[22px]">{formatPrice(item.price_eur, locale, item.currency)}</td>
 </tr>
 ))}
 </tbody>

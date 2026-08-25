@@ -28,7 +28,10 @@ npm run build
 echo "==> [5/8] Sync systemd unit files"
 cp "$APP_DIR/deploy/systemd/stepnow-backend.service"  /etc/systemd/system/stepnow-backend.service
 cp "$APP_DIR/deploy/systemd/stepnow-frontend.service" /etc/systemd/system/stepnow-frontend.service
+cp "$APP_DIR/deploy/systemd/stepnow-backup.service"   /etc/systemd/system/stepnow-backup.service
+cp "$APP_DIR/deploy/systemd/stepnow-backup.timer"     /etc/systemd/system/stepnow-backup.timer
 systemctl daemon-reload
+systemctl enable --now stepnow-backup.timer
 
 echo "==> [6/8] Sync nginx config"
 cp "$APP_DIR/deploy/nginx/step-now.de.conf" /etc/nginx/sites-available/step-now.de

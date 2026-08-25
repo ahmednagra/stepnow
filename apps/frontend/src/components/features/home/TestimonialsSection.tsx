@@ -16,14 +16,11 @@ interface TestimonialsSectionProps {
 const SECTION_IMAGE =
   "/others/testimonial.avif";
 
-const PORTRAIT_FALLBACKS = [
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=600&q=80",
-];
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+}
 
 export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
   const { t } = useUiStrings();
@@ -73,17 +70,17 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
       ref={sectionRef}
       className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]"
     >
-      <Container className="py-section">
-        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10">
+      <Container className="py-10 md:py-12">
+        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8">
           <div className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
-            <div className="bg-[var(--color-bg-surface)] p-6 md:p-8">
+            <div className="bg-[var(--color-bg-surface)] p-5 md:p-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
                 {pickT(t, "home.testimonials.pre_heading", "Kundenstimmen")}
               </p>
-              <h2 className="mt-3 max-w-lg font-serif text-section text-[var(--color-text-primary)] md:text-display-md">
+              <h2 className="mt-1.5 font-serif text-[26px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[32px]">
                 {t("home.testimonials.heading")}
               </h2>
-              <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-[var(--color-text-secondary)] md:text-[16px]">
+              <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
                 {pickT(
                   t,
                   "home.testimonials.lead",
@@ -92,7 +89,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
               </p>
             </div>
 
-            <div className="relative min-h-[300px] bg-[var(--color-bg-surface)] md:min-h-[380px]">
+            <div className="relative min-h-[180px] bg-[var(--color-bg-surface)] md:min-h-[220px]">
               <Image
                 src={SECTION_IMAGE}
                 alt="Professional chauffeur service vehicle on the road"
@@ -109,43 +106,35 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
             onMouseLeave={() => setPaused(false)}
             className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]"
           >
-            <figure className="bg-[var(--color-bg-surface)] p-6 md:p-8">
+            <figure className="bg-[var(--color-bg-surface)] p-5 md:p-6">
               <div className="flex items-start justify-between gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="relative h-16 w-16 overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-                    <Image
-                      src={resolvePortrait(current, idx)}
-                      alt={current.author_name}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                    />
-                  </div>
+                <div className="flex items-center gap-3">
+                  <Avatar name={current.author_name} photoUrl={current.author_photo_url} size={48} />
                   <div>
-                    <p className="text-[16px] font-medium tracking-tight text-[var(--color-text-primary)]">
+                    <p className="text-[14.5px] font-medium tracking-tight text-[var(--color-text-primary)]">
                       {current.author_name}
                     </p>
                     {current.author_role && (
-                      <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+                      <p className="mt-0.5 text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
                         {current.author_role}
                       </p>
                     )}
                   </div>
                 </div>
-                <span className="inline-flex h-12 w-12 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
-                  <Quote className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
+                  <Quote className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
                 </span>
               </div>
 
               {current.rating !== null && current.rating > 0 && (
-                <div className="mt-6">
+                <div className="mt-4">
                   <RatingStars value={current.rating} />
                 </div>
               )}
 
               <blockquote
                 key={current.id}
-                className="mt-5 max-w-2xl font-serif text-[24px] leading-[1.45] text-[var(--color-text-primary)] animate-fade-in md:text-[30px]"
+                className="mt-3 max-w-2xl font-serif text-[19px] leading-[1.45] text-[var(--color-text-primary)] animate-fade-in md:text-[22px]"
               >
                 {current.quote}
               </blockquote>
@@ -159,28 +148,20 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
                   aria-label={`Show testimonial ${i + 1}`}
                   onClick={() => setIdx(i)}
                   className={cn(
-                    "flex items-center gap-4 bg-[var(--color-bg-surface)] p-4 text-left transition-colors duration-base",
+                    "flex items-center gap-3 bg-[var(--color-bg-surface)] p-3 text-left transition-colors duration-base",
                     items.length % 2 === 1 && i === items.length - 1 && "sm:col-span-2",
                     i === idx
                       ? "bg-[var(--color-bg-page)]"
                       : "hover:bg-[var(--color-bg-page)]",
                   )}
                 >
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-                    <Image
-                      src={resolvePortrait(item, i)}
-                      alt={item.author_name}
-                      fill
-                      sizes="48px"
-                      className="object-cover"
-                    />
-                  </div>
+                  <Avatar name={item.author_name} photoUrl={item.author_photo_url} size={36} />
                   <div className="min-w-0">
-                    <p className="truncate text-[14px] font-medium tracking-tight text-[var(--color-text-primary)]">
+                    <p className="truncate text-[13px] font-medium tracking-tight text-[var(--color-text-primary)]">
                       {item.author_name}
                     </p>
                     {item.author_role && (
-                      <p className="mt-1 truncate text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
+                      <p className="mt-0.5 truncate text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
                         {item.author_role}
                       </p>
                     )}
@@ -195,10 +176,26 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
   );
 }
 
-function resolvePortrait(item: TestimonialPublic, index: number): string {
-  const fromData = item.author_photo_url?.trim();
-  if (fromData) return fromData;
-  return PORTRAIT_FALLBACKS[index % PORTRAIT_FALLBACKS.length];
+function Avatar({ name, photoUrl, size }: { name: string; photoUrl: string | null; size: number }) {
+  const src = photoUrl?.trim();
+  return (
+    <div
+      className="relative shrink-0 overflow-hidden border border-[color:var(--color-border-soft)] bg-[var(--color-bg-accent-soft)]"
+      style={{ height: size, width: size }}
+    >
+      {src ? (
+        <Image src={src} alt={name} fill sizes={`${size}px`} className="object-cover" />
+      ) : (
+        <span
+          className="flex h-full w-full items-center justify-center font-serif font-medium text-[var(--color-accent-primary)]"
+          style={{ fontSize: size * 0.36 }}
+          aria-hidden="true"
+        >
+          {initials(name)}
+        </span>
+      )}
+    </div>
+  );
 }
 
 function RatingStars({ value }: { value: number }) {

@@ -22,6 +22,9 @@ class SettingsUpdate(BaseModel):
     whatsapp_url: str | None = Field(default=None, max_length=500)
     tax_number: str | None = Field(default=None, max_length=50)
     vat_id: str | None = Field(default=None, max_length=50)
+    default_currency: str | None = Field(default=None, min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
+    vat_rate_standard: Decimal | None = Field(default=None, ge=0, le=1, max_digits=5, decimal_places=4)
+    vat_rate_reduced: Decimal | None = Field(default=None, ge=0, le=1, max_digits=5, decimal_places=4)
     commercial_register: str | None = Field(default=None, max_length=50)
     register_court: str | None = Field(default=None, max_length=100)
     iban: str | None = Field(default=None, max_length=34)
@@ -67,6 +70,9 @@ class SettingsAdminResponse(BaseModel):
     whatsapp_url: str | None
     tax_number: str | None
     vat_id: str | None
+    default_currency: str
+    vat_rate_standard: Decimal
+    vat_rate_reduced: Decimal
     commercial_register: str | None
     register_court: str | None
     iban: str | None

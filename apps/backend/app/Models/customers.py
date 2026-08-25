@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import Boolean, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
@@ -19,7 +19,8 @@ class Customer(Base, TimestampMixin, SoftDeleteMixin):
         Index("ix_customers_company", "company_name"),
         Index("ix_customers_name", "last_name", "first_name"),
         Index("ix_customers_phone", "phone"),
-        Index("ix_customers_number", "customer_number", unique=True),
+        Index("ix_customers_number", "customer_number"),
+        live_unique("uq_customers_number_live", "customer_number"),
     )
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)

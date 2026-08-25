@@ -46,15 +46,26 @@ class LegalPagePublicResponse(BaseModel):
 
 class SettingsPublicResponse(BaseModel):
     business_name: str
+    owner_name: str
+    legal_form: str | None
     address_street: str
     address_postcode: str
     address_city: str
+    address_country: str | None
     address_lat: Decimal | None = None
     address_lng: Decimal | None = None
     phone: str
     phone_mobile: str | None
     email: str
     whatsapp_url: str | None
+    tax_number: str | None
+    vat_id: str | None
+    default_currency: str
+    commercial_register: str | None
+    register_court: str | None
+    concession_number: str | None
+    concession_authority: str | None
+    concession_date: date | None
     opening_hours: str | None
     social_facebook: str | None
     social_instagram: str | None
@@ -110,6 +121,7 @@ class PricingItemPublicResponse(BaseModel):
     from_location: str | None
     to_location: str | None
     price_eur: str
+    currency: str
     note: str | None
 
 

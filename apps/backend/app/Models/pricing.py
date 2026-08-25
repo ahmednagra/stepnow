@@ -3,7 +3,7 @@
 
 from decimal import Decimal
 from uuid import UUID, uuid4
-from sqlalchemy import ForeignKey, Index, Integer, Numeric, String
+from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
@@ -39,6 +39,10 @@ class PricingItem(Base, TimestampMixin, SoftDeleteMixin):
     to_location_de: Mapped[str | None] = mapped_column(String(200), nullable=True)
     to_location_en: Mapped[str | None] = mapped_column(String(200), nullable=True)
     price_eur: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, default="EUR", server_default=text("'EUR'"),
+        comment="ISO 4217 unit for price_eur — the column name predates multi-currency"
+    )
     note_de: Mapped[str | None] = mapped_column(String(500), nullable=True)
     note_en: Mapped[str | None] = mapped_column(String(500), nullable=True)
     category: Mapped["PricingCategory"] = relationship(back_populates="items")

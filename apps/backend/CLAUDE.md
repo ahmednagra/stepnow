@@ -1,6 +1,6 @@
 # StepNow — Backend
 
-FastAPI / SQLAlchemy sync / PostgreSQL / Alembic.
+FastAPI / SQLAlchemy sync / PostgreSQL. The models ARE the schema — no migration files.
 Read the sibling file for the module you're touching before writing anything.
 
 ## Stack
@@ -8,7 +8,7 @@ Read the sibling file for the module you're touching before writing anything.
 |---|---|
 | ORM | SQLAlchemy sync `Session` — never `AsyncSession` |
 | Validation | Pydantic v2 — `model_validate` `model_dump` — never `from_orm` |
-| Auth | JWT — `Depends(get_current_admin)` — single admin type, no RBAC |
+| Auth | JWT — `Depends(get_current_admin)` — single admin type, no RBAC. 30-min access token, 14-day refresh; the browser client refreshes on 401 and retries once |
 | Logging | `from app.Utils.Logger import get_logger; logger = get_logger("module")` |
 | Deploy | Hostinger VPS — systemd `stepnow-backend.service` port 8000 |
 
@@ -98,7 +98,7 @@ def create(db: Session, payload: VehicleCreate, actor: AdminUser) -> Vehicle:
 - **Sync only** — `await` only for WebSocket sends and post-commit background tasks.
 - **Soft-delete every read:** `.filter(Model.is_deleted == False)`
 - **Soft-delete every write:** `obj.is_deleted = True; obj.deleted_at = datetime.utcnow(); db.commit()`
-- **Row-lock shared counters:** `.with_for_update().first()`
+- **Shared counters:** claim via `next_counter(db, scope, key)` — atomic, no read-then-write
 - **Kill N+1:** aggregate in SQL, never query inside a loop
 - **Sargable:** never `func.lower(col)` on indexed columns
 - **All lists:** paginated + bounded — never unbounded `SELECT *`
@@ -112,10 +112,11 @@ def create(db: Session, payload: VehicleCreate, actor: AdminUser) -> Vehicle:
 | Tables | plural snake_case: `orders` `vehicles` `customers` |
 | Models | singular PascalCase: `Order` `Vehicle` `Customer` |
 | Money | `NUMERIC(10,2)` → `Decimal` — never `float`. EUR default. |
-| VAT | 7% passenger (PBefG); **19% courier — default on the order→Rechnung path** — set per order |
+| VAT | **DB-owned** — `services.vat_rate`, falling back to `site_settings.vat_rate_standard` (19%) / `vat_rate_reduced` (7%, PBefG). Resolve with `vat_rate_for(db, service_id, service_type)`; never a constant |
 | Docs | **Transportauftrag** (driver slip, no price, `A-…`) · **Rechnung** (§14 invoice, `R…`, IBAN/BIC + HRA footer). Issuer/bank/register from `site_settings`. Must match `Refrence Material/Docs/` templates. |
 | Kunden-Nr | `customers.customer_number` — K911-series (e.g. `K911053`), generated in `CustomersService.create` |
-| Accounts | **Vehicle account = `Order.*` amounts (frozen at create); company account = `Invoice.*` (editable).** Editing a bill (base_net/items/discount via `InvoicesService.update`) never writes order amounts — the two stay independent. Bill adjustments only vary the company account. |
+| Accounts | **Vehicle account = `Order.*` amounts (frozen at create); company account = `Invoice.*` (editable while draft).** Editing a bill never writes order amounts. |
+| Invoice lifecycle | `draft` → `issued` → `paid`, or `cancelled` (Storno). `update` is **draft-only** — an issued bill is a Buchungsbeleg (GoBD §§146/147 AO). Correct it with `cancel` + a replacement, which gets `R{order}-{revision}`. |
 | Public create | Field workers create orders with NO login via `POST /public/orders`, gated by `site_settings.staff_access_code`; `Order.created_via="public"`. Billing stays admin-only. |
 | Delivery status | string: `draft → dispatched → picked_up → delivered` |
 | JSONB attrs | never `metadata` — use `order_metadata` etc. |
@@ -180,7 +181,7 @@ Mailboxes: `rides` taxi/bookings · `movers` driver slips · `accounts` invoices
 
 ## Seeding — the real data-setup path
 
-Schema is built on startup by `Base.metadata.create_all(checkfirst=True)` ([main.py](main.py)) — new tables only, never alters columns. Data is loaded by idempotent seeders (Alembic not in the loop yet — see Migrations).
+Schema is synced from the models on startup (see "Schema changes" below). Data is loaded by idempotent seeders.
 
 `scripts/seeders/` holds ~20 seeders; `scripts/seed.py` runs them in dependency order. Each `run()` upserts — safe to re-run on a seeded DB.
 
@@ -189,25 +190,34 @@ python -m scripts.seed              # manual seed / refresh
 AUTO_SEED_ON_STARTUP=true           # app-lifespan auto-seed (non-production only)
 ```
 
+Tests build the schema into the `stepnow_test` PostgreSQL schema and pin `search_path` to it
+alone — never add `public` to that path, or `create_all` finds the real tables and the suite
+runs against live data. `TEST_DATABASE_URL` points the suite at a separate database instead.
+
 New domain data → add `scripts/seeders/seed_{feature}.py`, register it in `scripts/seed.py` order.
 
 ---
 
-## Migrations
+## Schema changes — edit the model, restart
 
-Every migration file needs idempotency guard:
-```python
-def _col_exists(conn, table, col):
-    return col in [c["name"] for c in inspect(conn).get_columns(table)]
+There are no migration files. `sync_schema()` in [main.py](main.py) runs on every boot and makes
+the database match `Base.metadata`: creates missing tables, **adds missing columns**
+(`ALTER TABLE … ADD COLUMN IF NOT EXISTS`), creates missing indexes, and drops a legacy plain
+`UNIQUE` once a partial index supersedes it. Additive and idempotent.
 
-def upgrade():
-    conn = op.get_bind()
-    if not _col_exists(conn, "orders", "vehicle_id"):
-        op.add_column("orders", sa.Column("vehicle_id", pg.UUID(), nullable=True,
-            comment="FK → vehicles.id"))
-```
+- `server_default=` on a new NOT NULL column — existing rows need a value.
+- `comment=` on every new column.
+- Uniqueness on a soft-deletable column: `live_unique("uq_x_live", "col")` from
+  `app/Models/base.py`, never `unique=True`. A plain UNIQUE keeps a soft-deleted row's value
+  reserved forever, so the service guard says free and the database says taken — an opaque 500.
+- Renaming or dropping a column is the one thing sync cannot do; do it by hand and update the model.
 
-`server_default` for new NOT NULL columns. `comment=` on every new column.
+## Sequential numbers
+
+Order numbers, Kunden-Nr. and Rechnungsnummern come from the `counters` table via
+`next_counter(db, scope, key)` — one `INSERT … ON CONFLICT DO UPDATE … RETURNING`, so the claim
+is atomic and a number is never reissued. Never derive a number from `COUNT(*)` or `MAX()`.
+`seed_counters()` aligns the table with existing rows on boot.
 
 ---
 
@@ -233,7 +243,9 @@ def upgrade():
 - [ ] `model_validate` / `model_dump` — no `from_orm`
 - [ ] `flag_modified` after JSONB mutation; no attr named `metadata`
 - [ ] No queries in loops; all lists paginated
-- [ ] Sargable filters; new migration has idempotency guard
+- [ ] Sargable filters; `live_unique` (not `unique=True`) on any soft-deletable column
+- [ ] Sequential numbers via `next_counter` — never `COUNT(*)`/`MAX()`
+- [ ] No module-level domain constants — rates, statuses and limits come from the DB
 - [ ] Style matches the sibling file
 
 ---

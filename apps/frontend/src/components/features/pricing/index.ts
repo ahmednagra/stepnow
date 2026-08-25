@@ -3,7 +3,6 @@ export { PricingTable } from "./PricingTable";
 export { PricingTabs } from "./PricingTabs";
 export type { ServicePricing } from "./PricingTabs";
 export {
-  PricingFeaturedHero,
   PricingTrustStrip,
   PricingIncludedMoment,
   PricingExcludedStrip,

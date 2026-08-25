@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Date, ForeignKey, Index, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
@@ -24,11 +24,12 @@ class Expense(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "expenses"
     __table_args__ = (
         Index("ix_expenses_date", "expense_date"),
+        live_unique("uq_expenses_legacy_id_live", "legacy_id"),
         # category_code is indexed via index=True on its column below.
     )
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     # The legacy JSON "id" — kept as the import idempotency key (skip-if-exists).
-    legacy_id: Mapped[int | None] = mapped_column(Integer, unique=True, nullable=True, index=True)
+    legacy_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
 
     typ: Mapped[str] = mapped_column(String(20), nullable=False, default="Ausgabe")  # Ausgabe | Einnahme
     expense_date: Mapped[date] = mapped_column(Date, nullable=False)                 # dat

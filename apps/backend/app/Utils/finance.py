@@ -1,85 +1,90 @@
 # apps/backend/app/Utils/finance.py
-# Shared money + numbering helpers. Single home for the rounding rule, VAT math and the
-# gapless sequential-number generator so orders/invoices never duplicate the logic.
+# Money rounding, VAT resolution and the gapless number generators. No rate or status is
+# hardcoded here — VAT comes from services.vat_rate, falling back to site_settings.
 
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from uuid import UUID
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
-
-_CENTS = Decimal("0.01")
 
 
 def money(value) -> Decimal:
-    """Quantize to 2 dp, kaufmännisch rounding (ROUND_HALF_UP)."""
-    return Decimal(str(value)).quantize(_CENTS, rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def compute_totals(net, rate) -> tuple[Decimal, Decimal, Decimal]:
-    """Return (net, vat, gross) all rounded to the cent."""
     net_d = money(net)
     vat_d = money(net_d * Decimal(str(rate)))
     return net_d, vat_d, money(net_d + vat_d)
 
 
-def year_prefix(lead: str = "") -> str:
-    """e.g. ''->'2026-', 'R'->'R2026-'."""
-    return f"{lead}{date.today().year}-"
+def default_vat_rate(db: Session, reduced: bool = False) -> Decimal:
+    from app.Models.settings import SiteSettings
+
+    column = SiteSettings.vat_rate_reduced if reduced else SiteSettings.vat_rate_standard
+    return db.query(column).filter(SiteSettings.id == 1).scalar() or Decimal("0")
 
 
-def next_sequence_number(db: Session, column, prefix: str, width: int = 5) -> str:
-    """Gapless per-prefix sequence, e.g. '2026-00001'. Includes soft-deleted rows so a
-    number is never reused (required for a clean Rechnungsnummer chain, §14 UStG)."""
-    last = (
-        db.query(column)
-        .filter(column.like(f"{prefix}%"))
-        .order_by(column.desc())
-        .first()
-    )
-    seq = (int(last[0].rsplit("-", 1)[1]) + 1) if last else 1
-    return f"{prefix}{seq:0{width}d}"
+def default_currency(db: Session) -> str:
+    """The ISO 4217 the business bills in. Never a literal — admin-editable in Settings."""
+    from app.Models.settings import SiteSettings
+
+    return db.query(SiteSettings.default_currency).filter(SiteSettings.id == 1).scalar() or "EUR"
 
 
-def order_date_sequence_number(db: Session, column, for_date: date | None = None) -> str:
-    """Generate an order number matching the Buchhaltung format:
-    counter(2) + DD(2) + MM(2) + YY(2)  →  e.g. '01260326'
-    meaning: 1st order on 26.03.2026.
+def vat_rate_for(db: Session, service_id: UUID | None = None, service_type: str | None = None) -> Decimal:
+    """Resolve the rate from the service catalog; fall back to the configured standard rate.
+    Nothing about which service is 7% and which is 19% lives in code."""
+    from app.Models.services import Service
 
-    counter = how many orders already exist on that date + 1 (padded to 2 digits).
-    Includes soft-deleted rows so a number is never reused.
-    """
+    query = db.query(Service.vat_rate).filter(Service.is_deleted == False, Service.vat_rate.isnot(None))  # noqa: E712
+    if service_id:
+        rate = query.filter(Service.id == service_id).scalar()
+        if rate is not None:
+            return rate
+    label = (service_type or "").strip()
+    if label:
+        rate = query.filter(
+            or_(Service.slug_de == label, Service.slug_en == label,
+                Service.title_de.ilike(label), Service.title_en.ilike(label))
+        ).scalar()
+        if rate is not None:
+            return rate
+    return default_vat_rate(db)
+
+
+def next_counter(db: Session, scope: str, key: str) -> int:
+    """Atomically claim the next number for (scope, key). One statement — race-free, never reuses."""
+    return db.execute(
+        text(
+            'INSERT INTO counters (scope, "key", value) VALUES (:s, :k, 1) '
+            'ON CONFLICT (scope, "key") DO UPDATE SET value = counters.value + 1 RETURNING value'
+        ),
+        {"s": scope, "k": key},
+    ).scalar_one()
+
+
+def date_suffix(for_date: date | None = None) -> str:
     d = for_date or date.today()
-    dd = str(d.day).zfill(2)
-    mm = str(d.month).zfill(2)
-    yy = str(d.year)[-2:]
-    date_suffix = f"{dd}{mm}{yy}"
-
-    # Count all existing orders whose number ends with this date suffix
-    count = (
-        db.query(column)
-        .filter(column.like(f"%{date_suffix}"))
-        .count()
-    )
-    counter = str(count + 1).zfill(2)
-    return f"{counter}{date_suffix}"
+    return f"{d.day:02d}{d.month:02d}{str(d.year)[-2:]}"
 
 
-def next_customer_number(db: Session, column) -> str:
-    """Kunden-Nr. in the legacy K911-series: 'K911' + 3-digit counter, e.g. 'K911070'.
-    Continues from the current max (K911069 → K911070), matching nextCustId in the export.
-    Includes soft-deleted rows so a number is never reused."""
-    last = (
-        db.query(column)
-        .filter(column.like("K911%"))
-        .order_by(column.desc())
-        .first()
-    )
-    seq = (int(last[0][4:]) + 1) if last else 1
-    return f"K911{seq:03d}"
+def order_date_sequence_number(db: Session, for_date: date | None = None) -> str:
+    """Buchhaltung format: counter(2) + DD + MM + YY, e.g. '01260326' = 1st order on 26.03.2026."""
+    suffix = date_suffix(for_date)
+    return f"{next_counter(db, 'order', suffix):02d}{suffix}"
 
 
-def invoice_number_from_order(order_number: str) -> str:
-    """Derive invoice number from order number: 'R' + order_number.
-    e.g. '01260326' → 'R01260326'
-    Matches Buchhaltung genRechnungNr(auftragsNr) = 'R' + auftragsNr.
-    """
-    return f"R{order_number}"
+def next_customer_number(db: Session, prefix: str = "K911", width: int = 3) -> str:
+    return f"{prefix}{next_counter(db, 'customer', prefix):0{width}d}"
+
+
+def invoice_number_from_order(order_number: str, revision: int = 0) -> str:
+    """'R' + order_number, matching Buchhaltung genRechnungNr. A replacement issued after a
+    Storno appends '-{revision}' so a cancelled number is never reissued (§14 UStG)."""
+    return f"R{order_number}" if revision <= 0 else f"R{order_number}-{revision}"
+
+
+def next_invoice_number(db: Session, order_number: str) -> str:
+    return invoice_number_from_order(order_number, next_counter(db, "invoice", order_number) - 1)

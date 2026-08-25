@@ -8,10 +8,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Download, FileDown } from "lucide-react";
 import { AdminPageHeader, AdminCard } from "@/components/admin";
-import { useVehicleLedger } from "@/hooks/queries";
+import { useDefaultCurrency, useVehicleLedger } from "@/hooks/queries";
 import { downloadVehicleLedgerPdf } from "@/services/vehicles/vehicles.admin.client";
 import { useAdminToast } from "@/hooks/useAdminToast";
-import { formatPriceEur } from "@/utils/decimal";
+import { formatMoney } from "@/utils/decimal";
 import { exportCsv } from "@/utils/exporters";
 
 const num = (s: string | null | undefined) => Number(s ?? "0") || 0;
@@ -19,6 +19,7 @@ const deDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "2-digit" }) : "—";
 
 export default function VehicleLedgerPage({ params }: { params: { id: string } }) {
+  const cur = useDefaultCurrency();
   const pushToast = useAdminToast((s) => s.push);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -69,7 +70,7 @@ export default function VehicleLedgerPage({ params }: { params: { id: string } }
 
         {data && (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {[["Orders", String(data.totals.count)], ["Net", formatPriceEur(num(data.totals.net).toFixed(2))], ["Gross", formatPriceEur(num(data.totals.gross).toFixed(2))], ["Outstanding", formatPriceEur(num(data.totals.balance).toFixed(2))]].map(([k, v]) => (
+            {[["Orders", String(data.totals.count)], ["Net", formatMoney(num(data.totals.net).toFixed(2), cur)], ["Gross", formatMoney(num(data.totals.gross).toFixed(2), cur)], ["Outstanding", formatMoney(num(data.totals.balance).toFixed(2), cur)]].map(([k, v]) => (
               <div key={k} className="border border-slate-200 bg-slate-50 px-3 py-2">
                 <p className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">{k}</p>
                 <p className="mt-0.5 font-mono text-[14px] font-semibold tabular-nums text-slate-900">{v}</p>
@@ -105,8 +106,8 @@ export default function VehicleLedgerPage({ params }: { params: { id: string } }
                       <td className="py-2.5 pr-3 text-slate-500">{deDate(o.date)}</td>
                       <td className="py-2.5 pr-3 text-slate-700">{o.customer_name}</td>
                       <td className="py-2.5 pr-3 text-slate-500">{(o.route_from ?? "—") + " → " + (o.route_to ?? "—")}</td>
-                      <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-700">{formatPriceEur(num(o.net_amount).toFixed(2))}</td>
-                      <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-900">{formatPriceEur(num(o.gross_amount).toFixed(2))}</td>
+                      <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-700">{formatMoney(num(o.net_amount).toFixed(2), cur)}</td>
+                      <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-900">{formatMoney(num(o.gross_amount).toFixed(2), cur)}</td>
                     </tr>
                   ))}
                 </tbody>

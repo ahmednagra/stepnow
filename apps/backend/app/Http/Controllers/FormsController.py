@@ -1,4 +1,5 @@
 # apps/backend/app/Http/Controllers/FormsController.py
+import secrets
 from datetime import datetime, timezone
 from fastapi import BackgroundTasks, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -39,9 +40,13 @@ class FormsController:
         return db.query(SiteSettings.staff_access_code).filter(SiteSettings.id == 1).scalar()
 
     @staticmethod
-    def verify_staff_code(db: Session, code: str) -> StaffGateResult:
+    def _staff_code_matches(db: Session, code: str) -> bool:
         configured = FormsController._staff_code(db)
-        return StaffGateResult(ok=bool(configured and code.strip() == configured.strip()))
+        return bool(configured) and secrets.compare_digest((code or "").strip(), configured.strip())
+
+    @staticmethod
+    def verify_staff_code(db: Session, code: str) -> StaffGateResult:
+        return StaffGateResult(ok=FormsController._staff_code_matches(db, code))
 
     @staticmethod
     def fleet_vehicles(db: Session) -> list[PublicFleetVehicle]:
@@ -55,8 +60,7 @@ class FormsController:
 
     @staticmethod
     def create_public_order(db: Session, payload, request: Request) -> PublicOrderSubmitted:
-        configured = FormsController._staff_code(db)
-        if not configured or payload.staff_access_code.strip() != configured.strip():
+        if not FormsController._staff_code_matches(db, payload.staff_access_code):
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Invalid staff code.")
         actor = db.query(AdminUser).filter(AdminUser.email == SYSTEM_ACTOR_EMAIL).first()
         if not actor:

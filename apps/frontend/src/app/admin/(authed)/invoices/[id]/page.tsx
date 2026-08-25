@@ -10,20 +10,21 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, X, Save, FileDown, Loader2 } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
-import { useInvoice } from "@/hooks/queries";
+import { useDefaultCurrency, useInvoice } from "@/hooks/queries";
 import { useUpdateInvoice } from "@/hooks/mutations/useOrderMutations";
 import { downloadInvoicePdfById, type InvoiceItemInput, type InvoiceItemKind } from "@/services/orders";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { ApiError } from "@/lib/api-errors";
-import { normalizeDecimalInput, formatPriceEur } from "@/utils/decimal";
+import { normalizeDecimalInput, formatMoney } from "@/utils/decimal";
 import { cn } from "@/utils/cn";
 
 const num = (s: string | null | undefined) => Number(normalizeDecimalInput(s ?? "") || "0") || 0;
-const eur = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
 
 type Row = { kind: InvoiceItemKind; label: string; net_amount: string };
 
 export default function InvoiceEditorPage({ params }: { params: { id: string } }) {
+  const cur = useDefaultCurrency();
+  const eur = (n: number) => formatMoney((Number.isFinite(n) ? n : 0).toFixed(2), cur);
   const pushToast = useAdminToast((s) => s.push);
   const { data: inv, isLoading, isError } = useInvoice(params.id);
   const save = useUpdateInvoice(params.id);
@@ -135,7 +136,7 @@ export default function InvoiceEditorPage({ params }: { params: { id: string } }
                 <span className="text-[12.5px] font-medium text-slate-700">Base service (Grundpreis)</span>
                 <div className="flex items-center gap-1.5">
                   <input type="number" min={0} step="0.01" className={cn(adminInputClass, "w-32 text-right")} value={baseNet} onChange={(e) => setBaseNet(e.target.value)} />
-                  <span className="text-[11px] text-slate-500">€ netto</span>
+                  <span className="text-[11px] text-slate-500">{cur} netto</span>
                 </div>
               </div>
 

@@ -4,6 +4,7 @@
 
 from pathlib import Path
 from decimal import Decimal
+from babel.numbers import format_currency
 from sqlalchemy.orm import Session
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -11,6 +12,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from app.Models.settings import SiteSettings
+from app.Utils.finance import default_currency
 from app.Services.InvoicePdfService import logo_flowable
 
 STORAGE_DIR = Path("storage/ledgers")  # gitignored
@@ -20,8 +22,9 @@ _MUTE = colors.HexColor("#64748B")
 _LINE = colors.HexColor("#E2E8F0")
 
 
-def _eur(value) -> str:
-    return f"{Decimal(value):,.2f} €"
+def _money(value, currency: str) -> str:
+    """Symbol and placement come from CLDR, so any ISO 4217 renders correctly — no symbol map."""
+    return format_currency(Decimal(value), currency, locale="de_DE")
 
 
 def _de_date(d) -> str:
@@ -59,6 +62,7 @@ class VehicleLedgerPdfService:
         story.append(Paragraph(f"Zeitraum: {period}" if period else "Alle Aufträge", small))
         story.append(Spacer(1, 5 * mm))
 
+        cur = rows[0][0].currency if rows else default_currency(db)
         head = ["Auftrag", "Datum", "Kunde", "Von → Nach", "Netto", "Brutto", "Bezahlt", "Offen"]
         data = [head]
         for o, paid, balance in rows:
@@ -67,9 +71,9 @@ class VehicleLedgerPdfService:
                 _de_date(o.preferred_date or (o.scheduled_datetime.date() if o.scheduled_datetime else None)),
                 Paragraph(o.customer_name, small),
                 Paragraph(f"{o.pickup_city or o.pickup_address or '—'} → {o.destination_city or o.destination_address or '—'}", small),
-                _eur(o.net_amount), _eur(o.gross_amount), _eur(paid), _eur(balance),
+                _money(o.net_amount, cur), _money(o.gross_amount, cur), _money(paid, cur), _money(balance, cur),
             ])
-        data.append(["", "", "", "Summe", _eur(totals["net"]), _eur(totals["gross"]), _eur(totals["paid"]), _eur(totals["balance"])])
+        data.append(["", "", "", "Summe", _money(totals["net"], cur), _money(totals["gross"], cur), _money(totals["paid"], cur), _money(totals["balance"], cur)])
 
         tbl = Table(data, colWidths=[22 * mm, 18 * mm, 34 * mm, 46 * mm, 18 * mm, 18 * mm, 18 * mm, 18 * mm], repeatRows=1)
         tbl.setStyle(TableStyle([

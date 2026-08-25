@@ -67,7 +67,7 @@ export function HomeServicesSection({ t, locale, services }: HomeServicesSection
                     <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-[var(--color-text-primary)]">
                       {service.title}
                     </h3>
-                    <p className="line-clamp-2 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
+                    <p className="line-clamp-3 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
                       {service.short_description}
                     </p>
                   </div>

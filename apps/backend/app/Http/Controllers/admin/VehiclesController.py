@@ -58,7 +58,7 @@ class VehiclesController:
                 customer_name=o.customer_name,
                 route_from=o.pickup_city or o.pickup_address,
                 route_to=o.destination_city or o.destination_address,
-                net_amount=o.net_amount, gross_amount=o.gross_amount,
+                net_amount=o.net_amount, gross_amount=o.gross_amount, currency=o.currency,
                 amount_paid=paid, balance_due=balance, status=o.status,
             )
             for o, paid, balance in rows

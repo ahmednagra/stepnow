@@ -15,6 +15,7 @@ from app.Models.admin import AdminUser
 from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.orders_admin import (
     InvoiceAdminResponse,
+    InvoiceCancel,
     InvoiceCreateFromOrder,
     InvoiceListResponse,
     InvoiceUpdate,
@@ -230,6 +231,25 @@ class OrdersController:
             db.rollback()
             logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
         return InvoiceAdminResponse.model_validate(inv)
+
+    @staticmethod
+    def issue_invoice(db: Session, invoice_id: UUID, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
+        inv = InvoicesService.issue(db, invoice_id, actor, request)
+        if not inv.pdf_url or not Path(inv.pdf_url).exists():
+            try:
+                inv.pdf_url = InvoicePdfService.render(db, inv)
+                db.commit()
+                db.refresh(inv)
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
+        return InvoiceAdminResponse.model_validate(inv)
+
+    @staticmethod
+    def cancel_invoice(db: Session, invoice_id: UUID, payload: InvoiceCancel, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
+        return InvoiceAdminResponse.model_validate(
+            InvoicesService.cancel(db, invoice_id, actor, request, payload.reason if payload else None)
+        )
 
     @staticmethod
     def invoice_pdf_path_by_id(db: Session, invoice_id: UUID) -> str:

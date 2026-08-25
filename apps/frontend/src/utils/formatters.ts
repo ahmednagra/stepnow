@@ -6,15 +6,17 @@ import type { Locale } from "@/types";
 
 const LOCALE_MAP: Record<Locale, string> = { de: "de-DE", en: "en-GB" };
 
-/** Format a numeric string as a EUR price with the appropriate locale separator. */
-export function formatPrice(value: string | number, locale: Locale = "de"): string {
+/** Format an amount in its stored currency. Intl places the symbol per locale —
+ *  "39,00 €" (de) vs "€39.00" (en) — so both languages read natively. */
+export function formatPrice(value: string | number, locale: Locale = "de", currency = "EUR"): string {
   const n = typeof value === "string" ? Number(value) : value;
   if (Number.isNaN(n)) return "—";
-  const amount = new Intl.NumberFormat(LOCALE_MAP[locale], {
+  return new Intl.NumberFormat(LOCALE_MAP[locale], {
+    style: "currency",
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
-  return `${amount} €`; // symbol on the right, e.g. "39,00 €" (de) / "39.00 €" (en)
 }
 
 /** Format an ISO date string ("2026-01-15") as a localized date. */

@@ -16,6 +16,8 @@ export interface SettingsPublic {
   whatsapp_url: string | null;
   tax_number: string | null;
   vat_id: string | null;
+  commercial_register: string | null;
+  register_court: string | null;
   concession_number: string | null;
   concession_authority: string | null;
   concession_date: string | null;
@@ -35,9 +37,11 @@ export interface SettingsPublic {
 
 export interface SettingsAdmin extends Omit<SettingsPublic, "opening_hours" | "default_meta_title"> {
   id: number;
-  // §14 register + bank block — admin-only, printed on the Transportauftrag/Rechnung.
-  commercial_register: string | null;
-  register_court: string | null;
+  // Currency + VAT are DB-owned (site_settings), never constants in code.
+  default_currency: string;
+  vat_rate_standard: string;
+  vat_rate_reduced: string;
+  // Bank block — admin-only, printed on the Rechnung.
   iban: string | null;
   bic: string | null;
   bank_account_holder: string | null;

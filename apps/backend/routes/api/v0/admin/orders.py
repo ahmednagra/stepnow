@@ -16,6 +16,7 @@ from app.Models.admin import AdminUser
 from app.Schemas.common import PaginatedResponse
 from app.Schemas.admin.orders_admin import (
     InvoiceAdminResponse,
+    InvoiceCancel,
     InvoiceCreateFromOrder,
     InvoiceListResponse,
     InvoiceUpdate,
@@ -93,6 +94,16 @@ async def get_invoice(invoice_id: UUID, db: Session = Depends(get_db), actor: Ad
 @router.patch("/admin/invoices/{invoice_id}", response_model=InvoiceAdminResponse)
 async def update_invoice(request: Request, invoice_id: UUID, payload: InvoiceUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.update_invoice(db, invoice_id, payload, actor, request)
+
+
+@router.post("/admin/invoices/{invoice_id}/issue", response_model=InvoiceAdminResponse)
+async def issue_invoice(request: Request, invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+    return OrdersController.issue_invoice(db, invoice_id, actor, request)
+
+
+@router.post("/admin/invoices/{invoice_id}/cancel", response_model=InvoiceAdminResponse)
+async def cancel_invoice(request: Request, invoice_id: UUID, payload: InvoiceCancel | None = None, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+    return OrdersController.cancel_invoice(db, invoice_id, payload, actor, request)
 
 
 @router.get("/admin/invoices/{invoice_id}/pdf")

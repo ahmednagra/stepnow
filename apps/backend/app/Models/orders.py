@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 from sqlalchemy import (
+    text,
     Boolean,
     Date,
     DateTime,
@@ -15,11 +16,10 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
@@ -38,7 +38,9 @@ if TYPE_CHECKING:
 class Order(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "orders"
     __table_args__ = (
-        UniqueConstraint("booking_id", name="uq_orders_booking_id"),
+        live_unique("uq_orders_booking_id_live", "booking_id"),
+        Index("ix_orders_booking_id", "booking_id"),
+        live_unique("uq_orders_number_live", "order_number"),
         Index("ix_orders_status_created", "status", "created_at"),
         Index("ix_orders_scheduled", "scheduled_datetime"),
     )
@@ -47,7 +49,7 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
         PgUUID(as_uuid=True), primary_key=True, default=uuid4
     )
     order_number: Mapped[str] = mapped_column(
-        String(30), unique=True, nullable=False, index=True
+        String(30), nullable=False, index=True
     )
 
     booking_id: Mapped[UUID | None] = mapped_column(
@@ -128,6 +130,10 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     #    short-distance licensed passenger transport (PBefG); override per order for courier /
     #    special transport, which is usually 19%. Confirm rates with the tax advisor. ──
     net_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default=text("'EUR'"),
+        comment="ISO 4217 — resolved from site_settings.default_currency at write time"
+    )
     vat_rate: Mapped[Decimal] = mapped_column(
         Numeric(5, 4), nullable=False, default=Decimal("0.0700")
     )

@@ -17,6 +17,14 @@ interface HeroBookingWidgetProps {
   locale: Locale;
 }
 
+const LOCATION_SUGGESTIONS = [
+  "Stuttgart Flughafen (STR)",
+  "Stuttgart Hauptbahnhof",
+  "Esslingen am Neckar",
+  "Plochingen",
+  "Deizisau",
+];
+
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -69,6 +77,7 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
           placeholder={t("hero_widget.from_placeholder")}
           value={pickup}
           onChange={setPickup}
+          listId="stepnow-location-suggestions"
           icon
         />
         <WidgetField
@@ -76,8 +85,14 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
           placeholder={t("hero_widget.to_placeholder")}
           value={destination}
           onChange={setDestination}
+          listId="stepnow-location-suggestions"
           icon
         />
+        <datalist id="stepnow-location-suggestions">
+          {LOCATION_SUGGESTIONS.map((loc) => (
+            <option key={loc} value={loc} />
+          ))}
+        </datalist>
         <div className="flex flex-col gap-1.5">
           <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
             {t("hero_widget.when_label")}
@@ -110,14 +125,6 @@ export function HeroBookingWidget({ locale }: HeroBookingWidgetProps) {
       >
         {t("hero_widget.cta")}
       </Button>
-
-      <p className="border-t border-[color:var(--color-border-soft)] pt-4 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
-        {pickT(
-          t,
-          "hero_widget.note",
-          "Fixed-price reply during our service hours.",
-        )}
-      </p>
     </div>
   );
 }
@@ -127,10 +134,11 @@ interface WidgetFieldProps {
   placeholder: string;
   value: string;
   onChange: (next: string) => void;
+  listId?: string;
   icon?: boolean;
 }
 
-function WidgetField({ label, placeholder, value, onChange, icon }: WidgetFieldProps) {
+function WidgetField({ label, placeholder, value, onChange, listId, icon }: WidgetFieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
@@ -149,6 +157,7 @@ function WidgetField({ label, placeholder, value, onChange, icon }: WidgetFieldP
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
+          list={listId}
           className={`h-11 w-full border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 transition-colors duration-base focus:border-[color:var(--color-accent-primary)] focus:outline-none ${
             icon ? "pl-9 pr-3" : "px-3"
           }`}

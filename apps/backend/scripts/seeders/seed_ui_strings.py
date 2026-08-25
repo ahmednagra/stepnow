@@ -1,5 +1,5 @@
 # scripts/seeders/seed_ui_strings.py
-# Seed the ui_strings table with every UI string the frontend references via t() or pickT(). Comprehensive DE/EN coverage organized by namespace; idempotent — existing rows skipped, only new keys inserted.
+# Seed the ui_strings table with every UI string the frontend references via t() or pickT(). Comprehensive DE/EN coverage organized by namespace; idempotent  existing rows skipped, only new keys inserted.
 
 from config.database import SessionLocal # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section
@@ -76,7 +76,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         True,
     ),
     # ════════════════════════════════════════════════════════════════════
-    # HOMEPAGE — HERO
+    # HOMEPAGE  HERO
     # ════════════════════════════════════════════════════════════════════
     (
         "home.hero.pre_heading",
@@ -97,8 +97,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "home.hero.subhead",
         "hero",
-        "Vorbestellte Fahrten in Plochingen/Esslingen. Konzessioniert nach § 49 PBefG.",
-        "Pre booked transfers in Plochingen/Esslingen. Licensed under § 49 PBefG.",
+        "Vorbestellte Fahrten in Plochingen/Esslingen.",
+        "Pre booked transfers in Plochingen/Esslingen.",
         "Hero subhead under H1",
         False,
     ),
@@ -178,13 +178,13 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "hero_widget.note",
         "hero",
-        "Unverbindliche Anfrage — Pauschalpreis Angebot innerhalb von 30 Minuten.",
-        "Non binding request — price quote within 30 minutes.",
+        "Unverbindliche Anfrage Pauschalpreis Angebot innerhalb von 30 Minuten.",
+        "Non binding request price quote within 30 minutes.",
         "Widget caption below inputs",
         False,
     ),
     # ════════════════════════════════════════════════════════════════════
-    # HOMEPAGE — TRUST STRIP (4 icons under hero)
+    # HOMEPAGE TRUST STRIP (4 icons under hero)
     # ════════════════════════════════════════════════════════════════════
     (
         "home.trust.licensed",
@@ -251,7 +251,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         False,
     ),
     # ════════════════════════════════════════════════════════════════════
-    # HOMEPAGE — SECTION HEADERS
+    # HOMEPAGE SECTION HEADERS
     # ════════════════════════════════════════════════════════════════════
     # Services grid
     (
@@ -371,40 +371,40 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "home.why.bullet.fixed_price",
         "home",
-        "Pauschalpreis statt Taxameter — der Preis steht vor der Fahrt fest.",
-        "Price instead of taximeter — the price is set before the ride.",
+        "Pauschalpreis statt Taxameter der Preis steht vor der Fahrt fest.",
+        "Price instead of taximeter the price is set before the ride.",
         "Why bullet 1",
         False,
     ),
     (
         "home.why.bullet.prebooked",
         "home",
-        "Vorbestellt statt Glücksspiel — Ihr Fahrer wartet bereits auf Sie.",
-        "Pre booked, not a gamble — your driver is already waiting for you.",
+        "Vorbestellt statt Glücksspiel Ihr Fahrer wartet bereits auf Sie.",
+        "Pre booked, not a gamble your driver is already waiting for you.",
         "Why bullet 2",
         False,
     ),
     (
         "home.why.bullet.licensed",
         "home",
-        "Konzessioniert und versichert — volle Personenbeförderungs Haftpflicht.",
-        "Licensed and insured — full passenger transport liability cover.",
+        "Konzessioniert und versichert volle Personenbeförderungs Haftpflicht.",
+        "Licensed and insured full passenger transport liability cover.",
         "Why bullet 3",
         False,
     ),
     (
         "home.why.bullet.personal",
         "home",
-        "Persönlicher Service — direkter Kontakt, kein anonymes Callcenter.",
-        "Personal service — direct contact, no anonymous call centre.",
+        "Persönlicher Service direkter Kontakt, kein anonymes Callcenter.",
+        "Personal service direct contact, no anonymous call centre.",
         "Why bullet 4",
         False,
     ),
     (
         "home.why.bullet.regional",
         "home",
-        "Regional verwurzelt — wir kennen die Strecken zwischen Esslingen, Stuttgart und Umgebung.",
-        "Regionally rooted — we know the routes between Esslingen, Stuttgart and the surrounding area.",
+        "Regional verwurzelt wir kennen die Strecken zwischen Esslingen, Stuttgart und Umgebung.",
+        "Regionally rooted we know the routes between Esslingen, Stuttgart and the surrounding area.",
         "Why bullet 5",
         False,
     ),
@@ -430,7 +430,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "home",
         "Drei Fahrzeuge,",
         "Three vehicles,",
-        "Fleet heading part 1 (count + comma) — overridden dynamically when vehicle count differs",
+        "Fleet heading part 1 (count + comma) overridden dynamically when vehicle count differs",
         False,
     ),
     (
@@ -444,8 +444,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "home.fleet.lead",
         "home",
-        "Eine kleine, bewusst gewählte Flotte. Jedes Fahrzeug wird einzeln betreut — keine geteilten Schlüssel, keine anonyme Übergabe zwischen Schichten.",
-        "A small, deliberate fleet. Each vehicle is maintained on a single driver basis — no shared keys, no anonymous handover between shifts.",
+        "Eine kleine, bewusst gewählte Flotte. Jedes Fahrzeug wird einzeln betreut keine geteilten Schlüssel, keine anonyme Übergabe zwischen Schichten.",
+        "A small, deliberate fleet. Each vehicle is maintained on a single driver basis no shared keys, no anonymous handover between shifts.",
         "Fleet section lead paragraph",
         False,
     ),
@@ -466,7 +466,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Testimonials section heading",
         False,
     ),
-    # FAQ (homepage teaser — SINGULAR "faq")
+    # FAQ (homepage teaser  SINGULAR "faq")
     (
         "home.faq.pre_heading",
         "home",
@@ -491,7 +491,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Link to full FAQ",
         False,
     ),
-    # FAQ (contact page — PLURAL "faqs", separate key)
+    # FAQ (contact page  PLURAL "faqs", separate key)
     (
         "home.faqs.heading",
         "home",
@@ -508,7 +508,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "FAQ CTA on contact page (plural form key)",
         False,
     ),
-    # Final CTA (kept even though homepage section was removed — referenced by other places)
+    # Final CTA (kept even though homepage section was removed  referenced by other places)
     (
         "home.final_cta.pre_heading",
         "home",
@@ -528,13 +528,13 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "home.final_cta.subhead",
         "home",
-        "Buchen Sie jetzt oder rufen Sie an — wir melden uns innerhalb von 30 Minuten.",
-        "Book now or give us a call — we'll get back to you within 30 minutes.",
+        "Buchen Sie jetzt oder rufen Sie an wir melden uns innerhalb von 30 Minuten.",
+        "Book now or give us a call we'll get back to you within 30 minutes.",
         "Final CTA subhead",
         False,
     ),
     # ════════════════════════════════════════════════════════════════════
-    # SERVICES — LIST PAGE (magazine spread)
+    # SERVICES  LIST PAGE (magazine spread)
     # ════════════════════════════════════════════════════════════════════
     (
         "services.page.title",
@@ -642,7 +642,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Flughafentransfer",
         "Airport transfer",
-        "Short label — Footer, hero feature block",
+        "Short label Footer, hero feature block",
         True,
     ),
     (
@@ -650,7 +650,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Krankenfahrten",
         "Hospital transport",
-        "Short label — Footer, hero feature block",
+        "Short label Footer, hero feature block",
         True,
     ),
     (
@@ -658,7 +658,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Schülerbeförderung",
         "School transport",
-        "Short label — Footer, hero feature block",
+        "Short label Footer, hero feature block",
         True,
     ),
     (
@@ -666,7 +666,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Shuttle Service",
         "Shuttle service",
-        "Short label — Footer, hero feature block",
+        "Short label Footer, hero feature block",
         True,
     ),
     (
@@ -674,7 +674,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Kurier & Expressfahrten",
         "Courier & express",
-        "Short label — Footer, hero feature block",
+        "Short label Footer, hero feature block",
         True,
     ),
     # Per service differentiator blocks on the services magazine page
@@ -683,15 +683,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "60 Minuten Wartezeit",
         "60 minutes waiting included",
-        "Airport transfer — differentiator label (DE slug)",
+        "Airport transfer differentiator label (DE slug)",
         False,
     ),
     (
         "services.row.flughafentransfer.diff_body",
         "services",
-        "bei Flughafenabholungen — der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.",
-        "for airport pickups — your driver tracks your flight and adjusts automatically.",
-        "Airport transfer — differentiator body (DE slug)",
+        "bei Flughafenabholungen der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.",
+        "for airport pickups your driver tracks your flight and adjusts automatically.",
+        "Airport transfer differentiator body (DE slug)",
         False,
     ),
     (
@@ -699,15 +699,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "60 Minuten Wartezeit",
         "60 minutes waiting included",
-        "Airport transfer — differentiator label (EN slug)",
+        "Airport transfer differentiator label (EN slug)",
         False,
     ),
     (
         "services.row.airport transfer.diff_body",
         "services",
-        "bei Flughafenabholungen — der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.",
-        "for airport pickups — your driver tracks your flight and adjusts automatically.",
-        "Airport transfer — differentiator body (EN slug)",
+        "bei Flughafenabholungen der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.",
+        "for airport pickups your driver tracks your flight and adjusts automatically.",
+        "Airport transfer differentiator body (EN slug)",
         False,
     ),
     (
@@ -715,15 +715,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Geschult in Begleitung",
         "Trained for assistance",
-        "Hospital transport — differentiator label (DE slug)",
+        "Hospital transport  differentiator label (DE slug)",
         False,
     ),
     (
         "services.row.krankenhausfahrten.diff_body",
         "services",
-        "— Tür zu Tür Abholung, Hilfe mit Gepäck und Gehhilfen, optionale Wartezeit bei kurzen Terminen.",
-        "— door to door pickup, support with bags and walking aids, optional wait time during short appointments.",
-        "Hospital transport — differentiator body (DE slug)",
+        " Tür zu Tür Abholung, Hilfe mit Gepäck und Gehhilfen, optionale Wartezeit bei kurzen Terminen.",
+        " door to door pickup, support with bags and walking aids, optional wait time during short appointments.",
+        "Hospital transport  differentiator body (DE slug)",
         False,
     ),
     (
@@ -731,15 +731,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Geschult in Begleitung",
         "Trained for assistance",
-        "Hospital transport — differentiator label (EN slug)",
+        "Hospital transport  differentiator label (EN slug)",
         False,
     ),
     (
         "services.row.hospital transport.diff_body",
         "services",
-        "— Tür zu Tür Abholung, Hilfe mit Gepäck und Gehhilfen, optionale Wartezeit bei kurzen Terminen.",
-        "— door to door pickup, support with bags and walking aids, optional wait time during short appointments.",
-        "Hospital transport — differentiator body (EN slug)",
+        " Tür zu Tür Abholung, Hilfe mit Gepäck und Gehhilfen, optionale Wartezeit bei kurzen Terminen.",
+        " door to door pickup, support with bags and walking aids, optional wait time during short appointments.",
+        "Hospital transport  differentiator body (EN slug)",
         False,
     ),
     (
@@ -747,15 +747,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Abonnement verfügbar",
         "Subscription available",
-        "School transport — differentiator label (DE slug)",
+        "School transport  differentiator label (DE slug)",
         False,
     ),
     (
         "services.row.schuelerbefoerderung.diff_body",
         "services",
-        "— Mo–Fr Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.",
-        "— Monday–Friday block bookings with the same driver, billed monthly, paused automatically for school holidays.",
-        "School transport — differentiator body (DE slug)",
+        " Mo–Fr Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.",
+        " Monday–Friday block bookings with the same driver, billed monthly, paused automatically for school holidays.",
+        "School transport  differentiator body (DE slug)",
         False,
     ),
     (
@@ -763,15 +763,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Abonnement verfügbar",
         "Subscription available",
-        "School transport — differentiator label (EN slug)",
+        "School transport  differentiator label (EN slug)",
         False,
     ),
     (
         "services.row.school transport.diff_body",
         "services",
-        "— Mo–Fr Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.",
-        "— Monday–Friday block bookings with the same driver, billed monthly, paused automatically for school holidays.",
-        "School transport — differentiator body (EN slug)",
+        " Mo–Fr Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.",
+        " Monday–Friday block bookings with the same driver, billed monthly, paused automatically for school holidays.",
+        "School transport  differentiator body (EN slug)",
         False,
     ),
     (
@@ -779,15 +779,15 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "services",
         "Bis zu 8 Fahrgäste",
         "Up to 8 passengers",
-        "Shuttle service — differentiator label",
+        "Shuttle service  differentiator label",
         False,
     ),
     (
         "services.row.shuttle service.diff_body",
         "services",
-        "in einem Fahrzeug. Ein Fahrer koordiniert die gesamte Fahrt — eine Telefonnummer, auch bei mehreren Abholpunkten.",
-        "in one vehicle. Single driver coordination — one phone number for the whole journey, even with multiple pickups.",
-        "Shuttle service — differentiator body",
+        "in einem Fahrzeug. Ein Fahrer koordiniert die gesamte Fahrt  eine Telefonnummer, auch bei mehreren Abholpunkten.",
+        "in one vehicle. Single driver coordination  one phone number for the whole journey, even with multiple pickups.",
+        "Shuttle service  differentiator body",
         False,
     ),
     # How it works beat (dark band on services page)
@@ -834,8 +834,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "services.hiw.step1.body",
         "services",
-        "Per Webformular, Telefon oder WhatsApp. Geben Sie Zeit, Abholort und Ziel an — wir kümmern uns um den Rest.",
-        "By web form, phone or WhatsApp. Include the time, the pickup point and the destination — we'll handle the rest.",
+        "Per Webformular, Telefon oder WhatsApp. Geben Sie Zeit, Abholort und Ziel an  wir kümmern uns um den Rest.",
+        "By web form, phone or WhatsApp. Include the time, the pickup point and the destination  we'll handle the rest.",
         "HIW step 1 body",
         False,
     ),
@@ -882,8 +882,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "services.hiw.step3.body",
         "services",
-        "Kein Heranrufen, keine App Dispatch, kein Surge. Der bestätigte Pauschalpreis ist der Preis, den Sie zahlen — auch im Stau, auch an Feiertagen.",
-        "No hailing, no app dispatch, no surge. The price you confirmed is the price you pay — same in traffic, same on holidays.",
+        "Kein Heranrufen, keine App Dispatch, kein Surge. Der bestätigte Pauschalpreis ist der Preis, den Sie zahlen  auch im Stau, auch an Feiertagen.",
+        "No hailing, no app dispatch, no surge. The price you confirmed is the price you pay  same in traffic, same on holidays.",
         "HIW step 3 body",
         False,
     ),
@@ -1149,8 +1149,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.trust.attribution",
         "pricing",
-        "— UNSERE GARANTIE, GESCHÜTZT DURCH § 49 PBEFG",
-        "— OUR GUARANTEE, BACKED BY § 49 PBEFG",
+        " UNSERE GARANTIE, GESCHÜTZT DURCH § 49 PBEFG",
+        " OUR GUARANTEE, BACKED BY § 49 PBEFG",
         "Trust strip attribution caption",
         False,
     ),
@@ -1182,8 +1182,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.included.lead",
         "pricing",
-        "Jeder Pauschalpreis enthält Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage — ohne Aufpreis. Nichts wird am Zielort hinzugefügt.",
-        "Every quote includes standard luggage, waiting time at pickup and child seat on request — at no extra charge. Nothing added at the destination.",
+        "Jeder Pauschalpreis enthält Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage  ohne Aufpreis. Nichts wird am Zielort hinzugefügt.",
+        "Every quote includes standard luggage, waiting time at pickup and child seat on request  at no extra charge. Nothing added at the destination.",
         "Included moment lead paragraph",
         False,
     ),
@@ -1198,8 +1198,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.included.luggage.desc",
         "pricing",
-        "— 1 Koffer + 1 Handgepäck pro Fahrgast.",
-        "— 1 case + 1 cabin bag per passenger.",
+        " 1 Koffer + 1 Handgepäck pro Fahrgast.",
+        " 1 case + 1 cabin bag per passenger.",
         "Included row: luggage description",
         False,
     ),
@@ -1214,8 +1214,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.included.waiting.desc",
         "pricing",
-        "— 60 Minuten am Flughafen mit Meet & Greet.",
-        "— 60 minutes for airport meet & greet.",
+        " 60 Minuten am Flughafen mit Meet & Greet.",
+        " 60 minutes for airport meet & greet.",
         "Included row: waiting description",
         False,
     ),
@@ -1230,8 +1230,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.included.childseat.desc",
         "pricing",
-        "— auf Anfrage, kostenfrei.",
-        "— on request, free of charge.",
+        " auf Anfrage, kostenfrei.",
+        " on request, free of charge.",
         "Included row: child seat description",
         False,
     ),
@@ -1246,8 +1246,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.included.flighttrack.desc",
         "pricing",
-        "— wir passen die Abholzeit bei Verspätungen an.",
-        "— we adjust pickup if your flight is delayed.",
+        " wir passen die Abholzeit bei Verspätungen an.",
+        " we adjust pickup if your flight is delayed.",
         "Included row: flight tracking description",
         False,
     ),
@@ -1296,8 +1296,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.comparison.eyebrow",
         "pricing",
-        "Gleiche Fahrt — anderes Erlebnis",
-        "Same ride — different experience",
+        "Gleiche Fahrt  anderes Erlebnis",
+        "Same ride  different experience",
         "Comparison eyebrow",
         False,
     ),
@@ -1336,24 +1336,24 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "pricing.comparison.row1.label",
         "pricing",
-        "Preis Esslingen → STR",
-        "Price for Esslingen → STR",
+        "Preis Flughafentransfer",
+        "Airport transfer price",
         "Comparison row 1 label",
         False,
     ),
     (
         "pricing.comparison.row1.stepnow",
         "pricing",
-        "Pauschalpreis 70 € — bei Buchung bestätigt",
-        "70 € — confirmed at booking",
+        "Pauschalpreis ab {price} — bei Buchung bestätigt",
+        "Flat rate from {price} — confirmed at booking",
         "Comparison row 1 StepNow",
         False,
     ),
     (
         "pricing.comparison.row1.taxi",
         "pricing",
-        "Taxameter ca. 80–110 €, vom Verkehr abhängig",
-        "Meter based ≈ 80–110 €, depends on traffic",
+        "Taxameter — vom Verkehr abhängig, Endpreis erst bei Ankunft",
+        "Meter-based — depends on traffic, final price only on arrival",
         "Comparison row 1 taxi",
         False,
     ),
@@ -1583,7 +1583,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "about.page.subhead",
         "about",
         "Wir sind Ihr professioneller Fahrdienst als Alternative zum Taxi und bieten sichere, komfortable sowie zuverlässige Fahrten für Privat  und Geschäftskunden. Mit einem gepflegten Fuhrpark, erfahrenen Fahrern und konsequent kundenorientiertem Service garantieren wir höchste Qualität und Pünktlichkeit. Ob Flughafentransfer, Krankenfahrt oder Kurierdienst – wir bringen Sie entspannt und sicher ans Ziel.",
-        "We are your professional driver service as an alternative to the taxi, offering safe, comfortable and reliable trips for private and business customers. With a well maintained fleet, experienced drivers and consistently customer focused service, we guarantee the highest quality and punctuality. Whether airport transfer, hospital ride or courier service — we get you to your destination relaxed and safe.",
+        "We are your professional driver service as an alternative to the taxi, offering safe, comfortable and reliable trips for private and business customers. With a well maintained fleet, experienced drivers and consistently customer focused service, we guarantee the highest quality and punctuality. Whether airport transfer, hospital ride or courier service  we get you to your destination relaxed and safe.",
         "About page subhead",
         False,
     ),
@@ -1639,8 +1639,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.story.paragraph_1",
         "about",
-        "Ich bin Naeem Ahmad — Inhaber von StepNow Rides & Movers und seit über zehn Jahren in Plochingen/Esslingen unterwegs.",
-        "I'm Naeem Ahmad — owner of StepNow Rides & Movers and a driver in Plochingen/Esslingen for more than ten years.",
+        "Ich bin Naeem Ahmad  Inhaber von StepNow Rides & Movers und seit über zehn Jahren in Plochingen/Esslingen unterwegs.",
+        "I'm Naeem Ahmad  owner of StepNow Rides & Movers and a driver in Plochingen/Esslingen for more than ten years.",
         "Story paragraph 1",
         False,
     ),
@@ -1655,16 +1655,16 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.story.paragraph_3",
         "about",
-        "Wir sind kein anonymes Callcenter. Wenn Sie bei uns buchen, sprechen Sie direkt mit dem Inhaber — und unser Team kennt die Strecken zwischen Esslingen, Stuttgart und Umgebung wie die eigene Westentasche.",
-        "We are not an anonymous call centre. When you book with us, you speak directly with the owner — and our team knows the routes between Esslingen, Stuttgart and the surrounding area like the back of their hand.",
+        "Wir sind kein anonymes Callcenter. Wenn Sie bei uns buchen, sprechen Sie direkt mit dem Inhaber  und unser Team kennt die Strecken zwischen Esslingen, Stuttgart und Umgebung wie die eigene Westentasche.",
+        "We are not an anonymous call centre. When you book with us, you speak directly with the owner  and our team knows the routes between Esslingen, Stuttgart and the surrounding area like the back of their hand.",
         "Story paragraph 3",
         False,
     ),
     (
         "about.story.paragraph_4",
         "about",
-        "Ob Flughafentransfer, Krankenfahrt, Schülerbeförderung oder Shuttle — wir behandeln jede Fahrt mit dem Respekt, den sie verdient.",
-        "Whether it's an airport transfer, a hospital ride, a school run or a shuttle — we treat every trip with the respect it deserves.",
+        "Ob Flughafentransfer, Krankenfahrt, Schülerbeförderung oder Shuttle  wir behandeln jede Fahrt mit dem Respekt, den sie verdient.",
+        "Whether it's an airport transfer, a hospital ride, a school run or a shuttle  we treat every trip with the respect it deserves.",
         "Story paragraph 4",
         False,
     ),
@@ -1704,8 +1704,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.values.reliability.body",
         "about",
-        "Pünktlich, vorbestellt, bestätigt — keine Überraschungen am Abholtag.",
-        "On time, pre booked, confirmed — no surprises on pickup day.",
+        "Pünktlich, vorbestellt, bestätigt  keine Überraschungen am Abholtag.",
+        "On time, pre booked, confirmed  no surprises on pickup day.",
         "Value body 1",
         False,
     ),
@@ -1753,7 +1753,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "about.values.service.body",
         "about",
         "Direkter Kontakt zum Inhaber, kein anonymes Callcenter.",
-        "Direct contact with the owner — no anonymous call centre.",
+        "Direct contact with the owner  no anonymous call centre.",
         "Value body 4",
         False,
     ),
@@ -1769,8 +1769,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.values.personal.body",
         "about",
-        "Sie sprechen mit dem Inhaber — nicht mit einem anonymen Callcenter.",
-        "You talk to the owner — not an anonymous call centre.",
+        "Sie sprechen mit dem Inhaber  nicht mit einem anonymen Callcenter.",
+        "You talk to the owner  not an anonymous call centre.",
         "Alias for about.values.service.body",
         False,
     ),
@@ -1850,8 +1850,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.credentials.handelsregister.body",
         "about",
-        "Eingetragenes Unternehmen am Amtsgericht — Geschäftssitz Deizisau.",
-        "Registered business at the local commercial court — based in Deizisau.",
+        "Eingetragenes Unternehmen am Amtsgericht  Geschäftssitz Deizisau.",
+        "Registered business at the local commercial court  based in Deizisau.",
         "Credential 4 body",
         False,
     ),
@@ -1875,8 +1875,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.area.body",
         "about",
-        "Wir fahren in Plochingen, Esslingen, Deizisau und im mittleren Neckartal — sowie zu allen umliegenden Flughäfen.",
-        "We operate in Plochingen, Esslingen, Deizisau and the central Neckar valley — plus rides to all surrounding airports.",
+        "Wir fahren in Plochingen, Esslingen, Deizisau und im mittleren Neckartal  sowie zu allen umliegenden Flughäfen.",
+        "We operate in Plochingen, Esslingen, Deizisau and the central Neckar valley  plus rides to all surrounding airports.",
         "Service area body paragraph",
         False,
     ),
@@ -1916,8 +1916,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "about.service_area.body",
         "about",
-        "Wir bedienen Plochingen, Esslingen, Deizisau und das gesamte mittlere Neckartal — sowie Fahrten zu allen umliegenden Flughäfen.",
-        "We serve Plochingen, Esslingen, Deizisau and the entire central Neckar valley — plus rides to all surrounding airports.",
+        "Wir bedienen Plochingen, Esslingen, Deizisau und das gesamte mittlere Neckartal  sowie Fahrten zu allen umliegenden Flughäfen.",
+        "We serve Plochingen, Esslingen, Deizisau and the entire central Neckar valley  plus rides to all surrounding airports.",
         "Alias for about.area.body",
         False,
     ),
@@ -1968,8 +1968,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "contact.methods.intro",
         "contact",
-        "Telefon, E Mail oder direkt vor Ort — wir antworten innerhalb eines Werktages.",
-        "Phone, email or in person — we reply within one business day.",
+        "Telefon, E Mail oder direkt vor Ort  wir antworten innerhalb eines Werktages.",
+        "Phone, email or in person  we reply within one business day.",
         "Methods column intro",
         False,
     ),
@@ -2033,8 +2033,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "contact.form.intro",
         "contact",
-        "Schildern Sie uns kurz Ihr Anliegen — wir melden uns mit allen Details.",
-        "Tell us briefly what you need — we'll get back to you with the details.",
+        "Schildern Sie uns kurz Ihr Anliegen  wir melden uns mit allen Details.",
+        "Tell us briefly what you need  we'll get back to you with the details.",
         "Form column intro",
         False,
     ),
@@ -2186,7 +2186,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         False,
     ),
     # ════════════════════════════════════════════════════════════════════
-    # BOOKING WIZARD — full step by step coverage
+    # BOOKING WIZARD  full step by step coverage
     # ════════════════════════════════════════════════════════════════════
     # Page shell
     (
@@ -2227,7 +2227,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     ("booking.step.details", "booking", "Details", "Details", "Step 3 label", True),
     ("booking.step.contact", "booking", "Kontakt", "Contact", "Step 4 label", True),
     ("booking.step.review", "booking", "Bestätigen", "Review", "Step 5 label", True),
-    # Step 1 — service
+    # Step 1  service
     (
         "booking.service.heading",
         "booking",
@@ -2260,7 +2260,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Step 1 time input label",
         True,
     ),
-    # Step 2 — route
+    # Step 2  route
     (
         "booking.route.heading",
         "booking",
@@ -2317,7 +2317,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Step 2 city field label",
         True,
     ),
-    # Step 3 — details
+    # Step 3  details
     (
         "booking.details.heading",
         "booking",
@@ -2358,7 +2358,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Step 3 textarea label",
         True,
     ),
-    # Step 4 — contact
+    # Step 4  contact
     (
         "booking.contact.heading",
         "booking",
@@ -2423,7 +2423,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Step 4 VAT ID field label",
         True,
     ),
-    # Step 5 — review
+    # Step 5  review
     (
         "booking.review.heading",
         "booking",
@@ -2435,8 +2435,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "booking.review.subhead",
         "booking",
-        "Buchungsanfrage absenden — wir melden uns mit Ihrem Pauschalpreis innerhalb von 2 Stunden.",
-        "Submit your booking request — we'll come back with a price within 2 hours.",
+        "Buchungsanfrage absenden  wir melden uns mit Ihrem Pauschalpreis innerhalb von 2 Stunden.",
+        "Submit your booking request  we'll come back with a price within 2 hours.",
         "Step 5 subhead",
         True,
     ),
@@ -2725,8 +2725,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "footer.col.brand",
         "footer",
-        "StepNow Rides & Movers — Ihr zuverlässiger Partner für Personenbeförderung und Kurierdienste in Deizisau, Esslingen und Umgebung.",
-        "StepNow Rides & Movers — your reliable partner for passenger transport and courier services in Deizisau, Esslingen and the surrounding area.",
+        "StepNow Rides & Movers  Ihr zuverlässiger Partner für Personenbeförderung und Kurierdienste in Deizisau, Esslingen und Umgebung.",
+        "StepNow Rides & Movers  your reliable partner for passenger transport and courier services in Deizisau, Esslingen and the surrounding area.",
         "Footer brand column tagline",
         False,
     ),
@@ -2805,8 +2805,8 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
     (
         "footer.cta.sub",
         "footer",
-        "Buchen Sie online oder rufen Sie an — wir melden uns innerhalb von 30 Minuten zu unseren Telefonzeiten.",
-        "Book online or call — we reply within 30 minutes during phone hours.",
+        "Buchen Sie online oder rufen Sie an  wir melden uns innerhalb von 30 Minuten zu unseren Telefonzeiten.",
+        "Book online or call  we reply within 30 minutes during phone hours.",
         "Footer CTA subhead",
         False,
     ),
@@ -3008,18 +3008,18 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         False,
     ),
     # ════════════════════════════════════════════════════════════════════
-    # MISSING KEYS — backfill (from i18n runtime warnings)
+    # MISSING KEYS  backfill (from i18n runtime warnings)
     # ════════════════════════════════════════════════════════════════════
-    # Homepage — How it works (section lead)
+    # Homepage  How it works (section lead)
     (
         "home.how.summary",
         "home",
-        "In drei einfachen Schritten zu Ihrer Fahrt — anfragen, bestätigen lassen, einsteigen.",
-        "Three simple steps to your ride — request, get confirmation, get going.",
+        "In drei einfachen Schritten zu Ihrer Fahrt  anfragen, bestätigen lassen, einsteigen.",
+        "Three simple steps to your ride  request, get confirmation, get going.",
         "How it works section lead paragraph",
         False,
     ),
-    # Homepage — Testimonials (section lead)
+    # Homepage  Testimonials (section lead)
     (
         "home.testimonials.lead",
         "home",
@@ -3028,16 +3028,16 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Testimonials section lead paragraph",
         False,
     ),
-    # Services — How it works (section lead/summary)
+    # Services  How it works (section lead/summary)
     (
         "services.hiw.summary",
         "services",
-        "Vom ersten Kontakt bis zur Ankunft — der Pauschalpreis steht vor der Abfahrt fest.",
-        "From first contact to arrival — the price is fixed before you leave.",
+        "Vom ersten Kontakt bis zur Ankunft  der Pauschalpreis steht vor der Abfahrt fest.",
+        "From first contact to arrival  the price is fixed before you leave.",
         "Services HIW section lead paragraph",
         False,
     ),
-    # Contact — Form column lead
+    # Contact  Form column lead
     (
         "contact.form.lead",
         "contact",
@@ -3046,7 +3046,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Contact form column lead (right aligned beside heading)",
         False,
     ),
-    # Contact — Methods column lead
+    # Contact  Methods column lead
     (
         "contact.methods.lead",
         "contact",
@@ -3055,7 +3055,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Contact methods column lead",
         False,
     ),
-    # Contact — FAQ block
+    # Contact  FAQ block
     (
         "contact.faq.eyebrow",
         "contact",
@@ -3080,7 +3080,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Contact FAQ jump/CTA link",
         False,
     ),
-    # Pricing — per service tab taglines (rendered over hero band)
+    # Pricing  per service tab taglines (rendered over hero band)
     (
         "pricing.tab.airport transfer.tagline",
         "pricing",
@@ -3154,7 +3154,7 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Pricing tab tagline: courier transport (DE slug)",
         False,
     ),
-    # Pricing — empty state body
+    # Pricing  empty state body
     (
         "pricing.empty.body",
         "pricing",

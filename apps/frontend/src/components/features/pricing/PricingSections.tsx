@@ -1,13 +1,13 @@
 // apps/frontend/src/components/features/pricing/PricingSections.tsx
-// Server sections for the pricing page. PricingFeaturedHero now uses next/image with priority for LCP. Also exports getServiceHeroImage used by PricingTabs.
+// Server sections for the pricing page. Prices render from pricing_items — the comparison row
+// interpolates the live lowest fare rather than carrying its own copy. Exports getServiceHeroImage for PricingTabs.
 
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, Check, Banknote, CreditCard, FileText, Wallet } from "lucide-react";
+import { Check, Banknote, CreditCard, FileText, Wallet } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
-import type { Locale, PricingItemPublic, SettingsPublic } from "@/types";
+import type { Locale } from "@/types";
 import { Container } from "@/components/shared";
-import { toTelHref } from "@/utils/formatters";
+import { formatPrice } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
 import { resolveMediaUrl } from "@/utils/media-url";
 
@@ -35,150 +35,7 @@ export function getServiceHeroImage(slug: string, databaseUrl: string | null | u
   return SERVICE_HERO_FALLBACKS[slug] ?? PRICING_HERO_FALLBACK_URL;
 }
 
-function getFeaturedHeroImage(firstServiceImageUrl: string | null | undefined): string {
-  if (firstServiceImageUrl && firstServiceImageUrl.trim()) return firstServiceImageUrl;
-  return PRICING_HERO_FALLBACK_URL;
-}
 
-interface PricingFeaturedHeroProps {
-  t: TFunction;
-  locale: Locale;
-  settings: SettingsPublic;
-  featuredItem: PricingItemPublic | null;
-  backgroundImageUrl: string | null | undefined;
-  bookingHref: string;
-}
-
-export function PricingFeaturedHero({
-  t,
-  locale,
-  settings,
-  featuredItem,
-  backgroundImageUrl,
-  bookingHref,
-}: PricingFeaturedHeroProps) {
-  if (!featuredItem) return null;
-  const imageUrl = getFeaturedHeroImage(backgroundImageUrl);
-  const priceNumeric = Number(featuredItem.price_eur);
-  const proofPoints = [
-    pickT(
-      t,
-      "pricing.hero.proof_1",
-      locale === "de" ? "Pauschalpreis vor der Fahrt" : "Price before departure",
-    ),
-    pickT(
-      t,
-      "pricing.hero.proof_2",
-      locale === "de" ? "60 Min. Wartezeit inkl." : "60 min waiting included",
-    ),
-    pickT(t, "pricing.hero.proof_3", locale === "de" ? "Flugverfolgung" : "Flight tracking"),
-  ];
-
-  return (
-    <section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)] text-[var(--color-text-on-strong)]">
-      <Image
-        src={imageUrl}
-        alt=""
-        aria-hidden="true"
-        fill
-        priority
-        sizes="100vw"
-        quality={80}
-        className="absolute inset-0 h-full w-full object-cover object-[center_60%]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,26,23,0.82),rgba(24,26,23,0.56))]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute bottom-[-100px] right-[-100px] h-[500px] w-[700px] opacity-70 blur-sm"
-        style={{
-          background:
-            "radial-gradient(circle at 80% 30%, rgba(194, 166, 117, 0.18), transparent 50%)",
-        }}
-      />
-      <Container className="relative z-10 py-14 md:py-20">
-        <div className="grid items-center gap-10 md:grid-cols-[1.4fr_1fr] md:gap-14">
-          <div>
-            <span className="inline-flex items-center gap-2.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-secondary)]">
-              <span
-                aria-hidden="true"
-                className="block h-px w-6 bg-[var(--color-accent-secondary)]"
-              />
-              {pickT(
-                t,
-                "pricing.hero.eyebrow",
-                locale === "de" ? "Beliebteste Strecke" : "Most booked route",
-              )}
-            </span>
-            <h2 className="mt-3 font-serif text-[36px] leading-[1.02] tracking-tight text-[var(--color-text-on-strong)] md:text-[52px]">
-              {featuredItem.from_location}
-              <span className="mx-3 text-[var(--color-accent-secondary)] md:mx-4">→</span>
-              {featuredItem.to_location}
-            </h2>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 md:mt-7">
-              {proofPoints.map((p) => (
-                <li
-                  key={p}
-                  className="flex items-center gap-2 text-[13px] text-[rgba(247,244,234,0.82)]"
-                >
-                  <Check
-                    className="h-3.5 w-3.5 text-[var(--color-accent-secondary)]"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  />
-                  <span>{p}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-7 flex flex-wrap items-center gap-5 md:mt-8">
-              <Link
-                href={bookingHref}
-                className="inline-flex items-center gap-2 border border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] px-6 py-3.5 text-[13px] font-medium tracking-tight text-[var(--color-text-on-strong)] transition-colors duration-base hover:border-[var(--color-bg-strong-hover)] hover:bg-[var(--color-bg-strong-hover)]"
-              >
-                {pickT(
-                  t,
-                  "pricing.hero.cta_book",
-                  locale === "de" ? "Diese Strecke buchen" : "Book this route",
-                )}
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-              </Link>
-              <a
-                href={toTelHref(settings.phone)}
-                className="border-b border-[rgba(247,244,234,0.3)] pb-0.5 text-[13.5px] tabular-nums text-[var(--color-text-on-strong)] transition-colors hover:border-[var(--color-text-on-strong)]"
-              >
-                {locale === "de" ? "oder anrufen" : "or call"} {settings.phone}
-              </a>
-            </div>
-          </div>
-          <div className="text-left md:text-right">
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-[rgba(194,166,117,0.86)]">
-              {pickT(
-                t,
-                "pricing.hero.price_label",
-                locale === "de" ? "Pauschalpreis ab" : "Price from",
-              )}
-            </p>
-            <p className="my-2 block font-serif text-[110px] leading-none tracking-[-0.04em] text-[var(--color-text-on-strong)] md:text-[140px]">
-              {Math.round(priceNumeric)}
-              <span className="ml-1 align-[0.18em] text-[0.65em] text-[var(--color-accent-secondary)]">
-                €
-              </span>
-            </p>
-            <p className="text-[11.5px] uppercase tracking-[0.18em] text-[rgba(247,244,234,0.58)]">
-              {pickT(
-                t,
-                "pricing.hero.price_detail",
-                locale === "de" ? "Pro Fahrzeug · bis zu 4 Personen" : "Per vehicle · up to 4 pax",
-              )}
-            </p>
-          </div>
-        </div>
-      </Container>
-    </section>
-  );
-}
 
 interface PricingTrustStripProps {
   t: TFunction;
@@ -416,98 +273,19 @@ export function PricingExcludedStrip({ t, locale }: PricingExcludedStripProps) {
   );
 }
 
-interface ComparisonRow {
-  key: string;
-  defaults: {
-    de: { label: string; stepnow: string; taxi: string };
-    en: { label: string; stepnow: string; taxi: string };
-  };
-}
 
-const COMPARISON_ROWS: ComparisonRow[] = [
-  {
-    key: "row1",
-    defaults: {
-      de: {
-        label: "Preis Esslingen → STR",
-        stepnow: "Pauschalpreis 70 € — bei Buchung bestätigt",
-        taxi: "Taxameter ca. 80–110 €, vom Verkehr abhängig",
-      },
-      en: {
-        label: "Price for Esslingen → STR",
-        stepnow: "Price 70 € — confirmed at booking",
-        taxi: "Meter-based ≈ 80–110 €, depends on traffic",
-      },
-    },
-  },
-  {
-    key: "row2",
-    defaults: {
-      de: {
-        label: "Fahrer zugewiesen",
-        stepnow: "Gleiche Nummer, gleicher Fahrer, jedes Mal",
-        taxi: "Wen auch immer die Zentrale schickt",
-      },
-      en: {
-        label: "Driver assigned",
-        stepnow: "Same number, same driver, every time",
-        taxi: "Whoever dispatch sends",
-      },
-    },
-  },
-  {
-    key: "row3",
-    defaults: {
-      de: {
-        label: "Im Voraus gebucht",
-        stepnow: "Online oder telefonisch vorbestellt",
-        taxi: "Am Tag selbst herangerufen, Verfügbarkeit unklar",
-      },
-      en: {
-        label: "Booked in advance",
-        stepnow: "Pre-booked online or by phone",
-        taxi: "Hailed on the day, hope for availability",
-      },
-    },
-  },
-  {
-    key: "row4",
-    defaults: {
-      de: {
-        label: "Meet & Greet am Flughafen",
-        stepnow: "Bei Flughafenstrecken inklusive",
-        taxi: "Zusatzservice falls verfügbar",
-      },
-      en: {
-        label: "Meet & greet at airport",
-        stepnow: "Included with airport routes",
-        taxi: "Extra service if available",
-      },
-    },
-  },
-  {
-    key: "row5",
-    defaults: {
-      de: {
-        label: "Rechnung für Geschäftskunden",
-        stepnow: "Detaillierte Rechnung nach Vereinbarung",
-        taxi: "Handgeschriebene oder gedruckte Quittung",
-      },
-      en: {
-        label: "Receipt for business",
-        stepnow: "Detailed invoice, by arrangement",
-        taxi: "Handwritten or printed slip",
-      },
-    },
-  },
-];
+const COMPARISON_ROW_KEYS = ["row1", "row2", "row3", "row4", "row5"] as const;
 
 interface PricingComparisonProps {
   t: TFunction;
   locale: Locale;
+  /** Cheapest live route price; row 1 interpolates it so the table can never quote a stale figure. */
+  lowestPrice?: string | null;
+  lowestCurrency?: string;
 }
 
-export function PricingComparison({ t, locale }: PricingComparisonProps) {
+export function PricingComparison({ t, locale, lowestPrice, lowestCurrency = "EUR" }: PricingComparisonProps) {
+  const priceLabel = lowestPrice ? formatPrice(lowestPrice, locale, lowestCurrency) : null;
   const headLabel = pickT(
     t,
     "pricing.comparison.head_label",
@@ -559,25 +337,16 @@ export function PricingComparison({ t, locale }: PricingComparisonProps) {
           <div className="border-b border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)] md:px-6">
             {headTaxi}
           </div>
-          {COMPARISON_ROWS.map((row, idx) => {
-            const isLast = idx === COMPARISON_ROWS.length - 1;
-            const labelText = pickT(
-              t,
-              `pricing.comparison.${row.key}.label`,
-              row.defaults[locale].label,
-            );
-            const stepnowText = pickT(
-              t,
-              `pricing.comparison.${row.key}.stepnow`,
-              row.defaults[locale].stepnow,
-            );
-            const taxiText = pickT(
-              t,
-              `pricing.comparison.${row.key}.taxi`,
-              row.defaults[locale].taxi,
-            );
+          {COMPARISON_ROW_KEYS.map((key, idx) => {
+            const isLast = idx === COMPARISON_ROW_KEYS.length - 1;
+            const withPrice = (v: string) =>
+              priceLabel ? v.replace("{price}", priceLabel) : v.replace(/\s*\{price\}/g, "");
+            const labelText = withPrice(pickT(t, `pricing.comparison.${key}.label`, ""));
+            const stepnowText = withPrice(pickT(t, `pricing.comparison.${key}.stepnow`, ""));
+            const taxiText = withPrice(pickT(t, `pricing.comparison.${key}.taxi`, ""));
+            if (!labelText && !stepnowText && !taxiText) return null;
             return (
-              <div key={row.key} className="contents">
+              <div key={key} className="contents">
                 <div
                   className={`bg-[var(--color-bg-surface)] px-5 py-4 text-[13.5px] text-[var(--color-text-primary)] md:px-6 ${isLast ? "" : "border-b border-[color:var(--color-border-soft)]"}`}
                 >

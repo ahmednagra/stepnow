@@ -8,8 +8,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
 import { AdminPageHeader, AdminCard, FilterToolbar, Pagination } from "@/components/admin";
-import { useInvoices } from "@/hooks/queries";
-import { formatPriceEur } from "@/utils/decimal";
+import { useDefaultCurrency, useInvoices } from "@/hooks/queries";
+import { formatMoney } from "@/utils/decimal";
 import { exportCsv } from "@/utils/exporters";
 import { cn } from "@/utils/cn";
 
@@ -19,6 +19,7 @@ const deDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "2-digit" }) : "—";
 
 export default function InvoicesPage() {
+  const cur = useDefaultCurrency();
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
@@ -101,9 +102,9 @@ export default function InvoicesPage() {
                       <td className="py-2.5 pr-3 text-slate-700">{b.customer_name}</td>
                       <td className="py-2.5 pr-3 text-slate-500">{(b.route_from ?? "—") + " → " + (b.route_to ?? "—")}</td>
                       <td className="py-2.5 pr-3 text-slate-500">{deDate(b.issue_date)}</td>
-                      <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-900">{formatPriceEur(num(b.gross_amount).toFixed(2))}</td>
+                      <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-900">{formatMoney(num(b.gross_amount).toFixed(2), cur)}</td>
                       <td className={cn("py-2.5 pr-3 text-right font-mono tabular-nums", b.is_overdue ? "text-rose-600" : num(b.balance_due) > 0 ? "text-amber-700" : "text-emerald-700")}>
-                        {formatPriceEur(num(b.balance_due).toFixed(2))}
+                        {formatMoney(num(b.balance_due).toFixed(2), cur)}
                       </td>
                       <td className="py-2.5 pr-3 text-slate-600 capitalize">{b.status}</td>
                     </tr>

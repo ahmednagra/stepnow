@@ -1,7 +1,8 @@
 # apps/backend/app/Schemas/admin/forms_admin.py
 # Admin forms schemas. Adds revenue-series + service-mix response models for the dashboard aggregation endpoints (kills client-side truncation bug).
 
-from datetime import datetime, date
+from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -12,7 +13,7 @@ _BOOKING_STATUSES = ("new", "contacted", "quoted", "confirmed", "completed", "ca
 class BookingStatusUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     status: str = Field(pattern=r"^(new|contacted|quoted|confirmed|completed|cancelled)$")
-    quoted_price_eur: str | None = Field(default=None, max_length=50)
+    quoted_price_eur: Decimal | None = Field(default=None, ge=0, le=99999999, decimal_places=2)
     internal_notes: str | None = None
 
 
@@ -41,7 +42,7 @@ class BookingAdminResponse(BaseModel):
     language: str
     ip_address: str | None
     user_agent: str | None
-    quoted_price_eur: str | None
+    quoted_price_eur: Decimal | None
     quoted_at: datetime | None
     completed_at: datetime | None
     internal_notes: str | None

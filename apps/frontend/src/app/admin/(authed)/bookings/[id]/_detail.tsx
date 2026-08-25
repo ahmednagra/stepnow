@@ -4,6 +4,8 @@
 "use client";
 
 import { useState } from "react";
+import { useDefaultCurrency } from "@/hooks/queries";
+import { formatPrice } from "@/utils/formatters";
 import { useRouter } from "next/navigation";
 import {
   Loader2, Save, Trash2, Mail, Phone, MapPin, Calendar, Users, Briefcase, Printer, FileText,
@@ -56,6 +58,7 @@ function StatusPill({ status }: { status: BookingStatus }) {
 }
 
 export function BookingDetail({ initial, service }: Props) {
+  const cur = useDefaultCurrency();
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
   const updateBooking = useUpdateBooking(initial.id);
@@ -226,7 +229,7 @@ export function BookingDetail({ initial, service }: Props) {
             </select>
           </AdminFormField>
           <div className="mt-3">
-            <AdminFormField label="Quoted price (€)" error={priceError ?? undefined}>
+            <AdminFormField label={`Quoted price (${cur})`} error={priceError ?? undefined}>
               <input
                 type="text"
                 inputMode="decimal"
@@ -262,7 +265,7 @@ export function BookingDetail({ initial, service }: Props) {
               className="flex h-9 items-center justify-center gap-2 border border-[#A8865A] bg-white px-3 text-[12.5px] font-medium text-[#86683F] hover:bg-[#FBF7F0] disabled:opacity-40"
             >
               <FileText className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
-              Print quote (€{booking.quoted_price_eur ?? "—"})
+              Print quote ({booking.quoted_price_eur ? formatPrice(booking.quoted_price_eur, "en") : "—"})
             </button>
             <button
               type="button"
@@ -311,7 +314,7 @@ export function BookingDetail({ initial, service }: Props) {
               <tr style={{ borderTop: "1px solid #D8D5CE" }}>
                 <td style={{ padding: "12px 0", fontWeight: 600 }}>Total</td>
                 <td style={{ padding: "12px 0", textAlign: "right", fontFamily: "Georgia, serif", fontSize: 22 }}>
-                  €{booking.quoted_price_eur ?? "—"}
+                  {booking.quoted_price_eur ? formatPrice(booking.quoted_price_eur, "en") : "—"}
                 </td>
               </tr>
             </tbody>

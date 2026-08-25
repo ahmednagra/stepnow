@@ -4,15 +4,16 @@ from uuid import UUID, uuid4
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
 
 class AdminUser(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "admin_users"
+    __table_args__ = (live_unique("uq_admin_users_email_live", "email"),)
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
-    email: Mapped[str] = mapped_column(String(200), unique=True, nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

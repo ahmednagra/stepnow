@@ -10,6 +10,8 @@ Each service has:
 Idempotent: keyed by slug_de. Existing services are skipped.
 """
 
+from decimal import Decimal  # noqa: E402
+
 from config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402
 
@@ -19,12 +21,13 @@ SERVICES = [
         "sort_order": 10,
         "active": True,
         "icon": "plane",
+        "vat_rate": Decimal("0.0700"),
         "slug_de": "flughafentransfer",
         "slug_en": "airport-transfer",
         "title_de": "Flughafentransfer",
         "title_en": "Airport Transfer",
-        "short_description_de": "Pünktlich zum Flieger, entspannt nach Hause. Pauschalpreis mit Flugverfolgung und Wartezeit inklusive.",
-        "short_description_en": "Punctual to the airport, relaxed back home. Price including flight tracking and waiting time.",
+        "short_description_de": "Pünktlich zum Flieger, entspannt nach Hause – Pauschalpreis mit Flugverfolgung.",
+        "short_description_en": "Punctual to the airport, relaxed home — fixed price with flight tracking.",
         "long_description_de": (
             "## Flughafentransfer — komfortabel und zuverlässig\n\n"
             "Ob geschäftlich nach Frankfurt oder privat nach Mallorca: Unser Flughafentransfer bringt Sie sicher und pünktlich "
@@ -66,12 +69,13 @@ SERVICES = [
         "sort_order": 20,
         "active": True,
         "icon": "heart-pulse",
+        "vat_rate": Decimal("0.0700"),
         "slug_de": "krankenhausfahrten",
         "slug_en": "hospital-transport",
         "title_de": "Krankenhausfahrten",
         "title_en": "Hospital Transport",
-        "short_description_de": "Würdevoller, sicherer Transport zu und von Krankenhäusern, Reha-Einrichtungen und Arztterminen.",
-        "short_description_en": "Dignified, safe transport to and from hospitals, rehab facilities and medical appointments.",
+        "short_description_de": "Würdevoller, sicherer Transport zu Krankenhäusern, Reha und Arztterminen.",
+        "short_description_en": "Dignified, safe transport to hospitals, rehab facilities and appointments.",
         "long_description_de": (
             "## Krankenhausfahrten — Würde und Sicherheit\n\n"
             "Krankenhausbesuche und Reha-Termine sind belastend genug. Wir nehmen Ihnen die Sorge um die Anreise ab — "
@@ -113,12 +117,13 @@ SERVICES = [
         "sort_order": 30,
         "active": True,
         "icon": "graduation-cap",
+        "vat_rate": Decimal("0.0700"),
         "slug_de": "schuelerbefoerderung",
         "slug_en": "school-transport",
         "title_de": "Schülerbeförderung",
         "title_en": "School Transport",
-        "short_description_de": "Verlässlicher, regelmäßiger Schulweg-Service. Geprüfte Fahrer, vertraute Gesichter, sichere Fahrzeuge.",
-        "short_description_en": "Reliable, regular school commute service. Verified drivers, familiar faces, safe vehicles.",
+        "short_description_de": "Verlässlicher Schulweg-Service — geprüfte Fahrer, vertraute Gesichter.",
+        "short_description_en": "Reliable school commute — verified drivers, familiar faces.",
         "long_description_de": (
             "## Schülerbeförderung — Sicherheit, die Eltern beruhigt\n\n"
             "Wenn der Schulbus zu unzuverlässig ist und der eigene Arbeitsweg nicht passt: Wir übernehmen "
@@ -160,12 +165,13 @@ SERVICES = [
         "sort_order": 40,
         "active": True,
         "icon": "users",
+        "vat_rate": Decimal("0.0700"),
         "slug_de": "shuttle-service",
         "slug_en": "shuttle-service",
         "title_de": "Shuttle Service",
         "title_en": "Shuttle Service",
-        "short_description_de": "Zuverlässige Gruppenfahrten für Firmenevents, Veranstaltungen, Hochzeiten und private Anlässe – pünktlich, komfortabel und professionell organisiert.",
-        "short_description_en": "Reliable group transport for corporate events, occasions, weddings and private gatherings – punctual, comfortable and professionally organised.",
+        "short_description_de": "Zuverlässige Gruppenfahrten für Firmenevents, Hochzeiten und private Anlässe.",
+        "short_description_en": "Reliable group transport for corporate events, weddings and private gatherings.",
         "long_description_de": (
             "## Shuttle Service — Gruppentransport ohne Stress\n\n"
             "Hochzeit, Firmenfeier, Konferenz, Tagung: Wenn mehrere Gäste zur gleichen Zeit zum gleichen Ort müssen, "
@@ -209,12 +215,13 @@ SERVICES = [
         "sort_order": 50,
         "active": True,
         "icon": "courier",
+        "vat_rate": Decimal("0.1900"),
         "slug_de": "kurier-sondertransport",
         "slug_en": "courier-transport",
         "title_de": "Kurier-/Sondertransport",
         "title_en": "Courier / Special Transport",
-        "short_description_de": "Schnelle Kurier- und Sonderfahrten für Dokumente, Pakete und zeitkritische Sendungen.",
-        "short_description_en": "Fast courier and special transport for documents, parcels and time-critical shipments.",
+        "short_description_de": "Schnelle Kurierfahrten für Dokumente, Pakete und zeitkritische Sendungen.",
+        "short_description_en": "Fast courier transport for documents, parcels and time-critical shipments.",
         "long_description_de": (
             "## Kurier-/Sondertransport — schnell, sicher, termintreu\n\n"
             "Wenn ein Dokument, ein Paket oder eine zeitkritische Sendung zuverlässig ankommen muss, übernehmen wir "

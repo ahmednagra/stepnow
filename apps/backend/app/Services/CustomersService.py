@@ -126,7 +126,7 @@ class CustomersService:
     @staticmethod
     def create(db: Session, data: dict, actor: AdminUser, request: Request) -> Customer:
         if not data.get("customer_number"):
-            data["customer_number"] = next_customer_number(db, Customer.customer_number)
+            data["customer_number"] = next_customer_number(db)
         c = Customer(**data)
         db.add(c)
         db.flush()

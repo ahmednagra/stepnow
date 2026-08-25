@@ -4,7 +4,6 @@
 # status. Money + numbering reuse app.Utils.finance so the §14 rules live in one place.
 
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session, selectinload
@@ -18,10 +17,7 @@ from app.Models.vehicles import Vehicle
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
 from app.Services.EmailService import EmailService
-from app.Utils.finance import compute_totals, order_date_sequence_number
-
-DEFAULT_VAT_RATE = Decimal("0.0700")
-DELIVERY_FLOW = ["draft", "dispatched", "picked_up", "delivered"]
+from app.Utils.finance import compute_totals, default_currency, order_date_sequence_number, vat_rate_for
 
 
 class CourierOrdersService:
@@ -76,7 +72,7 @@ class CourierOrdersService:
                 raise NotFoundError("Driver not found", driver_id=str(payload.driver_id))
 
         display_name = customer.company_name
-        rate = payload.vat_rate if payload.vat_rate is not None else DEFAULT_VAT_RATE
+        rate = payload.vat_rate if payload.vat_rate is not None else vat_rate_for(db, getattr(payload, 'service_id', None), payload.service_type)
         net, vat, gross = compute_totals(payload.net_amount, rate)
         due_date = date.today() + timedelta(days=payload.payment_due_days)
 
@@ -87,7 +83,8 @@ class CourierOrdersService:
         first_pickup, drop = pickups[0], drops[0]
 
         order = Order(
-            order_number=order_date_sequence_number(db, Order.order_number),
+            order_number=order_date_sequence_number(db),
+            currency=default_currency(db),
             booking_id=None,
             status="open",
             delivery_status="draft",
@@ -198,8 +195,9 @@ class CourierOrdersService:
     def set_delivery_status(db: Session, order_id: UUID, new_status: str, actor: AdminUser, request: Request) -> Order:
         from app.Services.OrdersService import OrdersService
         o = OrdersService.get(db, order_id)
-        cur_i = DELIVERY_FLOW.index(o.delivery_status) if o.delivery_status in DELIVERY_FLOW else 0
-        new_i = DELIVERY_FLOW.index(new_status)
+        flow = ["draft", "dispatched", "picked_up", "delivered"]
+        cur_i = flow.index(o.delivery_status) if o.delivery_status in flow else 0
+        new_i = flow.index(new_status)
         if new_i not in (cur_i, cur_i + 1):
             raise ConflictError(f"Cannot move delivery status from {o.delivery_status} to {new_status}")
         before = CourierOrdersService._snapshot(o)

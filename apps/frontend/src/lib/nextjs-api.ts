@@ -2,7 +2,7 @@
 // Browser BFF client. Auto-aborts stale in-flight requests to the same URL.
 
 import { ApiError, ApiErrorBody, ERROR_CODES } from "./api-errors";
-import { getAccessToken } from "./auth-storage";
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth-storage";
 
 const BFF_BASE = "/api/v0";
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -16,11 +16,38 @@ interface ClientRequestOptions {
 
 const inFlight = new Map<string, AbortController>();
 
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  const refresh_token = getRefreshToken();
+  if (!refresh_token) return false;
+  const res = await fetch(`${BFF_BASE}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ refresh_token }),
+  });
+  if (!res.ok) return false;
+  const data = (await res.json()) as { access_token?: string; refresh_token?: string };
+  if (!data.access_token || !data.refresh_token) return false;
+  setTokens(data.access_token, data.refresh_token);
+  return true;
+}
+
+async function ensureFreshToken(): Promise<boolean> {
+  refreshPromise ??= refreshAccessToken()
+    .catch(() => false)
+    .finally(() => {
+      refreshPromise = null;
+    });
+  return refreshPromise;
+}
+
 async function request<T>(
   method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   body: unknown,
   opts: ClientRequestOptions = {},
+  isRetry = false,
 ): Promise<T> {
   if (typeof window === "undefined") {
     throw new ApiError(ERROR_CODES.UNKNOWN, "nextjsApiClient called from server context", 500);
@@ -50,6 +77,11 @@ async function request<T>(
     });
     clearTimeout(timeoutId);
     if (inFlight.get(dedupeKey) === controller) inFlight.delete(dedupeKey);
+    if (res.status === 401 && !isRetry && getRefreshToken()) {
+      if (await ensureFreshToken()) return request<T>(method, path, body, opts, true);
+      clearTokens();
+      if (!window.location.pathname.startsWith("/admin/login")) window.location.assign("/admin/login");
+    }
     return await handleResponse<T>(res);
   } catch (err) {
     clearTimeout(timeoutId);

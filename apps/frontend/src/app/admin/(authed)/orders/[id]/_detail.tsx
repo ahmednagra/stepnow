@@ -5,6 +5,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDefaultCurrency } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
 import { Loader2, Save, FileText, Plus, Download } from "lucide-react";
 import { AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
@@ -16,12 +17,13 @@ import {
 } from "@/services/orders";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
-import { formatPriceEur, normalizeDecimalInput } from "@/utils/decimal";
+import { formatMoney, normalizeDecimalInput } from "@/utils/decimal";
 
 const ORDER_STATUSES: OrderStatus[] = ["open", "completed", "cancelled"];
 const PAYMENT_METHODS: PaymentMethod[] = ["cash", "girocard", "bank_transfer", "paypal", "other"];
 
 export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
+  const cur = useDefaultCurrency();
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
   const [order, setOrder] = useState<OrderDetail>(initial);
@@ -94,9 +96,9 @@ export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
             <Field label="Email" value={order.customer_email} />
           </dl>
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-[13px]">
-            <Field label="Net" value={formatPriceEur(order.net_amount)} />
-            <Field label={`VAT (${(Number(order.vat_rate) * 100).toFixed(0)}%)`} value={formatPriceEur(order.vat_amount)} />
-            <Field label="Gross" value={formatPriceEur(order.gross_amount)} strong />
+            <Field label="Net" value={formatMoney(order.net_amount, cur)} />
+            <Field label={`VAT (${(Number(order.vat_rate) * 100).toFixed(0)}%)`} value={formatMoney(order.vat_amount, cur)} />
+            <Field label="Gross" value={formatMoney(order.gross_amount, cur)} strong />
           </div>
         </AdminCard>
 
@@ -128,7 +130,7 @@ export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
               <dl className="space-y-2 text-[13px]">
                 <Field label="Invoice-No." value={order.invoice.invoice_number} mono />
                 <Field label="Issued" value={order.invoice.issue_date} />
-                <Field label="Gross" value={formatPriceEur(order.invoice.gross_amount)} strong />
+                <Field label="Gross" value={formatMoney(order.invoice.gross_amount, cur)} strong />
               </dl>
               <button
                 type="button"
@@ -155,13 +157,13 @@ export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
           title="Payments"
           headerActions={
             <Badge tone={balancePositive ? "warn" : "success"}>
-              {balancePositive ? `Due ${formatPriceEur(order.balance_due)}` : "Paid"}
+              {balancePositive ? `Due ${formatMoney(order.balance_due, cur)}` : "Paid"}
             </Badge>
           }
         >
           <div className="mb-3 flex justify-between text-[12px] text-slate-500">
-            <span>Paid {formatPriceEur(order.amount_paid)}</span>
-            <span>Balance {formatPriceEur(order.balance_due)}</span>
+            <span>Paid {formatMoney(order.amount_paid, cur)}</span>
+            <span>Balance {formatMoney(order.balance_due, cur)}</span>
           </div>
 
           {order.payments.length > 0 && (
@@ -169,7 +171,7 @@ export function OrderDetailIsland({ initial }: { initial: OrderDetail }) {
               {order.payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between py-2 text-[12.5px]">
                   <span className="text-slate-700">{p.method} · {new Date(p.received_at).toLocaleDateString("en-GB")}</span>
-                  <span className="font-medium tabular-nums text-slate-900">{formatPriceEur(p.amount)}</span>
+                  <span className="font-medium tabular-nums text-slate-900">{formatMoney(p.amount, cur)}</span>
                 </li>
               ))}
             </ul>

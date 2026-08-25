@@ -14,6 +14,7 @@ export interface VehicleLedgerOrder {
   route_to: string | null;
   net_amount: string;
   gross_amount: string;
+  currency: string;
   amount_paid: string;
   balance_due: string;
   status: string;

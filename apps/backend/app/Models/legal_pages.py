@@ -4,15 +4,16 @@ from uuid import UUID, uuid4
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
 
 class LegalPage(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "legal_pages"
+    __table_args__ = (live_unique("uq_legal_pages_slug_live", "slug"),)
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
-    slug: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    slug: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     published_version_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("legal_page_versions.id", use_alter=True, name="fk_legal_pages_published_version"), nullable=True)
     draft_version_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("legal_page_versions.id", use_alter=True, name="fk_legal_pages_draft_version"), nullable=True)
     versions: Mapped[list["LegalPageVersion"]] = relationship(back_populates="legal_page", cascade="all, delete-orphan", foreign_keys="LegalPageVersion.legal_page_id")

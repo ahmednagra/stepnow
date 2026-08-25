@@ -4,6 +4,7 @@
 "use client";
 
 import { useEffect, useState, memo } from "react";
+import { useDefaultCurrency } from "@/hooks/queries";
 import { AdminCard } from "../AdminCard";
 import { RangeSwitcher, type Range } from "./RangeSwitcher";
 import { RevenueChart, type RevenuePoint } from "./RevenueChart";
@@ -39,6 +40,7 @@ revenue: p.revenue_eur,
 interface Props { initialRange?: Range; initialData: RevenuePoint[]; }
 
 function PerformanceCardBase({ initialRange = "30d", initialData }: Props) {
+  const cur = useDefaultCurrency();
 const [range, setRange] = useState<Range>(initialRange);
 const [data, setData] = useState<RevenuePoint[]>(initialData);
 const [loading, setLoading] = useState(false);
@@ -63,14 +65,14 @@ headerActions={<RangeSwitcher value={range} onChange={setRange} />}
 >
 <div className="mb-3 flex gap-5">
 <div className="flex items-center gap-1.5 text-[11.5px] text-slate-500">
-<span className="h-2.5 w-2.5 bg-slate-900" aria-hidden="true" /> Revenue (€)
+<span className="h-2.5 w-2.5 bg-slate-900" aria-hidden="true" /> Revenue ({cur})
 </div>
 <div className="flex items-center gap-1.5 text-[11.5px] text-slate-500">
 <span className="h-2.5 w-2.5 bg-[#A8865A]" aria-hidden="true" /> Bookings
 </div>
 {loading && <span className="text-[11px] text-slate-400">loading…</span>}
 </div>
-<RevenueChart data={data} />
+<RevenueChart data={data} currency={cur} />
 </AdminCard>
 );
 }

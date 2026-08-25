@@ -4,6 +4,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatPrice } from "@/utils/formatters";
 import Link from "next/link";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter,
@@ -201,7 +202,7 @@ export default function BookingsPage() {
                       <AdminTableCell><StatusPill status={b.status} /></AdminTableCell>
                       <AdminTableCell>
                         <span className="font-serif text-[14px] tabular-nums text-slate-900">
-                          {b.quoted_price_eur ? `€${Number(b.quoted_price_eur).toFixed(2)}` : <span className="text-slate-300">—</span>}
+                          {b.quoted_price_eur ? formatPrice(b.quoted_price_eur, "en") : <span className="text-slate-300">—</span>}
                         </span>
                       </AdminTableCell>
                       <AdminTableCell className="text-right">

@@ -38,8 +38,8 @@ const pricingByServiceId = new Map(allPricing.map((g) => [g.service_id, g.catego
 
 const data: ServiceWithPricing[] = services.map((s) => {
 const categories = pricingByServiceId.get(s.id) ?? [];
-const { price, routeLabel } = findLowestPrice(categories);
-return { service: s, lowestPrice: price, lowestRouteLabel: routeLabel };
+const { price, currency, routeLabel } = findLowestPrice(categories);
+return { service: s, lowestPrice: price, lowestCurrency: currency, lowestRouteLabel: routeLabel };
 });
 
 return (
@@ -73,12 +73,12 @@ return (
 <Container className="pt-8 pb-0 md:pt-10"><ConcessionBadge settings={settings} tone="light" /></Container>
 </section>
 <ServicesIndex t={t} locale="de" data={data} />
-{data.slice(0, 2).map(({ service, lowestPrice, lowestRouteLabel }, idx) => (
-<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestRouteLabel={lowestRouteLabel} />
+{data.slice(0, 2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel }, idx) => (
+<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} />
 ))}
 <HowItWorksBeat t={t} locale="de" />
-{data.slice(2).map(({ service, lowestPrice, lowestRouteLabel }, idx) => (
-<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx + 2} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestRouteLabel={lowestRouteLabel} />
+{data.slice(2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel }, idx) => (
+<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx + 2} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} />
 ))}
 <ServicesEditorialClose t={t} locale="de" settings={settings} pricingHref="/preise" />
 <JsonLd

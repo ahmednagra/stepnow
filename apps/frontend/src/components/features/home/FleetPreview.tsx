@@ -112,25 +112,25 @@ export function FleetPreview({ t, vehicles, locale = "de" }: FleetPreviewProps) 
 
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-      <Container className="py-section">
-        <header className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
+      <Container className="py-10 md:py-12">
+        <header className="mb-5 flex flex-col items-start gap-3 md:mb-6 md:flex-row md:items-end md:justify-between md:gap-12">
           <div className="max-w-2xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
               {pickT(t, "home.fleet.pre_heading", locale === "de" ? "Die Flotte" : "The fleet")}
             </p>
-            <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
+            <h2 className="mt-1.5 font-serif text-[26px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[32px]">
               {headingPart1}
               <br />
               <span className="italic text-[var(--color-accent-primary)]">{headingPart2}</span>
             </h2>
           </div>
-          <p className="max-w-sm text-[13.5px] leading-relaxed text-[var(--color-text-secondary)] md:text-right">
+          <p className="max-w-sm text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:max-w-none md:whitespace-nowrap md:text-right">
             {lead}
           </p>
         </header>
         <ul
           className={cn(
-            "grid gap-6",
+            "grid gap-5",
             count === 1
               ? "md:mx-auto md:max-w-2xl md:grid-cols-1"
               : count === 2
@@ -153,7 +153,7 @@ function VehicleCard({ vehicle, locale }: { vehicle: VehiclePublic; locale: Loca
 
   return (
     <li className="group flex flex-col border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
-      <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
+      <div className="relative aspect-[2/1] w-full overflow-hidden border-b border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
         {strategy.kind === "image" ? (
           <>
             <Image
@@ -191,16 +191,16 @@ function VehicleCard({ vehicle, locale }: { vehicle: VehiclePublic; locale: Loca
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-4 border-t-2 border-t-[var(--color-accent-primary)] p-6">
-        <h3 className="font-serif text-[22px] font-medium leading-tight tracking-tight text-[var(--color-text-primary)]">
+      <div className="flex flex-1 flex-col gap-3 border-t-2 border-t-[var(--color-accent-primary)] p-4">
+        <h3 className="font-serif text-[17px] font-medium leading-tight tracking-tight text-[var(--color-text-primary)]">
           {vehicle.name}
         </h3>
         {vehicle.features.length > 0 && (
           <ul className="flex flex-wrap gap-1.5">
-            {vehicle.features.slice(0, 4).map((feature) => (
+            {vehicle.features.slice(0, 3).map((feature) => (
               <li
                 key={feature}
-                className="border border-[color:rgba(168,134,90,0.22)] bg-[var(--color-bg-accent-soft)] px-2.5 py-1 text-[11px] leading-relaxed tracking-tight text-[var(--color-text-secondary)]"
+                className="border border-[color:rgba(168,134,90,0.22)] bg-[var(--color-bg-accent-soft)] px-2 py-0.5 text-[10.5px] leading-relaxed tracking-tight text-[var(--color-text-secondary)]"
               >
                 {feature}
               </li>
@@ -209,38 +209,38 @@ function VehicleCard({ vehicle, locale }: { vehicle: VehiclePublic; locale: Loca
         )}
         <div className="mt-auto grid grid-cols-2 gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
           <span
-            className="flex items-center gap-2 bg-[var(--color-bg-accent-soft)] px-4 py-3"
+            className="flex items-center gap-2 bg-[var(--color-bg-accent-soft)] px-3 py-2"
             title={locale === "de" ? "Fahrgäste" : "Passengers"}
           >
             <Users
-              className="h-4 w-4 text-[var(--color-accent-primary)]"
+              className="h-3.5 w-3.5 text-[var(--color-accent-primary)]"
               aria-hidden="true"
               strokeWidth={1.5}
             />
-            <span className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
-                {locale === "de" ? "Passagiere" : "Passengers"}
-              </span>
-              <span className="text-[15px] font-medium tabular-nums text-[var(--color-text-primary)]">
+            <span className="flex items-baseline gap-1">
+              <span className="text-[13px] font-medium tabular-nums text-[var(--color-text-primary)]">
                 {vehicle.capacity_passengers}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.1em] text-[var(--color-text-secondary)]">
+                {locale === "de" ? "Pax" : "pax"}
               </span>
             </span>
           </span>
           <span
-            className="flex items-center gap-2 bg-[var(--color-bg-accent-soft)] px-4 py-3"
+            className="flex items-center gap-2 bg-[var(--color-bg-accent-soft)] px-3 py-2"
             title={locale === "de" ? "Gepäckstücke" : "Luggage"}
           >
             <Briefcase
-              className="h-4 w-4 text-[var(--color-accent-primary)]"
+              className="h-3.5 w-3.5 text-[var(--color-accent-primary)]"
               aria-hidden="true"
               strokeWidth={1.5}
             />
-            <span className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
-                {locale === "de" ? "Gepäck" : "Luggage"}
-              </span>
-              <span className="text-[15px] font-medium tabular-nums text-[var(--color-text-primary)]">
+            <span className="flex items-baseline gap-1">
+              <span className="text-[13px] font-medium tabular-nums text-[var(--color-text-primary)]">
                 {vehicle.capacity_luggage}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.1em] text-[var(--color-text-secondary)]">
+                {locale === "de" ? "Gepäck" : "bags"}
               </span>
             </span>
           </span>

@@ -27,14 +27,14 @@ import { DatePicker } from "@/components/ui";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { ApiError } from "@/lib/api-errors";
 import { cn } from "@/utils/cn";
-import { normalizeDecimalInput, formatPriceEur } from "@/utils/decimal";
+import { normalizeDecimalInput, formatMoney } from "@/utils/decimal";
 import { z } from "zod";
 import { adminOrderSchema, type AdminOrderInput } from "@/schemas/admin-order.schema";
 import { adminDriverSchema } from "@/schemas/admin-driver.schema";
 import { searchCustomers, type CustomerAdmin } from "@/services/customers";
 import { vehicleLabel } from "@/services/vehicles";
 import { type DriverAdmin } from "@/services/drivers";
-import { useVehicles, useDrivers } from "@/hooks/queries";
+import { useDefaultCurrency, useVehicles, useDrivers } from "@/hooks/queries";
 import type { VehicleAdmin } from "@/types";
 import {
   sendDriverSlipWhatsApp, sendDocuments, downloadSlipPdf,
@@ -170,6 +170,7 @@ function AffixInput({ unit, invalid, ...props }: { unit: string; invalid?: boole
 }
 
 export default function NewTransportOrderPage() {
+  const cur = useDefaultCurrency();
   const pushToast = useAdminToast((s) => s.push);
 
   const {
@@ -420,7 +421,7 @@ export default function NewTransportOrderPage() {
   const brutto = netNum + vatAmt;
   const vatPct = +(rate * 100).toFixed(2);
   const leerKm = Math.max(0, (parseInt(kmGes) || 0) - (parseInt(kmBes) || 0));
-  const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
+  const money = (n: number) => formatMoney((Number.isFinite(n) ? n : 0).toFixed(2), cur);
   // Days → weeks for the payment-term hint (whole weeks shown plainly, else one decimal).
   const termWeeks = term != null ? term / 7 : 0;
   const termWeeksLabel = Number.isInteger(termWeeks) ? `${termWeeks} week${termWeeks === 1 ? "" : "s"}` : `${termWeeks.toFixed(1)} weeks`;
@@ -861,7 +862,7 @@ export default function NewTransportOrderPage() {
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <AdminFormField label={<span>Net amount (€) {req}</span>}>
+                  <AdminFormField label={<span>Net amount ({cur}) {req}</span>}>
                     <Controller
                       name="net"
                       control={control}

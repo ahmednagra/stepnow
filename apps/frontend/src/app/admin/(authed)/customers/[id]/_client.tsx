@@ -5,15 +5,17 @@
 "use client";
 
 import { notFound } from "next/navigation";
+import { useDefaultCurrency } from "@/hooks/queries";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty } from "@/components/admin";
 import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
-import { formatPriceEur } from "@/utils/decimal";
+import { formatMoney } from "@/utils/decimal";
 import { useCustomer, useCustomerOrders } from "@/hooks/queries/useCustomers";
 import { CustomerForm } from "../_form";
 
 export function CustomerEditClient({ id }: { id: string }) {
+  const cur = useDefaultCurrency();
   const { data: customer, isLoading, isError } = useCustomer(id);
   const { data: orders = [] } = useCustomerOrders(id);
 
@@ -37,14 +39,14 @@ export function CustomerEditClient({ id }: { id: string }) {
       <div className="space-y-4 p-6">
         <CustomerForm mode="edit" initial={customer} />
 
-        <AdminCard flush title={`${orders.length} order${orders.length === 1 ? "" : "s"} · ${formatPriceEur(String(totalBilled))} billed`}>
+        <AdminCard flush title={`${orders.length} order${orders.length === 1 ? "" : "s"} · ${formatMoney(String(totalBilled), cur)} billed`}>
           <AdminTable columns={["Order-No.", "Route", "Delivery", "Gross"]}>
             {orders.length > 0 ? orders.map((o) => (
               <AdminTableRow key={o.id}>
                 <AdminTableCell><Link href={`/admin/orders/${o.id}`} className="font-mono hover:underline">{o.order_number}</Link></AdminTableCell>
                 <AdminTableCell>{o.pickup_address} → {o.destination_address}</AdminTableCell>
                 <AdminTableCell><DeliveryStatusBadge status={o.delivery_status} /></AdminTableCell>
-                <AdminTableCell>{formatPriceEur(o.gross_amount)}</AdminTableCell>
+                <AdminTableCell>{formatMoney(o.gross_amount, cur)}</AdminTableCell>
               </AdminTableRow>
             )) : <AdminTableEmpty message="No orders yet." />}
           </AdminTable>

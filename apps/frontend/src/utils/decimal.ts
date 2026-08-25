@@ -47,16 +47,15 @@ export function formatDecimalForInput(value: string | null | undefined): string 
   return value;
 }
 
-/**
- * Format a decimal string as a EUR amount for display in lists.
- */
-export function formatPriceEur(value: string | null | undefined): string {
-  if (value == null) return "—";
+/** Format a decimal string in the given ISO 4217 unit. Symbol and placement come from Intl. */
+export function formatMoney(value: string | null | undefined, currency: string): string {
+  if (value === null || value === undefined || value === "") return "—";
   const num = Number(value);
-  if (Number.isNaN(num)) return value;
-  const amount = new Intl.NumberFormat("en-IE", {
+  if (Number.isNaN(num)) return String(value);
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(num);
-  return `${amount} €`; // symbol on the right
 }

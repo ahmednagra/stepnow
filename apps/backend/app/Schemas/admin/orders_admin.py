@@ -16,7 +16,7 @@ class OrderCreateFromBooking(BaseModel):
     # are pulled from the booking server-side (not trusted from the client).
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     net_amount: Decimal = Field(ge=0, max_digits=10, decimal_places=2)
-    vat_rate: Decimal | None = Field(default=None, ge=0, le=1, description="e.g. 0.07 or 0.19; defaults to 0.07")
+    vat_rate: Decimal | None = Field(default=None, ge=0, le=1, description="e.g. 0.07 or 0.19; resolved from the service when omitted")
     payment_due_days: int = Field(default=14, ge=0, le=365)
     distance_km: Decimal | None = Field(default=None, ge=0, max_digits=8, decimal_places=2)
     driver_name: str | None = Field(default=None, max_length=200)
@@ -65,6 +65,7 @@ class OrderAdminResponse(BaseModel):
     vat_rate: Decimal
     vat_amount: Decimal
     gross_amount: Decimal
+    currency: str
     payment_due_days: int
     due_date: date | None
     completed_at: datetime | None
@@ -114,8 +115,13 @@ class InvoiceItemResponse(BaseModel):
     sort_order: int
 
 
+class InvoiceCancel(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    reason: str | None = Field(default=None, max_length=500)
+
+
 class InvoiceUpdate(BaseModel):
-    """Edit a bill before or after issue. All fields optional (PATCH). Line items replace-all."""
+    """Draft-only edit (PATCH). Line items replace-all. Issued bills are corrected by cancel + reissue."""
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     issue_date: date | None = None
     payment_due_days: int | None = Field(default=None, ge=0, le=365)
@@ -142,6 +148,7 @@ class InvoiceAdminResponse(BaseModel):
     vat_rate: Decimal
     vat_amount: Decimal
     gross_amount: Decimal
+    currency: str
     skonto_pct: Decimal | None
     skonto_days: int | None
     payment_due_days: int
@@ -168,6 +175,7 @@ class InvoiceListResponse(BaseModel):
     route_from: str | None
     route_to: str | None
     gross_amount: Decimal
+    currency: str
     amount_paid: Decimal = Decimal("0.00")
     balance_due: Decimal = Decimal("0.00")
     is_overdue: bool = False
@@ -192,6 +200,7 @@ class PaymentResponse(BaseModel):
     order_id: UUID
     invoice_id: UUID | None
     amount: Decimal
+    currency: str
     method: str
     status: str
     received_at: datetime

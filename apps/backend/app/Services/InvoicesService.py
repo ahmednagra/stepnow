@@ -6,12 +6,12 @@ from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
-from app.Core.Exceptions import NotFoundError
+from app.Core.Exceptions import ConflictError, NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.orders import Order
 from app.Models.invoices import Invoice, InvoiceItem
 from app.Services.AuditService import AuditService
-from app.Utils.finance import compute_totals, invoice_number_from_order, money
+from app.Utils.finance import compute_totals, money, next_invoice_number
 
 
 class InvoicesService:
@@ -26,8 +26,6 @@ class InvoicesService:
 
     @staticmethod
     def _recompute(inv: Invoice) -> None:
-        """Roll base_net + line items into the stored net/vat/gross totals.
-        net = base_net + Σ(charge) − Σ(discount); vat = net × rate; gross = net + vat."""
         adjust = sum(
             (item.net_amount if item.kind == "charge" else -item.net_amount)
             for item in inv.items if not item.is_deleted
@@ -38,15 +36,15 @@ class InvoicesService:
 
     @staticmethod
     def create_from_order(db: Session, order_id: UUID, payload, actor: AdminUser, request: Request | None = None) -> Invoice:
-        order = (
-            db.query(Order)
-            .filter(Order.id == order_id, Order.is_deleted == False)  # noqa: E712
-            .first()
-        )
+        order = db.query(Order).filter(Order.id == order_id, Order.is_deleted == False).first()  # noqa: E712
         if not order:
             raise NotFoundError("Order not found", order_id=str(order_id))
 
-        existing = db.query(Invoice).filter(Invoice.order_id == order_id, Invoice.is_deleted == False).first()
+        existing = (
+            db.query(Invoice)
+            .filter(Invoice.order_id == order_id, Invoice.is_deleted == False, Invoice.status != "cancelled")  # noqa: E712
+            .first()
+        )
         if existing:
             return existing
 
@@ -55,13 +53,14 @@ class InvoicesService:
         base, vat, gross = compute_totals(order.net_amount, rate)
 
         invoice = Invoice(
-            invoice_number=invoice_number_from_order(order.order_number),
+            invoice_number=next_invoice_number(db, order.order_number),
             order_id=order.id,
             status="draft",
             issue_date=issue,
             recipient_block=payload.recipient_block,
             tax_number=payload.tax_number,
             base_net=base, net_amount=base, vat_rate=rate, vat_amount=vat, gross_amount=gross,
+            currency=order.currency,
             skonto_pct=payload.skonto_pct,
             skonto_days=payload.skonto_days,
             payment_due_days=payload.payment_due_days,
@@ -69,12 +68,6 @@ class InvoicesService:
         )
         db.add(invoice)
         db.flush()
-
-        # NOTE: the draft→dispatched delivery-lifecycle transition is intentionally NOT done
-        # here. Issuing the invoice is a billing event; the parcel is "dispatched" only when
-        # the driver is actually notified, which CourierController.send owns (it sets
-        # delivery_status="dispatched" + dispatched_at when the driver slip is emailed).
-
         AuditService.log(db, actor, "invoices", str(invoice.id), "create", None, InvoicesService._snapshot(invoice), request)
         db.commit()
         db.refresh(invoice)
@@ -89,9 +82,14 @@ class InvoicesService:
 
     @staticmethod
     def update(db: Session, invoice_id: UUID, payload, actor: AdminUser, request: Request | None = None) -> Invoice:
-        """Edit a bill before or after issue (no lock). Replace-all line items; recompute totals.
-        Order amounts are never touched — the vehicle account stays frozen."""
+        """Draft-only. Once issued, an invoice is a Buchungsbeleg (GoBD §§146/147 AO):
+        correct it with cancel() + a fresh invoice, never by rewriting it in place."""
         inv = InvoicesService.get(db, invoice_id)
+        if inv.status != "draft":
+            raise ConflictError(
+                "Invoice is no longer a draft and cannot be edited. Cancel it and issue a replacement.",
+                invoice_id=str(invoice_id), status=inv.status,
+            )
         before = InvoicesService._snapshot(inv)
         data = payload.model_dump(exclude_unset=True)
         items = data.pop("items", None)
@@ -111,6 +109,33 @@ class InvoicesService:
                 ))
         InvoicesService._recompute(inv)
         AuditService.log(db, actor, "invoices", str(inv.id), "update", before, InvoicesService._snapshot(inv), request)
+        db.commit()
+        db.refresh(inv)
+        return inv
+
+    @staticmethod
+    def issue(db: Session, invoice_id: UUID, actor: AdminUser, request: Request | None = None) -> Invoice:
+        inv = InvoicesService.get(db, invoice_id)
+        if inv.status != "draft":
+            raise ConflictError("Only a draft invoice can be issued.", invoice_id=str(invoice_id), status=inv.status)
+        before = InvoicesService._snapshot(inv)
+        inv.status = "issued"
+        AuditService.log(db, actor, "invoices", str(inv.id), "issue", before, InvoicesService._snapshot(inv), request)
+        db.commit()
+        db.refresh(inv)
+        return inv
+
+    @staticmethod
+    def cancel(db: Session, invoice_id: UUID, actor: AdminUser, request: Request | None = None, reason: str | None = None) -> Invoice:
+        """Storno. The number is retired, never reused; a replacement gets the next revision."""
+        inv = InvoicesService.get(db, invoice_id)
+        if inv.status == "cancelled":
+            raise ConflictError("Invoice is already cancelled.", invoice_id=str(invoice_id))
+        before = InvoicesService._snapshot(inv)
+        inv.status = "cancelled"
+        if reason:
+            inv.internal_notes = f"{inv.internal_notes}\n{reason}".strip() if inv.internal_notes else reason
+        AuditService.log(db, actor, "invoices", str(inv.id), "cancel", before, InvoicesService._snapshot(inv), request)
         db.commit()
         db.refresh(inv)
         return inv
@@ -137,9 +162,9 @@ class InvoicesService:
 
     @staticmethod
     def mark_paid(db: Session, invoice_id: UUID, actor: AdminUser, request: Request) -> Invoice:
-        inv = db.query(Invoice).filter(Invoice.id == invoice_id, Invoice.is_deleted == False).first()  # noqa: E712
-        if not inv:
-            raise NotFoundError("Invoice not found", invoice_id=str(invoice_id))
+        inv = InvoicesService.get(db, invoice_id)
+        if inv.status == "cancelled":
+            raise ConflictError("A cancelled invoice cannot be marked paid.", invoice_id=str(invoice_id))
         before = InvoicesService._snapshot(inv)
         inv.status = "paid"
         inv.paid_at = datetime.now(timezone.utc)

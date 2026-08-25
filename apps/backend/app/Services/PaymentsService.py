@@ -78,6 +78,7 @@ class PaymentsService:
             order_id=order.id,
             invoice_id=payload.invoice_id,
             amount=money(payload.amount),
+            currency=order.currency,
             method=payload.method,
             status=payload.status or "received",
             received_at=payload.received_at or datetime.now(timezone.utc),

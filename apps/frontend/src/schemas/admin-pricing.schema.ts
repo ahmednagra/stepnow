@@ -2,6 +2,10 @@
 import { z } from "zod";
 import { normalizeDecimalInput } from "@/utils/decimal";
 
+/** ISO 4217 units the panel offers. Add one here and it appears in every price form. */
+export const SUPPORTED_CURRENCIES = ["EUR", "CHF", "GBP", "USD"] as const;
+export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
+
 const optStr = (max: number) =>
   z.string().trim().max(max).optional().or(z.literal(""));
 
@@ -27,6 +31,7 @@ export const adminPricingItemSchema = z.object({
     .trim()
     .min(1, "Required")
     .refine((v) => normalizeDecimalInput(v) !== null, "Enter a valid amount (e.g. 45.50 or 45,50)"),
+  currency: z.enum(SUPPORTED_CURRENCIES),
   note_de: optStr(500),
   note_en: optStr(500),
 });

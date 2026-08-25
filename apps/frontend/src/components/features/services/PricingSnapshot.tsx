@@ -79,7 +79,7 @@ export function PricingSnapshot({
                 {item.to_location}
               </span>
               <span className="font-serif text-xl tabular-nums text-[var(--color-accent-primary)]">
-                {formatPrice(item.price_eur, locale)}
+                {formatPrice(item.price_eur, locale, item.currency)}
               </span>
             </li>
           ))}

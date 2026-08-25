@@ -66,7 +66,7 @@ VEHICLES = [
             "Extra luggage space",
             "Bluetooth audio",
         ],
-        "image_url": "https://media.oneweb.mercedes-benz.com/images/dynamic/europe/GB/247087/806_056/iris.png?q=COSY-EU-100-1713d0VXqaWFqtyO67PobzIr3eWsrrCsdRRzwQZg9pZbMw3SGtGyUtsd2sDcUfp8fXGEuiRJ0l3IJOB2NMcbApjTlI5uV6%25QC31C1kzNwtnm7jA6ZhKV5XN%25vq4t9yLRgcRYaxPa9rH1ejun8wsbfoiZrb1M4FnKJTg95vp6PDCIoSeWHmUtsd8J3cUfiMcXGE4TwJ0lgOrOB2PzqbApe79I5usr2QC32hOkzNL6Sm%25kbFDZk3tsdB%25ycJtj9GXOcBYqJ0l40xOB2igBbAp0ToI5uC5JQC3zgOkzN7t6m7jK2IhKUWP3IrZxD%25WLfscVvVS%25qjuauQFQ0ZzKG1BZeEsRrbP76&BKGND=9&IMGT=P27&cp=U7lLKRUtPa6KAFr8s_ubHw&uni=m&POV=BE340",
+        "image_url": "https://media.oneweb.mercedes-benz.com/images/dynamic/europe/GB/247087/806_056/iris.png?q=COSY-EU-100-1713d0VXqaWFqtyO67PobzIr3eWsrrCsdRRzwQZg9pZbMw3SGtGyUtsd2sDcUfp8fXGEuiRJ0l3IJOB2NMcbApjTlI5uV6%25QC31C1kzNwtnm7jA6ZhKV5XN%25vq4t9yLRgcRYaxPa9rH1ejun8wsbfoiZrb1M4FnKJTg95vp6PDCIoSeWHmUtsd8J3cUfiMcXGE4TwJ0lgOrOB2PzqbApe79I5usr2QC32hOkzNL6Sm%25kbFDZk3tsdB%25ycJtj9GXOcBYqJ0l40xOB2igBbAp0ToI5uC5JQC3zgOkzN7t6m7jK2IhKUWP3IrZxD%25WLfscVvVS%25qjuauQFQ0ZzKG1BZeEsRrbP76&BKGND=9&IMGT=P27&cp=U7lLKRUtPa6KAFr8s_ubHw&uni=m&POV=BE040,PZM",
     },
     {
         "sort_order": 30,
@@ -93,7 +93,7 @@ VEHICLES = [
             "Ambient lighting",
             "Punctuality guarantee",
         ],
-        "image_url": "https://media.oneweb.mercedes-benz.com/images/dynamic/europe/GB/247087/806_056/iris.png?q=COSY-EU-100-1713d0VXqaWFqtyO67PobzIr3eWsrrCsdRRzwQZUnRZbMw3SGtGyUtsd2sDcUfp8fXGEuiRJ0l3IJOB2NMcbApjTlI5uV6%25QC31C1kzNwtnm7jA6ZhKV5XN%25vq4t9yLRgcRYaxPa9rH1ejun8wsbfoiZrb1M4FnKJTg95vp6PDCIoSeWHmUtsd8J3cUfiMcXGE4TwJ0lgOrOB2PzqbApe79I5usr2QC32hOkzNL6Sm%25kbFDZk3tsdB%25ycJtj9GXOcBYqJ0l40xOB2igBbAp0ToI5uC5JQC3zgOkzN7t6m7jK2IhKUWP3IrZxD%25WLfscVvVS%25qjuauQFQ0ZzKG1BZeEsRrbP76&BKGND=9&IMGT=P27&cp=U7lLKRUtPa6KAFr8s_ubHw&uni=m&POV=BE290",
+        "image_url": "https://media.oneweb.mercedes-benz.com/images/dynamic/europe/GB/247087/806_056/iris.png?q=COSY-EU-100-1713d0VXqaWFqtyO67PobzIr3eWsrrCsdRRzwQZUnRZbMw3SGtGyUtsd2sDcUfp8fXGEuiRJ0l3IJOB2NMcbApjTlI5uV6%25QC31C1kzNwtnm7jA6ZhKV5XN%25vq4t9yLRgcRYaxPa9rH1ejun8wsbfoiZrb1M4FnKJTg95vp6PDCIoSeWHmUtsd8J3cUfiMcXGE4TwJ0lgOrOB2PzqbApe79I5usr2QC32hOkzNL6Sm%25kbFDZk3tsdB%25ycJtj9GXOcBYqJ0l40xOB2igBbAp0ToI5uC5JQC3zgOkzN7t6m7jK2IhKUWP3IrZxD%25WLfscVvVS%25qjuauQFQ0ZzKG1BZeEsRrbP76&BKGND=9&IMGT=P27&cp=U7lLKRUtPa6KAFr8s_ubHw&uni=m&POV=BE040,PZM",
     },
 ]
 

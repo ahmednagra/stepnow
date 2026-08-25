@@ -3,7 +3,6 @@
 # FormsAdminService). Money + numbering go through app.Utils.finance so the rules live once.
 
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session, selectinload
@@ -13,9 +12,7 @@ from app.Models.bookings import BookingRequest
 from app.Models.orders import Order
 from app.Services.AuditService import AuditService
 from app.Services.EmailService import EmailService
-from app.Utils.finance import compute_totals, order_date_sequence_number
-
-DEFAULT_VAT_RATE = Decimal("0.0700")  # reduced rate (PBefG short-distance passenger transport)
+from app.Utils.finance import compute_totals, default_currency, order_date_sequence_number, vat_rate_for
 
 
 class OrdersService:
@@ -44,12 +41,13 @@ class OrdersService:
         if existing:
             raise ConflictError("Booking already converted to an order", order_number=existing.order_number)
 
-        rate = payload.vat_rate if payload.vat_rate is not None else DEFAULT_VAT_RATE
+        rate = payload.vat_rate if payload.vat_rate is not None else vat_rate_for(db, booking.service_id)
         net, vat, gross = compute_totals(payload.net_amount, rate)
         due_date = date.today() + timedelta(days=payload.payment_due_days)
 
         order = Order(
-            order_number=order_date_sequence_number(db, Order.order_number),
+            order_number=order_date_sequence_number(db),
+            currency=default_currency(db),
             booking_id=booking.id,
             service_id=booking.service_id,
             vehicle_id=payload.vehicle_id,

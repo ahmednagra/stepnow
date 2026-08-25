@@ -9,7 +9,7 @@
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
-from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
@@ -32,6 +32,10 @@ class Payment(Base, TimestampMixin, SoftDeleteMixin):
     invoice_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True, index=True)
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default=text("'EUR'"),
+        comment="ISO 4217 — resolved from site_settings.default_currency at write time"
+    )
     method: Mapped[str] = mapped_column(String(20), nullable=False, default="cash")       # cash | girocard | bank_transfer | paypal | other
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="received", index=True)  # received | pending | refunded | failed
 
