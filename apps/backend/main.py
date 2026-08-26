@@ -144,9 +144,9 @@ def seed_counters() -> None:
         conn.execute(text("""
             INSERT INTO counters (scope, "key", value)
             SELECT 'order', right(order_number, 6),
-                   MAX(CAST(left(order_number, length(order_number) - 6) AS bigint))
+                   MAX(CAST(regexp_replace(left(order_number, length(order_number) - 6), '^[A-Za-z]+', '') AS bigint))
             FROM orders
-            WHERE order_number ~ '^[0-9]{7,}$'
+            WHERE order_number ~ '^[A-Za-z]*[0-9]{7,}$'
             GROUP BY right(order_number, 6)
             ON CONFLICT (scope, "key") DO UPDATE SET value = GREATEST(counters.value, EXCLUDED.value)
         """))

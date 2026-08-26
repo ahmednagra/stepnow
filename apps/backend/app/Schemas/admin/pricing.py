@@ -32,6 +32,7 @@ class PricingItemCreate(BaseModel):
     to_location_en: str | None = Field(default=None, max_length=200)
     price_eur: Decimal = Field(ge=0, le=99999999, decimal_places=2)
     currency: str = Field(default="EUR", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
+    distance_km: Decimal | None = Field(default=None, ge=0, le=99999, decimal_places=2)
     note_de: str | None = Field(default=None, max_length=500)
     note_en: str | None = Field(default=None, max_length=500)
 
@@ -45,6 +46,7 @@ class PricingItemUpdate(BaseModel):
     to_location_en: str | None = Field(default=None, max_length=200)
     price_eur: Decimal | None = Field(default=None, ge=0, le=99999999, decimal_places=2)
     currency: str | None = Field(default=None, min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
+    distance_km: Decimal | None = Field(default=None, ge=0, le=99999, decimal_places=2)
     note_de: str | None = Field(default=None, max_length=500)
     note_en: str | None = Field(default=None, max_length=500)
 
@@ -60,6 +62,7 @@ class PricingItemAdminResponse(BaseModel):
     to_location_en: str | None
     price_eur: Decimal
     currency: str
+    distance_km: Decimal | None
     note_de: str | None
     note_en: str | None
     is_deleted: bool

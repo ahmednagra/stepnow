@@ -14,7 +14,7 @@ from app.Models.services import Service
 from app.Services.AuditService import AuditService
 
 _CAT_FIELDS = ("service_id", "sort_order", "name_de", "name_en", "description_de", "description_en")
-_ITEM_FIELDS = ("category_id", "sort_order", "from_location_de", "from_location_en", "to_location_de", "to_location_en", "price_eur", "currency", "note_de", "note_en")
+_ITEM_FIELDS = ("category_id", "sort_order", "from_location_de", "from_location_en", "to_location_de", "to_location_en", "price_eur", "currency", "distance_km", "note_de", "note_en")
 
 
 class PricingService:
@@ -177,6 +177,7 @@ class PricingService:
                     "to_location": i.to_location_de if is_de else i.to_location_en,
                     "price_eur": str(i.price_eur),
                     "currency": i.currency,
+                    "distance_km": str(i.distance_km) if i.distance_km is not None else None,
                     "note": i.note_de if is_de else i.note_en,
                 } for i in items],
             })
@@ -210,6 +211,7 @@ class PricingService:
                         "to_location": i.to_location_de if is_de else i.to_location_en,
                         "price_eur": str(i.price_eur),
                     "currency": i.currency,
+                    "distance_km": str(i.distance_km) if i.distance_km is not None else None,
                         "note": i.note_de if is_de else i.note_en,
                     } for i in items],
                 })

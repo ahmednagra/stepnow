@@ -400,14 +400,6 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         "Why bullet 4",
         False,
     ),
-    (
-        "home.why.bullet.regional",
-        "home",
-        "Regional verwurzelt wir kennen die Strecken zwischen Esslingen, Stuttgart und Umgebung.",
-        "Regionally rooted we know the routes between Esslingen, Stuttgart and the surrounding area.",
-        "Why bullet 5",
-        False,
-    ),
     # Fleet preview
     (
         "home.fleet.pre_heading",
@@ -1293,6 +1285,14 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         False,
     ),
     # Comparison table (StepNow vs standard taxi)
+    (
+        "brand.tagline",
+        "brand",
+        "Der Nächster Schritt in Mobilität",
+        "The next step in mobility",
+        "Brand tagline as it appears in the logo lockup",
+        False,
+    ),
     (
         "pricing.comparison.eyebrow",
         "pricing",

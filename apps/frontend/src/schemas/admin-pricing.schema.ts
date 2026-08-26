@@ -32,6 +32,13 @@ export const adminPricingItemSchema = z.object({
     .min(1, "Required")
     .refine((v) => normalizeDecimalInput(v) !== null, "Enter a valid amount (e.g. 45.50 or 45,50)"),
   currency: z.enum(SUPPORTED_CURRENCIES),
+  /** Optional route distance. Blank means "not recorded", not zero. */
+  distance_km: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || normalizeDecimalInput(v) !== null, "Enter a valid distance (e.g. 24.5)"),
   note_de: optStr(500),
   note_en: optStr(500),
 });

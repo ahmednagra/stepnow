@@ -46,6 +46,7 @@ function defaults(it: PricingItemAdmin | undefined, nextSortOrder: number): Admi
     to_location_en: it?.to_location_en ?? "",
     price_eur: formatDecimalForInput(it?.price_eur),
     currency: (it?.currency ?? "EUR") as AdminPricingItemInput["currency"],
+    distance_km: formatDecimalForInput(it?.distance_km),
     note_de: it?.note_de ?? "",
     note_en: it?.note_en ?? "",
   };
@@ -88,6 +89,8 @@ export function ItemModal({
       to_location_de: orNull(values.to_location_de),
       to_location_en: orNull(values.to_location_en),
       price_eur: normalizedPrice,
+      currency: values.currency,
+      distance_km: values.distance_km?.trim() ? normalizeDecimalInput(values.distance_km) : null,
       note_de: orNull(values.note_de),
       note_en: orNull(values.note_en),
     };
@@ -192,6 +195,17 @@ export function ItemModal({
                 {...register("price_eur")}
               />
             </AdminFormField>
+            <AdminFormField label="Distance (km)" error={errors.distance_km?.message} hint="optional">
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="—"
+                className={`${adminInputClass} tabular-nums`}
+                {...register("distance_km")}
+              />
+            </AdminFormField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <AdminFormField label="Sort order" error={errors.sort_order?.message} hint="optional">
               <input type="number" min="0" className={adminInputClass} {...register("sort_order")} />
             </AdminFormField>

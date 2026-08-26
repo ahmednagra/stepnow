@@ -14,6 +14,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { SettingsAdmin } from "@/types";
 import Link from "next/link";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,7 +35,7 @@ import { adminDriverSchema } from "@/schemas/admin-driver.schema";
 import { searchCustomers, type CustomerAdmin } from "@/services/customers";
 import { vehicleLabel } from "@/services/vehicles";
 import { type DriverAdmin } from "@/services/drivers";
-import { useDefaultCurrency, useVehicles, useDrivers } from "@/hooks/queries";
+import { useSettings, useDefaultCurrency, useVehicles, useDrivers } from "@/hooks/queries";
 import type { VehicleAdmin } from "@/types";
 import {
   sendDriverSlipWhatsApp, sendDocuments, downloadSlipPdf,
@@ -62,15 +63,19 @@ const TERM_OPTIONS = [
   { days: 28, label: "4 weeks" },
 ];
 
-// Display-only issuer block for the live preview. The stored PDFs are rendered server-side
-// from SiteSettings — these strings never reach the actual document.
-const ISSUER = {
-  name: "StepNow Rides & Movers",
-  sub: "Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau",
-  steuer: "Steuer-Nr. 59500/72609",
-  bank: "IBAN DE10 1001 7997 7961 0444 47 · BIC HOLVDEB1 · Naeem Ahmad",
-  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · HRA 742905 AG Stuttgart · www.step-now.de",
-};
+// Display-only issuer block for the live preview, derived from SiteSettings so it can never
+// drift from the server-rendered PDF.
+function issuerFrom(s?: SettingsAdmin | null) {
+  const addr = s ? `${s.address_street}, ${s.address_postcode} ${s.address_city}` : "";
+  const reg = s?.commercial_register && s?.register_court ? `${s.commercial_register} ${s.register_court}` : "";
+  return {
+    name: s?.business_name ?? "",
+    sub: s ? `${s.owner_name} ${s.legal_form} · ${addr}` : "",
+    steuer: s?.tax_number ? `Steuer-Nr. ${s.tax_number}` : "",
+    bank: s ? [s.iban && `IBAN ${s.iban}`, s.bic && `BIC ${s.bic}`, s.bank_account_holder].filter(Boolean).join(" · ") : "",
+    foot: s ? [s.business_name, `${s.owner_name} ${s.legal_form}`, addr, reg, s.website].filter(Boolean).join(" · ") : "",
+  };
+}
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const deDate = (iso: string) =>
@@ -171,6 +176,7 @@ function AffixInput({ unit, invalid, ...props }: { unit: string; invalid?: boole
 
 export default function NewTransportOrderPage() {
   const cur = useDefaultCurrency();
+  const ISSUER = issuerFrom(useSettings().data);
   const pushToast = useAdminToast((s) => s.push);
 
   const {
@@ -1084,7 +1090,7 @@ export default function NewTransportOrderPage() {
                         {previewMode === "driver" ? "Transportauftrag" : "Rechnung"}
                       </p>
                       <p className="font-mono text-[12.5px] text-slate-700">
-                        {order?.order_number ? `${previewMode === "driver" ? "A-" : "R"}${order.order_number}` : "—"}
+                        {order?.order_number ? (previewMode === "driver" ? order.order_number : `R${order.order_number.replace(/^[A-Za-z]+/, "")}`) : "—"}
                       </p>
                       <p>{deDate(orderDate)}</p>
                       {previewMode === "customer" && <p>{ISSUER.steuer}</p>}

@@ -6,6 +6,7 @@ export interface PricingItemPublic {
   to_location: string;
   price_eur: string;
   currency: string;
+  distance_km: string | null;
   note: string | null;
   sort_order: number;
 }
@@ -27,6 +28,7 @@ export interface PricingItemAdmin {
   to_location_en: string | null;
   price_eur: string;
   currency: string;
+  distance_km: string | null;
   note_de: string | null;
   note_en: string | null;
   sort_order: number;

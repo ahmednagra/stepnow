@@ -70,10 +70,15 @@ def date_suffix(for_date: date | None = None) -> str:
     return f"{d.day:02d}{d.month:02d}{str(d.year)[-2:]}"
 
 
+ORDER_PREFIX = "P"
+INVOICE_PREFIX = "R"
+
+
 def order_date_sequence_number(db: Session, for_date: date | None = None) -> str:
-    """Buchhaltung format: counter(2) + DD + MM + YY, e.g. '01260326' = 1st order on 26.03.2026."""
+    """Format: P + counter(2) + DD + MM + YY, e.g. 'P02130826' = 2nd order on 13.08.2026.
+    The letter is part of the stored number, so nothing downstream re-prefixes it."""
     suffix = date_suffix(for_date)
-    return f"{next_counter(db, 'order', suffix):02d}{suffix}"
+    return f"{ORDER_PREFIX}{next_counter(db, 'order', suffix):02d}{suffix}"
 
 
 def next_customer_number(db: Session, prefix: str = "K911", width: int = 3) -> str:
@@ -81,9 +86,11 @@ def next_customer_number(db: Session, prefix: str = "K911", width: int = 3) -> s
 
 
 def invoice_number_from_order(order_number: str, revision: int = 0) -> str:
-    """'R' + order_number, matching Buchhaltung genRechnungNr. A replacement issued after a
-    Storno appends '-{revision}' so a cancelled number is never reissued (§14 UStG)."""
-    return f"R{order_number}" if revision <= 0 else f"R{order_number}-{revision}"
+    """Swap the order's letter for the invoice one: P02130826 -> R02130826. A replacement issued
+    after a Storno appends '-{revision}' so a cancelled number is never reissued (§14 UStG)."""
+    core = order_number.lstrip(ORDER_PREFIX) if order_number[:1].isalpha() else order_number
+    base = f"{INVOICE_PREFIX}{core}"
+    return base if revision <= 0 else f"{base}-{revision}"
 
 
 def next_invoice_number(db: Session, order_number: str) -> str:

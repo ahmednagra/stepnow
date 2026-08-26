@@ -125,7 +125,7 @@ class DriverSlipPdfService:
         story.append(Spacer(1, 8 * mm))
         story.append(Paragraph("TRANSPORTAUFTRAG", title))
         ref = f"  ·  Lade-Ref.: {order.client_reference}" if order.client_reference else ""
-        story.append(Paragraph(f"Auftrags-Nr.: A-{order.order_number}{ref}", small))
+        story.append(Paragraph(f"Auftrags-Nr.: {order.order_number}{ref}", small))
         story.append(Spacer(1, 5 * mm))
 
         # Spediteur / Auftraggeber + Wichtige Infos (two columns)

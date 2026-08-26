@@ -210,7 +210,7 @@ AUFTRAEGE = [
     {"auftrag_nr":"03290526","rechnung_nr":"R03290526","cust_nr":"K911013","ku":"Concord Express GmbH & Co. KG","von":"Schierling","nch":"Bad Rappenau","km":250,"fz":"SN 112","termin":"2026-05-29","ref_nr":"260501497","r_net":Decimal("200.00"),"r_vat_r":Decimal("0.19"),"r_vat_b":Decimal("38.00"),"r_brutto":Decimal("238.00"),"r_zz":45,"r_faellig":"2026-07-15","r_dat":"2026-05-31","r_stat":"Unbezahlt","r_skonto":Decimal("5.0"),"empfaenger":"Concord Express GmbH & Co. KG"},
 ]
 
-TAX_NUMBER = "59500/72609"
+TAX_NUMBER = "59002/59899"
 
 
 def _find_customer(db, cust_nr: str):

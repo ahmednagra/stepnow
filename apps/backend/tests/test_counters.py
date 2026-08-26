@@ -8,7 +8,13 @@ from datetime import date
 import pytest
 from sqlalchemy import text
 
-from app.Utils.finance import next_counter, next_customer_number, next_invoice_number, order_date_sequence_number
+from app.Utils.finance import (
+    ORDER_PREFIX,
+    next_counter,
+    next_customer_number,
+    next_invoice_number,
+    order_date_sequence_number,
+)
 
 
 @pytest.fixture
@@ -53,10 +59,21 @@ def test_order_number_format_and_uniqueness(db):
     first = order_date_sequence_number(db, when)
     second = order_date_sequence_number(db, when)
     db.commit()
+    assert first.startswith(ORDER_PREFIX) and second.startswith(ORDER_PREFIX)
     assert first.endswith("260326") and second.endswith("260326")
-    assert len(first) >= 8
     assert first != second
-    assert int(second[:-6]) == int(first[:-6]) + 1
+    counter = lambda n: int(n[len(ORDER_PREFIX):-6])
+    assert counter(second) == counter(first) + 1
+
+
+def test_invoice_number_swaps_the_order_letter(db):
+    when = date(2026, 3, 28)
+    order_no = order_date_sequence_number(db, when)
+    db.commit()
+    invoice_no = next_invoice_number(db, order_no)
+    db.commit()
+    assert order_no.startswith("P")
+    assert invoice_no == f"R{order_no[1:]}"
 
 
 def test_order_counter_survives_past_ninety_nine(db):

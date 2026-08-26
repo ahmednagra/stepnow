@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # StepNow — Monorepo
 
-German licensed transport + courier company — **StepNow Rides & Movers, Naeem Ahmad e.K.** (Blumenstraße 8, 73779 Deizisau; Handelsregister **HRA 742905 · AG Stuttgart**; Steuer-Nr. **59500/72609**; Stuttgart/Esslingen region). The passenger side is § 49 PBefG *Mietwagen mit Fahrer*; the day-to-day billed business is B2B courier *Sonderfahrten* for freight forwarders (the reference `Transportauftrag` / `Rechnung` PDFs and `StepNow_Data-1.json` are canonical for that path).
+German licensed transport + courier company — **StepNow Rides & Movers, Naeem Ahmad e.K.** (Blumenstraße 8, 73779 Deizisau; Handelsregister **HRA 742905 · AG Stuttgart**; Steuer-Nr. **59002/59899**; USt-IdNr. **DE 463491338**; Stuttgart/Esslingen region). The passenger side is § 49 PBefG *Mietwagen mit Fahrer*; the day-to-day billed business is B2B courier *Sonderfahrten* for freight forwarders (the reference `Transportauftrag` / `Rechnung` PDFs and `StepNow_Data-1.json` are canonical for that path).
 Two apps, one repo: a bilingual public marketing+booking website and an internal admin/ops panel.
 **Each app has its own CLAUDE.md with the canonical patterns — read it before touching that app.**
 

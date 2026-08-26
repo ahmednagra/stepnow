@@ -29,7 +29,7 @@ export default function VehicleLedgerPage({ params }: { params: { id: string } }
 
   const exportRows = useMemo(
     () => orders.map((o) => ({
-      order_no: `A-${o.order_number}`, date: o.date ?? "", customer: o.customer_name,
+      order_no: o.order_number, date: o.date ?? "", customer: o.customer_name,
       from: o.route_from ?? "", to: o.route_to ?? "",
       net: num(o.net_amount).toFixed(2), gross: num(o.gross_amount).toFixed(2),
       paid: num(o.amount_paid).toFixed(2), balance: num(o.balance_due).toFixed(2), status: o.status,

@@ -114,7 +114,7 @@ export function CustomerForm({ mode, initial }: CustomerFormProps) {
             <input className={adminInputClass} {...register("company_vatid")} placeholder="DE123456789" />
           </AdminFormField>
           <AdminFormField label="Tax number" hint="Steuernummer — optional." error={errors.tax_number?.message}>
-            <input className={adminInputClass} {...register("tax_number")} placeholder="59500/72609" />
+            <input className={adminInputClass} {...register("tax_number")} placeholder="59002/59899" />
           </AdminFormField>
         </div>
       </AdminCard>

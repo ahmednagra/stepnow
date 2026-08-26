@@ -122,6 +122,7 @@ class PricingItemPublicResponse(BaseModel):
     to_location: str | None
     price_eur: str
     currency: str
+    distance_km: str | None
     note: str | None
 
 

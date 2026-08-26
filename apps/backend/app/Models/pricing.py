@@ -43,6 +43,9 @@ class PricingItem(Base, TimestampMixin, SoftDeleteMixin):
         String(3), nullable=False, default="EUR", server_default=text("'EUR'"),
         comment="ISO 4217 unit for price_eur — the column name predates multi-currency"
     )
+    distance_km: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 2), nullable=True, comment="Optional route distance shown next to the price"
+    )
     note_de: Mapped[str | None] = mapped_column(String(500), nullable=True)
     note_en: Mapped[str | None] = mapped_column(String(500), nullable=True)
     category: Mapped["PricingCategory"] = relationship(back_populates="items")
