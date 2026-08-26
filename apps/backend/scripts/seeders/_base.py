@@ -6,6 +6,14 @@ import sys
 from pathlib import Path
 
 
+def use_utf8_stdout() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def bootstrap_path() -> None:
     # _base.py → seeders → scripts → apps/backend. Adds apps/backend to sys.path and loads its .env. Idempotent.
     backend_dir = Path(__file__).resolve().parent.parent.parent
@@ -29,6 +37,7 @@ def bootstrap_path() -> None:
                 os.environ[key] = value
 
 
+use_utf8_stdout()
 bootstrap_path()
 
 SYSTEM_ACTOR_EMAIL = "system@stepnow.local"
@@ -54,8 +63,16 @@ def get_system_actor(db):
     return actor
 
 
+def _safe_print(line: str) -> None:
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "ascii"
+        print(line.encode(enc, errors="replace").decode(enc, errors="replace"))
+
+
 def log_action(label: str, action: str, detail: str = "") -> None:
-    print(f"  [{action}] {label}" + (f" — {detail}" if detail else ""))
+    _safe_print(f"  [{action}] {label}" + (f" — {detail}" if detail else ""))
 
 
 def log_skip(label: str, detail: str = "") -> None:

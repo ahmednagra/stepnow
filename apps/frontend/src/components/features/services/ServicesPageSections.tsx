@@ -96,7 +96,10 @@ export function ServicesIndex({
             className="block h-px flex-1 bg-[color:var(--color-border-soft)]"
           />
         </p>
-        <div className="grid grid-cols-1 border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-2 lg:grid-cols-4">
+        {/* auto-fit collapses empty tracks, so five services fill five columns instead of
+              leaving a void beside the fifth. gap-px lets the parent show through as hairlines,
+              which replaces the per-child nth-child border rules entirely. */}
+          <div className="grid grid-cols-1 gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-[repeat(auto-fit,minmax(212px,1fr))]">
           {data.map(({ service, lowestPrice, lowestCurrency }, idx) => {
             const Icon = ICON_BY_SLUG[service.slug] ?? Plane;
             const number = String(idx + 1).padStart(2, "0");
@@ -104,13 +107,7 @@ export function ServicesIndex({
               <a
                 key={service.id}
                 href={`#${service.slug}`}
-                className={cn(
-                  "group flex flex-col gap-1 bg-[var(--color-bg-page)] px-5 py-5 transition-colors duration-base hover:bg-[var(--color-bg-surface)] md:px-6",
-                  "sm:border-r sm:border-[color:var(--color-border-soft)] sm:[&:nth-child(2n)]:border-r-0",
-                  "lg:[&:last-child]:border-r-0 lg:[&:nth-child(-n+3)]:border-r lg:[&:nth-child(-n+3)]:border-[color:var(--color-border-soft)] lg:[&:nth-child(2n)]:border-r lg:[&:nth-child(2n)]:border-[color:var(--color-border-soft)]",
-                  idx < data.length - 1 &&
-                    "border-b border-[color:var(--color-border-soft)] lg:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0",
-                )}
+                className="group flex flex-col gap-1 bg-[var(--color-bg-page)] px-5 py-5 transition-colors duration-base hover:bg-[var(--color-bg-surface)] md:px-6"
               >
                 <div className="mb-2 flex items-center justify-between">
                   <Icon
@@ -129,7 +126,7 @@ export function ServicesIndex({
                   {lowestPrice ? (
                     <>
                       <span className="text-[10.5px] uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
-                        {locale === "de" ? "Ab" : "From"}
+                        {pickT(t, "services.price.from", locale === "de" ? "Ab" : "From")}
                       </span>
                       <span className="font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)] md:text-[22px]">
                         {formatPrice(lowestPrice, locale, lowestCurrency)}
@@ -137,12 +134,12 @@ export function ServicesIndex({
                     </>
                   ) : (
                     <span className="text-[13px] text-[var(--color-text-primary)]">
-                      {locale === "de" ? "Auf Anfrage" : "On request"}
+                      {pickT(t, "services.price.on_request", locale === "de" ? "Auf Anfrage" : "On request")}
                     </span>
                   )}
                 </div>
                 <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent-primary)] transition-colors group-hover:text-[var(--color-text-primary)]">
-                  {locale === "de" ? "Mehr lesen" : "Read more"}
+                  {pickT(t, "services.index.read_more", locale === "de" ? "Mehr lesen" : "Read more")}
                   <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
                 </span>
               </a>
@@ -395,7 +392,7 @@ export function ServiceRichRow({
               <span className="flex items-baseline gap-2">
                 <span className="text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                   {lowestRouteLabel
-                    ? `${lowestRouteLabel} ${locale === "de" ? "ab" : "from"}`
+                    ? `${lowestRouteLabel} ${pickT(t, "services.price.from_inline", locale === "de" ? "ab" : "from")}`
                     : locale === "de"
                       ? "Ab"
                       : "From"}
@@ -558,12 +555,10 @@ export function HowItWorksBeat({ t, locale }: { t: TFunction; locale: Locale }) 
 export function ServicesEditorialClose({
   t,
   locale,
-  settings,
   pricingHref,
 }: {
   t: TFunction;
   locale: Locale;
-  settings: { concession_number: string | null };
   pricingHref: string;
 }) {
   return (
@@ -602,10 +597,6 @@ export function ServicesEditorialClose({
           )}
         </p>
         <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--color-text-secondary)]">
-          <span className="text-[var(--color-accent-primary)]">
-            § 49 PBefG{settings.concession_number ? ` · ${settings.concession_number}` : ""}
-          </span>{" "}
-          ·{" "}
           {pickT(
             t,
             "services.close.attribution",

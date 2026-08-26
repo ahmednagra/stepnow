@@ -10,6 +10,8 @@ from sqlalchemy import text
 
 from app.Utils.finance import (
     ORDER_PREFIX,
+    booking_reference,
+    job_core,
     next_counter,
     next_customer_number,
     next_invoice_number,
@@ -59,10 +61,10 @@ def test_order_number_format_and_uniqueness(db):
     first = order_date_sequence_number(db, when)
     second = order_date_sequence_number(db, when)
     db.commit()
-    assert first.startswith(ORDER_PREFIX) and second.startswith(ORDER_PREFIX)
+    assert first.startswith(f"{ORDER_PREFIX}-") and second.startswith(f"{ORDER_PREFIX}-")
     assert first.endswith("260326") and second.endswith("260326")
     assert first != second
-    counter = lambda n: int(n[len(ORDER_PREFIX):-6])
+    counter = lambda n: int(job_core(n)[:-6])
     assert counter(second) == counter(first) + 1
 
 
@@ -72,8 +74,8 @@ def test_invoice_number_swaps_the_order_letter(db):
     db.commit()
     invoice_no = next_invoice_number(db, order_no)
     db.commit()
-    assert order_no.startswith("P")
-    assert invoice_no == f"R{order_no[1:]}"
+    assert order_no.startswith("P-")
+    assert invoice_no == f"R-{job_core(order_no)}"
 
 
 def test_order_counter_survives_past_ninety_nine(db):
@@ -91,13 +93,55 @@ def test_customer_numbers_are_unique_and_prefixed(db):
 
 
 def test_invoice_number_gets_a_revision_after_the_first(db):
-    order_number = "01010199"
+    order_number = "P-01010199"
     db.execute(text('DELETE FROM counters WHERE scope = :s AND "key" = :k'), {"s": "invoice", "k": order_number})
     db.commit()
     first = next_invoice_number(db, order_number)
     second = next_invoice_number(db, order_number)
     db.commit()
-    assert first == f"R{order_number}"
-    assert second == f"R{order_number}-1"
+    assert first == "R-01010199"
+    assert second == "R-01010199-1"
     db.execute(text('DELETE FROM counters WHERE scope = :s AND "key" = :k'), {"s": "invoice", "k": order_number})
     db.commit()
+
+
+def test_booking_order_and_invoice_share_one_core(db):
+    """The letter says which document, the digits say which job — end to end."""
+    reference = booking_reference(db, date(2026, 4, 2))
+    db.commit()
+    core = job_core(reference)
+    order_no = order_date_sequence_number(db, core=core)
+    invoice_no = next_invoice_number(db, order_no)
+    db.commit()
+    assert (reference, order_no, invoice_no) == (f"B-{core}", f"P-{core}", f"R-{core}")
+
+
+def test_bookings_and_orders_never_claim_the_same_core(db):
+    when = date(2026, 4, 3)
+    cores = [job_core(booking_reference(db, when)), job_core(order_date_sequence_number(db, when))]
+    db.commit()
+    assert len(set(cores)) == 2
+
+
+def test_customer_number_steps_over_explicitly_numbered_rows(db):
+    """A legacy import writes its own Kunden-Nr. without touching the counter. The next claim has
+    to step over those rows — otherwise it collides with uq_customers_number_live on a fresh DB."""
+    from app.Models.customers import Customer
+    from app.Utils.finance import sync_customer_counter
+
+    prefix = "TSTK"
+    clear = lambda: db.execute(
+        text('DELETE FROM counters WHERE scope = :s AND "key" = :k'), {"s": "customer", "k": prefix}
+    )
+    clear()
+    db.add_all([
+        Customer(customer_number=f"{prefix}001", company_name="Legacy import", is_business=True),
+        Customer(customer_number=f"{prefix}002", company_name="Legacy import", is_business=True),
+    ])
+    db.flush()
+    assert next_customer_number(db, prefix) == f"{prefix}003"
+    clear()
+    sync_customer_counter(db, prefix)
+    assert next_customer_number(db, prefix) == f"{prefix}003"
+    clear()
+    db.rollback()

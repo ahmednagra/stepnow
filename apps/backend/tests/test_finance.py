@@ -57,10 +57,10 @@ def test_date_suffix_is_ddmmyy():
 
 
 def test_invoice_number_derives_from_order():
-    assert invoice_number_from_order("01260326") == "R01260326"
+    assert invoice_number_from_order("01260326") == "R-01260326"
 
 
 def test_invoice_number_revisions_never_collide():
     numbers = {invoice_number_from_order("01260326", r) for r in range(5)}
     assert len(numbers) == 5
-    assert invoice_number_from_order("01260326", 1) == "R01260326-1"
+    assert invoice_number_from_order("01260326", 1) == "R-01260326-1"

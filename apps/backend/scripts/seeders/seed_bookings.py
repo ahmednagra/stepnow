@@ -1,25 +1,14 @@
-# scripts/seeders/seed_bookings.py
-"""Seed sample bookings — one in each of the 6 lifecycle states.
+# apps/backend/scripts/seeders/seed_bookings.py
+# Seeds one sample booking in each of the six lifecycle states, so the admin list, its filters and
+# the status changer all have something real to render. Names are deliberately fake (Mustermann).
+#
+# new (just submitted) -> contacted -> quoted -> confirmed -> completed, plus cancelled. 'quoted'
+# and later set quoted_at, 'completed' sets completed_at. submit_booking() always creates as 'new',
+# so the transitions are applied afterwards through FormsAdminService.
+#
+# Idempotent: re-running matches on customer_email, so a seeded booking is never duplicated.
+# References come from FormsService, i.e. the real 'B-' job counter.
 
-Customer names are clearly fake (Max Mustermann, Anna Beispiel — the German
-equivalents of John Doe) so seed data can't be confused with real
-submissions. Email domains use @example.com / @example.de.
-
-Lifecycle distribution:
-- new        (just submitted, awaiting Naeem)
-- contacted  (Naeem reached out, gathering info)
-- quoted     (price quoted, awaiting customer confirm)
-- confirmed  (customer confirmed, ride scheduled)
-- completed  (ride completed)
-- cancelled  (cancelled at any stage)
-
-For 'quoted'+, we mark quoted_at; for 'completed', completed_at. The
-FormsService.submit_booking() creates with status='new', so we update
-afterwards using FormsAdminService for the lifecycle transitions.
-
-Idempotent: seeded bookings have references starting with 'SN-SEED' to
-distinguish from real bookings. Re-running checks for these.
-"""
 from datetime import datetime, timedelta, timezone
 
 from config.database import SessionLocal  # noqa: E402

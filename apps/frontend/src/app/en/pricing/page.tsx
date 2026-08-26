@@ -9,7 +9,7 @@ import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
-import { ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
+import { Container, MobileStickyBar } from "@/components/shared";
 import {
   PricingTabs,
   PricingTrustStrip,
@@ -101,8 +101,7 @@ export default async function PricingPageEn() {
       </section>
 
       <section className="bg-[var(--color-bg-page)]">
-        <Container className="pb-section pt-8 md:pt-10">
-          <ConcessionBadge settings={settings} tone="light" />
+        <Container className="pb-section pt-8 md:pt-10">
           <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
             <div className="max-w-2xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
@@ -129,12 +128,7 @@ export default async function PricingPageEn() {
       <PricingExcludedStrip t={t} locale="en" />
       <PricingComparison t={t} locale="en" lowestPrice={lowest.price} lowestCurrency={lowest.currency} />
       <PricingPaymentCancellation t={t} locale="en" agbHref="/en/terms" />
-
-      <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-        <Container className="flex justify-center py-8 md:py-10">
-          <ConcessionBadge settings={settings} tone="light" />
-        </Container>
-      </section>
+
       <MobileStickyBar settings={settings} />
       <JsonLd
         data={buildBreadcrumbJsonLd([

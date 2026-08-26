@@ -56,6 +56,9 @@ npm run typecheck                          # tsc --noEmit  ← the reliable pre-
 4. `Order.status` (financial: open→completed/cancelled) is independent of `Order.delivery_status` (courier: draft→dispatched→picked_up→delivered). **Orders attach to a vehicle, not a driver.**
 
 **Schema & seeding — the models ARE the schema. No migration files.**
+- **A new database needs one grant first** (PostgreSQL 15+ no longer gives a non-owner role
+  `CREATE` on `public`): `ALTER SCHEMA public OWNER TO stepnow;` as a superuser. Startup names
+  this command if it is missing.
 - `sync_schema()` in `main.py` runs on every boot and makes the database match `Base.metadata`:
   creates missing tables, **adds missing columns**, creates missing indexes, and drops a legacy
   plain `UNIQUE` once a partial (soft-delete-aware) index supersedes it. Every step is additive

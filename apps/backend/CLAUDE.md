@@ -200,6 +200,22 @@ New domain data → add `scripts/seeders/seed_{feature}.py`, register it in `scr
 
 ## Schema changes — edit the model, restart
 
+### One-time grant on a NEW database
+
+`sync_schema()` creates the tables on first boot — but PostgreSQL 15 removed the implicit
+`CREATE` grant on schema `public` for every role except its owner. On a freshly created
+database the app therefore starts, tries to create `admin_users`, and gets
+`permission denied for schema public`. Run this once, as a superuser, per new database:
+
+```sql
+ALTER SCHEMA public OWNER TO stepnow;      -- or: GRANT CREATE, USAGE ON SCHEMA public TO stepnow;
+```
+
+Startup checks the privilege first and names this command if it is missing, rather than
+failing inside `create_all`.
+
+### How the sync works
+
 There are no migration files. `sync_schema()` in [main.py](main.py) runs on every boot and makes
 the database match `Base.metadata`: creates missing tables, **adds missing columns**
 (`ALTER TABLE … ADD COLUMN IF NOT EXISTS`), creates missing indexes, and drops a legacy plain

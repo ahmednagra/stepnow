@@ -1,4 +1,4 @@
-# scripts/seeders/seed_site_settings.py
+# apps/backend/scripts/seeders/seed_site_settings.py
 # Idempotent seeder that creates the singleton site_settings row with Naeem's business data + map coords.
 from datetime import date
 from decimal import Decimal

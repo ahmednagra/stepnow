@@ -1,6 +1,6 @@
 # apps/backend/app/Services/FormsService.py
-import secrets
-from datetime import datetime, timezone
+# Public form intake — booking requests and contact messages. Bookings claim the shared job
+# counter here, so the reference a customer is quoted survives into the order and the invoice.
 from typing import Any
 from fastapi import Request
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ from app.Models.contact import ContactMessage
 from app.Services.AuditService import AuditService
 from app.Services.EmailService import EmailService
 from app.Services.SettingsService import SettingsService
+from app.Utils.finance import booking_reference
 
 
 class FormsService:
@@ -21,7 +22,7 @@ class FormsService:
             return None, []
         if not data.get("consent_dsgvo"):
             raise DomainError("DSGVO consent required", field="consent_dsgvo")
-        reference = FormsService._generate_booking_reference()
+        reference = booking_reference(db)
         booking = BookingRequest(
             reference=reference,
             status="new",
@@ -78,11 +79,6 @@ class FormsService:
         db.refresh(message)
         return message, email_log_ids
 
-    @staticmethod
-    def _generate_booking_reference() -> str:
-        now = datetime.now(timezone.utc)
-        suffix = secrets.token_hex(3).upper()
-        return f"SN-{now.strftime('%Y%m%d')}-{suffix}"
 
     @staticmethod
     def _queue_booking_emails(db: Session, booking: BookingRequest) -> list[int]:

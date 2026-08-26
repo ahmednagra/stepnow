@@ -1,14 +1,8 @@
-# scripts/seeders/seed_services.py
-"""Seed the five StepNow services with realistic bilingual content.
-
-Each service has:
-- Bilingual slugs (DE/EN)
-- Bilingual titles, descriptions
-- Markdown long_description (real German prose, not Lorem Ipsum)
-- SEO meta fields
-
-Idempotent: keyed by slug_de. Existing services are skipped.
-"""
+# apps/backend/scripts/seeders/seed_services.py
+# Seeds the five StepNow services with full bilingual content: DE/EN slugs, titles and descriptions,
+# a Markdown long_description in real German prose, and the SEO meta fields.
+#
+# Idempotent: keyed by slug_de — an existing service is skipped, never overwritten.
 
 from decimal import Decimal  # noqa: E402
 

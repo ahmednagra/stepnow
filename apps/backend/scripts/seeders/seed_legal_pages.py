@@ -1,17 +1,12 @@
-# scripts/seeders/seed_legal_pages.py
-"""Seed Impressum, Datenschutz, and AGB legal pages.
-
-Workflow:
-1. Create the page slug
-2. Save a draft with title + body in both languages
-3. Publish the draft → writes immutable version row
-
-Placeholders use the validated single-brace syntax {site_settings.field}.
-The backend resolves them at GET-time from the live site_settings row.
-
-Idempotent: if a page slug exists and has a published version, the seeder
-skips it. To reset, soft-delete the page first via admin, then re-run.
-"""
+# apps/backend/scripts/seeders/seed_legal_pages.py
+# Seeds Impressum, Datenschutz and AGB: create the slug, save a bilingual draft, then publish it so
+# an immutable version row exists — the same three steps the admin UI performs.
+#
+# Bodies use the validated single-brace {site_settings.field} placeholders, resolved at GET-time
+# from the live settings row, so the legal text never carries a stale address or tax number.
+#
+# Idempotent: a slug that already has a published version is skipped. To reset, soft-delete the
+# page in admin and re-run.
 
 from config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402

@@ -1,13 +1,7 @@
-# scripts/seeders/seed_vehicles.py
-"""Seed the fleet — three Mercedes-Benz B-Klasse vehicles in different colours.
-
-- Mercedes-Benz B-Klasse — Obsidianschwarz (black)
-- Mercedes-Benz B-Klasse — Polarweiß (white)
-- Mercedes-Benz B-Klasse — Iridiumsilber (silver)
-
-Same model throughout; the colour is carried in name_de / name_en so each row is
-distinct (the seeder is idempotent and keyed by name_de).
-"""
+# apps/backend/scripts/seeders/seed_vehicles.py
+# Seeds the public-facing fleet: three Mercedes-Benz B-Klasse in Obsidianschwarz, Polarweiß and
+# Iridiumsilber. Same model throughout, so the colour is carried in name_de / name_en to keep each
+# row distinct — which is also the idempotency key.
 
 from config.database import SessionLocal
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402

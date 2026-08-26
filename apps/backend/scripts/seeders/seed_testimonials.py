@@ -1,16 +1,12 @@
-# scripts/seeders/seed_testimonials.py
-"""Seed testimonials — DSGVO-compliant authorship.
+# apps/backend/scripts/seeders/seed_testimonials.py
+# Seeds testimonials under the DSGVO-safe authorship pattern: initials plus city ("M.S. (Stuttgart)"),
+# because publishing a customer's full name needs explicit consent that seed data cannot have.
+#
+# Quotes read like real customers rather than marketing copy, and ratings vary — mostly 5s with a
+# single 4, which is what a believable review set looks like.
+#
+# Idempotent: keyed by (author_name, quote_de prefix).
 
-Author names use initials + city only (e.g. "M.S. (Stuttgart)"). Per German
-data protection guidance, real customer testimonials need explicit consent
-for full-name publication. Initials-only is the default safe pattern.
-
-Quotes are realistic — written in natural German that sounds like a real
-customer, not marketing copy. Variety in rating (mostly 5s with one 4 for
-believability).
-
-Idempotent: keyed by (author_name, quote_de prefix) match.
-"""
 from datetime import date, timedelta
 
 from config.database import SessionLocal  # noqa: E402

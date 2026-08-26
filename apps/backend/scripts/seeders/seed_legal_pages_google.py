@@ -1,4 +1,4 @@
-# scripts/seeders/seed_legal_pages_google.py
+# apps/backend/scripts/seeders/seed_legal_pages_google.py
 # Publishes a new Datenschutz version that adds DSGVO-required disclosures for Google Maps, Fonts, Analytics.
 from config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip  # noqa: E402

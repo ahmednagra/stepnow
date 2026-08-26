@@ -6,12 +6,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
-import { listAllPricingServer } from "@/services/pricing";
-import { getSettingsServer } from "@/services/settings";
+import { listAllPricingServer } from "@/services/pricing";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
-import { ConcessionBadge, Container } from "@/components/shared";
+import { Container } from "@/components/shared";
 import { ServicesIndex, ServiceRichRow, HowItWorksBeat, ServicesEditorialClose, findLowestPrice, type ServiceWithPricing } from "@/components/features/services";
 import { pickT } from "@/lib/i18n/pick";
 
@@ -27,10 +26,9 @@ return buildMetadata({ title: t("services.page.title"), description: t("services
 }
 
 export default async function ServicesListEn() {
-const [stringsRes, services, settings, allPricing] = await Promise.all([
+const [stringsRes, services, allPricing] = await Promise.all([
 getUiStringsServer("en"),
-listServicesServer("en"),
-getSettingsServer("en"),
+listServicesServer("en"),
 listAllPricingServer("en"),
 ]);
 const t = createT(stringsRes.strings, "en");
@@ -68,10 +66,7 @@ return (
 <p className="mt-4 text-[11.5px] uppercase tracking-[0.18em] text-[rgba(247,244,234,0.68)]">{pickT(t, "services.page.region", "Stuttgart · Esslingen · Deizisau")}</p>
 </div>
 </Container>
-</section>
-<section className="bg-[var(--color-bg-page)]">
-<Container className="pt-8 pb-0 md:pt-10"><ConcessionBadge settings={settings} tone="light" /></Container>
-</section>
+</section>
 <ServicesIndex t={t} locale="en" data={data} />
 {data.slice(0, 2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel }, idx) => (
 <ServiceRichRow key={service.id} t={t} locale="en" service={service} index={idx} detailHref={`/en/services/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} />
@@ -80,7 +75,7 @@ return (
 {data.slice(2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel }, idx) => (
 <ServiceRichRow key={service.id} t={t} locale="en" service={service} index={idx + 2} detailHref={`/en/services/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} />
 ))}
-<ServicesEditorialClose t={t} locale="en" settings={settings} pricingHref="/en/pricing" />
+<ServicesEditorialClose t={t} locale="en" pricingHref="/en/pricing" />
 <JsonLd
 data={buildBreadcrumbJsonLd([
 { name: pickT(t, "nav.home", "Home"), href: "/en" },

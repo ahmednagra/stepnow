@@ -1,15 +1,11 @@
-# scripts/seeders/seed_faqs.py
-"""Seed FAQs real questions German chauffeur customers ask.
-
-Categories:
-- general works for the homepage teaser
-- booking about the booking process
-- pricing about how prices work
-- airport specific to airport transfer service
-- hospital specific to hospital transport service
-
-Idempotent: keyed by question_de exact match.
-"""
+# apps/backend/scripts/seeders/seed_faqs.py
+# Seeds the FAQ list with the questions German chauffeur customers actually ask, grouped by the
+# category that decides where each one surfaces on the site.
+#
+# general -> homepage teaser · booking -> the booking process · pricing -> how prices work
+# airport / hospital -> pinned to their own service page.
+#
+# Idempotent: keyed by an exact question_de match.
 
 from config.database import SessionLocal  # noqa: E402
 from scripts.seeders._base import get_system_actor, log_section
@@ -78,8 +74,8 @@ FAQS = [
         "category": "booking",
         "question_de": "Bekomme ich eine Bestätigung?",
         "question_en": "Will I receive a confirmation?",
-        "answer_de": "Ja, sofort nach Buchung erhalten Sie eine E-Mail mit Ihrer Referenznummer (Format: SN-JJJJMMTT-XXXXXX) und allen Details. Sobald wir den Pauschalpreis bestätigt haben, schicken wir Ihnen die endgültige Buchungsbestätigung.",
-        "answer_en": "Yes, immediately after booking you receive an email with your reference number (format: SN-YYYYMMDD-XXXXXX) and all details. Once we've confirmed the price, we send you the final booking confirmation.",
+        "answer_de": "Ja, sofort nach Buchung erhalten Sie eine E-Mail mit Ihrer Referenznummer (z. B. B-45260826) und allen Details. Diese Nummer begleitet Ihre Fahrt bis zur Rechnung. Sobald wir den Pauschalpreis bestätigt haben, schicken wir Ihnen die endgültige Buchungsbestätigung.",
+        "answer_en": "Yes, immediately after booking you receive an email with your reference number (e.g. B-45260826) and all details. That number stays with your ride all the way to the invoice. Once we've confirmed the price, we send you the final booking confirmation.",
     },
     # === PRICING ===
     {

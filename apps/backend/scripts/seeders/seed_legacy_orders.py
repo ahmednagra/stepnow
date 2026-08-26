@@ -318,7 +318,7 @@ def run() -> None:
             fleet_vehicle = _resolve_fleet(a["fz"])
 
             order = Order(
-                order_number=order_date_sequence_number(db, Order.order_number),
+                order_number=order_date_sequence_number(db, termin_date),
                 booking_id=None,
                 status="completed" if a["r_stat"] == "Bezahlt" else "open",
                 delivery_status="delivered",
@@ -379,7 +379,10 @@ def run() -> None:
             invoice: Invoice = InvoicesService.create_from_order(
                 db, order.id, inv_payload, actor, request=None
             )
-            # Override invoice_number to match the legacy rechnung ID exactly.
+            # These 81 invoices were issued by the previous bookkeeping, not by this system, so the
+            # number stays exactly as the customer received it — §14 UStG / GoBD forbid renumbering
+            # an issued Buchungsbeleg. That is why they read 'R01010526' while every invoice this
+            # system issues from now on reads 'R-01010526'. Do not "normalise" these.
             if invoice.invoice_number != a["rechnung_nr"]:
                 invoice.invoice_number = a["rechnung_nr"]
                 db.flush()

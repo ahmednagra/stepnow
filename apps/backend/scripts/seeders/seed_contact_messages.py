@@ -1,10 +1,8 @@
-# scripts/seeders/seed_contact_messages.py
-"""Seed contact messages — mix of categories, mix of handled/unhandled.
-
-Useful for admin demo: shows the list with filters working, mix of states.
-
-Idempotent: keyed by email + first 30 chars of message.
-"""
+# apps/backend/scripts/seeders/seed_contact_messages.py
+# Seeds contact messages across every subject category, part handled and part still open, so the
+# admin list demonstrates its filters and unread badge against realistic traffic.
+#
+# Idempotent: keyed by email plus the first 30 characters of the message.
 
 from datetime import datetime, timedelta, timezone
 
@@ -50,7 +48,7 @@ SAMPLE_MESSAGES = [
     {
         "_handled": True,
         "_handled_days_ago": 4,
-        "_internal_notes": "Rückruf am 7.5. erfolgt. Termin für Hochzeit am 22.6. fest vereinbart. Booking SN-20260622-XXXXXX anlegen.",
+        "_internal_notes": "Rückruf am 7.5. erfolgt. Termin für Hochzeit am 22.6. fest vereinbart. Buchung anlegen und Referenz an Kundin senden.",
         "subject_category": "booking",
         "name": "Marie Demo",
         "email": "marie.demo@example.de",

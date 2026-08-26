@@ -14,8 +14,6 @@ export type { LeafletMarker } from "./LeafletMap";
 export { GoogleMapsEmbed } from "./GoogleMapsEmbed";
 export { BrandMark } from "./BrandMark";
 export { ScrollReveal } from "./ScrollReveal";
-export { ConcessionBadge } from "./ConcessionBadge";
-export { CredentialStamp } from "./CredentialStamp";
 export { MobileStickyBar } from "./MobileStickyBar";
 export { Logo } from "./Logo";
 export { SlugMapBridge } from "./SlugMapBridge";

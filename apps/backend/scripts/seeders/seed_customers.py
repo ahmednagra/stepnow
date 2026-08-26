@@ -10,6 +10,7 @@
 
 from config.database import SessionLocal
 from scripts.seeders._base import get_system_actor, log_section, log_create, log_skip
+from app.Utils.finance import sync_customer_counter
 
 # fmt: off
 CUSTOMERS = [
@@ -212,6 +213,10 @@ def run() -> None:
             log_create(f"customer '{legacy_nr}'", f"id={c.id}, company={company}")
             created += 1
 
+        # These rows carried their own Kunden-Nr., so the counter never moved — align it here or
+        # the first counter-allocated customer collides with K911001.
+        sync_customer_counter(db)
+        db.commit()
         print(f"  [done] {created} created, {skipped} skipped")
     finally:
         db.close()

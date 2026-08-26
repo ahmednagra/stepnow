@@ -1,4 +1,4 @@
-# scripts/seeders/seed_ui_strings.py
+# apps/backend/scripts/seeders/seed_ui_strings.py
 # Seed the ui_strings table with every UI string the frontend references via t() or pickT(). Comprehensive DE/EN coverage organized by namespace; idempotent  existing rows skipped, only new keys inserted.
 
 from config.database import SessionLocal # noqa: E402
@@ -577,6 +577,46 @@ UI_STRINGS: list[tuple[str, str, str, str, str | None, bool]] = [
         False,
     ),
     # Services index strip (sticky overview row)
+    (
+        "services.price.from",
+        "services",
+        "Ab",
+        "From",
+        "Price prefix on a service card (capitalised, stands alone)",
+        False,
+    ),
+    (
+        "services.price.from_inline",
+        "services",
+        "ab",
+        "from",
+        "Price prefix after a route label, mid-sentence",
+        False,
+    ),
+    (
+        "services.price.on_request",
+        "services",
+        "Auf Anfrage",
+        "On request",
+        "Shown instead of a price when a service has no published routes",
+        False,
+    ),
+    (
+        "services.index.read_more",
+        "services",
+        "Mehr lesen",
+        "Read more",
+        "Link on a service card in the At-a-glance strip",
+        False,
+    ),
+    (
+        "services.snapshot.all_prices",
+        "services",
+        "Alle Preise",
+        "View full pricing",
+        "Link from a service's price snapshot to the pricing page",
+        False,
+    ),
     (
         "services.index.eyebrow",
         "services",

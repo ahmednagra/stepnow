@@ -53,6 +53,7 @@ class Settings(BaseSettings):
 
     # ── Database ──
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+    DATABASE_ADMIN_URL: str = os.getenv("DATABASE_ADMIN_URL", "")
 
     # ── JWT ──
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")

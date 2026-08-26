@@ -1,16 +1,12 @@
-# scripts/seeders/seed_pricing.py
-"""Seed pricing categories and items for each service.
-
-Real Stuttgart-area routes with realistic prices (Endpreise — VAT is included in
-the price and not shown separately).
-- Airport: STR, FRA, MUC, FMM, FKB
-- Hospital: Klinikum Esslingen, Klinikum Stuttgart, Marienhospital, etc.
-- School: Stuttgart Gymnasien from suburban towns
-- Shuttle: Weddings, conferences
-
-Depends on services already being seeded (looks up by slug_de).
-Idempotent: keyed by (service_id, name_de) for categories.
-"""
+# apps/backend/scripts/seeders/seed_pricing.py
+# Seeds the pricing categories and route rows behind every service. Prices are Endpreise — VAT is
+# included and never shown separately — and the routes are real Stuttgart-area journeys.
+#
+# Airport: STR, FRA, MUC, FMM, FKB · Hospital: Klinikum Esslingen/Stuttgart, Marienhospital
+# School: Stuttgart Gymnasien from the suburbs · Shuttle: weddings and conferences.
+#
+# Depends on seed_services (looked up by slug_de). Idempotent: categories keyed by
+# (service_id, name_de).
 
 from decimal import Decimal
 
@@ -30,16 +26,6 @@ PRICING_DATA = {
             "description_en": "Transfers to/from Stuttgart Airport from the surrounding area",
             "items": [
                 {
-                    "sort_order": 10,
-                    "from_de": "Stuttgart Hauptbahnhof",
-                    "from_en": "Stuttgart Main Station",
-                    "to_de": "Flughafen Stuttgart",
-                    "to_en": "Stuttgart Airport",
-                    "price": "39.00",
-                    "note_de": "Pauschalpreis",
-                    "note_en": "Price",
-                },
-                {
                     "sort_order": 20,
                     "from_de": "Esslingen",
                     "from_en": "Esslingen",
@@ -55,7 +41,7 @@ PRICING_DATA = {
                     "from_en": "Deizisau",
                     "to_de": "Flughafen Stuttgart",
                     "to_en": "Stuttgart Airport",
-                    "price": "49.00",
+                    "price": "45.00",
                     "note_de": None,
                     "note_en": None,
                 },
@@ -65,7 +51,7 @@ PRICING_DATA = {
                     "from_en": "Plochingen",
                     "to_de": "Flughafen Stuttgart",
                     "to_en": "Stuttgart Airport",
-                    "price": "55.00",
+                    "price": "45.00",
                     "note_de": None,
                     "note_en": None,
                 },
@@ -75,17 +61,17 @@ PRICING_DATA = {
                     "from_en": "Göppingen",
                     "to_de": "Flughafen Stuttgart",
                     "to_en": "Stuttgart Airport",
-                    "price": "75.00",
+                    "price": "70.00",
                     "note_de": None,
                     "note_en": None,
                 },
                 {
                     "sort_order": 60,
-                    "from_de": "Tübingen",
-                    "from_en": "Tübingen",
+                    "from_de": "Kirchheim (Teck)",
+                    "from_en": "Kirchheim (Teck)",
                     "to_de": "Flughafen Stuttgart",
                     "to_en": "Stuttgart Airport",
-                    "price": "85.00",
+                    "price": "70.00",
                     "note_de": None,
                     "note_en": None,
                 },

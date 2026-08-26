@@ -60,7 +60,7 @@ export function PricingSnapshot({
             href={pricingHref}
             className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-primary)] transition-colors duration-base hover:text-[var(--color-text-primary)]"
           >
-            {locale === "de" ? "Alle Preise" : "View full pricing"}
+            {pickT(t, "services.snapshot.all_prices", locale === "de" ? "Alle Preise" : "View full pricing")}
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </header>

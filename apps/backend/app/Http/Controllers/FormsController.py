@@ -1,4 +1,6 @@
 # apps/backend/app/Http/Controllers/FormsController.py
+# Public form endpoints — booking intake, contact, staff gate and the no-login courier order.
+# Honeypot hits get a plausible reference back so a bot cannot tell it was rejected.
 import secrets
 from datetime import datetime, timezone
 from fastapi import BackgroundTasks, HTTPException, Request, status
@@ -11,6 +13,7 @@ from app.Schemas.public import PublicFleetVehicle, PublicOrderSubmitted, StaffGa
 from app.Services.FormsService import FormsService
 from app.Services.CourierOrdersService import CourierOrdersService
 from app.Http.Controllers._background import dispatch_emails as _dispatch_emails
+from app.Utils.finance import BOOKING_PREFIX
 
 SYSTEM_ACTOR_EMAIL = "system@stepnow.local"
 
@@ -22,8 +25,8 @@ class FormsController:
         booking, email_log_ids = FormsService.submit_booking(db, payload.model_dump(), request)
         background_tasks.add_task(_dispatch_emails, email_log_ids)
         if booking is None:
-            # Honeypot triggered — return a generic plausible response.
-            return BookingSubmitted(reference="SN-00000000-000000", submitted_at=datetime.now(timezone.utc))
+            # Honeypot triggered — a plausible-looking reference that no job will ever carry.
+            return BookingSubmitted(reference=f"{BOOKING_PREFIX}-00000000", submitted_at=datetime.now(timezone.utc))
         return BookingSubmitted(reference=booking.reference, submitted_at=booking.created_at)
 
     @staticmethod

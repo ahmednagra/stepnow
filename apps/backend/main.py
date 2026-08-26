@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from config.settings import settings
+from sqlalchemy import create_engine
 from config.database import engine
 from app.Models import Base
 from app.Core.Exceptions import AppError
@@ -96,8 +97,47 @@ def _supersede_legacy_uniques(conn, inspector, table) -> int:
     return dropped
 
 
+def _ensure_schema_writable() -> None:
+    with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        user, allowed = conn.execute(
+            text("select current_user, has_schema_privilege(current_user, 'public', 'CREATE')")
+        ).first()
+        if allowed:
+            return
+        for stmt in (f'GRANT CREATE, USAGE ON SCHEMA public TO "{user}"',
+                    f'ALTER SCHEMA public OWNER TO "{user}"'):
+            try:
+                conn.execute(text(stmt))
+            except Exception:
+                continue
+            if conn.execute(text("select has_schema_privilege(current_user, 'public', 'CREATE')")).scalar():
+                logger.info(f"[Schema] granted CREATE on public to {user} ({stmt})")
+                return
+    if settings.DATABASE_ADMIN_URL:
+        admin = create_engine(settings.DATABASE_ADMIN_URL, isolation_level="AUTOCOMMIT")
+        try:
+            with admin.connect() as conn:
+                conn.execute(text(f'ALTER SCHEMA public OWNER TO "{user}"'))
+        except Exception as exc:
+            logger.error(f"[Schema] DATABASE_ADMIN_URL could not grant CREATE to {user}: {exc}")
+        finally:
+            admin.dispose()
+        with engine.connect() as conn:
+            if conn.execute(text("select has_schema_privilege(current_user, 'public', 'CREATE')")).scalar():
+                logger.info(f"[Schema] granted CREATE on public to {user} via DATABASE_ADMIN_URL")
+                return
+
+    raise RuntimeError(
+        f"Role {user!r} cannot create objects in schema public. Either set DATABASE_ADMIN_URL to a "
+        "superuser connection so startup can grant it, create the database owned by the app role "
+        f'(CREATE DATABASE ... OWNER {user}), or run once as a superuser:  '
+        f'ALTER SCHEMA public OWNER TO "{user}";'
+    )
+
+
 def sync_schema() -> None:
     added_columns = created_indexes = dropped_uniques = 0
+    _ensure_schema_writable()
     with engine.begin() as conn:
         before = set(inspect(conn).get_table_names())
         Base.metadata.create_all(bind=conn, checkfirst=True)
@@ -138,16 +178,23 @@ def sync_schema() -> None:
 
 
 def seed_counters() -> None:
-    """Adopt the highest number already issued so a counter never reissues an existing
-    order number, Kunden-Nr. or Rechnungsnummer. Idempotent — only ever raises a counter."""
+    """Adopt the highest number already issued so a counter never reissues an existing job
+    number, Kunden-Nr. or Rechnungsnummer. Bookings and orders share the 'job' scope — the
+    digits are claimed once and carried by both. Idempotent — only ever raises a counter.
+    On an empty table an ungrouped MAX() yields one NULL row, so the customer query needs a
+    HAVING guard; the grouped queries return no rows and need none."""
     with engine.begin() as conn:
         conn.execute(text("""
             INSERT INTO counters (scope, "key", value)
-            SELECT 'order', right(order_number, 6),
-                   MAX(CAST(regexp_replace(left(order_number, length(order_number) - 6), '^[A-Za-z]+', '') AS bigint))
-            FROM orders
-            WHERE order_number ~ '^[A-Za-z]*[0-9]{7,}$'
-            GROUP BY right(order_number, 6)
+            SELECT 'job', right(core, 6), MAX(CAST(left(core, length(core) - 6) AS bigint))
+            FROM (
+                SELECT regexp_replace(order_number, '^[A-Za-z]+-?', '') AS core FROM orders
+                WHERE order_number ~ '^[A-Za-z]+-?[0-9]{7,}$'
+                UNION ALL
+                SELECT regexp_replace(reference, '^[A-Za-z]+-?', '') FROM booking_requests
+                WHERE reference ~ '^[A-Za-z]+-?[0-9]{7,}$'
+            ) s
+            GROUP BY right(core, 6)
             ON CONFLICT (scope, "key") DO UPDATE SET value = GREATEST(counters.value, EXCLUDED.value)
         """))
         conn.execute(text("""
@@ -155,6 +202,7 @@ def seed_counters() -> None:
             SELECT 'customer', 'K911', MAX(CAST(substring(customer_number from 5) AS bigint))
             FROM customers
             WHERE customer_number ~ '^K911[0-9]+$'
+            HAVING MAX(CAST(substring(customer_number from 5) AS bigint)) IS NOT NULL
             ON CONFLICT (scope, "key") DO UPDATE SET value = GREATEST(counters.value, EXCLUDED.value)
         """))
         conn.execute(text("""

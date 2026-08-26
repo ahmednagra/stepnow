@@ -12,7 +12,7 @@ from app.Models.bookings import BookingRequest
 from app.Models.orders import Order
 from app.Services.AuditService import AuditService
 from app.Services.EmailService import EmailService
-from app.Utils.finance import compute_totals, default_currency, order_date_sequence_number, vat_rate_for
+from app.Utils.finance import BOOKING_PREFIX, compute_totals, default_currency, job_core, order_date_sequence_number, vat_rate_for
 
 
 class OrdersService:
@@ -45,8 +45,10 @@ class OrdersService:
         net, vat, gross = compute_totals(payload.net_amount, rate)
         due_date = date.today() + timedelta(days=payload.payment_due_days)
 
+        # The job keeps the digits it was quoted under; only legacy 'SN-' refs start a new number.
+        carried = job_core(booking.reference) if (booking.reference or "").startswith(f"{BOOKING_PREFIX}-") else None
         order = Order(
-            order_number=order_date_sequence_number(db),
+            order_number=order_date_sequence_number(db, core=carried),
             currency=default_currency(db),
             booking_id=booking.id,
             service_id=booking.service_id,
