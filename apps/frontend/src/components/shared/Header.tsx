@@ -28,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { key: "nav.services", hrefDe: "/dienstleistungen", hrefEn: "/en/services" },
   { key: "nav.pricing", hrefDe: "/preise", hrefEn: "/en/pricing" },
   { key: "nav.about", hrefDe: "/ueber-uns", hrefEn: "/en/about" },
-  { key: "footer.legal.impressum", hrefDe: "/impressum", hrefEn: "/en/legal-notice" },
   { key: "nav.contact", hrefDe: "/kontakt", hrefEn: "/en/contact" },
 ];
 

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 import {
   AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty,
-  FilterToolbar,
+  FilterToolbar, Pagination,
 } from "@/components/admin";
 import { useUiStrings } from "@/hooks/queries/useUiStrings";
 import { useUpdateUiString } from "@/hooks/mutations/useUiStringMutations";
@@ -29,14 +29,21 @@ export default function UiStringsPage() {
     return () => window.clearTimeout(id);
   }, [q]);
 
-  const { data, isLoading } = useUiStrings({ q: debouncedQ || undefined, size: 500 });
-  const items = data?.items ?? [];
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [debouncedQ]);
 
+  // size is capped at 100 by the API (le=100) — page instead of asking for everything.
+  const { data, isLoading } = useUiStrings({ q: debouncedQ || undefined, page, size: 100 });
+  const items = data?.items ?? [];
+  const pagination = data?.pagination ?? null;
+
+  // Keyed on `data`, not `items`: `?? []` is a new array every render while data is
+  // undefined, which would re-run this effect → setState → render in a loop.
   useEffect(() => {
     const d: Record<string, { de: string; en: string }> = {};
-    for (const s of items) d[s.id] = { de: s.value_de, en: s.value_en };
+    for (const s of data?.items ?? []) d[s.id] = { de: s.value_de, en: s.value_en };
     setDrafts(d);
-  }, [items]);
+  }, [data]);
 
   async function onSave(s: UiStringAdmin) {
     setSavingId(s.id);
@@ -61,7 +68,7 @@ export default function UiStringsPage() {
       <div className="p-6">
         <AdminCard
           flush
-          title={`${items.length} string${items.length === 1 ? "" : "s"}`}
+          title={`${pagination?.total ?? items.length} string${(pagination?.total ?? items.length) === 1 ? "" : "s"}`}
           headerActions={
             <FilterToolbar
               searchValue={q}
@@ -120,6 +127,9 @@ export default function UiStringsPage() {
               })
             )}
           </AdminTable>
+          {pagination && pagination.pages > 1 && (
+            <Pagination page={pagination.page} totalPages={pagination.pages} totalItems={pagination.total} onPageChange={setPage} />
+          )}
         </AdminCard>
       </div>
     </>

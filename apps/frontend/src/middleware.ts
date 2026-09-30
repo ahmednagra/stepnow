@@ -1,11 +1,7 @@
 // src/middleware.ts
 
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  LOCALE_COOKIE_MAX_AGE_SECONDS,
-  LOCALE_COOKIE_NAME,
-  isLocale,
-} from "@/lib/i18n/config";
+import { LOCALE_COOKIE_NAME, isLocale } from "@/lib/i18n/config";
 import { ROUTE_MAP, REVERSE_ROUTE_MAP } from "@/lib/i18n/routes";
 
 /**
@@ -85,16 +81,11 @@ export function middleware(request: NextRequest) {
     return passThrough(request);
   }
 
-  // First visit (no cookie yet): German is the default locale. Respect an
-  // explicit /en/* URL, otherwise serve the German site. We intentionally do
-  // NOT auto-switch to English based on Accept-Language — DE is the default.
-  const response = passThrough(request);
-  response.cookies.set(LOCALE_COOKIE_NAME, englishPath ? "en" : "de", {
-    path: "/",
-    maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
-    sameSite: "lax",
-  });
-  return response;
+  // No cookie: German is the default locale and the URL decides — `/` is DE,
+  // an explicit /en/* URL is EN. The cookie is written ONLY by the
+  // LanguageSwitcher (an explicit choice); landing on one /en link must not
+  // pin every later visit to English. No Accept-Language sniffing either.
+  return passThrough(request);
 }
 
 export const config = {

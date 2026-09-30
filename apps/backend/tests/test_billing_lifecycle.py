@@ -218,3 +218,12 @@ def test_cancelled_booking_cannot_be_converted(db):
     db.commit()
     with pytest.raises(ConflictError):
         OrdersService.create_from_booking(db, booking.id, OrderCreateFromBooking(net_amount=Decimal("10.00")), ACTOR)
+
+
+def test_bills_list_renders_every_invoice_with_its_currency(db):
+    order = _order(db)
+    inv = _invoice(db, order)
+    page = OrdersController.list_invoices(db, 1, 100, None, None)
+    row = next(r for r in page.items if r.id == inv.id)
+    assert row.currency == inv.currency and row.gross_amount == inv.gross_amount
+    assert row.balance_due == inv.gross_amount and row.is_overdue is False

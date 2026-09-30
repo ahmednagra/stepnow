@@ -198,7 +198,7 @@ class OrdersController:
                 order_number=o.order_number, status=inv.status, issue_date=inv.issue_date,
                 due_date=inv.due_date, customer_name=o.customer_name,
                 route_from=o.pickup_city or o.pickup_address, route_to=o.destination_city or o.destination_address,
-                gross_amount=inv.gross_amount, amount_paid=paid, balance_due=balance,
+                gross_amount=inv.gross_amount, currency=inv.currency, amount_paid=paid, balance_due=balance,
                 is_overdue=bool(inv.status == "issued" and balance > 0 and inv.due_date is not None and inv.due_date < today),
             ))
         return PaginatedResponse[InvoiceListResponse].build(rows, page, size, total)
