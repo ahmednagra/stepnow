@@ -43,6 +43,14 @@
     scroll-behavior: smooth;
   }
 
+  /* Entrance animations translate content sideways before it settles; `clip` (unlike `hidden`)
+     does not create a scroll container, so sticky positioning keeps working while phones can
+     never scroll the page horizontally. */
+  html,
+  body {
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-cream text-ink font-sans;
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;

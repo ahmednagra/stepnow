@@ -88,6 +88,7 @@ class PricingController:
             name_en=c.name_en,
             description_de=c.description_de,
             description_en=c.description_en,
+            prices_net=c.prices_net,
             is_deleted=c.is_deleted,
             created_at=c.created_at,
             updated_at=c.updated_at,
