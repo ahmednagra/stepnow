@@ -27,7 +27,8 @@ class PublicSlipController:
             raise HTTPException(status_code=status.HTTP_410_GONE, detail="This link has expired")
 
         order = OrdersService.get(db, row.source_entity_id)
-        abs_path = DriverSlipPdfService.ensure(db, order)
+        # Driver copy: the agreed client rate stays off the run-sheet.
+        abs_path = DriverSlipPdfService.ensure(db, order, with_price=False)
 
         background_tasks.add_task(MessageDeliveryService.notify_download, str(row.id))
         return abs_path

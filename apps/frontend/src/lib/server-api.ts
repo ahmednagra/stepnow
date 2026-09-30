@@ -24,8 +24,31 @@ params?: Record<string, string | number | boolean | null | undefined>;
 headers?: Record<string, string>;
 }
 
+type Method = "GET" | "POST" | "PATCH" | "DELETE";
+
+// Every BFF call reaches FastAPI from loopback, so per-visitor rate limits and audit/consent IPs
+// need the browser's address passed along. nginx overwrites X-Real-IP with $remote_addr (a client
+// can't set it); FastAPI believes X-Forwarded-For only from loopback. Forwarded only for mutations
+// and authed calls — those already run per request, whereas reading headers() during an anonymous
+// GET would force ISR pages into dynamic rendering (and there is no visitor behind an ISR fetch).
+// next/headers is imported lazily: client components reach this module through the services
+// barrels, and a static import would fail the client build. FastAPI re-validates the address.
+const IP_LIKE = /^[0-9A-Fa-f:.]{2,45}$/;
+
+async function visitorIpHeader(method: Method, authToken?: string): Promise<Record<string, string>> {
+if (method === "GET" && !authToken) return {};
+let ip: string | null;
+try {
+const { headers } = await import("next/headers");
+ip = headers().get("x-real-ip");
+} catch {
+return {}; // outside a request scope (build, scripts): no visitor to forward
+}
+return ip && IP_LIKE.test(ip) ? { "X-Forwarded-For": ip } : {};
+}
+
 async function request<T>(
-method: "GET" | "POST" | "PATCH" | "DELETE",
+method: Method,
 path: string,
 body: unknown,
 opts: RequestOptions = {},
@@ -37,6 +60,7 @@ const timeout = setTimeout(() => controller.abort(), opts.timeoutMs ?? DEFAULT_T
 
 const headers: Record<string, string> = {
 Accept: "application/json",
+...(await visitorIpHeader(method, authToken)),
 ...opts.headers,
 };
 if (body !== undefined) headers["Content-Type"] = "application/json";

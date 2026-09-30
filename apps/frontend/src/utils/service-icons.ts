@@ -1,5 +1,4 @@
 import {
-  GraduationCap,
   HeartPulse,
   Package,
   Plane,
@@ -20,11 +19,6 @@ const ICON_BY_KEY: Record<string, LucideIcon> = {
   clinic: HeartPulse,
   medical: HeartPulse,
   heartpulse: HeartPulse,
-  schuelerbefoerderung: GraduationCap,
-  "school-transport": GraduationCap,
-  school: GraduationCap,
-  student: GraduationCap,
-  graduationcap: GraduationCap,
   "shuttle-service": Users,
   shuttle: Users,
   group: Users,

@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import Request
 from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError, RequiredFieldError
-from app.Core.ProtectedFields import LEGALLY_REQUIRED_FIELDS
+from app.Core.ProtectedFields import LEGAL_PAGE_ALLOWED_PLACEHOLDERS, LEGALLY_REQUIRED_FIELDS
 from app.Models.admin import AdminUser
 from app.Models.settings import SiteSettings
 from app.Services.AuditService import AuditService
@@ -73,20 +73,6 @@ class SettingsService:
         s = SettingsService.get_or_none(db)
         if not s:
             return {}
-        return {
-            "site_settings.business_name": s.business_name or "",
-            "site_settings.owner_name": s.owner_name or "",
-            "site_settings.legal_form": s.legal_form or "",
-            "site_settings.address_street": s.address_street or "",
-            "site_settings.address_postcode": s.address_postcode or "",
-            "site_settings.address_city": s.address_city or "",
-            "site_settings.address_country": s.address_country or "",
-            "site_settings.phone": s.phone or "",
-            "site_settings.phone_mobile": s.phone_mobile or "",
-            "site_settings.email": s.email or "",
-            "site_settings.tax_number": s.tax_number or "",
-            "site_settings.vat_id": s.vat_id or "",
-            "site_settings.concession_number": s.concession_number or "",
-            "site_settings.concession_authority": s.concession_authority or "",
-            "site_settings.concession_date": s.concession_date.isoformat() if s.concession_date else "",
-        }
+        # Derived from the allowlist so a placeholder can never be allowed but left unresolved.
+        values = {key: getattr(s, key.split(".", 1)[1], None) for key in LEGAL_PAGE_ALLOWED_PLACEHOLDERS}
+        return {k: v.isoformat() if hasattr(v, "isoformat") else ("" if v is None else str(v)) for k, v in values.items()}

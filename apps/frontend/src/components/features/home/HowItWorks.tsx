@@ -38,50 +38,50 @@ export function HowItWorks({ t }: HowItWorksProps) {
 
   return (
     <section className="border-y border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-      <Container className="py-section">
+      <Container className="py-10 md:py-12">
         <div className="border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)]">
-          <div className="grid gap-8 border-b border-[color:var(--color-border-soft)] px-6 py-7 md:px-8 md:py-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
+          <div className="grid gap-5 border-b border-[color:var(--color-border-soft)] px-6 py-5 md:px-7 md:py-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
                 {pickT(t, "home.how.pre_heading", "Ablauf")}
               </p>
-              <h2 className="mt-3 max-w-2xl font-serif text-section text-[var(--color-text-primary)] md:text-display-md">
+              <h2 className="mt-1.5 font-serif text-[26px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[32px]">
                 {t("home.how.heading")}
               </h2>
             </div>
 
             <div className="flex items-start gap-3 lg:max-w-sm lg:justify-self-end">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
-                <ArrowRight className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden="true" />
               </span>
-              <p className="text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
+              <p className="text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
                 {pickT(
                   t,
                   "home.how.summary",
-                  "Kurze Anfrage, klare Rueckmeldung und planbare Fahrt. Ohne unnötige Zwischenschritte.",
+                  "Kurze Anfrage, klare Rückmeldung und planbare Fahrt. Ohne unnötige Zwischenschritte.",
                 )}
               </p>
             </div>
           </div>
 
-          <ol className="grid gap-px bg-[color:var(--color-border-soft)] md:grid-cols-3">
+          <ol className="grid divide-y divide-dashed divide-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] md:grid-cols-3 md:divide-x md:divide-y-0">
             {steps.map((step) => (
-              <li key={step.number} className="bg-[var(--color-bg-surface)]">
-                <article className="flex h-full flex-col p-6 md:p-8">
-                  <div className="flex items-end justify-between gap-4">
-                    <span className="font-serif text-[40px] leading-none tracking-tight text-[color:rgba(168,134,90,0.34)] md:text-[56px]">
-                      {step.number}
+              <li key={step.number}>
+                <article className="flex h-full flex-col p-5 md:p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-mono text-[10.5px] font-medium tracking-[0.1em] text-[var(--color-accent-primary)] tabular-nums">
+                      N&deg; {step.number}/{String(steps.length).padStart(2, "0")}
                     </span>
-                    <span className="inline-flex h-12 w-12 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
-                      <step.Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                    <span className="inline-flex h-9 w-9 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)] text-[var(--color-accent-primary)]">
+                      <step.Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                     </span>
                   </div>
 
-                  <div className="mt-8 border-t border-[color:var(--color-border-soft)] pt-5">
-                    <h3 className="text-[22px] font-semibold tracking-tight text-[var(--color-text-primary)] md:text-[24px]">
+                  <div className="mt-4 border-t border-dashed border-[color:var(--color-border-soft)] pt-4">
+                    <h3 className="text-[17px] font-semibold tracking-tight text-[var(--color-text-primary)]">
                       {step.title}
                     </h3>
-                    <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
+                    <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
                       {step.body}
                     </p>
                   </div>

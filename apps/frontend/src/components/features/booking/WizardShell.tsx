@@ -129,7 +129,7 @@ export function WizardShell({
                   t,
                   "booking.wizard.summary",
                   locale === "de"
-                    ? "In wenigen Schritten zur klaren Anfrage. Wir bestätigen anschliessend persoenlich."
+                    ? "In wenigen Schritten zur klaren Anfrage. Wir bestätigen anschließend persönlich."
                     : "A clear booking request in a few steps. We follow up personally after submission.",
                 )}
               </p>
@@ -200,9 +200,9 @@ export function WizardShell({
             </h2>
             <ul className="mt-6 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
               {[
-                pickT(t, "booking.sidebar.point_1", locale === "de" ? "Pauschalpreis und persoenliche Rueckmeldung statt unklarer Verfuegbarkeit." : "Fixed-price follow-up instead of uncertain availability."),
-                pickT(t, "booking.sidebar.point_2", locale === "de" ? "Vorbestellung fuer Flughafentransfer, Krankenfahrten und private Strecken." : "Advance booking for airport transfers, hospital rides, and private routes."),
-                pickT(t, "booking.sidebar.point_3", locale === "de" ? "Direkter Kontakt, falls Details vor der Fahrt abgestimmt werden muessen." : "Direct contact if details need to be clarified before the ride."),
+                pickT(t, "booking.sidebar.point_1", locale === "de" ? "Transparenter Preis und persönliche Rückmeldung statt unklarer Verfügbarkeit." : "Transparent price and a personal reply instead of uncertain availability."),
+                pickT(t, "booking.sidebar.point_2", locale === "de" ? "Vorbestellung für Flughafen-Transfer, Arzt- & Klinikfahrten und private Strecken." : "Advance booking for airport transfers, doctor and clinic rides, and private routes."),
+                pickT(t, "booking.sidebar.point_3", locale === "de" ? "Direkter Kontakt, falls Details vor der Fahrt abgestimmt werden müssen." : "Direct contact if details need to be clarified before the ride."),
               ].map((point) => (
                 <li key={point} className="flex items-start gap-3 bg-[var(--color-bg-page)] p-4">
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[color:var(--color-border-soft)] bg-[var(--color-bg-surface)] text-[var(--color-accent-primary)]">
@@ -228,7 +228,7 @@ export function WizardShell({
                   "booking.help.body",
                   locale === "de"
                     ? "Wenn die Fahrt kurzfristig ist oder besondere Anforderungen hat, rufen Sie uns direkt an."
-                    : "If the ride is short notice or has special requirements, call us directly.",
+                    : "If the ride is at short notice or has special requirements, call us directly.",
                 )}
               </p>
               <a

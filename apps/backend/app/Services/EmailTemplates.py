@@ -35,19 +35,37 @@ def _env() -> Environment:
 
 
 def company_context() -> dict[str, Any]:
-    """Shared brand/company variables every template can rely on."""
+    """Brand/company variables for every template, read from site_settings — the same row the
+    invoice PDF renders from, so an email and its own attachment can never quote different bank
+    details. COMPANY_* env vars are a cold-start fallback only, used when the row is missing."""
     from datetime import datetime
+    from config.database import SessionLocal
+    from app.Models.settings import SiteSettings
+
+    db = SessionLocal()
+    try:
+        s = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
+    finally:
+        db.close()
+
+    bank = " · ".join(p for p in (
+        f"IBAN {s.iban}" if s and s.iban else None,
+        f"BIC {s.bic}" if s and s.bic else None,
+        s.bank_account_holder if s and s.bank_account_holder else None,
+    ) if p) if s else settings.COMPANY_BANK
 
     return {
         "brand_name": "StepNow",
         "brand_tagline": "Rides & Movers",
-        "company_name": settings.COMPANY_NAME,
-        "company_owner": settings.COMPANY_OWNER,
-        "company_street": settings.COMPANY_STREET,
-        "company_city": settings.COMPANY_CITY,
-        "company_phone": settings.COMPANY_PHONE,
-        "company_bank": settings.COMPANY_BANK,
-        "support_email": settings.COMPANY_EMAIL,
+        "company_name": s.business_name if s else settings.COMPANY_NAME,
+        "company_owner": f"{s.owner_name} {s.legal_form}".strip() if s else settings.COMPANY_OWNER,
+        "company_street": s.address_street if s else settings.COMPANY_STREET,
+        "company_city": f"{s.address_postcode} {s.address_city}".strip() if s else settings.COMPANY_CITY,
+        "company_phone": s.phone if s else settings.COMPANY_PHONE,
+        "company_bank": bank or settings.COMPANY_BANK,
+        "company_tax_no": s.tax_number if s else settings.COMPANY_TAX_NO,
+        "company_vat_id": s.vat_id if s else None,
+        "support_email": s.email if s else settings.COMPANY_EMAIL,
         "current_year": datetime.now().year,
     }
 

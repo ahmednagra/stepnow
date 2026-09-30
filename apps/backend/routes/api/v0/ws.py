@@ -3,13 +3,19 @@
 # access token as a query param (?token=...) since browsers can't set Authorization headers
 # on a WebSocket handshake. On connect we authenticate (same decode path as get_current_admin),
 # auto-subscribe to the shared "admin" feed and the user's own "user:{id}" channel, then accept
-# lightweight client commands to (un)subscribe to per-resource channels like "order:{id}".
+# lightweight client commands: (un)subscribe to per-resource channels like "order:{id}", and
+# {"action": "ping"} → {"type": "pong"} so the client can detect a half-open connection.
+#
+# A rejected token closes with 4401 AFTER accepting: closing before the handshake surfaces in the
+# browser as a bare 1006, indistinguishable from a network drop, so the client could not know to
+# refresh its token instead of retrying forever.
 #
 # Mounted directly on the app (not under a router prefix) in setup_api_routes.
 
 from uuid import UUID
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from config.database import SessionLocal
@@ -25,6 +31,7 @@ router = APIRouter()
 
 # Only these channel prefixes may be subscribed to from the client side.
 _ALLOWED_CLIENT_PREFIXES = ("order:",)
+WS_CLOSE_UNAUTHORIZED = 4401
 
 
 def _authenticate(token: str | None) -> AdminUser | None:
@@ -48,10 +55,10 @@ def _authenticate(token: str | None) -> AdminUser | None:
 
 @router.websocket("/ws")
 async def admin_ws(websocket: WebSocket, token: str | None = Query(default=None)) -> None:
-    user = _authenticate(token)
+    user = await run_in_threadpool(_authenticate, token)  # sync DB lookup off the event loop
     if not user:
-        # 1008 = policy violation; closes before accept-handshake completes meaningful traffic.
-        await websocket.close(code=1008)
+        await websocket.accept()
+        await websocket.close(code=WS_CLOSE_UNAUTHORIZED, reason="unauthorized")
         return
 
     connection_id = await connection_manager.connect(websocket)
@@ -64,6 +71,9 @@ async def admin_ws(websocket: WebSocket, token: str | None = Query(default=None)
             msg = await websocket.receive_json()
             action = (msg or {}).get("action")
             channel = (msg or {}).get("channel", "")
+            if action == "ping":
+                await websocket.send_json({"type": "pong"})
+                continue
             if action not in ("subscribe", "unsubscribe"):
                 continue
             if not isinstance(channel, str) or not channel.startswith(_ALLOWED_CLIENT_PREFIXES):

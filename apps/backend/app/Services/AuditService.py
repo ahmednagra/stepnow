@@ -4,6 +4,7 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 from app.Models.admin import AdminUser
 from app.Models.audit import AuditLog
+from app.Utils.client_ip import client_ip
 
 
 class AuditService:
@@ -28,7 +29,7 @@ class AuditService:
             record_id=str(record_id),
             action=action,
             changes=changes,
-            ip_address=request.client.host if request and request.client else None,
+            ip_address=client_ip(request) if request else None,
             user_agent=request.headers.get("user-agent") if request else None,
             notes=notes,
         )

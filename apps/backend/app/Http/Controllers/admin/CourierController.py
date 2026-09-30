@@ -69,7 +69,8 @@ class CourierController:
     @staticmethod
     def slip_pdf_path(db: Session, order_id: UUID) -> str:
         order = OrdersService.get(db, order_id)
-        return DriverSlipPdfService.ensure(db, order)
+        # Admin download is the only priced copy; driver email/WhatsApp/link use the default (no price).
+        return DriverSlipPdfService.ensure(db, order, with_price=True)
 
     @staticmethod
     def send(db: Session, order_id: UUID, payload: SendSlipRequest, actor: AdminUser, request: Request, background_tasks: BackgroundTasks) -> CourierOrderResponse:
@@ -153,17 +154,21 @@ class CourierController:
             queued.append(log.id)
 
         if "customer" in payload.to:
-            if not order.invoice:
+            inv = order.current_invoice
+            if not inv:
                 raise ConflictError("Order has no invoice yet — create the invoice first (POST /admin/orders/{id}/invoice)")
+            # Only the frozen, issued document goes to a customer — a draft is not yet a Rechnung.
+            if inv.status == "draft" or not inv.pdf_url or not Path(inv.pdf_url).exists():
+                raise ConflictError(f"Invoice {inv.invoice_number} has no issued PDF — issue it before sending it to the customer")
             if not order.customer_email:
                 raise ConflictError("Customer has no email address")
             log = EmailService.queue(
                 db, to_address=order.customer_email, template="customer_invoice",
-                subject=f"Rechnung {order.invoice.invoice_number}", locale="de",
-                extra={"invoice_number": order.invoice.invoice_number, "order_number": order.order_number},
+                subject=f"Rechnung {inv.invoice_number}", locale="de",
+                extra={"invoice_number": inv.invoice_number, "order_number": order.order_number},
                 module="courier_invoice",
-                attachment_path=str(Path(order.invoice.pdf_url).resolve()) if order.invoice.pdf_url else None,
-                attachment_name=f"{order.invoice.invoice_number}.pdf",
+                attachment_path=str(Path(inv.pdf_url).resolve()),
+                attachment_name=f"{inv.invoice_number}.pdf",
             )
             queued.append(log.id)
 

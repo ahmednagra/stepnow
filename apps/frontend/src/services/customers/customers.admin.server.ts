@@ -48,6 +48,6 @@ export async function deleteAdminCustomerServer(id: string, authToken: string): 
   revalidateForPath(ENDPOINTS.ADMIN.CUSTOMERS);
 }
 
-export async function listCustomerOrdersServer(id: string, authToken: string): Promise<CourierOrder[]> {
-  return unwrap(await serverApiClient.get<CourierOrder[]>(ENDPOINTS.ADMIN.CUSTOMER_ORDERS(id), undefined, authToken));
+export async function listCustomerOrdersServer(id: string, params: { page?: number; size?: number }, authToken: string): Promise<Paginated<CourierOrder>> {
+  return unwrap(await serverApiClient.get<Paginated<CourierOrder>>(ENDPOINTS.ADMIN.CUSTOMER_ORDERS(id), { params }, authToken));
 }

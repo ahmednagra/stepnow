@@ -6,7 +6,7 @@ import { getUiStringsServer } from "@/services/uiStrings";
 import { getSettingsServer } from "@/services/settings";
 import { listFaqsServer } from "@/services/faqs";
 import { createT } from "@/lib/i18n/t";
-import { buildLocalBusinessJsonLd, buildFaqPageJsonLd, buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
+import { buildLocalBusinessJsonLd, buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { Container } from "@/components/shared";
 import {
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = createT(stringsRes.strings, "en");
   return buildMetadata({
     title: t("contact.page.title"),
-    description: t("contact.page.subhead"),
+    description: t("contact.meta_description"),
     path: "/en/contact",
     locale: "en",
   });
@@ -177,7 +177,6 @@ export default async function ContactPageEn() {
       </section>
 
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />
-      {topFaqs.length > 0 && <JsonLd data={buildFaqPageJsonLd(topFaqs)} />}
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: pickT(t, "nav.home", "Home"), href: "/en" },

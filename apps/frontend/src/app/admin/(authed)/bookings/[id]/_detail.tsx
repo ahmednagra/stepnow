@@ -1,28 +1,33 @@
 // apps/frontend/src/app/admin/(authed)/bookings/[id]/_detail.tsx
-// Booking detail with status changer, price quote, notes, print quote/invoice.
+// Booking detail: the route, the customer's own request, one-tap contact, status/quote changer.
+// The reference belongs to the page header and is never repeated down here.
 
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
-  Loader2, Save, Trash2, Mail, Phone, MapPin, Calendar, Users, Briefcase, Printer, FileText,
+  Briefcase, Building2, FileText, Loader2, Mail, MapPin, MessageSquare, MessageSquareQuote,
+  Phone, Printer, Save, Trash2, Users,
 } from "lucide-react";
 import {
-  AdminCard, AdminFormField, ConfirmDialog,
-  adminInputClass, adminTextareaClass,
+  AdminCard, AdminFormField, ConfirmDialog, adminInputClass, adminTextareaClass,
 } from "@/components/admin";
-import {
-  BOOKING_STATUSES, type BookingStatus, type BookingAdmin, type ServiceAdmin,
-} from "@/types";
+import { BOOKING_STATUSES, type BookingStatus, type BookingAdmin, type ServiceAdmin } from "@/types";
+import { useDefaultCurrency } from "@/hooks/queries";
 import { useUpdateBooking, useDeleteBooking } from "@/hooks/mutations/useBookingMutations";
-import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
+import { ApiError } from "@/lib/api-errors";
+import { formatPrice } from "@/utils/formatters";
 import { normalizeDecimalInput } from "@/utils/decimal";
 import { printNode } from "@/utils/exporters";
 import { cn } from "@/utils/cn";
 
 interface Props { initial: BookingAdmin; service: ServiceAdmin | null; }
+
+const LABEL = "text-[9.5px] font-semibold uppercase tracking-[0.20em] text-slate-400";
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
   new: "New",
@@ -55,7 +60,82 @@ function StatusPill({ status }: { status: BookingStatus }) {
   );
 }
 
+// Pickup and destination read as one connected journey rather than two sibling columns —
+// the shape dispatchers already know from every run-sheet.
+function RouteLine({ booking }: { booking: BookingAdmin }) {
+  const origin = [booking.pickup_postcode, booking.pickup_city].filter(Boolean).join(" ");
+  const target = [booking.destination_postcode, booking.destination_city].filter(Boolean).join(" ");
+  return (
+    <div className="grid grid-cols-[16px_minmax(0,1fr)] gap-x-3">
+      <div className="flex flex-col items-center">
+        <span aria-hidden="true" className="mt-[6px] h-[11px] w-[11px] shrink-0 rounded-full border-2 border-[#A8865A] bg-white" />
+        <span aria-hidden="true" className="my-1 w-px flex-1 bg-slate-200" />
+      </div>
+      <div className="min-w-0 pb-5">
+        <p className={LABEL}>From</p>
+        <p className="mt-0.5 text-[13.5px] leading-snug text-slate-900">{booking.pickup_address}</p>
+        {origin && <p className="text-[11.5px] text-slate-500">{origin}</p>}
+      </div>
+      <div className="flex justify-center">
+        <MapPin className="mt-[3px] h-4 w-4 shrink-0 text-slate-900" strokeWidth={2} aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <p className={LABEL}>To</p>
+        <p className="mt-0.5 text-[13.5px] leading-snug text-slate-900">{booking.destination_address}</p>
+        {target && <p className="text-[11.5px] text-slate-500">{target}</p>}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400" strokeWidth={1.5} aria-hidden="true" />
+      <span className={LABEL}>{label}</span>
+      <span className="text-[13px] tabular-nums text-slate-900">{value}</span>
+    </div>
+  );
+}
+
+// The customer's own words decide the vehicle and the driver, so they get their own surface
+// above the contact block instead of a grey row at the bottom of the trip table.
+function CustomerRequest({ text }: { text: string }) {
+  return (
+    <section className="border border-[#E4D5BC] bg-[#FBF7F0] shadow-[0_1px_2px_0_rgba(15,23,42,0.03)]">
+      <div className="flex gap-3 px-5 py-4">
+        <MessageSquareQuote className="mt-0.5 h-4 w-4 shrink-0 text-[#A8865A]" strokeWidth={1.5} aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="text-[9.5px] font-semibold uppercase tracking-[0.20em] text-[#86683F]">
+            What the customer asked for
+          </p>
+          <p className="mt-1.5 whitespace-pre-wrap font-serif text-[15px] leading-[1.55] text-slate-900">{text}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ContactAction({ icon: Icon, label, value, href, external }: {
+  icon: LucideIcon; label: string; value: string; href: string; external?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      className="group flex items-center gap-2.5 border border-slate-200 px-3 py-2.5 transition-colors hover:border-slate-900 hover:bg-slate-50"
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-900" strokeWidth={1.5} aria-hidden="true" />
+      <span className="min-w-0">
+        <span className={cn("block", LABEL)}>{label}</span>
+        <span className="block truncate text-[13px] text-slate-900">{value}</span>
+      </span>
+    </a>
+  );
+}
+
 export function BookingDetail({ initial, service }: Props) {
+  const cur = useDefaultCurrency();
   const router = useRouter();
   const pushToast = useAdminToast((s) => s.push);
   const updateBooking = useUpdateBooking(initial.id);
@@ -116,86 +196,54 @@ export function BookingDetail({ initial, service }: Props) {
   const when = new Date(booking.requested_datetime).toLocaleString("en-GB", {
     weekday: "long", day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
+  const whatsapp = booking.customer_phone?.replace(/\D/g, "") || "";
+  const quoted = booking.quoted_price_eur ? formatPrice(booking.quoted_price_eur, "en", cur) : "—";
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="space-y-4" id="booking-printable">
-        <AdminCard eyebrow={`Reference · ${booking.reference}`} title="Trip" serif>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-[13px]">
-            <div className="col-span-2 flex items-start gap-2.5">
-              <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A8865A]" strokeWidth={1.5} aria-hidden="true" />
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Pickup time</dt>
-                <dd className="font-serif text-[18px] font-medium text-slate-900 tabular-nums">{when}</dd>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A8865A]" strokeWidth={1.5} aria-hidden="true" />
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">From</dt>
-                <dd className="text-slate-900">{booking.pickup_address}</dd>
-                {(booking.pickup_postcode || booking.pickup_city) && (
-                  <dd className="text-[11.5px] text-slate-500">{booking.pickup_postcode} {booking.pickup_city}</dd>
-                )}
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-900" strokeWidth={1.5} aria-hidden="true" />
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">To</dt>
-                <dd className="text-slate-900">{booking.destination_address}</dd>
-                {(booking.destination_postcode || booking.destination_city) && (
-                  <dd className="text-[11.5px] text-slate-500">{booking.destination_postcode} {booking.destination_city}</dd>
-                )}
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Users className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A8865A]" strokeWidth={1.5} aria-hidden="true" />
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Passengers</dt>
-                <dd className="tabular-nums text-slate-900">{booking.passenger_count}</dd>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Briefcase className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A8865A]" strokeWidth={1.5} aria-hidden="true" />
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Luggage</dt>
-                <dd className="tabular-nums text-slate-900">{booking.luggage_count}</dd>
-              </div>
-            </div>
+        <AdminCard eyebrow="Pickup" title={when} serif headerActions={<StatusPill status={status} />}>
+          <RouteLine booking={booking} />
+          <div className="mt-5 flex flex-wrap items-center gap-x-7 gap-y-2.5 border-t border-slate-100 pt-4">
+            <Stat icon={Users} label="Passengers" value={booking.passenger_count} />
+            <Stat icon={Briefcase} label="Luggage" value={booking.luggage_count} />
             {service && (
-              <div className="col-span-2 border-t border-slate-100 pt-3">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Service</dt>
-                <dd className="mt-0.5 text-slate-900">{service.title_de} <span className="text-slate-500">· {service.title_en}</span></dd>
-              </div>
+              <Stat
+                icon={FileText}
+                label="Service"
+                value={<>{service.title_de} <span className="text-slate-500">· {service.title_en}</span></>}
+              />
             )}
-            {booking.special_requirements && (
-              <div className="col-span-2 border-t border-slate-100 pt-3">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Special requirements</dt>
-                <dd className="mt-0.5 whitespace-pre-wrap text-slate-700">{booking.special_requirements}</dd>
-              </div>
-            )}
-          </dl>
+          </div>
         </AdminCard>
 
-        <AdminCard eyebrow="Customer" title={booking.customer_name} serif>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
-            <div className="flex items-center gap-2">
-              <Mail className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} aria-hidden="true" />
-              <a href={`mailto:${booking.customer_email}`} className="text-slate-900 hover:underline">{booking.customer_email}</a>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.5} aria-hidden="true" />
-              <a href={`tel:${booking.customer_phone}`} className="text-slate-900 hover:underline">{booking.customer_phone}</a>
-            </div>
-            {booking.is_business && (
-              <div className="col-span-2 border-t border-slate-100 pt-3">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Business</dt>
-                <dd className="mt-0.5 text-slate-900">{booking.company_name}</dd>
-                {booking.company_vatid && <dd className="text-[11.5px] text-slate-500">VAT: {booking.company_vatid}</dd>}
-              </div>
+        {booking.special_requirements && <CustomerRequest text={booking.special_requirements} />}
+
+        <AdminCard
+          eyebrow="Customer"
+          title={booking.customer_name}
+          serif
+          headerActions={booking.is_business ? (
+            <span className="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+              <Building2 className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+              Business
+            </span>
+          ) : null}
+        >
+          <div className="grid gap-2 sm:grid-cols-2">
+            <ContactAction icon={Mail} label="Email" value={booking.customer_email} href={`mailto:${booking.customer_email}`} />
+            <ContactAction icon={Phone} label="Phone" value={booking.customer_phone} href={`tel:${booking.customer_phone}`} />
+            {whatsapp && (
+              <ContactAction icon={MessageSquare} label="WhatsApp" value="Open chat" href={`https://wa.me/${whatsapp}`} external />
             )}
-          </dl>
+          </div>
+          {booking.is_business && (
+            <dl className="mt-4 border-t border-slate-100 pt-3 text-[13px]">
+              <dt className={LABEL}>Company</dt>
+              <dd className="mt-0.5 text-slate-900">{booking.company_name}</dd>
+              {booking.company_vatid && <dd className="text-[11.5px] text-slate-500">VAT {booking.company_vatid}</dd>}
+            </dl>
+          )}
         </AdminCard>
 
         <AdminCard eyebrow="Internal" title="Operations notes" serif>
@@ -226,7 +274,7 @@ export function BookingDetail({ initial, service }: Props) {
             </select>
           </AdminFormField>
           <div className="mt-3">
-            <AdminFormField label="Quoted price (€)" error={priceError ?? undefined}>
+            <AdminFormField label={`Quoted price (${cur})`} error={priceError ?? undefined}>
               <input
                 type="text"
                 inputMode="decimal"
@@ -262,7 +310,7 @@ export function BookingDetail({ initial, service }: Props) {
               className="flex h-9 items-center justify-center gap-2 border border-[#A8865A] bg-white px-3 text-[12.5px] font-medium text-[#86683F] hover:bg-[#FBF7F0] disabled:opacity-40"
             >
               <FileText className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
-              Print quote (€{booking.quoted_price_eur ?? "—"})
+              Print quote ({quoted})
             </button>
             <button
               type="button"
@@ -310,9 +358,7 @@ export function BookingDetail({ initial, service }: Props) {
               <tr><td style={{ padding: "6px 0", color: "#5A5A5A" }}>Passengers</td><td style={{ textAlign: "right" }}>{booking.passenger_count}</td></tr>
               <tr style={{ borderTop: "1px solid #D8D5CE" }}>
                 <td style={{ padding: "12px 0", fontWeight: 600 }}>Total</td>
-                <td style={{ padding: "12px 0", textAlign: "right", fontFamily: "Georgia, serif", fontSize: 22 }}>
-                  €{booking.quoted_price_eur ?? "—"}
-                </td>
+                <td style={{ padding: "12px 0", textAlign: "right", fontFamily: "Georgia, serif", fontSize: 22 }}>{quoted}</td>
               </tr>
             </tbody>
           </table>

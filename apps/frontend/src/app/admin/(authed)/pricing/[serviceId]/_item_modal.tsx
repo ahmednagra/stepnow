@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Loader2 } from "lucide-react";
 import {
   adminPricingItemSchema,
+  SUPPORTED_CURRENCIES,
   type AdminPricingItemInput,
 } from "@/schemas/admin-pricing.schema";
 import {
@@ -44,6 +45,10 @@ function defaults(it: PricingItemAdmin | undefined, nextSortOrder: number): Admi
     to_location_de: it?.to_location_de ?? "",
     to_location_en: it?.to_location_en ?? "",
     price_eur: formatDecimalForInput(it?.price_eur),
+    price_unit: it?.price_unit ?? "",
+    is_from_price: it?.is_from_price ?? false,
+    currency: (it?.currency ?? "EUR") as AdminPricingItemInput["currency"],
+    distance_km: formatDecimalForInput(it?.distance_km),
     note_de: it?.note_de ?? "",
     note_en: it?.note_en ?? "",
   };
@@ -73,8 +78,9 @@ export function ItemModal({
 
   async function onSubmit(values: AdminPricingItemInput) {
     setServerError(null);
-    const normalizedPrice = normalizeDecimalInput(values.price_eur);
-    if (!normalizedPrice) {
+    // Blank amount = "Preis auf Anfrage" (the offering is listed, the fare is quoted per request).
+    const normalizedPrice = values.price_eur.trim() ? normalizeDecimalInput(values.price_eur) : null;
+    if (values.price_eur.trim() && !normalizedPrice) {
       setServerError("Enter a valid price.");
       return;
     }
@@ -86,6 +92,10 @@ export function ItemModal({
       to_location_de: orNull(values.to_location_de),
       to_location_en: orNull(values.to_location_en),
       price_eur: normalizedPrice,
+      price_unit: normalizedPrice && values.price_unit ? values.price_unit : null,
+      is_from_price: normalizedPrice ? values.is_from_price : false,
+      currency: values.currency,
+      distance_km: values.distance_km?.trim() ? normalizeDecimalInput(values.distance_km) : null,
       note_de: orNull(values.note_de),
       note_en: orNull(values.note_en),
     };
@@ -168,12 +178,18 @@ export function ItemModal({
             }
           />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <AdminFormField label="Currency" required error={errors.currency?.message} hint="ISO 4217">
+              <select className={adminInputClass} {...register("currency")}>
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </AdminFormField>
             <AdminFormField
-              label="Price (EUR)"
-              required
+              label="Amount"
               error={errors.price_eur?.message}
-              hint="e.g. 45.50 or 45,50"
+              hint="e.g. 45.50 — leave empty for “price on request”"
             >
               <input
                 type="text"
@@ -182,6 +198,30 @@ export function ItemModal({
                 className={`${adminInputClass} tabular-nums`}
                 {...register("price_eur")}
               />
+            </AdminFormField>
+            <AdminFormField label="Distance (km)" error={errors.distance_km?.message} hint="optional">
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="—"
+                className={`${adminInputClass} tabular-nums`}
+                {...register("distance_km")}
+              />
+            </AdminFormField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <AdminFormField label="Price unit" error={errors.price_unit?.message} hint="flat, per km or per minute">
+              <select className={adminInputClass} {...register("price_unit")}>
+                <option value="">Flat price</option>
+                <option value="km">per kilometre (€ / km)</option>
+                <option value="min">per minute (€ / Min.)</option>
+              </select>
+            </AdminFormField>
+            <AdminFormField label="Starting price" hint="shown as “ab …”">
+              <label className="flex h-9 items-center gap-2 text-[13px] text-slate-700">
+                <input type="checkbox" className="h-3.5 w-3.5" {...register("is_from_price")} />
+                Starting price (ab)
+              </label>
             </AdminFormField>
             <AdminFormField label="Sort order" error={errors.sort_order?.message} hint="optional">
               <input type="number" min="0" className={adminInputClass} {...register("sort_order")} />

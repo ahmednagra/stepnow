@@ -4,13 +4,15 @@
 # so they are never placed under the public /uploads mount; they stream via the authenticated
 # admin endpoint. Issuer/bank/legal details come from SiteSettings, not hardcoded. Layout
 # follows the client RECHNUNG template: issuer + Steuer-Nr top-right, Kunden-/Referenz-Nr meta,
-# salutation + route intro, Einzelpreis/Gesamtpreis line table, Skonto with computed €,
+# salutation + route intro, Einzelpreis/Gesamtpreis line table, Skonto with a computed amount,
 # Zahlungsbedingungen (IBAN/BIC/Verwendungszweck/Fälligkeitsdatum), closing + Handelsregister footer.
+# Every user-controlled value is escaped before it enters Paragraph markup (app/Utils/pdf.py).
 #
 # Requires: reportlab  (reportlab==4.2.5 in requirements.txt)
 
 from datetime import date
 from decimal import Decimal
+from babel.numbers import format_currency
 from pathlib import Path
 from sqlalchemy.orm import Session
 from reportlab.lib import colors
@@ -21,6 +23,7 @@ from reportlab.platypus import SimpleDocTemplate, Image, Paragraph, Spacer, Tabl
 from app.Models.invoices import Invoice
 from app.Models.settings import SiteSettings
 from app.Utils.finance import money
+from app.Utils.pdf import atomic_output, esc, esc_lines
 
 STORAGE_DIR = Path("storage/invoices")  # gitignored (apps/backend/storage/)
 _INK = colors.HexColor("#0F1115")
@@ -47,8 +50,9 @@ def logo_flowable(s, max_w_mm: float = 42, max_h_mm: float = 18):
         return None
 
 
-def _eur(value) -> str:
-    return f"{Decimal(value):,.2f} €"
+def _money(value, currency: str) -> str:
+    """Symbol and placement come from CLDR, so any ISO 4217 renders correctly — no symbol map."""
+    return format_currency(Decimal(value), currency, locale="de_DE")
 
 
 def _de_date(d) -> str:
@@ -58,14 +62,21 @@ def _de_date(d) -> str:
 class InvoicePdfService:
 
     @staticmethod
-    def storage_path(invoice: Invoice) -> Path:
-        return STORAGE_DIR / f"{invoice.invoice_number}.pdf"
+    def storno_number(invoice: Invoice) -> str:
+        """The cancellation document's own reference: the original number + a Storno marker. Distinct
+        from a replacement's '-{revision}' suffix, so the two can never collide."""
+        return f"{invoice.invoice_number}-STORNO"
 
     @staticmethod
-    def render(db: Session, invoice: Invoice) -> str:
-        """Generate the PDF, return its (relative) storage path string."""
+    def render(db: Session, invoice: Invoice, storno: bool = False) -> str:
+        """Generate the PDF, return its (relative) storage path string. storno=True renders the
+        Stornorechnung for a cancelled invoice: own reference, negated amounts, no payment request."""
         STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-        out = InvoicePdfService.storage_path(invoice)
+        doc_no = InvoicePdfService.storno_number(invoice) if storno else invoice.invoice_number
+        out = STORAGE_DIR / f"{doc_no}.pdf"
+        sign = Decimal(-1) if storno else Decimal(1)
+        doc_title = "Stornorechnung" if storno else "Rechnung"
+        cur = invoice.currency
         order = invoice.order
         s = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
 
@@ -89,11 +100,6 @@ class InvoicePdfService:
         addr_parts = [p for p in (s.address_street if s else None, loc) if p]
         sender_line = " · ".join([biz, *addr_parts])
 
-        doc = SimpleDocTemplate(
-            str(out), pagesize=A4,
-            leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm,
-            title=f"Rechnung {invoice.invoice_number}",
-        )
         story = []
 
         # Header — logo (left) + issuer right-aligned with Steuer-Nr (template puts it top-right)
@@ -101,44 +107,49 @@ class InvoicePdfService:
         if logo:
             story.append(logo)
             story.append(Spacer(1, 2 * mm))
-        story.append(Paragraph(issuer_line, h_right))
+        story.append(Paragraph(esc(issuer_line), h_right))
         if contact_line:
-            story.append(Paragraph(contact_line, h_right_s))
+            story.append(Paragraph(esc(contact_line), h_right_s))
         if tax_no:
-            story.append(Paragraph(f"Steuer-Nr.: {tax_no}", h_right_s))
+            story.append(Paragraph(f"Steuer-Nr.: {esc(tax_no)}", h_right_s))
         story.append(Spacer(1, 8 * mm))
 
         # Recipient + invoice meta side by side. Sender one-liner over the address window.
-        recipient = (invoice.recipient_block or order.customer_name or "").replace("\n", "<br/>")
+        recipient = esc_lines(invoice.recipient_block or order.customer_name or "")
         cust_no = order.customer.customer_number if order.customer and order.customer.customer_number else None
         meta = [["Kunden-Nr.:", cust_no]] if cust_no else []
         meta += [
+            ["Storno-Nr.:", doc_no], ["Datum:", _de_date(date.today())], ["Zu Rechnung:", invoice.invoice_number],
+        ] if storno else [
             ["Rechnungs-Nr.:", invoice.invoice_number],
             ["Datum:", _de_date(invoice.issue_date)],
         ]
         if order.client_reference:
             meta.append(["Referenz-Nr.:", order.client_reference])
-        meta_tbl = Table([[Paragraph(f"<b>{k}</b>", small), Paragraph(v, small)] for k, v in meta], colWidths=[28 * mm, 44 * mm])
+        meta_tbl = Table([[Paragraph(f"<b>{k}</b>", small), Paragraph(esc(v), small)] for k, v in meta], colWidths=[28 * mm, 44 * mm])
         meta_tbl.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
         recipient_cell = Paragraph(
-            f"<font size=6.5 color='#94A3B8'>{sender_line}</font><br/><br/>" + recipient, body)
+            f"<font size=6.5 color='#94A3B8'>{esc(sender_line)}</font><br/><br/>" + recipient, body)
         head = Table([[recipient_cell, meta_tbl]], colWidths=[95 * mm, 75 * mm])
         head.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
         story.append(head)
         story.append(Spacer(1, 8 * mm))
-        story.append(Paragraph("Rechnung", title))
+        story.append(Paragraph(doc_title, title))
         story.append(Spacer(1, 3 * mm))
 
         # Salutation + intro referencing the service date + route.
         _pickups = [st for st in (order.stops or []) if not st.is_deleted and st.stop_type == "pickup"]
         _drop = next((st for st in (order.stops or []) if not st.is_deleted and st.stop_type == "drop"), None)
-        _from_city = (_pickups[0].city if _pickups and _pickups[0].city else order.pickup_city) or (
-            _pickups[0].address if _pickups else order.pickup_address) or "—"
-        _to_city = (_drop.city if _drop and _drop.city else order.destination_city) or (
-            _drop.address if _drop else order.destination_address) or "—"
+        _from_city = esc((_pickups[0].city if _pickups and _pickups[0].city else order.pickup_city) or (
+            _pickups[0].address if _pickups else order.pickup_address) or "—")
+        _to_city = esc((_drop.city if _drop and _drop.city else order.destination_city) or (
+            _drop.address if _drop else order.destination_address) or "—")
         service_date = order.preferred_date or (order.scheduled_datetime.date() if order.scheduled_datetime else invoice.issue_date)
         story.append(Paragraph("Sehr geehrte Damen und Herren,", body))
         story.append(Paragraph(
+            f"Storno zu Rechnung {esc(invoice.invoice_number)} vom {_de_date(invoice.issue_date)}. "
+            f"Die Rechnung über die Transportleistung vom {_de_date(service_date)} ({_from_city} nach {_to_city}) "
+            f"wird hiermit in voller Höhe storniert:" if storno else
             f"vielen Dank für Ihren Auftrag. Für die nachfolgend aufgeführte Transportleistung "
             f"vom {_de_date(service_date)} ({_from_city} nach {_to_city}) erlauben wir uns, "
             f"folgende Rechnung zu stellen:", body))
@@ -148,15 +159,15 @@ class InvoicePdfService:
         # first, then the ad-hoc charge/discount rows (Waiting Time, Rabatt …).
         rate = Decimal(invoice.vat_rate)
         rate_pct = f"{(rate * 100):.0f}%"
-        base_net = Decimal(invoice.base_net)
+        base_net = sign * Decimal(invoice.base_net)
         rows = [["Pos.", "Beschreibung", "Einzelpreis", "MwSt", "Gesamtpreis"]]
-        desc = order.service_description or "Transportleistung"
+        desc = esc_lines(order.service_description or "Transportleistung")
         route = f"{_from_city} → {_to_city}"
         rows.append(["1", Paragraph(f"{desc}<br/><font size=7 color='#64748B'>{route}</font>", small),
-                     _eur(base_net), rate_pct, _eur(base_net * (1 + rate))])
+                     _money(base_net, cur), rate_pct, _money(base_net * (1 + rate), cur)])
         for n, item in enumerate((it for it in invoice.items if not it.is_deleted), start=2):
-            signed = item.net_amount if item.kind == "charge" else -item.net_amount
-            rows.append([str(n), item.label, _eur(signed), rate_pct, _eur(signed * (1 + rate))])
+            signed = sign * (item.net_amount if item.kind == "charge" else -item.net_amount)
+            rows.append([str(n), item.label, _money(signed, cur), rate_pct, _money(signed * (1 + rate), cur)])
 
         items = Table(rows, colWidths=[12 * mm, 80 * mm, 26 * mm, 16 * mm, 28 * mm])
         items.setStyle(TableStyle([
@@ -174,9 +185,9 @@ class InvoicePdfService:
 
         # Totals — Summe Netto / zzgl. USt. X% / Gesamtbetrag
         totals = [
-            ["Summe Netto", _eur(invoice.net_amount)],
-            [f"zzgl. USt. {rate_pct}", _eur(invoice.vat_amount)],
-            ["Gesamtbetrag", _eur(invoice.gross_amount)],
+            ["Summe Netto", _money(sign * invoice.net_amount, cur)],
+            [f"zzgl. USt. {rate_pct}", _money(sign * invoice.vat_amount, cur)],
+            ["Gesamtbetrag", _money(sign * invoice.gross_amount, cur)],
         ]
         t = Table(totals, colWidths=[44 * mm, 32 * mm], hAlign="RIGHT")
         t.setStyle(TableStyle([
@@ -190,44 +201,55 @@ class InvoicePdfService:
         story.append(t)
         story.append(Spacer(1, 6 * mm))
 
-        # Skonto with computed € amount
-        if invoice.skonto_pct and invoice.skonto_days:
-            disc = money(Decimal(invoice.gross_amount) * Decimal(invoice.skonto_pct) / Decimal("100"))
+        # A Stornorechnung requests no payment: no Skonto, no Zahlungsbedingungen.
+        if storno:
             story.append(Paragraph(
-                f"Skonto: Bei Zahlung binnen {invoice.skonto_days} Tagen {invoice.skonto_pct}% "
-                f"= {_eur(disc)} Abzug möglich.", small))
-            story.append(Spacer(1, 3 * mm))
+                "Bereits geleistete Zahlungen werden mit der Ersatzrechnung verrechnet oder erstattet.", small))
+            story.append(Spacer(1, 8 * mm))
+        else:
+            # Skonto with the computed discount amount
+            if invoice.skonto_pct and invoice.skonto_days:
+                disc = money(Decimal(invoice.gross_amount) * Decimal(invoice.skonto_pct) / Decimal("100"))
+                story.append(Paragraph(
+                    f"Skonto: Bei Zahlung binnen {invoice.skonto_days} Tagen {invoice.skonto_pct}% "
+                    f"= {_money(disc, cur)} Abzug möglich.", small))
+                story.append(Spacer(1, 3 * mm))
 
-        # Zahlungsbedingungen — bank block + Verwendungszweck + Fälligkeitsdatum
-        story.append(Paragraph("<b>Zahlungsbedingungen</b>", body))
-        story.append(Paragraph(
-            f"Bitte überweisen Sie den Rechnungsbetrag von {_eur(invoice.gross_amount)} innerhalb von "
-            f"{invoice.payment_due_days} Tagen ohne Abzug auf das folgende Konto:", small))
-        if s and (s.iban or s.bic):
-            bank = "  ·  ".join(p for p in (
-                f"IBAN: {s.iban}" if s.iban else None,
-                f"BIC: {s.bic}" if s.bic else None,
-                s.bank_account_holder or None,
-            ) if p)
-            story.append(Paragraph(bank, small))
-        story.append(Paragraph(
-            f"Bitte geben Sie als Verwendungszweck die Rechnungsnummer {invoice.invoice_number} an.", small))
-        if invoice.due_date:
-            story.append(Paragraph(f"Fälligkeitsdatum: {_de_date(invoice.due_date)}", small))
-        story.append(Spacer(1, 8 * mm))
+            # Zahlungsbedingungen — bank block + Verwendungszweck + Fälligkeitsdatum
+            story.append(Paragraph("<b>Zahlungsbedingungen</b>", body))
+            story.append(Paragraph(
+                f"Bitte überweisen Sie den Rechnungsbetrag von {_money(invoice.gross_amount, cur)} innerhalb von "
+                f"{invoice.payment_due_days} Tagen ohne Abzug auf das folgende Konto:", small))
+            if s and (s.iban or s.bic):
+                bank = "  ·  ".join(p for p in (
+                    f"IBAN: {s.iban}" if s.iban else None,
+                    f"BIC: {s.bic}" if s.bic else None,
+                    s.bank_account_holder or None,
+                ) if p)
+                story.append(Paragraph(esc(bank), small))
+            story.append(Paragraph(
+                f"Bitte geben Sie als Verwendungszweck die Rechnungsnummer {esc(invoice.invoice_number)} an.", small))
+            if invoice.due_date:
+                story.append(Paragraph(f"Fälligkeitsdatum: {_de_date(invoice.due_date)}", small))
+            story.append(Spacer(1, 8 * mm))
 
         # Closing
         story.append(Paragraph("Mit freundlichen Grüßen", body))
         if owner:
-            story.append(Paragraph(owner, body))
+            story.append(Paragraph(esc(owner), body))
 
         # Legal footer
         reg = " ".join(p for p in (s.commercial_register, s.register_court) if p) if s else ""
         footer_bits = [p for p in (sender_line, reg, s.website if s else None) if p]
         if footer_bits:
             story.append(Spacer(1, 6 * mm))
-            story.append(Paragraph("  ·  ".join(footer_bits),
+            story.append(Paragraph(esc("  ·  ".join(footer_bits)),
                                    ParagraphStyle("foot", parent=small, fontSize=7.5, alignment=1)))
 
-        doc.build(story)
+        with atomic_output(out) as tmp:
+            SimpleDocTemplate(
+                str(tmp), pagesize=A4,
+                leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm,
+                title=f"{doc_title} {doc_no}",
+            ).build(story)
         return str(out)

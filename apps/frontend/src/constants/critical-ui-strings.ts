@@ -1,8 +1,8 @@
 // src/constants/critical-ui-strings.ts
-// Last-resort fallbacks for UI strings that must never be missing.
-// The backend marks the same keys as is_locked=true so they can't be deleted.
-// Wizard strings are included here so the booking flow works even if the backend
-// hasn't been seeded with them — the wizard is too critical to fail silently.
+// Last-resort fallbacks for UI strings that must never render as a raw key — the booking wizard,
+// language switcher, 404 and core errors — used only when the ui_strings API is unreachable or the
+// key is missing from the DB. Every value is identical to seed_ui_strings.py (DE + EN); the backend
+// test tests/test_ui_strings_coverage.py fails on any drift or on a fallback no component uses.
 
 import type { Locale } from "@/types";
 
@@ -13,21 +13,28 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   "language.switch.current": { de: "Sprache wählen", en: "Choose language" },
 
   // Common
-  "common.loading": { de: "Lädt…", en: "Loading…" },
-  "common.book_now": { de: "Jetzt buchen", en: "Book now" },
   "common.call_us": { de: "Anrufen", en: "Call us" },
   "common.back": { de: "Zurück", en: "Back" },
   "common.continue": { de: "Weiter", en: "Continue" },
-  "common.submit": { de: "Absenden", en: "Submit" },
   "common.edit": { de: "Ändern", en: "Edit" },
 
   // Errors
-  "errors.generic": { de: "Ein Fehler ist aufgetreten.", en: "An error occurred." },
+  "errors.generic": {
+    de: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    en: "An error occurred. Please try again.",
+  },
   "errors.required": { de: "Dieses Feld ist erforderlich.", en: "This field is required." },
   "errors.consent_required": {
-    de: "Bitte stimmen Sie der Datenschutzerklärung zu.",
-    en: "Please accept the privacy policy.",
+    de: "Bitte stimmen Sie der Datenschutzerklärung zu, um fortzufahren.",
+    en: "Please accept the privacy policy to continue.",
   },
+  "errors.page.eyebrow": { de: "Fehler", en: "Error" },
+  "errors.page.heading": { de: "Etwas ist schiefgelaufen", en: "Something went wrong" },
+  "errors.page.body": {
+    de: "Die Seite konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    en: "The page could not be loaded. Please try again.",
+  },
+  "errors.page.retry": { de: "Erneut versuchen", en: "Try again" },
 
   // 404
   "404.heading": { de: "Seite nicht gefunden", en: "Page not found" },
@@ -37,16 +44,12 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   },
   "404.cta": { de: "Zur Startseite", en: "Back to homepage" },
 
-  // Home pre-headings
-  "home.services.pre_heading": { de: "UNSERE LEISTUNGEN", en: "OUR SERVICES" },
-  "home.final_cta.pre_heading": { de: "BEREIT FÜR IHRE FAHRT", en: "READY FOR YOUR RIDE" },
-
   // === Booking wizard ===
   // Page / shell
   "booking.page.title": { de: "Fahrt buchen", en: "Book your ride" },
   "booking.page.subhead": {
-    de: "In wenigen Schritten zur unverbindlichen Buchungsanfrage. Wir melden uns mit Ihrem Pauschalpreis.",
-    en: "A few steps to your non-binding booking request. We'll get back with your price.",
+    de: "In wenigen Schritten zur unverbindlichen Buchungsanfrage. Wir melden uns mit Ihrem Preis — online vorbestellt sparen Sie bis zu 5 %.",
+    en: "A few steps to your non-binding booking request. We'll get back with your price — book online and save up to 5%.",
   },
   "booking.step.service": { de: "Leistung", en: "Service" },
   "booking.step.route": { de: "Strecke", en: "Route" },
@@ -67,25 +70,6 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
     de: "Wählen Sie die Art Ihrer Fahrt und den gewünschten Termin.",
     en: "Choose the type of ride and your preferred time.",
   },
-  "booking.service.label": { de: "Leistung", en: "Service" },
-  "booking.datetime.heading": {
-    de: "Wann benötigen Sie die Fahrt?",
-    en: "When do you need the ride?",
-  },
-  "booking.datetime.date_label": { de: "Datum", en: "Date" },
-  "booking.datetime.time_label": { de: "Uhrzeit", en: "Time" },
-  "booking.datetime.hint": {
-    de: "Mindestens 1 Stunde im Voraus, maximal 6 Monate im Voraus.",
-    en: "At least 1 hour in advance, no more than 6 months ahead.",
-  },
-  "booking.service.error.lead_time": {
-    de: "Die Abholzeit muss mindestens 1 Stunde in der Zukunft liegen.",
-    en: "Pickup time must be at least 1 hour from now.",
-  },
-  "booking.service.error.too_far": {
-    de: "Buchungen sind maximal 6 Monate im Voraus möglich.",
-    en: "Bookings are limited to 6 months in advance.",
-  },
 
   // Step 2 — route
   "booking.route.heading": {
@@ -96,62 +80,40 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
     de: "Vollständige Adressen helfen uns, den besten Preis zu berechnen.",
     en: "Complete addresses help us calculate the best price.",
   },
-  "booking.route.pickup_heading": { de: "Abholung", en: "Pickup" },
-  "booking.route.destination_heading": { de: "Ziel", en: "Destination" },
   "booking.route.address_label": { de: "Adresse", en: "Address" },
   "booking.route.postcode_label": { de: "PLZ", en: "Postal code" },
-  "booking.route.city_label": { de: "Stadt", en: "City" },
+  "booking.route.city_label": { de: "Ort", en: "City" },
 
   // Step 3 — details
   "booking.details.heading": { de: "Passagiere & Gepäck", en: "Passengers & luggage" },
   "booking.details.subhead": {
-    de: "Wir bringen das passende Fahrzeug. Sondernwünsche bitte unten angeben.",
-    en: "We'll bring the right vehicle. Note special requirements below.",
+    de: "Pro Fahrzeug fahren bis zu 4 Personen — für größere Gruppen setzen wir mehrere Fahrzeuge ein. Sonderwünsche bitte unten angeben.",
+    en: "Each vehicle carries up to 4 persons — for larger groups we deploy several vehicles. Note any special requirements below.",
   },
-  "booking.details.passengers_label": { de: "Personen", en: "Passengers" },
-  "booking.details.luggage_label": { de: "Gepäckstücke", en: "Luggage" },
-  "booking.details.special_label": { de: "Besondere Wünsche", en: "Special requirements" },
-  "booking.details.special_placeholder": {
-    de: "z.B. Kindersitz, zusätzlicher Halt, sehr großes Gepäck …",
-    en: "e.g. child seat, extra stop, oversized luggage …",
-  },
+  "booking.details.passengers_label": { de: "Fahrgäste", en: "Passengers" },
+  "booking.details.luggage_label": { de: "Gepäckstücke", en: "Luggage pieces" },
 
   // Step 4 — contact
   "booking.contact.heading": { de: "Ihre Kontaktdaten", en: "Your contact details" },
   "booking.contact.subhead": {
-    de: "Damit wir uns mit Ihrem Pauschalpreis melden können.",
+    de: "Damit wir uns mit Ihrem Preis melden können.",
     en: "So we can get back to you with your price.",
   },
   "booking.contact.name_label": { de: "Name", en: "Name" },
   "booking.contact.phone_label": { de: "Telefon", en: "Phone" },
   "booking.contact.email_label": { de: "E-Mail", en: "Email" },
   "booking.contact.business_toggle": {
-    de: "Ich buche für ein Unternehmen",
-    en: "I'm booking for a business",
+    de: "Ich buche als Geschäftskunde",
+    en: "I'm booking as a business customer",
   },
-  "booking.contact.company_name_label": { de: "Firmenname", en: "Company name" },
-  "booking.contact.vatid_label": { de: "USt-IdNr. (optional)", en: "VAT ID (optional)" },
 
   // Step 5 — review
   "booking.review.heading": { de: "Bitte prüfen und bestätigen", en: "Please review and confirm" },
   "booking.review.subhead": {
-    de: "Buchungsanfrage absenden — wir melden uns mit Ihrem Pauschalpreis innerhalb von 2 Stunden.",
-    en: "Submit your booking request — we'll come back with a price within 2 hours.",
+    de: "Buchungsanfrage absenden — wir melden uns innerhalb von 30 Minuten mit Ihrem Preis.",
+    en: "Submit your booking request — we'll come back with your price within 30 minutes.",
   },
-  "booking.review.section.service": { de: "Leistung & Termin", en: "Service & time" },
-  "booking.review.section.route": { de: "Strecke", en: "Route" },
-  "booking.review.section.details": { de: "Details", en: "Details" },
-  "booking.review.section.contact": { de: "Kontakt", en: "Contact" },
-  "booking.review.consent": {
-    de: "Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zur Abwicklung der Anfrage zu.",
-    en: "I have read the privacy policy and consent to the processing of my data to fulfill this request.",
-  },
-  "booking.review.consent_link": { de: "Datenschutzerklärung", en: "Privacy policy" },
   "booking.review.submit": { de: "Buchungsanfrage absenden", en: "Submit booking request" },
-  "booking.review.submit_note": {
-    de: "Mit dem Absenden bestätigen Sie Ihre Buchungsanfrage. Wir melden uns mit Ihrem Pauschalpreis.",
-    en: "By submitting, you confirm your booking request. We'll get back with your price.",
-  },
 
   // Confirmation page
   "booking.confirmation.heading": {
@@ -164,15 +126,15 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
   },
   "booking.confirmation.next_steps_heading": { de: "Wie es weitergeht", en: "What happens next" },
   "booking.confirmation.next_step_1": {
-    de: "Sie erhalten innerhalb von 2 Stunden eine telefonische Rückmeldung mit Ihrem Pauschalpreis.",
-    en: "Within 2 hours, we'll call you back with your price.",
+    de: "Sie erhalten innerhalb von 30 Minuten zu unseren Telefonzeiten eine Rückmeldung mit Ihrem Preis.",
+    en: "Within 30 minutes during our phone hours, we'll get back to you with your price.",
   },
   "booking.confirmation.next_step_2": {
     de: "Nach Ihrer Bestätigung wird die Fahrt fest gebucht.",
     en: "Once you confirm, the ride is firmly booked.",
   },
   "booking.confirmation.next_step_3": {
-    de: "Am Tag der Fahrt bekommen Sie eine SMS mit Fahrer- und Fahrzeuginformationen.",
+    de: "Am Tag der Fahrt erhalten Sie eine SMS mit Fahrer- und Fahrzeuginformationen.",
     en: "On the day of the ride, you'll receive an SMS with driver and vehicle details.",
   },
   "booking.confirmation.urgent_heading": { de: "Dringend?", en: "Urgent?" },
@@ -181,14 +143,13 @@ export const CRITICAL_FALLBACKS: Record<string, Record<Locale, string>> = {
     en: "For short-notice bookings, please call us directly.",
   },
   "booking.confirmation.cta_home": { de: "Zur Startseite", en: "Back to homepage" },
-  "booking.confirmation.cta_call": { de: "Jetzt anrufen", en: "Call now" },
 
   // Hero widget (homepage)
-  "hero_widget.heading": { de: "Pauschalpreis-Anfrage", en: "Get a price" },
+  "hero_widget.heading": { de: "Fahrt anfragen", en: "Request a ride" },
   "hero_widget.from_label": { de: "Von", en: "From" },
   "hero_widget.from_placeholder": { de: "Abholadresse", en: "Pickup address" },
   "hero_widget.to_label": { de: "Nach", en: "To" },
-  "hero_widget.to_placeholder": { de: "Zieladresse", en: "Destination" },
+  "hero_widget.to_placeholder": { de: "Zieladresse", en: "Destination address" },
   "hero_widget.when_label": { de: "Wann", en: "When" },
-  "hero_widget.cta": { de: "Pauschalpreis erfragen", en: "Get your price" },
+  "hero_widget.cta": { de: "Preis anfragen", en: "Request your price" },
 };

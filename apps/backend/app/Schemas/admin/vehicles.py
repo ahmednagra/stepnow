@@ -70,6 +70,7 @@ class VehicleLedgerOrder(BaseModel):
     route_to: str | None
     net_amount: "Decimal"
     gross_amount: "Decimal"
+    currency: str
     amount_paid: "Decimal"
     balance_due: "Decimal"
     status: str

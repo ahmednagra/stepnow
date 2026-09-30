@@ -1,12 +1,11 @@
 // apps/frontend/src/components/features/pricing/index.ts
-export { PricingTable } from "./PricingTable";
-export { PricingTabs } from "./PricingTabs";
-export type { ServicePricing } from "./PricingTabs";
+export { PricingPriceList } from "./PricingPriceList";
+export type { ServicePricing } from "./PricingPriceList";
 export {
-  PricingFeaturedHero,
   PricingTrustStrip,
   PricingIncludedMoment,
   PricingExcludedStrip,
+  PricingDiscounts,
   PricingComparison,
   PricingPaymentCancellation,
 } from "./PricingSections";

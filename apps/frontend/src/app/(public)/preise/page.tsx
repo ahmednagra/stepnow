@@ -4,13 +4,15 @@ import Link from "next/link";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { listAllPricingServer } from "@/services/pricing";
+import { findLowestPrice } from "@/utils/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
-import { ConcessionBadge, Container, MobileStickyBar } from "@/components/shared";
+import { Container, MobileStickyBar } from "@/components/shared";
 import {
-  PricingTabs,
+  PricingPriceList,
+  PricingDiscounts,
   PricingTrustStrip,
   PricingIncludedMoment,
   PricingExcludedStrip,
@@ -50,6 +52,9 @@ export default async function PricingPageDe() {
     service: s,
     categories: pricingByServiceId.get(s.id) ?? ([] as PricingCategoryPublic[]),
   }));
+  // Row 1 of the comparison quotes the primary service (first by services.sort_order),
+  // not the global minimum — otherwise it advertises a hospital fare as an airport one.
+  const lowest = findLowestPrice(pricingByService[0]?.categories ?? []);
   return (
     <>
       <section className="relative overflow-hidden border-t border-[color:var(--color-border-soft)] bg-[var(--color-text-primary)]">
@@ -95,12 +100,11 @@ export default async function PricingPageDe() {
       </section>
 
       <section className="bg-[var(--color-bg-page)]">
-        <Container className="pt-8 pb-section md:pt-10">
-          <ConcessionBadge settings={settings} tone="light" />
+        <Container className="pt-8 pb-section md:pt-10">
           <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
             <div className="max-w-2xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
-                {pickT(t, "pricing.tabs.eyebrow", "Vollstaendige Preisliste")}
+                {pickT(t, "pricing.tabs.eyebrow", "Aktuelle Preisliste")}
               </p>
               <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
                 {pickT(t, "pricing.tabs.heading", "Jede Strecke, jeder Service")}
@@ -110,25 +114,21 @@ export default async function PricingPageDe() {
               {pickT(
                 t,
                 "pricing.tabs.lead",
-                "Waehlen Sie einen Service, um alle Pauschalpreis anzusehen. Andere Strecken erhalten ein Angebot innerhalb von 30 Minuten.",
+                "Alle Preise aus unserer aktuellen Preisliste. Für andere Strecken erhalten Sie ein Angebot innerhalb von 30 Minuten.",
               )}
             </p>
           </div>
-          <PricingTabs strings={stringsRes.strings} locale="de" data={pricingByService} />
+          <PricingPriceList t={t} locale="de" data={pricingByService} />
         </Container>
       </section>
 
       <PricingTrustStrip t={t} locale="de" />
+      <PricingDiscounts t={t} locale="de" />
       <PricingIncludedMoment t={t} locale="de" />
       <PricingExcludedStrip t={t} locale="de" />
-      <PricingComparison t={t} locale="de" />
+      <PricingComparison t={t} locale="de" lowestPrice={lowest.price} lowestCurrency={lowest.currency} />
       <PricingPaymentCancellation t={t} locale="de" agbHref="/agb" />
-
-      <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-        <Container className="flex justify-center py-8 md:py-10">
-          <ConcessionBadge settings={settings} tone="light" />
-        </Container>
-      </section>
+
       <MobileStickyBar settings={settings} />
       <JsonLd
         data={buildBreadcrumbJsonLd([

@@ -14,6 +14,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { SettingsAdmin } from "@/types";
 import Link from "next/link";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,14 +28,14 @@ import { DatePicker } from "@/components/ui";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { ApiError } from "@/lib/api-errors";
 import { cn } from "@/utils/cn";
-import { normalizeDecimalInput, formatPriceEur } from "@/utils/decimal";
+import { normalizeDecimalInput, formatMoney } from "@/utils/decimal";
 import { z } from "zod";
 import { adminOrderSchema, type AdminOrderInput } from "@/schemas/admin-order.schema";
 import { adminDriverSchema } from "@/schemas/admin-driver.schema";
 import { searchCustomers, type CustomerAdmin } from "@/services/customers";
 import { vehicleLabel } from "@/services/vehicles";
 import { type DriverAdmin } from "@/services/drivers";
-import { useVehicles, useDrivers } from "@/hooks/queries";
+import { useSettings, useDefaultCurrency, useVehicles, useDrivers } from "@/hooks/queries";
 import type { VehicleAdmin } from "@/types";
 import {
   sendDriverSlipWhatsApp, sendDocuments, downloadSlipPdf,
@@ -62,15 +63,19 @@ const TERM_OPTIONS = [
   { days: 28, label: "4 weeks" },
 ];
 
-// Display-only issuer block for the live preview. The stored PDFs are rendered server-side
-// from SiteSettings — these strings never reach the actual document.
-const ISSUER = {
-  name: "StepNow Rides & Movers",
-  sub: "Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau",
-  steuer: "Steuer-Nr. 59500/72609",
-  bank: "IBAN DE10 1001 7997 7961 0444 47 · BIC HOLVDEB1 · Naeem Ahmad",
-  foot: "StepNow Rides & Movers · Naeem Ahmad e.K. · Blumenstraße 8, 73779 Deizisau · HRA 742905 AG Stuttgart · www.step-now.de",
-};
+// Display-only issuer block for the live preview, derived from SiteSettings so it can never
+// drift from the server-rendered PDF.
+function issuerFrom(s?: SettingsAdmin | null) {
+  const addr = s ? `${s.address_street}, ${s.address_postcode} ${s.address_city}` : "";
+  const reg = s?.commercial_register && s?.register_court ? `${s.commercial_register} ${s.register_court}` : "";
+  return {
+    name: s?.business_name ?? "",
+    sub: s ? `${s.owner_name} ${s.legal_form} · ${addr}` : "",
+    steuer: s?.tax_number ? `Steuer-Nr. ${s.tax_number}` : "",
+    bank: s ? [s.iban && `IBAN ${s.iban}`, s.bic && `BIC ${s.bic}`, s.bank_account_holder].filter(Boolean).join(" · ") : "",
+    foot: s ? [s.business_name, `${s.owner_name} ${s.legal_form}`, addr, reg, s.website].filter(Boolean).join(" · ") : "",
+  };
+}
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const deDate = (iso: string) =>
@@ -81,7 +86,12 @@ const addDaysDE = (iso: string, d: number | string) => {
   return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-const emptyStop = () => ({ company: "", address: "", plz: "", ort: "", contact_name: "", contact_phone: "", time_from: "", time_to: "", notes: "" });
+// The bill carries its order's digits (A-45260826 → R-45260826) — same rule as the backend's
+// invoice_number_from_order / job_core. Preview only: order creation never creates the invoice itself.
+const invoiceNumberFor = (orderNumber: string) =>
+  `R-${(orderNumber.includes("-") ? orderNumber.split("-")[1] : orderNumber.replace(/^[A-Za-z]/, "")).split("-")[0]}`;
+
+const emptyStop = () => ({ company: "", address: "", plz: "", ort: "", contact_name: "", contact_phone: "", stop_date: "", time_from: "", time_to: "", notes: "" });
 
 function emptyDefaults(): AdminOrderInput {
   return {
@@ -107,6 +117,7 @@ function toPayload(v: AdminOrderInput): ParcelOrderInput {
     city: orNull(s.ort),
     contact_name: orNull(s.contact_name),
     contact_phone: orNull(s.contact_phone),
+    stop_date: orNull(s.stop_date),
     time_from: orNull(s.time_from),
     time_to: orNull(s.time_to),
     notes: orNull(s.notes),
@@ -170,6 +181,8 @@ function AffixInput({ unit, invalid, ...props }: { unit: string; invalid?: boole
 }
 
 export default function NewTransportOrderPage() {
+  const cur = useDefaultCurrency();
+  const ISSUER = issuerFrom(useSettings().data);
   const pushToast = useAdminToast((s) => s.push);
 
   const {
@@ -420,7 +433,7 @@ export default function NewTransportOrderPage() {
   const brutto = netNum + vatAmt;
   const vatPct = +(rate * 100).toFixed(2);
   const leerKm = Math.max(0, (parseInt(kmGes) || 0) - (parseInt(kmBes) || 0));
-  const money = (n: number) => formatPriceEur((Number.isFinite(n) ? n : 0).toFixed(2));
+  const money = (n: number) => formatMoney((Number.isFinite(n) ? n : 0).toFixed(2), cur);
   // Days → weeks for the payment-term hint (whole weeks shown plainly, else one decimal).
   const termWeeks = term != null ? term / 7 : 0;
   const termWeeksLabel = Number.isInteger(termWeeks) ? `${termWeeks} week${termWeeks === 1 ? "" : "s"}` : `${termWeeks.toFixed(1)} weeks`;
@@ -795,7 +808,8 @@ export default function NewTransportOrderPage() {
                         <input className={adminInputClass} {...register(`pickups.${i}.plz`)} placeholder="PLZ" />
                         <input className={adminInputClass} {...register(`pickups.${i}.ort`)} placeholder="City" />
                       </div>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_140px]">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[150px_140px_140px]">
+                        <label className="flex items-center gap-1.5 text-[11px] text-slate-500">am <input type="date" className={adminInputClass} {...register(`pickups.${i}.stop_date`)} /></label>
                         <label className="flex items-center gap-1.5 text-[11px] text-slate-500">von <input type="time" className={adminInputClass} {...register(`pickups.${i}.time_from`)} /></label>
                         <label className="flex items-center gap-1.5 text-[11px] text-slate-500">bis <input type="time" className={adminInputClass} {...register(`pickups.${i}.time_to`)} /></label>
                       </div>
@@ -826,7 +840,8 @@ export default function NewTransportOrderPage() {
                       <input className={adminInputClass} {...register("dropoff.plz")} placeholder="PLZ" />
                       <input className={adminInputClass} {...register("dropoff.ort")} placeholder="City" />
                     </div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_140px]">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[150px_140px_140px]">
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-500">am <input type="date" className={adminInputClass} {...register("dropoff.stop_date")} /></label>
                       <label className="flex items-center gap-1.5 text-[11px] text-slate-500">von <input type="time" className={adminInputClass} {...register("dropoff.time_from")} /></label>
                       <label className="flex items-center gap-1.5 text-[11px] text-slate-500">bis <input type="time" className={adminInputClass} {...register("dropoff.time_to")} /></label>
                     </div>
@@ -861,7 +876,7 @@ export default function NewTransportOrderPage() {
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <AdminFormField label={<span>Net amount (€) {req}</span>}>
+                  <AdminFormField label={<span>Net amount ({cur}) {req}</span>}>
                     <Controller
                       name="net"
                       control={control}
@@ -1083,7 +1098,7 @@ export default function NewTransportOrderPage() {
                         {previewMode === "driver" ? "Transportauftrag" : "Rechnung"}
                       </p>
                       <p className="font-mono text-[12.5px] text-slate-700">
-                        {order?.order_number ? `${previewMode === "driver" ? "A-" : "R"}${order.order_number}` : "—"}
+                        {order?.order_number ? (previewMode === "driver" ? order.order_number : invoiceNumberFor(order.order_number)) : "—"}
                       </p>
                       <p>{deDate(orderDate)}</p>
                       {previewMode === "customer" && <p>{ISSUER.steuer}</p>}
@@ -1171,7 +1186,7 @@ export default function NewTransportOrderPage() {
                         </div>
                         <dl className="min-w-[190px] space-y-1 text-[12px]">
                           <div className="flex justify-between gap-6"><dt className="text-slate-500">Kunden-Nr.</dt><dd className="text-slate-800">{customerNumber ?? (linkedId ? "—" : "wird vergeben")}</dd></div>
-                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Rechnungs-Nr.</dt><dd className="font-mono text-slate-800">{order?.order_number ? `R${order.order_number}` : "—"}</dd></div>
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Rechnungs-Nr.</dt><dd className="font-mono text-slate-800">{order?.order_number ? invoiceNumberFor(order.order_number) : "—"}</dd></div>
                           <div className="flex justify-between gap-6"><dt className="text-slate-500">Datum</dt><dd className="text-slate-800">{deDate(orderDate)}</dd></div>
                           {clientRef && <div className="flex justify-between gap-6"><dt className="text-slate-500">Referenz-Nr.</dt><dd className="text-slate-800">{clientRef}</dd></div>}
                         </dl>
@@ -1219,7 +1234,7 @@ export default function NewTransportOrderPage() {
                       <p className="mt-4 text-[12px] font-semibold text-slate-700">Zahlungsbedingungen</p>
                       <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
                         Bitte überweisen Sie den Rechnungsbetrag von <strong className="text-slate-900">{money(brutto)}</strong> innerhalb von {term ?? 0} Tagen ohne Abzug.
-                        Verwendungszweck: Rechnungsnummer <span className="font-mono">{order?.order_number ? `R${order.order_number}` : "—"}</span>.
+                        Verwendungszweck: Rechnungsnummer <span className="font-mono">{order?.order_number ? invoiceNumberFor(order.order_number) : "—"}</span>.
                         {" "}Fälligkeitsdatum: <strong className="text-slate-900">{term != null ? addDaysDE(orderDate, term) : "—"}</strong>.
                       </p>
                       <p className="mt-2 text-[11px] text-slate-500">{ISSUER.bank}</p>

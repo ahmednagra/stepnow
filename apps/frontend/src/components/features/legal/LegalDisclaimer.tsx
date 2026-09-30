@@ -3,6 +3,7 @@ import { Info } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 interface LegalDisclaimerProps {
+  text: string;
   className?: string;
 }
 
@@ -11,7 +12,7 @@ interface LegalDisclaimerProps {
  * legally binding one — per website-outline.md §11 and standard German
  * practice for translated Impressum/Datenschutz/AGB.
  */
-export function LegalDisclaimer({ className }: LegalDisclaimerProps) {
+export function LegalDisclaimer({ text, className }: LegalDisclaimerProps) {
   return (
     <aside
       role="note"
@@ -24,10 +25,7 @@ export function LegalDisclaimer({ className }: LegalDisclaimerProps) {
         className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent-primary)]"
         aria-hidden="true"
       />
-      <p>
-        This English translation is provided for convenience only. The German
-        version is the legally binding text.
-      </p>
+      <p>{text}</p>
     </aside>
   );
 }

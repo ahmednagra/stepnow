@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUiStrings } from "@/hooks/useUiStrings";
-import { getAlternateUrl } from "@/lib/i18n/routes";
+import { getMirrorUrl } from "@/lib/i18n/routes";
 import {
   LOCALE_COOKIE_NAME,
   LOCALE_COOKIE_MAX_AGE_SECONDS,
@@ -43,22 +43,19 @@ function persistLocaleCookie(locale: Locale): void {
 }
 
 export function LanguageSwitcher({ className, dynamicSlugMap }: LanguageSwitcherProps) {
-  const { locale } = useUiStrings();
+  const { locale, t } = useUiStrings();
   const pathname = usePathname() ?? "/";
   const storeSlugMap = useSlugMap();
 
-  const isEn = locale === "en";
-
-  // Resolution order: explicit prop > store > static ROUTE_MAP > fallback.
-  // Merging keeps an explicit prop's keys winning over the store's keys.
+  // Resolution order: explicit prop > store > static ROUTE_MAP. Merging keeps an
+  // explicit prop's keys winning over the store's keys. null = this page has no
+  // counterpart in the other locale (e.g. the staff-only order form), so that
+  // language is shown but not linked — never a link to a 404.
   const effectiveSlugMap = { ...storeSlugMap, ...(dynamicSlugMap ?? {}) };
-  const alt = getAlternateUrl(
+  const mirror = getMirrorUrl(
     pathname,
     Object.keys(effectiveSlugMap).length > 0 ? effectiveSlugMap : undefined,
   );
-
-  const deHref = isEn ? alt : pathname;
-  const enHref = isEn ? pathname : alt;
 
   // Active state: thin accent underline with generous offset so it doesn't
   // crowd the small-caps glyphs. Works on both light and dark surfaces.
@@ -66,38 +63,45 @@ export function LanguageSwitcher({ className, dynamicSlugMap }: LanguageSwitcher
     "text-current underline decoration-[var(--color-accent-primary)] decoration-[1.5px] underline-offset-[6px]";
   const inactiveStyles = "text-current/55 hover:text-current";
 
+  function option(target: Locale, label: string) {
+    const isActive = target === locale;
+    const href = isActive ? pathname : mirror;
+    const name = t(target === "de" ? "language.switch.de" : "language.switch.en");
+    if (href === null) {
+      return (
+        <span aria-disabled="true" title={name} className="cursor-not-allowed text-current/30">
+          {label}
+        </span>
+      );
+    }
+    return (
+      <Link
+        href={href}
+        hrefLang={target}
+        aria-label={name}
+        onClick={() => persistLocaleCookie(target)}
+        aria-current={isActive ? "true" : undefined}
+        className={cn("transition-colors duration-base", isActive ? activeStyles : inactiveStyles)}
+      >
+        {label}
+      </Link>
+    );
+  }
+
   return (
     <div
+      role="group"
+      aria-label={t("language.switch.current")}
       className={cn(
         "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.20em]",
         className,
       )}
     >
-      <Link
-        href={deHref}
-        onClick={() => persistLocaleCookie("de")}
-        aria-current={!isEn ? "true" : undefined}
-        className={cn(
-          "transition-colors duration-base",
-          !isEn ? activeStyles : inactiveStyles,
-        )}
-      >
-        DE
-      </Link>
+      {option("de", "DE")}
       <span aria-hidden="true" className="text-current/30">
         /
       </span>
-      <Link
-        href={enHref}
-        onClick={() => persistLocaleCookie("en")}
-        aria-current={isEn ? "true" : undefined}
-        className={cn(
-          "transition-colors duration-base",
-          isEn ? activeStyles : inactiveStyles,
-        )}
-      >
-        EN
-      </Link>
+      {option("en", "EN")}
     </div>
   );
 }

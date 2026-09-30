@@ -2,6 +2,7 @@
 import { nextjsApiClient } from "@/lib/nextjs-api";
 import { ENDPOINTS } from "@/services/api/endpoints";
 import type { PricingCategoryAdmin, PricingItemAdmin } from "@/types";
+import type { PriceUnit } from "@/types/pricing";
 
 export interface PricingCategoryCreateInput {
   sort_order?: number;
@@ -9,6 +10,8 @@ export interface PricingCategoryCreateInput {
   name_en: string;
   description_de?: string | null;
   description_en?: string | null;
+  /** True = the category's prices are quoted net, plus VAT. */
+  prices_net?: boolean;
 }
 export type PricingCategoryUpdateInput = Partial<PricingCategoryCreateInput>;
 
@@ -18,8 +21,12 @@ export interface PricingItemCreateInput {
   from_location_en?: string | null;
   to_location_de?: string | null;
   to_location_en?: string | null;
-  /** String (e.g. "45.50") to preserve precision. */
-  price_eur: string;
+  /** String (e.g. "45.50") to preserve precision; null = "Preis auf Anfrage". */
+  price_eur: string | null;
+  price_unit?: PriceUnit | null;
+  is_from_price?: boolean;
+  currency?: string;
+  distance_km?: string | null;
   note_de?: string | null;
   note_en?: string | null;
 }

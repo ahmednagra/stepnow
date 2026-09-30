@@ -1,4 +1,7 @@
 # apps/backend/app/Http/Controllers/FormsController.py
+# Public form endpoints — booking intake, contact, staff gate and the no-login courier order.
+# Honeypot hits get a plausible reference back so a bot cannot tell it was rejected.
+import secrets
 from datetime import datetime, timezone
 from fastapi import BackgroundTasks, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -10,6 +13,7 @@ from app.Schemas.public import PublicFleetVehicle, PublicOrderSubmitted, StaffGa
 from app.Services.FormsService import FormsService
 from app.Services.CourierOrdersService import CourierOrdersService
 from app.Http.Controllers._background import dispatch_emails as _dispatch_emails
+from app.Utils.finance import BOOKING_PREFIX
 
 SYSTEM_ACTOR_EMAIL = "system@stepnow.local"
 
@@ -21,8 +25,8 @@ class FormsController:
         booking, email_log_ids = FormsService.submit_booking(db, payload.model_dump(), request)
         background_tasks.add_task(_dispatch_emails, email_log_ids)
         if booking is None:
-            # Honeypot triggered — return a generic plausible response.
-            return BookingSubmitted(reference="SN-00000000-000000", submitted_at=datetime.now(timezone.utc))
+            # Honeypot triggered — a plausible-looking reference that no job will ever carry.
+            return BookingSubmitted(reference=f"{BOOKING_PREFIX}-00000000", submitted_at=datetime.now(timezone.utc))
         return BookingSubmitted(reference=booking.reference, submitted_at=booking.created_at)
 
     @staticmethod
@@ -39,9 +43,13 @@ class FormsController:
         return db.query(SiteSettings.staff_access_code).filter(SiteSettings.id == 1).scalar()
 
     @staticmethod
-    def verify_staff_code(db: Session, code: str) -> StaffGateResult:
+    def _staff_code_matches(db: Session, code: str) -> bool:
         configured = FormsController._staff_code(db)
-        return StaffGateResult(ok=bool(configured and code.strip() == configured.strip()))
+        return bool(configured) and secrets.compare_digest((code or "").strip(), configured.strip())
+
+    @staticmethod
+    def verify_staff_code(db: Session, code: str) -> StaffGateResult:
+        return StaffGateResult(ok=FormsController._staff_code_matches(db, code))
 
     @staticmethod
     def fleet_vehicles(db: Session) -> list[PublicFleetVehicle]:
@@ -55,8 +63,7 @@ class FormsController:
 
     @staticmethod
     def create_public_order(db: Session, payload, request: Request) -> PublicOrderSubmitted:
-        configured = FormsController._staff_code(db)
-        if not configured or payload.staff_access_code.strip() != configured.strip():
+        if not FormsController._staff_code_matches(db, payload.staff_access_code):
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Invalid staff code.")
         actor = db.query(AdminUser).filter(AdminUser.email == SYSTEM_ACTOR_EMAIL).first()
         if not actor:

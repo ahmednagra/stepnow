@@ -25,6 +25,7 @@ const stopSchema = z.object({
   ort: z.string().trim().optional().or(z.literal("")),
   contact_name: z.string().trim().optional().or(z.literal("")),
   contact_phone: z.string().trim().optional().or(z.literal("")),
+  stop_date: z.string().trim().optional().or(z.literal("")),
   time_from: z.string().trim().optional().or(z.literal("")),
   time_to: z.string().trim().optional().or(z.literal("")),
   notes: z.string().trim().optional().or(z.literal("")),

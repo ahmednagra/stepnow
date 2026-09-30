@@ -1,0 +1,11 @@
+[Unit]
+Description=StepNow database backup (pg_dump -> local + optional S3)
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/stepnow/apps/backend
+EnvironmentFile=/root/stepnow/apps/backend/.env
+Environment="PATH=/root/stepnow/apps/backend/venv/bin:/usr/bin:/bin"
+ExecStart=/root/stepnow/apps/backend/venv/bin/python -m scripts.backup_db

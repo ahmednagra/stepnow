@@ -16,7 +16,7 @@ router = APIRouter(prefix="/admin/vehicles", tags=["admin: vehicles"])
 
 
 @router.get("", response_model=PaginatedResponse[VehicleAdminResponse])
-async def list_vehicles(
+def list_vehicles(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -30,33 +30,33 @@ async def list_vehicles(
 
 
 @router.get("/{vehicle_id}", response_model=VehicleAdminResponse)
-async def get_vehicle(vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
+def get_vehicle(vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
     return VehiclesController.get(db, vehicle_id)
 
 
 @router.post("", response_model=VehicleAdminResponse, status_code=status.HTTP_201_CREATED)
-async def create_vehicle(request: Request, payload: VehicleCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
+def create_vehicle(request: Request, payload: VehicleCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
     return VehiclesController.create(db, payload, actor, request)
 
 
 @router.patch("/{vehicle_id}", response_model=VehicleAdminResponse)
-async def update_vehicle(request: Request, vehicle_id: UUID, payload: VehicleUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
+def update_vehicle(request: Request, vehicle_id: UUID, payload: VehicleUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
     return VehiclesController.update(db, vehicle_id, payload, actor, request)
 
 
 @router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_vehicle(request: Request, vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_vehicle(request: Request, vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     VehiclesController.delete(db, vehicle_id, actor, request)
 
 
 @router.post("/{vehicle_id}/restore", response_model=VehicleAdminResponse)
-async def restore_vehicle(request: Request, vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
+def restore_vehicle(request: Request, vehicle_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> VehicleAdminResponse:
     return VehiclesController.restore(db, vehicle_id, actor, request)
 
 
 # ── Per-vehicle account (ledger) — order list + order prices + totals ──
 @router.get("/{vehicle_id}/ledger", response_model=VehicleLedgerResponse)
-async def vehicle_ledger(
+def vehicle_ledger(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
@@ -67,7 +67,7 @@ async def vehicle_ledger(
 
 
 @router.get("/{vehicle_id}/ledger/pdf")
-async def vehicle_ledger_pdf(
+def vehicle_ledger_pdf(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),

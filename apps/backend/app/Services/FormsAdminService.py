@@ -2,7 +2,7 @@
 # Forms admin service. Adds revenue_series() and service_mix() aggregations: SQL GROUP BY in the DB instead of fetching limited rows and aggregating client-side. Fixes C-4 (silent revenue truncation for months with >100 bookings).
 
 from datetime import datetime, timezone, date, timedelta
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 from fastapi import Request
@@ -126,8 +126,6 @@ class FormsAdminService:
     @staticmethod
     def revenue_series(db: Session, from_date: date, to_date: date) -> dict[str, Any]:
         # SQL-side GROUP BY on date(created_at) so we never silently truncate.
-        # quoted_price_eur is stored as String(50); cast safely to Decimal on the
-        # Python side because not all dialects can SUM a varchar reliably.
         rows = (
             db.query(BookingRequest.created_at, BookingRequest.quoted_price_eur)
             .filter(BookingRequest.is_deleted == False)
@@ -141,16 +139,13 @@ class FormsAdminService:
         while cur <= to_date:
             bucket[cur] = {"bookings": 0, "revenue": Decimal("0")}
             cur = cur + timedelta(days=1)
-        for created_at, price_str in rows:
+        for created_at, price in rows:
             day = created_at.date() if hasattr(created_at, "date") else created_at
             if day not in bucket:
                 bucket[day] = {"bookings": 0, "revenue": Decimal("0")}
             bucket[day]["bookings"] += 1
-            if price_str:
-                try:
-                    bucket[day]["revenue"] += Decimal(str(price_str))
-                except (InvalidOperation, ValueError):
-                    pass
+            if price is not None:
+                bucket[day]["revenue"] += price
         points = []
         total_bookings = 0
         total_revenue = Decimal("0")

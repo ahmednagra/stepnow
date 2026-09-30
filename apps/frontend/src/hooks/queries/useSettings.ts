@@ -21,3 +21,8 @@ export function useSettings(opts: { enabled?: boolean } = {}) {
     refetchOnWindowFocus: false,
   });
 }
+
+/** The ISO 4217 the business bills in, from site_settings. Every admin money format uses this. */
+export function useDefaultCurrency(): string {
+  return useSettings().data?.default_currency ?? "EUR";
+}

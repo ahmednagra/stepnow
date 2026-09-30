@@ -8,12 +8,44 @@
 #
 # Per the architecture: there is exactly one manager/publisher. Do not instantiate another.
 
+import asyncio
+from collections.abc import Coroutine
 from typing import Any
 
 from app.WebSocket.manager import build_event, connection_manager
 from app.Utils.Logger import get_logger
 
 logger = get_logger("websocket")
+
+# The server loop owns every socket; sync code (services, BackgroundTasks in the threadpool) must
+# hand sends to it rather than asyncio.run() a private loop — that writes to a transport from a
+# foreign thread and raises outright when called on the loop thread. Bound in main.lifespan.
+_loop: asyncio.AbstractEventLoop | None = None
+_pending: set[asyncio.Task] = set()
+
+
+def bind_loop(loop: asyncio.AbstractEventLoop | None) -> None:
+    global _loop
+    _loop = loop
+
+
+def emit_soon(coro: Coroutine[Any, Any, None]) -> None:
+    """Fire-and-forget a publish from sync code. Without a bound loop (scripts, tests) there are
+    no sockets to reach, so the send is dropped."""
+    if _loop is None or _loop.is_closed():
+        coro.close()
+        return
+    try:
+        on_loop = asyncio.get_running_loop() is _loop
+    except RuntimeError:
+        on_loop = False
+    if on_loop:
+        # Runs once the current (sync) handler yields — i.e. after it has committed.
+        task = _loop.create_task(coro)
+        _pending.add(task)
+        task.add_done_callback(_pending.discard)
+    else:
+        asyncio.run_coroutine_threadsafe(coro, _loop)
 
 
 class EventPublisher:

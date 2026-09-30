@@ -62,7 +62,7 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
                 </h2>
                 <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
                   {pickT(t, "booking.confirmation.body", locale === "de"
-                    ? "Wir melden uns innerhalb von 30 Minuten mit einem Pauschalpreis-Angebot."
+                    ? "Wir melden uns innerhalb von 30 Minuten mit einem verbindlichen Angebot."
                     : "We'll get back to you within 30 minutes with a fixed-price quote."
                   )}
                 </p>
@@ -155,15 +155,15 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
               {pickT(t, "booking.confirmation.sidebar.eyebrow", locale === "de" ? "Ihre Anfrage" : "Your request")}
             </p>
             <h2 className="mt-2 font-serif text-[28px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[32px]">
-              {pickT(t, "booking.confirmation.sidebar.heading", locale === "de" ? "Persoenlich bestaetigt, nicht automatisch abgefertigt" : "Personally confirmed, not auto-processed")}
+              {pickT(t, "booking.confirmation.sidebar.heading", locale === "de" ? "Persönlich bestätigt, nicht automatisch abgefertigt" : "Personally confirmed, not auto-processed")}
             </h2>
             <p className="mt-3 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
               {pickT(
                 t,
                 "booking.confirmation.sidebar.body",
                 locale === "de"
-                  ? "Ihre Anfrage wird manuell geprueft. So koennen wir Route, Verfuegbarkeit und besondere Hinweise sauber bestaetigen."
-                  : "Your request is checked manually so we can confirm route, availability, and any special requirements properly.",
+                  ? "Ihre Anfrage wird manuell geprüft. So können wir Route, Verfügbarkeit und besondere Hinweise sauber bestätigen."
+                  : "Your request is checked manually so we can confirm route, availability and any special requirements properly.",
               )}
             </p>
           </div>
@@ -173,15 +173,15 @@ export function BookingConfirmation({ reference, settings, homeHref }: BookingCo
               {pickT(t, "booking.confirmation.contact.eyebrow", locale === "de" ? "Direkter Kontakt" : "Direct contact")}
             </p>
             <h2 className="mt-2 font-serif text-[26px] leading-tight tracking-tight text-[var(--color-text-primary)]">
-              {pickT(t, "booking.confirmation.contact.heading", locale === "de" ? "Rueckfragen oder kurzfristige Fahrt?" : "Questions or a short-notice ride?")}
+              {pickT(t, "booking.confirmation.contact.heading", locale === "de" ? "Rückfragen oder kurzfristige Fahrt?" : "Questions or a short-notice ride?")}
             </h2>
             <p className="mt-3 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
               {pickT(
                 t,
                 "booking.confirmation.contact.body",
                 locale === "de"
-                  ? "Wenn sich etwas aendert oder die Fahrt dringend ist, erreichen Sie uns direkt per Telefon."
-                  : "If anything changes or the booking is urgent, you can reach us directly by phone.",
+                  ? "Wenn sich etwas ändert oder die Fahrt dringend ist, erreichen Sie uns direkt per Telefon."
+                  : "If anything changes or the ride is urgent, you can reach us directly by phone.",
               )}
             </p>
             <a

@@ -7,7 +7,7 @@ import { listVehiclesServer } from "@/services/vehicles";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
-import { ConcessionBadge, Container } from "@/components/shared";
+import { Container } from "@/components/shared";
 import { Credentials, ServiceAreaMap, StorySection, ValuesSection } from "@/components/features/about";
 import { FleetPreview } from "@/components/features/home";
 import { pickT } from "@/lib/i18n/pick";
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = createT(stringsRes.strings, "de");
   return buildMetadata({
     title: t("about.page.title"),
-    description: t("about.page.subhead"),
+    description: t("about.meta_description"),
     path: "/ueber-uns",
     locale: "de",
   });
@@ -100,12 +100,7 @@ export default async function AboutPageDe() {
       </section>
 
       <FleetPreview t={t} vehicles={vehicles} locale="de" />
-
-      <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
-        <Container className="flex justify-center py-8 md:py-10">
-          <ConcessionBadge settings={settings} tone="light" />
-        </Container>
-      </section>
+
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: pickT(t, "nav.home", "Startseite"), href: "/" },

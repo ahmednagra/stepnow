@@ -1,5 +1,7 @@
 # StepNow Backend
 
+> **Outdated.** The canonical, maintained guide is [CLAUDE.md](CLAUDE.md) (and the repo-root [CLAUDE.md](../../CLAUDE.md)); where this README disagrees, CLAUDE.md wins.
+
 FastAPI backend for the StepNow website. See `docs/architecture/backend.md` in the repo root for full conventions.
 
 ## Status

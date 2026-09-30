@@ -1,6 +1,6 @@
 // src/hooks/queries/useCustomers.ts
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { queryKeys, STALE_TIMES, GC_TIMES } from "@/lib/react-query";
 import { getAdminCustomer, listAdminCustomers, listCustomerOrders, type CustomerAdmin } from "@/services/customers/customers.admin.client";
 import type { CourierOrder } from "@/services/courier";
@@ -43,17 +43,18 @@ export function useCustomer(id: string, opts: { enabled?: boolean } = {}) {
   });
 }
 
-/** Order history for a customer (detail page). */
-export function useCustomerOrders(id: string, opts: { enabled?: boolean } = {}) {
-  return useQuery<CourierOrder[]>({
-    queryKey: queryKeys.customers.orders(id),
+/** One page of the customer's order history (newest first); keyed per page. */
+export function useCustomerOrders(id: string, params: { page?: number; size?: number } = {}, opts: { enabled?: boolean } = {}) {
+  return useQuery<Paginated<CourierOrder>>({
+    queryKey: queryKeys.customers.orders(id, params),
     queryFn: async () => {
       console.log(`🔄 useCustomerOrders: Fetching ${id}`);
-      const res = await listCustomerOrders(id);
-      console.log(`✅ useCustomerOrders: Fetched ${res.length} orders`);
+      const res = await listCustomerOrders(id, params);
+      console.log(`✅ useCustomerOrders: Fetched ${res.items.length} orders`);
       return res;
     },
     enabled: (opts.enabled ?? true) && Boolean(id),
+    placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.STANDARD,
     gcTime: GC_TIMES.STANDARD,
     refetchOnWindowFocus: false,

@@ -1,9 +1,9 @@
 // apps/frontend/src/lib/i18n/UiStringsProvider.tsx
-// Client-side i18n provider. Now also syncs document.documentElement.lang to the current locale so /en routes get lang="en" without needing to split the root layout (M-7).
+// Client-side i18n provider. <html lang> is rendered server-side by the DE/EN root layouts (see app/root-document.tsx).
 
 "use client";
 
-import { createContext, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useMemo, type ReactNode } from "react";
 import type { Locale, UiStringsMap } from "@/types";
 import { createT, type TFunction } from "./t";
 
@@ -26,13 +26,6 @@ const value = useMemo<UiStringsContextValue>(
 () => ({ locale, strings, t: createT(strings, locale) }),
 [locale, strings],
 );
-
-useEffect(() => {
-if (typeof document === "undefined") return;
-if (document.documentElement.lang !== locale) {
-document.documentElement.lang = locale;
-}
-}, [locale]);
 
 return <UiStringsContext.Provider value={value}>{children}</UiStringsContext.Provider>;
 }

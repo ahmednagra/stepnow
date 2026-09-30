@@ -210,7 +210,7 @@ AUFTRAEGE = [
     {"auftrag_nr":"03290526","rechnung_nr":"R03290526","cust_nr":"K911013","ku":"Concord Express GmbH & Co. KG","von":"Schierling","nch":"Bad Rappenau","km":250,"fz":"SN 112","termin":"2026-05-29","ref_nr":"260501497","r_net":Decimal("200.00"),"r_vat_r":Decimal("0.19"),"r_vat_b":Decimal("38.00"),"r_brutto":Decimal("238.00"),"r_zz":45,"r_faellig":"2026-07-15","r_dat":"2026-05-31","r_stat":"Unbezahlt","r_skonto":Decimal("5.0"),"empfaenger":"Concord Express GmbH & Co. KG"},
 ]
 
-TAX_NUMBER = "59500/72609"
+TAX_NUMBER = "59002/59899"
 
 
 def _find_customer(db, cust_nr: str):
@@ -318,7 +318,7 @@ def run() -> None:
             fleet_vehicle = _resolve_fleet(a["fz"])
 
             order = Order(
-                order_number=order_date_sequence_number(db, Order.order_number),
+                order_number=order_date_sequence_number(db, termin_date),
                 booking_id=None,
                 status="completed" if a["r_stat"] == "Bezahlt" else "open",
                 delivery_status="delivered",
@@ -379,7 +379,10 @@ def run() -> None:
             invoice: Invoice = InvoicesService.create_from_order(
                 db, order.id, inv_payload, actor, request=None
             )
-            # Override invoice_number to match the legacy rechnung ID exactly.
+            # These 81 invoices were issued by the previous bookkeeping, not by this system, so the
+            # number stays exactly as the customer received it — §14 UStG / GoBD forbid renumbering
+            # an issued Buchungsbeleg. That is why they read 'R01010526' while every invoice this
+            # system issues from now on reads 'R-01010526'. Do not "normalise" these.
             if invoice.invoice_number != a["rechnung_nr"]:
                 invoice.invoice_number = a["rechnung_nr"]
                 db.flush()

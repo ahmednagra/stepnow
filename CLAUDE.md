@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # StepNow — Monorepo
 
-German licensed transport + courier company — **StepNow Rides & Movers, Naeem Ahmad e.K.** (Blumenstraße 8, 73779 Deizisau; Handelsregister **HRA 742905 · AG Stuttgart**; Steuer-Nr. **59500/72609**; Stuttgart/Esslingen region). The passenger side is § 49 PBefG *Mietwagen mit Fahrer*; the day-to-day billed business is B2B courier *Sonderfahrten* for freight forwarders (the reference `Transportauftrag` / `Rechnung` PDFs and `StepNow_Data-1.json` are canonical for that path).
+German licensed transport + courier company — **StepNow Rides & Movers, Naeem Ahmad e.K.** (Blumenstraße 8, 73779 Deizisau; Handelsregister **HRA 742905 · AG Stuttgart**; Steuer-Nr. **59002/59899**; USt-IdNr. **DE 463491338**; Stuttgart/Esslingen region). The passenger side is § 49 PBefG *Mietwagen mit Fahrer*; the day-to-day billed business is B2B courier *Sonderfahrten* for freight forwarders (the reference `Transportauftrag` / `Rechnung` PDFs and `StepNow_Data-1.json` are canonical for that path).
 Two apps, one repo: a bilingual public marketing+booking website and an internal admin/ops panel.
 **Each app has its own CLAUDE.md with the canonical patterns — read it before touching that app.**
 
@@ -28,9 +28,9 @@ stepnow/
 # Backend (apps/backend, venv active)
 uvicorn main:app --reload                 # dev :8000
 python -m scripts.seed                     # (re)seed — idempotent, safe to re-run
-python -m scripts.migrate_<name>           # apply a column migration (see "Schema" below)
+python -m scripts.backup_db                # pg_dump -> local + optional S3, prunes by retention
 pytest tests/ -x                           # all tests, stop on first failure
-pytest tests/test_orders.py -k convert     # a single test / pattern
+pytest tests/test_finance.py -k vat        # a single test / pattern
 
 # Frontend (apps/frontend)
 npm run dev                                # :3000  (needs backend on :8000)
@@ -38,7 +38,9 @@ npm run build                              # production build
 npm run typecheck                          # tsc --noEmit  ← the reliable pre-commit gate
 ```
 
-> `npm run lint` (`next lint`) is **not configured** — it drops into an interactive setup prompt and will hang a non-interactive shell. Use `npm run build && npm run typecheck` as the gate until ESLint is wired up.
+> `npm run build` needs a backend on `:8000` — the public pages are RSC and prerender real data,
+> so a build without the API fails on `/dienstleistungen` and `/preise`. The reliable offline gate
+> is `npm run typecheck && npx eslint src`.
 
 ## Architecture (the big picture)
 
@@ -49,27 +51,42 @@ npm run typecheck                          # tsc --noEmit  ← the reliable pre-
 
 **Core domain lifecycle — booking → order → invoice → payment:**
 1. Public 5-step wizard (`features/booking/WizardShell`) POSTs to `/public/bookings` → writes a `booking_requests` row (status `new`). **No price is computed** — the public flow is request-only; staff quote manually (the site advertises a ≤30-min reply, not an instant fare).
-2. Admin `POST /admin/bookings/{id}/convert-to-order` snapshots customer/route into an `orders` row (VAT default 7%, booking → `confirmed`).
-3. Optional `Invoice` (sequential `invoice_number`, §14 UStG) and one or more `Payment` rows. **Paid state is derived from `sum(payments)`** — there is no boolean paid flag.
+2. Admin `POST /admin/bookings/{id}/convert-to-order` snapshots customer/route into an `orders` row (VAT resolved from the service, booking → `confirmed`).
+3. Optional `Invoice` (`invoice_number` = `R-` + the job's digits, §14 UStG) and one or more `Payment` rows. **Paid state is derived from `sum(payments)`** — there is no boolean paid flag. An invoice is editable only while `status = draft`; after `issue` it is a Buchungsbeleg — correct it with `cancel` (Storno) + a replacement, which gets the next `-{revision}` suffix.
 4. `Order.status` (financial: open→completed/cancelled) is independent of `Order.delivery_status` (courier: draft→dispatched→picked_up→delivered). **Orders attach to a vehicle, not a driver.**
 
-**Schema, migrations & seeding (no Alembic in the loop).**
-- Schema is built on startup by `Base.metadata.create_all(checkfirst=True)` in `main.py` — this creates **new tables only**, never alters existing ones.
-- Adding **columns to an existing table** therefore needs a standalone idempotent script: `apps/backend/scripts/migrate_*.py` using `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, run manually with `python -m scripts.migrate_<name>`. (See `migrate_orders_vehicle_fields.py` / `migrate_settings_trust_numbers.py` for the pattern.)
+**Schema & seeding — the models ARE the schema. No migration files.**
+- **A new database needs one grant first** (PostgreSQL 15+ no longer gives a non-owner role
+  `CREATE` on `public`): `ALTER SCHEMA public OWNER TO stepnow;` as a superuser. Startup names
+  this command if it is missing.
+- `sync_schema()` in `main.py` runs on every boot and makes the database match `Base.metadata`:
+  creates missing tables, **adds missing columns**, creates missing indexes, and drops a legacy
+  plain `UNIQUE` once a partial (soft-delete-aware) index supersedes it. Every step is additive
+  and idempotent — edit the model, restart, done.
+- `seed_counters()` follows it, aligning the `counters` table with the highest number already
+  issued so an order number, Kunden-Nr. or Rechnungsnummer is never reissued.
+- Uniqueness on a soft-deletable column uses `live_unique(...)` from `app/Models/base.py`
+  (`UNIQUE … WHERE is_deleted = false`) — a plain `UNIQUE` would keep a deleted row's value
+  reserved forever while the service-layer guard reports it free.
 - Data is loaded by idempotent seeders in `scripts/seeders/` (run via `python -m scripts.seed`, or `AUTO_SEED_ON_STARTUP=true` in non-prod). Seeders **skip rows that already exist**, so changing seed values only affects a fresh DB.
 
 **i18n & locale routing.** DE is the default; DE routes are bare (`/preise`), EN routes are mirrored under `/en/*`. `middleware.ts` reads the `stepnow_locale` cookie and translates between locales using `ROUTE_MAP`/`REVERSE_ROUTE_MAP` (static routes only). UI strings live in the **`ui_strings` DB table** (admin-editable), fetched via `/public/ui-strings`; components resolve them with `t(key)` / `pickT(t, key, fallback)` — there are no JSON locale files.
 
-**Theming — two layers, both gold/charcoal/cream + Cormorant serif.** Colors come from Tailwind tokens (`gold`, `gold-deep`, `charcoal`, `cream`, `ink` in `tailwind.config.ts`) **and** CSS variables in `globals.css` `:root` (`--color-accent-primary`, `--color-bg-strong`, `--color-text-primary`, …). Most feature/shared components use `var(--color-*)`; UI primitives (`components/ui/*`) use Tailwind tokens. To recolor the site globally, edit the `:root` variables — they cascade to ~40 components. Cormorant (serif) is for H1/H2 + editorial text; Inter (sans) for everything functional.
+**Theming — two layers, both gold/charcoal/cream + Playfair Display serif.** Colors come from Tailwind tokens (`gold`, `gold-deep`, `charcoal`, `cream`, `ink` in `tailwind.config.ts`) **and** CSS variables in `globals.css` `:root` (`--color-accent-primary`, `--color-bg-strong`, `--color-text-primary`, …). Most feature/shared components use `var(--color-*)`; UI primitives (`components/ui/*`) use Tailwind tokens. To recolor the site globally, edit the `:root` variables — they cascade to ~40 components. Playfair Display (serif, `--font-serif`) is for H1/H2 + editorial text; Inter (sans, `--font-sans`) for everything functional. Both are self-hosted via `next/font` in `lib/fonts.ts` (the export is still named `cormorant` for old imports); the Google Fonts CDN link is injected only after consent (`GoogleFontsLoader`).
 
-**Realtime.** A single in-process WebSocket `connection_manager` (channels `admin`, `user:{id}`, `order:{id}`) pushes order events + notifications to the admin UI. WS auth uses a `?token=` query param (browsers can't set WS headers).
+**Realtime.** Backend: a single in-process WebSocket `connection_manager` (channels `admin`, `user:{id}`, `order:{id}`) at `/ws` on the API root (not under `/api/v0`). Sync code publishes via `emit_soon(...)`, which hands the send to the server loop bound in `main.lifespan` — never `asyncio.run()`. Events: `orders.*` (OrdersController, on `admin` + `order:{id}`) and `notification.created` (every in-app notification, on `user:{id}`). Auth is `?token=` (browsers can't set WS headers); a rejected token closes with **4401**; `{"action":"ping"}` → `{"type":"pong"}`. Single-worker only — a second uvicorn worker would need Redis fan-out.
+Frontend: `AdminRealtimeProvider` (`hooks/realtime/`), mounted once in `app/admin/(authed)/layout.tsx`, is the **one documented exception to invariant 1** — the browser connects to FastAPI directly because Next route handlers cannot proxy a WebSocket. URL from `NEXT_PUBLIC_WS_URL` (origin, e.g. `wss://api.step-now.de`), else `NEXT_PUBLIC_API_URL` http→ws, else `ws://<host>:8000` on localhost; otherwise realtime is off and the admin polls. Events carry no state into the cache: each one only **invalidates** React Query keys (`lib/realtime.ts` `keysForEvent`, coalesced 300 ms); a reconnect invalidates every realtime key. Reconnect = exponential backoff + jitter (1 s → 30 s), 25 s ping heartbeat, 4401 → one token refresh then retry, closed on unmount/logout. Polling stays as the fallback — `useRealtimeConnected()` relaxes the unread-badge poll from 60 s to 5 min while the socket is up.
 
 ## Deployment
 
 Hostinger VPS, nginx reverse proxy, Let's Encrypt HTTPS.
 `step-now.de` → frontend `:3000` · `api.step-now.de` → backend `:8000`. Systemd: `stepnow-backend` + `stepnow-frontend`.
+Frontend build env: `NEXT_PUBLIC_WS_URL=wss://api.step-now.de` (inlined at `npm run build`; unset → admin realtime off, polling only). The api vhost already forwards `Upgrade`/`Connection`.
 Email via Hostinger SMTP `smtp.hostinger.com:465 SSL`; mailboxes `info@` `rides@` `movers@` `accounts@step-now.de` (`rides`=bookings, `movers`=driver slips, `accounts`=invoices/system).
 `bash scripts/deploy.sh` = pull → pip → npm build → systemd restart.
+Nightly `pg_dump` at 03:15 via `stepnow-backup.timer` (installed and enabled by deploy.sh);
+keeps `BACKUP_RETENTION_DAYS` of dumps in `BACKUP_DIR`, uploads to S3 when `BACKUP_S3_*` is set.
+Set `PG_DUMP_PATH` if `pg_dump` is not on PATH.
 
 ## Domain
 
@@ -83,17 +100,20 @@ Email via Hostinger SMTP `smtp.hostinger.com:465 SSL`; mailboxes `info@` `rides@
 | Content | `services` `pricing_categories` `pricing_items` `faqs` `testimonials` `legal_pages` `ui_strings` |
 | System | `site_settings` `admin_users` `notifications` `audit_log` `email_logs` `contact_messages` `message_delivery` |
 
-German-language public field labels — match `StepNow_Buchhaltung.html`. VAT: 7% passenger (PBefG), **19% courier — the default on the order→`Rechnung` path** (set per order). Customers carry a canonical Kunden-Nr. (`customer_number`, K911-series, e.g. `K911053`). The two billing documents: **Transportauftrag** (driver run-sheet, no price, order no. `A-…`) and **Rechnung** (§14 UStG invoice, no. `R…`, with the IBAN/BIC bank block + `HRA 742905 · AG Stuttgart` footer). Issuer/bank/register details live in `site_settings` (admin → Settings), never hardcoded. The PDFs are generated by `DriverSlipPdfService` / `InvoicePdfService` (reportlab) and must match the reference templates in `Refrence Material/Docs/`.
+German-language public field labels — match `StepNow_Buchhaltung.html`. VAT rates are **DB-owned**:
+`services.vat_rate` per service, falling back to `site_settings.vat_rate_standard` (19%, courier /
+Sonderfahrt) — `site_settings.vat_rate_reduced` (7%) is the PBefG passenger rate. Resolved by
+`vat_rate_for(db, service_id, service_type)`; never hardcoded, editable in admin → Settings. Customers carry a canonical Kunden-Nr. (`customer_number`, K911-series, e.g. `K911053`). The two billing documents: **Transportauftrag** (`A-…`, the agreed job — carries the price, payment terms and both signature lines; the public driver link renders it with `with_price=False`) and **Rechnung** (§14 UStG invoice, `R-…`, with the IBAN/BIC bank block + `HRA 742905 · AG Stuttgart` footer). Both follow the client's own `Auftragsschein` layout. Issuer/bank/register details live in `site_settings` (admin → Settings), never hardcoded. The PDFs are generated by `DriverSlipPdfService` / `InvoicePdfService` (reportlab) and must match the reference templates in `Refrence Material/Docs/`.
 
 ## Cross-Cutting Invariants
 
-1. Browser never calls FastAPI — all requests through `/api/v0/*` BFF.
+1. Browser never calls FastAPI — all requests through `/api/v0/*` BFF. Sole exception: the admin realtime WebSocket (see Realtime).
 2. `any` banned. TypeScript strict. `unknown` + type guards at untrusted edges.
 3. Secrets server-side only. `NEXT_PUBLIC_*` is the only browser-reachable prefix.
 4. Auth token in `localStorage` (`accessToken` + `refreshToken`). `nextjsApiClient` attaches `Authorization: Bearer <token>`; BFF reads it via `extractBearerToken`. Route protection is client-side (`(authed)/layout.tsx`). No auth cookies. (The frontend README's httpOnly-cookie claim is obsolete.)
 5. Soft-delete everywhere. `is_deleted = True` + `deleted_at` on write; filter `is_deleted == False` on every read.
 6. Money is `Decimal` — never `float`. Always paired with currency (EUR default). VAT rate stored at 4 decimals.
-7. DB is single source of truth — no hardcoded domain values, statuses, or strings in code.
+7. DB is single source of truth — no hardcoded domain values, rates, or strings in code. VAT comes from `services`/`site_settings`; sequential numbers come from the `counters` table, never from `COUNT(*)`.
 8. All frontend URLs in `ENDPOINTS.*` — never inline. All user-facing copy via `t()` — never hardcoded.
 9. All admin client reads via React Query hooks. No raw `fetch` or `useEffect`+`useState` for data.
 10. API routes: `extractBearerToken` → per-resource `{resource}.admin.server.ts` → `NextResponse.json`, `catch → apiErrorResponse`. No `bffHandler`/`admin-bff` abstraction.

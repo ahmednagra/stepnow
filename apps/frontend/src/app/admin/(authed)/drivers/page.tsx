@@ -14,7 +14,7 @@ import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { useDrivers } from "@/hooks/queries/useDrivers";
 import { useRecordLicenseCheck } from "@/hooks/mutations/useDriverMutations";
-import { exportCsv, exportJson, printNode } from "@/utils/exporters";
+import { exportCsv, exportExcel, exportJson, printNode } from "@/utils/exporters";
 import {
   type DriverAdmin, type ComplianceStatus,
 } from "@/services/drivers";
@@ -182,17 +182,9 @@ export default function DriversPage() {
 
   const doCsv = () => { exportCsv(exportRows(), `stepnow-drivers-${todayISO()}.csv`); pushToast("success", `Exported ${view.length} rows to CSV`); setExportOpen(false); };
   const doJson = () => { exportJson(exportRows(), `stepnow-drivers-${todayISO()}.json`); pushToast("success", `Exported ${view.length} rows to JSON`); setExportOpen(false); };
-  const doXlsx = async () => {
-    try {
-      const XLSX = await import("xlsx");
-      const rows = exportRows();
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws["!cols"] = Object.keys(rows[0] ?? { a: 1 }).map(() => ({ wch: 16 }));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Drivers");
-      XLSX.writeFile(wb, `stepnow-drivers-${todayISO()}.xlsx`);
-      pushToast("success", `Exported ${view.length} rows to XLSX`);
-    } catch { pushToast("error", "XLSX export failed", "The spreadsheet library could not be loaded."); }
+  const doXlsx = () => {
+    exportExcel(exportRows(), `stepnow-drivers-${todayISO()}.xls`, "Drivers");
+    pushToast("success", `Exported ${view.length} rows to Excel`);
     setExportOpen(false);
   };
   const doPrint = () => { printNode(document.getElementById("drivers-printable"), `StepNow Driver Compliance ${todayISO()}`); setExportOpen(false); };
@@ -250,7 +242,7 @@ export default function DriversPage() {
               <div className="absolute right-0 top-11 z-40 min-w-[220px] border border-slate-200 bg-white shadow-lg">
                 <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Export current view ({view.length})</p>
                 <button type="button" onClick={doCsv} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-600 py-0.5 text-center text-[9px] font-bold text-white">CSV</span> Comma-separated</button>
-                <button type="button" onClick={doXlsx} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-800 py-0.5 text-center text-[9px] font-bold text-white">XLSX</span> Compliance workbook</button>
+                <button type="button" onClick={doXlsx} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-green-800 py-0.5 text-center text-[9px] font-bold text-white">XLS</span> Compliance workbook</button>
                 <button type="button" onClick={doJson} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-slate-700 py-0.5 text-center text-[9px] font-bold text-white">JSON</span> Raw data</button>
                 <button type="button" onClick={doPrint} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3 py-2.5 text-left text-[13px] text-slate-700 hover:bg-slate-50"><span className="w-9 bg-red-600 py-0.5 text-center text-[9px] font-bold text-white">PDF</span> Audit report (Behörde)</button>
               </div>

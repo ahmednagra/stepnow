@@ -74,6 +74,24 @@ export async function updateInvoiceServer(id: string, data: Record<string, unkno
   return inv;
 }
 
+export async function issueInvoiceServer(id: string, authToken: string): Promise<InvoiceAdmin> {
+  const inv = unwrap(await serverApiClient.post<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_ISSUE(id), {}, undefined, authToken));
+  revalidateForPath(ENDPOINTS.ADMIN.INVOICES);
+  return inv;
+}
+
+export async function cancelInvoiceServer(id: string, data: Record<string, unknown>, authToken: string): Promise<InvoiceAdmin> {
+  const inv = unwrap(await serverApiClient.post<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_CANCEL(id), data, undefined, authToken));
+  revalidateForPath(ENDPOINTS.ADMIN.INVOICES);
+  return inv;
+}
+
+export async function setPaymentStatusServer(id: string, data: Record<string, unknown>, authToken: string): Promise<PaymentAdmin> {
+  const p = unwrap(await serverApiClient.patch<PaymentAdmin>(ENDPOINTS.ADMIN.PAYMENT_BY_ID(id), data, undefined, authToken));
+  revalidateForPath(ENDPOINTS.ADMIN.ORDERS);
+  return p;
+}
+
 export async function updateAdminOrderParcelServer(id: string, data: Record<string, unknown>, authToken: string): Promise<CourierOrder> {
   const o = unwrap(await serverApiClient.patch<CourierOrder>(ENDPOINTS.ADMIN.ORDER_PARCEL(id), data, undefined, authToken));
   revalidateForPath(ENDPOINTS.ADMIN.ORDERS);

@@ -16,7 +16,7 @@ router = APIRouter(tags=["admin: customers"])
 
 
 @router.get("/admin/customers", response_model=PaginatedResponse[CustomerResponse])
-async def list_customers(
+def list_customers(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -28,25 +28,31 @@ async def list_customers(
 
 
 @router.post("/admin/customers", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
-async def create_customer(request: Request, payload: CustomerCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CustomerResponse:
+def create_customer(request: Request, payload: CustomerCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CustomerResponse:
     return CustomersController.create(db, payload, actor, request)
 
 
 @router.get("/admin/customers/{customer_id}", response_model=CustomerResponse)
-async def get_customer(customer_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CustomerResponse:
+def get_customer(customer_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CustomerResponse:
     return CustomersController.get(db, customer_id)
 
 
 @router.patch("/admin/customers/{customer_id}", response_model=CustomerResponse)
-async def update_customer(request: Request, customer_id: UUID, payload: CustomerUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CustomerResponse:
+def update_customer(request: Request, customer_id: UUID, payload: CustomerUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> CustomerResponse:
     return CustomersController.update(db, customer_id, payload, actor, request)
 
 
 @router.delete("/admin/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_customer(request: Request, customer_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_customer(request: Request, customer_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     CustomersController.delete(db, customer_id, actor, request)
 
 
-@router.get("/admin/customers/{customer_id}/orders", response_model=list[CourierOrderResponse])
-async def customer_orders(customer_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> list[CourierOrderResponse]:
-    return CustomersController.list_orders(db, customer_id)
+@router.get("/admin/customers/{customer_id}/orders", response_model=PaginatedResponse[CourierOrderResponse])
+def customer_orders(
+    customer_id: UUID,
+    db: Session = Depends(get_db),
+    actor: AdminUser = Depends(get_current_admin),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+) -> PaginatedResponse[CourierOrderResponse]:
+    return CustomersController.list_orders(db, customer_id, page, size)

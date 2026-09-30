@@ -66,7 +66,7 @@ export async function deleteAdminCustomer(id: string): Promise<void> {
 }
 
 import type { CourierOrder } from "@/services/courier";
-/** Order history for a customer (for the detail page + outstanding balance). */
-export async function listCustomerOrders(id: string): Promise<CourierOrder[]> {
-  return nextjsApiClient.get<CourierOrder[]>(ENDPOINTS.ADMIN.CUSTOMER_ORDERS(id));
+/** One page of a customer's order history, newest first. Lifetime totals live on the customer record. */
+export async function listCustomerOrders(id: string, params: { page?: number; size?: number } = {}): Promise<Paginated<CourierOrder>> {
+  return nextjsApiClient.get<Paginated<CourierOrder>>(ENDPOINTS.ADMIN.CUSTOMER_ORDERS(id), { params });
 }

@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
-from app.Models.base import Base
+from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
 
@@ -25,6 +25,7 @@ class MessageDelivery(Base, TimestampMixin, SoftDeleteMixin):
         Index("ix_message_deliveries_source", "source_entity_type", "source_entity_id"),
         Index("ix_message_deliveries_channel_status", "channel", "status"),
         Index("ix_message_deliveries_provider_msg", "provider", "provider_message_id"),
+        live_unique("uq_message_deliveries_public_code_live", "public_code"),
     )
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -50,7 +51,7 @@ class MessageDelivery(Base, TimestampMixin, SoftDeleteMixin):
     template_key: Mapped[str | None] = mapped_column(String(60), nullable=True)          # driver_slip
 
     # ── Web-click specifics ──
-    public_code: Mapped[str | None] = mapped_column(String(16), unique=True, nullable=True, index=True)
+    public_code: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deep_link: Mapped[str | None] = mapped_column(Text, nullable=True)                   # the wa.me URL we built
     message_body: Mapped[str | None] = mapped_column(Text, nullable=True)               # exact text we generated (audit)

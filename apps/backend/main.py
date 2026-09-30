@@ -1,9 +1,12 @@
 # apps/backend/main.py
-# FastAPI app factory: lifespan creates missing tables (no Alembic — models ARE the schema) and (opt-in) runs idempotent seeders; CORS + rate-limit middleware; centralized error envelope.
+# FastAPI app factory: lifespan syncs the schema to the models and (opt-in) runs idempotent seeders; CORS + rate-limit middleware; centralized error envelope.
 
+import asyncio
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from sqlalchemy import inspect, text
+from sqlalchemy.schema import CreateIndex
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -13,11 +16,14 @@ from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from config.settings import settings
+from sqlalchemy import create_engine
 from config.database import engine
 from app.Models import Base
 from app.Core.Exceptions import AppError
 from app.Utils.Logger import get_logger
+from app.Utils.client_ip import client_ip
 from app.Utils.rate_limit import limiter
+from app.WebSocket.publisher import bind_loop
 from routes import setup_api_routes
 
 logger = get_logger("stepnow")
@@ -26,14 +32,197 @@ logger = get_logger("stepnow")
 _seeded_this_process: bool = False
 
 
-def _create_missing_tables() -> None:
-    # Models ARE the schema source while the project is pre-launch. SQLAlchemy create_all is non-destructive (checkfirst=True): only creates tables that don't exist, never alters/drops. Runs in every environment, including production — on first deploy this builds the schema; on subsequent deploys it's a no-op. Reintroduce Alembic before going live with real customer data so you can evolve columns/indexes safely.
-    try:
-        registered = set(Base.metadata.tables.keys())
-        Base.metadata.create_all(bind=engine, checkfirst=True)
-        logger.info(f"create_missing_tables OK — {len(registered)} model(s) registered, missing tables created (existing untouched)")
-    except Exception:
-        logger.exception("create_missing_tables failed — continuing startup anyway")
+def _missing_columns(inspector, table) -> list:
+    existing = {c["name"] for c in inspector.get_columns(table.name)}
+    return [c for c in table.columns if c.name not in existing]
+
+
+def _add_column_sql(dialect, table_name: str, column) -> tuple[str, bool]:
+    """(ALTER TABLE … ADD COLUMN statement, has_default). The default goes through the dialect's
+    DDL compiler — the same path CREATE TABLE uses — so a plain string default is quoted
+    ('draft'), text() passes through verbatim, and quotes inside a literal are escaped."""
+    default = dialect.ddl_compiler(dialect, None).get_column_default_string(column)
+    ddl = column.type.compile(dialect=dialect)
+    clause = f" DEFAULT {default}" if default is not None else ""
+    return f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS "{column.name}" {ddl}{clause}', default is not None
+
+
+def _add_column(conn, table, column) -> None:
+    sql, has_default = _add_column_sql(conn.dialect, table.name, column)
+    conn.execute(text(sql.replace(":", "\\:")))  # a literal default is not a bind parameter
+    # A server_default backfills existing rows, so NOT NULL can be applied straight after —
+    # without it the database stays nullable while the model claims otherwise.
+    if not column.nullable and has_default:
+        conn.execute(text(f'ALTER TABLE {table.name} ALTER COLUMN "{column.name}" SET NOT NULL'))
+
+
+def _existing_index_names(inspector, table_name) -> set:
+    names = {i["name"] for i in inspector.get_indexes(table_name)}
+    names |= {c["name"] for c in inspector.get_unique_constraints(table_name)}
+    return {n for n in names if n}
+
+
+def _fk_target_columns(conn, table_name) -> set:
+    """Columns another table's FK points at. Postgres backs such an FK with the unique index on
+    the target, and a partial index cannot satisfy it — so these must keep their plain UNIQUE."""
+    return {
+        row[0]
+        for row in conn.execute(
+            text("""
+                select a.attname
+                from pg_constraint con
+                join pg_class tgt on tgt.oid = con.confrelid
+                join unnest(con.confkey) k on true
+                join pg_attribute a on a.attrelid = con.confrelid and a.attnum = k
+                where con.contype = 'f' and tgt.relname = :t
+            """),
+            {"t": table_name},
+        )
+    }
+
+
+def _supersede_legacy_uniques(conn, inspector, table) -> int:
+    """A column now covered by a partial unique index must lose its plain UNIQUE, otherwise the
+    deleted-row value stays reserved and the service-layer guard and the database disagree."""
+    covered = {list(i.columns)[0].name for i in table.indexes
+               if i.unique and i.dialect_options["postgresql"].get("where") is not None and len(i.columns) == 1}
+    covered -= _fk_target_columns(conn, table.name)
+    if not covered:
+        return 0
+    dropped = 0
+    for uc in inspector.get_unique_constraints(table.name):
+        cols = set(uc.get("column_names") or [])
+        if len(cols) == 1 and cols <= covered:
+            conn.execute(text(f'ALTER TABLE {table.name} DROP CONSTRAINT IF EXISTS "{uc["name"]}"'))
+            dropped += 1
+    for ix in inspector.get_indexes(table.name):
+        if not ix.get("unique"):
+            continue
+        cols = set(c for c in (ix.get("column_names") or []) if c)
+        model_index = next((i for i in table.indexes if i.name == ix["name"]), None)
+        is_partial_in_model = model_index is not None and model_index.dialect_options["postgresql"].get("where") is not None
+        if len(cols) == 1 and cols <= covered and not is_partial_in_model:
+            conn.execute(text(f'DROP INDEX IF EXISTS "{ix["name"]}"'))
+            dropped += 1
+    return dropped
+
+
+def _ensure_schema_writable() -> None:
+    with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        user, allowed = conn.execute(
+            text("select current_user, has_schema_privilege(current_user, 'public', 'CREATE')")
+        ).first()
+        if allowed:
+            return
+        for stmt in (f'GRANT CREATE, USAGE ON SCHEMA public TO "{user}"',
+                    f'ALTER SCHEMA public OWNER TO "{user}"'):
+            try:
+                conn.execute(text(stmt))
+            except Exception:
+                continue
+            if conn.execute(text("select has_schema_privilege(current_user, 'public', 'CREATE')")).scalar():
+                logger.info(f"[Schema] granted CREATE on public to {user} ({stmt})")
+                return
+    if settings.DATABASE_ADMIN_URL:
+        admin = create_engine(settings.DATABASE_ADMIN_URL, isolation_level="AUTOCOMMIT")
+        try:
+            with admin.connect() as conn:
+                conn.execute(text(f'ALTER SCHEMA public OWNER TO "{user}"'))
+        except Exception as exc:
+            logger.error(f"[Schema] DATABASE_ADMIN_URL could not grant CREATE to {user}: {exc}")
+        finally:
+            admin.dispose()
+        with engine.connect() as conn:
+            if conn.execute(text("select has_schema_privilege(current_user, 'public', 'CREATE')")).scalar():
+                logger.info(f"[Schema] granted CREATE on public to {user} via DATABASE_ADMIN_URL")
+                return
+
+    raise RuntimeError(
+        f"Role {user!r} cannot create objects in schema public. Either set DATABASE_ADMIN_URL to a "
+        "superuser connection so startup can grant it, create the database owned by the app role "
+        f'(CREATE DATABASE ... OWNER {user}), or run once as a superuser:  '
+        f'ALTER SCHEMA public OWNER TO "{user}";'
+    )
+
+
+def sync_schema() -> None:
+    added_columns = created_indexes = dropped_uniques = 0
+    _ensure_schema_writable()
+    with engine.begin() as conn:
+        before = set(inspect(conn).get_table_names())
+        Base.metadata.create_all(bind=conn, checkfirst=True)
+        inspector = inspect(conn)
+        present = set(inspector.get_table_names())
+        created_tables = len(present - before)
+
+        for table in Base.metadata.sorted_tables:
+            if table.name not in present:
+                continue
+            for column in _missing_columns(inspector, table):
+                _add_column(conn, table, column)
+                added_columns += 1
+                logger.info(f"[Schema] {table.name}.{column.name} added")
+
+        inspector = inspect(conn)
+        for table in Base.metadata.sorted_tables:
+            if table.name not in set(inspector.get_table_names()):
+                continue
+            dropped_uniques += _supersede_legacy_uniques(conn, inspector, table)
+
+        inspector = inspect(conn)
+        for table in Base.metadata.sorted_tables:
+            if table.name not in set(inspector.get_table_names()):
+                continue
+            existing = _existing_index_names(inspector, table.name)
+            for index in table.indexes:
+                if index.name in existing:
+                    continue
+                conn.execute(CreateIndex(index, if_not_exists=True))
+                created_indexes += 1
+                logger.info(f"[Schema] index {index.name} created")
+
+    logger.info(
+        f"[Schema] in sync — {len(Base.metadata.tables)} table(s); "
+        f"+{created_tables} table(s), +{added_columns} column(s), +{created_indexes} index(es), -{dropped_uniques} legacy unique(s)"
+    )
+
+
+def seed_counters() -> None:
+    """Adopt the highest number already issued so a counter never reissues an existing job
+    number, Kunden-Nr. or Rechnungsnummer. Bookings and orders share the 'job' scope — the
+    digits are claimed once and carried by both. Idempotent — only ever raises a counter.
+    On an empty table an ungrouped MAX() yields one NULL row, so the customer query needs a
+    HAVING guard; the grouped queries return no rows and need none."""
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO counters (scope, "key", value)
+            SELECT 'job', right(core, 6), MAX(CAST(left(core, length(core) - 6) AS bigint))
+            FROM (
+                SELECT regexp_replace(order_number, '^[A-Za-z]+-?', '') AS core FROM orders
+                WHERE order_number ~ '^[A-Za-z]+-?[0-9]{7,}$'
+                UNION ALL
+                SELECT regexp_replace(reference, '^[A-Za-z]+-?', '') FROM booking_requests
+                WHERE reference ~ '^[A-Za-z]+-?[0-9]{7,}$'
+            ) s
+            GROUP BY right(core, 6)
+            ON CONFLICT (scope, "key") DO UPDATE SET value = GREATEST(counters.value, EXCLUDED.value)
+        """))
+        conn.execute(text("""
+            INSERT INTO counters (scope, "key", value)
+            SELECT 'customer', 'K911', MAX(CAST(substring(customer_number from 5) AS bigint))
+            FROM customers
+            WHERE customer_number ~ '^K911[0-9]+$'
+            HAVING MAX(CAST(substring(customer_number from 5) AS bigint)) IS NOT NULL
+            ON CONFLICT (scope, "key") DO UPDATE SET value = GREATEST(counters.value, EXCLUDED.value)
+        """))
+        conn.execute(text("""
+            INSERT INTO counters (scope, "key", value)
+            SELECT 'invoice', o.order_number, COUNT(i.id)
+            FROM invoices i JOIN orders o ON o.id = i.order_id
+            GROUP BY o.order_number
+            ON CONFLICT (scope, "key") DO UPDATE SET value = GREATEST(counters.value, EXCLUDED.value)
+        """))
+    logger.info("[Schema] counters aligned with existing numbers")
 
 
 def _run_seeders_if_enabled() -> None:
@@ -64,9 +253,12 @@ def _run_seeders_if_enabled() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} (env={settings.ENVIRONMENT})")
-    _create_missing_tables()
+    sync_schema()
+    seed_counters()
     _run_seeders_if_enabled()
+    bind_loop(asyncio.get_running_loop())  # sync code publishes realtime events onto this loop
     yield
+    bind_loop(None)
     logger.info(f"Shutting down {settings.APP_NAME}")
 
 
@@ -92,11 +284,11 @@ app.add_middleware(
 @app.middleware("http")
 async def request_logging(request: Request, call_next):
     start = time.perf_counter()
-    client_ip = request.client.host if request.client else "-"
+    ip = client_ip(request)
     try:
         response = await call_next(request)
         duration_ms = (time.perf_counter() - start) * 1000
-        logger.info(f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms:.1f}ms) ip={client_ip}")
+        logger.info(f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms:.1f}ms) ip={ip}")
         return response
     except Exception as exc:
         duration_ms = (time.perf_counter() - start) * 1000

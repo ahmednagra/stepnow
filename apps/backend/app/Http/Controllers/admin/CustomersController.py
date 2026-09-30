@@ -15,33 +15,23 @@ from app.Services.CustomersService import CustomersService
 
 class CustomersController:
     @staticmethod
+    def _enrich(c, aggregates: dict) -> CustomerResponse:
+        return CustomerResponse(**{**CustomerResponse.model_validate(c).model_dump(), **aggregates.get(c.id, {})})
+
+    @staticmethod
     def list(
         db: Session, page: int, size: int, q: str | None, include_deleted: bool
     ) -> PaginatedResponse[CustomerResponse]:
         items, total = CustomersService.customers_list(db, page, size, q, include_deleted)
-
         # One grouped query for the loaded page → per-customer rollups (no N+1).
         aggregates = CustomersService.aggregates_for(db, [c.id for c in items])
-
-        rows: list[CustomerResponse] = []
-        for c in items:
-            base = CustomerResponse.model_validate(c).model_dump()
-            agg = aggregates.get(c.id)
-            if agg:
-                base.update(
-                    orders_count=agg["orders_count"],
-                    total_billed=agg["total_billed"],
-                    balance_due=agg["balance_due"],
-                    overdue_balance=agg["overdue_balance"],
-                    last_order_at=agg["last_order_at"],
-                )
-            rows.append(CustomerResponse(**base))
-
-        return PaginatedResponse[CustomerResponse].build(rows, page, size, total)
+        return PaginatedResponse[CustomerResponse].build([CustomersController._enrich(c, aggregates) for c in items], page, size, total)
 
     @staticmethod
     def get(db: Session, customer_id: UUID) -> CustomerResponse:
-        return CustomerResponse.model_validate(CustomersService.get(db, customer_id))
+        # The detail page shows lifetime totals from these SQL rollups, not by summing its order page.
+        c = CustomersService.get(db, customer_id)
+        return CustomersController._enrich(c, CustomersService.aggregates_for(db, [c.id]))
 
     @staticmethod
     def create(
@@ -59,11 +49,8 @@ class CustomersController:
         actor: AdminUser,
         request: Request,
     ) -> CustomerResponse:
-        return CustomerResponse.model_validate(
-            CustomersService.update(
-                db, customer_id, payload.model_dump(exclude_unset=True), actor, request
-            )
-        )
+        c = CustomersService.update(db, customer_id, payload.model_dump(exclude_unset=True), actor, request)
+        return CustomersController._enrich(c, CustomersService.aggregates_for(db, [c.id]))
 
     @staticmethod
     def delete(
@@ -72,8 +59,6 @@ class CustomersController:
         CustomersService.soft_delete(db, customer_id, actor, request)
 
     @staticmethod
-    def list_orders(db: Session, customer_id: UUID):
-        return [
-            CourierOrderResponse.model_validate(o)
-            for o in CustomersService.list_orders(db, customer_id)
-        ]
+    def list_orders(db: Session, customer_id: UUID, page: int, size: int) -> PaginatedResponse[CourierOrderResponse]:
+        items, total = CustomersService.list_orders(db, customer_id, page, size)
+        return PaginatedResponse[CourierOrderResponse].build([CourierOrderResponse.model_validate(o) for o in items], page, size, total)

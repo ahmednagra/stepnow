@@ -4,6 +4,7 @@
 "use client";
 
 import { useEffect, useRef, memo } from "react";
+import { formatMoney } from "@/utils/decimal";
 import {
   Chart, BarController, LineController, BarElement, PointElement, LineElement,
   CategoryScale, LinearScale, Tooltip, Filler,
@@ -19,10 +20,11 @@ export interface RevenuePoint {
 
 interface RevenueChartProps {
   data: RevenuePoint[];
+  currency: string;
   height?: number;
 }
 
-function RevenueChartBase({ data, height = 260 }: RevenueChartProps) {
+function RevenueChartBase({ data, currency, height = 260 }: RevenueChartProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -78,7 +80,7 @@ function RevenueChartBase({ data, height = 260 }: RevenueChartProps) {
             bodyFont: { size: 12 },
             callbacks: {
               label: (ctx) => ctx.dataset.label === "Revenue"
-                ? `  Revenue  €${Number(ctx.parsed.y).toLocaleString()}`
+                ? `  Revenue  ${formatMoney(String(ctx.parsed.y), currency)}`
                 : `  Bookings  ${ctx.parsed.y}`,
             },
           },
@@ -94,7 +96,7 @@ function RevenueChartBase({ data, height = 260 }: RevenueChartProps) {
             grid: { color: "#F0EDE5", drawTicks: false },
             ticks: {
               font: { size: 10 }, color: "#9A968D",
-              callback: (v) => "€" + (Number(v) / 1000).toFixed(1) + "k",
+              callback: (v) => formatMoney(String(Math.round(Number(v) / 1000)), currency) + "k",
             },
             border: { display: false },
           },

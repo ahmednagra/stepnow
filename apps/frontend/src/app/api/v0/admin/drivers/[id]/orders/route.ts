@@ -10,8 +10,12 @@ import { listDriverOrdersServer } from "@/services/drivers/drivers.admin.server"
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const token = extractBearerToken(request);
   if (!token) return errorResponse("UNAUTHORIZED", "Authentication token is required", 401);
+  const sp = request.nextUrl.searchParams;
+  const query: { page?: number; size?: number } = {};
+  if (sp.get("page")) query.page = Number(sp.get("page"));
+  if (sp.get("size")) query.size = Number(sp.get("size"));
   try {
-    return NextResponse.json(await listDriverOrdersServer(params.id, token));
+    return NextResponse.json(await listDriverOrdersServer(params.id, query, token));
   } catch (err) {
     return apiErrorResponse(err);
   }

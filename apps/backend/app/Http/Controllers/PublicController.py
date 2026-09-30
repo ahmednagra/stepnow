@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError
 from app.Schemas.public import (
     FaqPublicResponse, LegalPagePublicResponse, PricingCategoryPublicResponse,
-    PricingGroupedByServicePublic, PricingItemPublicResponse, ServicePublicListItem,
+    PricingGroupedByServicePublic, ServicePublicListItem,
     ServicePublicResponse, SettingsPublicResponse, TestimonialPublicResponse,
     UiStringsPublicResponse, VehiclePublicResponse,
 )
@@ -44,15 +44,26 @@ class PublicController:
         is_de = locale == Locale.DE
         return SettingsPublicResponse(
             business_name=s.business_name,
+            owner_name=s.owner_name,
+            legal_form=s.legal_form,
             address_street=s.address_street,
             address_postcode=s.address_postcode,
             address_city=s.address_city,
+            address_country=s.address_country,
             address_lat=s.address_lat,
             address_lng=s.address_lng,
             phone=s.phone,
             phone_mobile=s.phone_mobile,
             email=s.email,
             whatsapp_url=s.whatsapp_url,
+            tax_number=s.tax_number,
+            vat_id=s.vat_id,
+            default_currency=s.default_currency,
+            commercial_register=s.commercial_register,
+            register_court=s.register_court,
+            concession_number=s.concession_number,
+            concession_authority=s.concession_authority,
+            concession_date=s.concession_date,
             opening_hours=s.opening_hours_de if is_de else s.opening_hours_en,
             social_facebook=s.social_facebook,
             social_instagram=s.social_instagram,
@@ -115,12 +126,7 @@ class PublicController:
     @staticmethod
     def list_pricing_for_service(db: Session, slug: str, locale: Locale) -> list[PricingCategoryPublicResponse]:
         cats = PricingService.list_public_for_service_slug(db, slug, locale.value)
-        return [PricingCategoryPublicResponse(
-            id=c["id"],
-            name=c["name"],
-            description=c["description"],
-            items=[PricingItemPublicResponse(**i) for i in c["items"]],
-        ) for c in cats]
+        return [PricingCategoryPublicResponse.model_validate(c) for c in cats]
 
     @staticmethod
     def list_pricing_all_grouped(db: Session, locale: Locale) -> list[PricingGroupedByServicePublic]:
@@ -128,10 +134,5 @@ class PublicController:
         return [PricingGroupedByServicePublic(
             service_id=g["service_id"],
             service_slug=g["service_slug"],
-            categories=[PricingCategoryPublicResponse(
-                id=c["id"],
-                name=c["name"],
-                description=c["description"],
-                items=[PricingItemPublicResponse(**i) for i in c["items"]],
-            ) for c in g["categories"]],
+            categories=[PricingCategoryPublicResponse.model_validate(c) for c in g["categories"]],
         ) for g in grouped]

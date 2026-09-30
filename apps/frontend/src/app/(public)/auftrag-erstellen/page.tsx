@@ -27,6 +27,7 @@ export default function PublicCreateOrderPage() {
   const [gateError, setGateError] = useState<string | null>(null);
 
   const [vehicles, setVehicles] = useState<FleetVehicle[]>([]);
+  const [currency, setCurrency] = useState("");
   const [vehicleId, setVehicleId] = useState("");
   const [driverName, setDriverName] = useState("");
   const [company, setCompany] = useState("");
@@ -47,8 +48,12 @@ export default function PublicCreateOrderPage() {
     try {
       const res = await nextjsApiClient.post<{ ok: boolean }>(ENDPOINTS.PUBLIC.STAFF_GATE, { code: code.trim() });
       if (!res.ok) { setGateError("Wrong code."); return; }
-      const fleet = await nextjsApiClient.get<FleetVehicle[]>(ENDPOINTS.PUBLIC.FLEET_VEHICLES);
+      const [fleet, settings] = await Promise.all([
+        nextjsApiClient.get<FleetVehicle[]>(ENDPOINTS.PUBLIC.FLEET_VEHICLES),
+        nextjsApiClient.get<{ default_currency: string }>(ENDPOINTS.PUBLIC.SETTINGS),
+      ]);
       setVehicles(fleet);
+      setCurrency(settings.default_currency);
       setUnlocked(true);
     } catch (e) {
       setGateError(e instanceof ApiError ? e.message : "Could not verify the code.");
@@ -94,7 +99,7 @@ export default function PublicCreateOrderPage() {
       <div className="mx-auto max-w-md p-8 text-center">
         <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Check className="h-6 w-6" /></div>
         <h1 className="font-serif text-2xl text-slate-900">Auftrag erstellt</h1>
-        <p className="mt-2 text-slate-600">Auftrags-Nr.: <span className="font-mono font-semibold">A-{doneNo}</span></p>
+        <p className="mt-2 text-slate-600">Auftrags-Nr.: <span className="font-mono font-semibold">{doneNo}</span></p>
         <button type="button" onClick={() => { setDoneNo(null); setCompany(""); setPhone(""); setClientRef(""); setServiceType(""); setPickups([emptyStop()]); setDrops([emptyStop()]); setNet(""); setNotes(""); setDriverName(""); setVehicleId(""); }}
           className="mt-6 h-10 bg-slate-900 px-5 text-[13px] font-medium text-white hover:bg-slate-800">Weiteren Auftrag erstellen</button>
       </div>
@@ -171,7 +176,7 @@ export default function PublicCreateOrderPage() {
       ))}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-[12px] text-slate-600">Preis netto (€) *<input type="number" min={0} step="0.01" className={`${input} mt-1`} value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" /></label>
+        <label className="text-[12px] text-slate-600">Preis netto{currency ? ` (${currency})` : ""} *<input type="number" min={0} step="0.01" className={`${input} mt-1`} value={net} onChange={(e) => setNet(e.target.value)} placeholder="0.00" /></label>
         <label className="text-[12px] text-slate-600 sm:col-span-2">Hinweise<textarea rows={2} className={`${input} mt-1 h-auto py-2`} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
       </section>
 

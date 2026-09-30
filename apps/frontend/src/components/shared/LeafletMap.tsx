@@ -1,5 +1,6 @@
 // apps/frontend/src/components/shared/LeafletMap.tsx
-// Client-only Leaflet wrapper used as the DSGVO-clean fallback before maps consent is given.
+// Client-only Leaflet wrapper. Renders only AFTER maps consent — the OSM tile request
+// carries the visitor's IP, so it must never run on the pre-consent path.
 "use client";
 import "leaflet/dist/leaflet.css";
 import { memo, useEffect, useRef } from "react";

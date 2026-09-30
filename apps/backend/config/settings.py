@@ -53,14 +53,15 @@ class Settings(BaseSettings):
 
     # ── Database ──
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+    DATABASE_ADMIN_URL: str = os.getenv("DATABASE_ADMIN_URL", "")
 
     # ── JWT ──
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    # Session length = 24h. The access token governs the live session (no auto-refresh), so it
-    # is set to a full day; the refresh token expires in step. Override per-env via .env.
-    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "1440"))
-    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "1"))
+    # Short access token + long refresh token. nextjsApiClient refreshes transparently on a
+    # 401 and retries once, so a stolen access token is useful for minutes, not a day.
+    JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", "30"))
+    JWT_REFRESH_TOKEN_EXPIRES_DAYS: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "14"))
 
     # ── CORS ──
     # JSON-list string in .env, e.g. ["http://localhost:3000","https://step-now.de"]
@@ -72,6 +73,14 @@ class Settings(BaseSettings):
     # ── Rate limits ──
     BOOKING_RATE_LIMIT: str = os.getenv("BOOKING_RATE_LIMIT", "5/hour")
     CONTACT_RATE_LIMIT: str = os.getenv("CONTACT_RATE_LIMIT", "3/hour")
+    # Counter store for every limit. memory:// is per-process — correct for today's single uvicorn
+    # worker; with several workers/hosts point it at shared storage, e.g. redis://localhost:6379/0.
+    RATE_LIMIT_STORAGE_URI: str = os.getenv("RATE_LIMIT_STORAGE_URI", "memory://")
+    # Failed logins per account (normalized email), across all IPs — caps distributed guessing.
+    LOGIN_ACCOUNT_FAILURE_LIMIT: str = os.getenv("LOGIN_ACCOUNT_FAILURE_LIMIT", "10/15 minutes;50/day")
+    # Peers (IPs/CIDRs, comma-separated) whose X-Forwarded-For is believed: nginx and the Next.js
+    # BFF both reach uvicorn over loopback. Anyone else is keyed on their own socket address.
+    TRUSTED_PROXIES: str = os.getenv("TRUSTED_PROXIES", "127.0.0.1,::1")
 
     # ── Backups (S3-compatible) ──
     BACKUP_S3_ENDPOINT: str | None = os.getenv("BACKUP_S3_ENDPOINT") or None
@@ -79,6 +88,8 @@ class Settings(BaseSettings):
     BACKUP_S3_ACCESS_KEY: str | None = os.getenv("BACKUP_S3_ACCESS_KEY") or None
     BACKUP_S3_SECRET_KEY: str | None = os.getenv("BACKUP_S3_SECRET_KEY") or None
     BACKUP_RETENTION_DAYS: int = int(os.getenv("BACKUP_RETENTION_DAYS", "30"))
+    BACKUP_DIR: str = os.getenv("BACKUP_DIR", "storage/backups")
+    PG_DUMP_PATH: str = os.getenv("PG_DUMP_PATH", "pg_dump")
 
     # ════════════════════════════════════════════════════════════════
     # EMAIL
@@ -220,3 +231,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+_REQUIRED = ("DATABASE_URL", "JWT_SECRET_KEY")
+_missing = [k for k in _REQUIRED if not (getattr(settings, k, "") or "").strip()]
+if _missing:
+    raise RuntimeError(f"Missing required setting(s): {', '.join(_missing)}. Set them in the environment or .env before starting.")
+if settings.ENVIRONMENT == "production" and len(settings.JWT_SECRET_KEY) < 32:
+    raise RuntimeError("JWT_SECRET_KEY must be at least 32 characters in production.")

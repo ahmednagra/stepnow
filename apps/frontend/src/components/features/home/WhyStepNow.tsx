@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { BadgeCheck, MapPinned, PhoneCall, ShieldCheck, WalletCards } from "lucide-react";
+import { BadgeCheck, PhoneCall, ShieldCheck, WalletCards } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import { Container } from "@/components/shared";
 import { pickT } from "@/lib/i18n/pick";
@@ -18,11 +18,10 @@ const BENEFITS: Benefit[] = [
   { key: "home.why.bullet.prebooked", Icon: BadgeCheck },
   { key: "home.why.bullet.licensed", Icon: ShieldCheck },
   { key: "home.why.bullet.personal", Icon: PhoneCall },
-  { key: "home.why.bullet.regional", Icon: MapPinned },
 ];
 
 const WHY_IMAGE =
-  "/others/whyus.avif";
+  "/vehicle/mercedes-benz-e-class.webp";
 
 export function WhyStepNow({ t }: WhyStepNowProps) {
   return (
@@ -42,10 +41,10 @@ export function WhyStepNow({ t }: WhyStepNowProps) {
               </p>
             </div>
 
-            <div className="relative min-h-[280px] bg-[var(--color-bg-surface)] md:min-h-[360px]">
+            <div className="relative min-h-[200px] bg-[var(--color-bg-surface)] md:min-h-[230px]">
               <Image
                 src={WHY_IMAGE}
-                alt="Professional passenger transfer service"
+                alt="Mercedes-Benz passenger vehicle"
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-cover"
@@ -54,7 +53,7 @@ export function WhyStepNow({ t }: WhyStepNowProps) {
             </div>
           </div>
 
-          <div className="grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
+          <div className="grid gap-px self-start border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)]">
             {BENEFITS.map(({ key, Icon }) => {
               const text = t(key);
               const [lead, rest] = text.includes("—")

@@ -21,10 +21,12 @@ export function Markdown({ source, className }: MarkdownProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          // Markdown is always embedded in a page that owns the <h1>; a "#" heading in DB content
+          // must not add a second one (one h1 per page for SEO and screen readers).
           h1: ({ children }) => (
-            <h1 className="mb-4 mt-10 font-serif text-3xl tracking-tight text-[var(--color-text-primary)]">
+            <h2 className="mb-4 mt-10 font-serif text-3xl tracking-tight text-[var(--color-text-primary)]">
               {children}
-            </h1>
+            </h2>
           ),
           h2: ({ children }) => (
             <h2 className="mb-4 font-serif text-2xl tracking-tight text-[var(--color-text-primary)]">

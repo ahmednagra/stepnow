@@ -4,6 +4,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { formatMoney } from "@/utils/decimal";
 import { CalendarCheck, Mail, Car, Euro, Activity } from "lucide-react";
 import {
   AdminPageHeader, AdminCard, KpiTile,
@@ -16,7 +17,7 @@ import { UpcomingBookings } from "@/components/admin/dashboard/UpcomingBookings"
 import { DashboardActions } from "./_dashboard-actions";
 import type { BookingAdmin } from "@/types";
 import { useDashboard } from "@/hooks/queries/useDashboard";
-import { useCurrentAdmin } from "@/hooks/queries";
+import { useDefaultCurrency, useCurrentAdmin } from "@/hooks/queries";
 
 function fmtTime(iso: string): string {
   try {
@@ -27,6 +28,7 @@ function fmtTime(iso: string): string {
 }
 
 export function DashboardClient() {
+  const cur = useDefaultCurrency();
   const { data, isLoading } = useDashboard();
   const { data: admin } = useCurrentAdmin();
 
@@ -116,8 +118,8 @@ export function DashboardClient() {
           />
           <KpiTile
             label="Revenue (30D)"
-            value={`€${Math.round(totalRevenue).toLocaleString()}`}
-            context={`avg €${data.series.length > 0 ? Math.round(totalRevenue / avgRevenueDays).toLocaleString() : 0}`}
+            value={formatMoney(String(Math.round(totalRevenue)), cur)}
+            context={`avg ${formatMoney(String(data.series.length > 0 ? Math.round(totalRevenue / avgRevenueDays) : 0), cur)}`}
             icon={<Euro className="h-4 w-4" strokeWidth={1.5} />}
             accent="ink"
             sparkline={data.series.slice(-12).map((p) => p.revenue)}

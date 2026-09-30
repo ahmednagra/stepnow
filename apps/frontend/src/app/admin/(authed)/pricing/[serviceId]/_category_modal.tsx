@@ -40,6 +40,7 @@ function defaults(c: PricingCategoryAdmin | undefined, nextSortOrder: number): A
     name_en: c?.name_en ?? "",
     description_de: c?.description_de ?? "",
     description_en: c?.description_en ?? "",
+    prices_net: c?.prices_net ?? false,
   };
 }
 
@@ -73,6 +74,7 @@ export function CategoryModal({
       name_en: values.name_en,
       description_de: values.description_de?.trim() || null,
       description_en: values.description_en?.trim() || null,
+      prices_net: values.prices_net,
     };
     try {
       const saved =
@@ -156,6 +158,11 @@ export function CategoryModal({
               </div>
             }
           />
+
+          <label className="flex items-center gap-2 text-[13px] text-slate-700">
+            <input type="checkbox" className="h-3.5 w-3.5" {...register("prices_net")} />
+            Prices are net, plus VAT (e.g. courier) — the public page marks them “netto”
+          </label>
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <button

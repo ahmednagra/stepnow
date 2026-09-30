@@ -39,8 +39,8 @@ const VALUES: ValueEntry[] = [
     titleKey: "about.values.transparency.title",
     bodyKey: "about.values.transparency.body",
     defaults: {
-      de: { title: "Transparenz", body: "Pauschalpreis vor der Fahrt. Keine versteckten Aufschläge, keine Taxameter-Überraschungen." },
-      en: { title: "Transparency", body: "Fixed prices up front. No hidden surcharges, no meter surprises." },
+      de: { title: "Transparenz", body: "Festpreise und ein klarer Tarif — alle Personenfahrten inkl. MwSt., keine versteckten Aufschläge." },
+      en: { title: "Transparency", body: "Fixed prices and a clear tariff — all passenger rides incl. VAT, no hidden surcharges." },
     },
   },
   {
