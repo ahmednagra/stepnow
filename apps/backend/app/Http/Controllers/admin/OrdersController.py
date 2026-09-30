@@ -25,6 +25,7 @@ from app.Schemas.admin.orders_admin import (
     OrderStatusUpdate,
     PaymentCreate,
     PaymentResponse,
+    PaymentStatusUpdate,
 )
 from app.Services.OrdersService import OrdersService
 from app.Services.InvoicesService import InvoicesService
@@ -83,26 +84,15 @@ class OrdersController:
         paid_map = PaymentsService.totals_for(db, [o.id for o in items])
         rows: list[OrderAdminResponse] = []
         for o in items:
-            paid = paid_map.get(o.id, money(0))
-            balance = money(o.gross_amount - paid)
-            invoice = o.invoice  # eager-loaded (selectinload); one-to-one, may be None
-            is_overdue = bool(
-                balance > 0 and o.due_date is not None and o.due_date < today
-            )
             base = OrderAdminResponse.model_validate(o).model_dump()
-            base.update(
-                amount_paid=paid,
-                balance_due=balance,
-                is_overdue=is_overdue,
-                invoice_number=invoice.invoice_number if invoice else None,
-                invoice_status=invoice.status if invoice else None,
-            )
+            base.update(OrdersController._derived(o, paid_map.get(o.id, money(0)), today))
             rows.append(OrderAdminResponse(**base))
         return PaginatedResponse[OrderAdminResponse].build(rows, page, size, total)
 
     @staticmethod
     def get(db: Session, order_id: UUID) -> OrderDetailResponse:
-        return OrdersController._detail(db, OrdersService.get(db, order_id))
+        # History view: a soft-deleted order stays readable (it may carry issued Belege).
+        return OrdersController._detail(db, OrdersService.get(db, order_id, allow_deleted=True))
 
     @staticmethod
     def update(
@@ -156,16 +146,6 @@ class OrdersController:
         invoice = InvoicesService.create_from_order(
             db, order_id, payload, actor, request
         )
-        # Render the PDF immediately and store its (non-public) path. The invoice is already
-        # committed by the service, so a render failure must not fail the request — roll back the
-        # pdf_url write and let it regenerate on download (invoice_pdf_path handles missing PDFs).
-        try:
-            invoice.pdf_url = InvoicePdfService.render(db, invoice)
-            db.commit()
-            db.refresh(invoice)
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error rendering invoice PDF for invoice {invoice.invoice_number}: {e}")
         data = {"invoice_number": invoice.invoice_number, "order_id": str(order_id)}
         link = f"/admin/orders/{order_id}"
         background_tasks.add_task(_emit_order_event, OrderEvent.INVOICE_CREATED, str(order_id), data, str(actor.id))
@@ -177,42 +157,49 @@ class OrdersController:
 
     @staticmethod
     def invoice_pdf_path(db: Session, order_id: UUID) -> str:
-        """Absolute path to the invoice PDF for this order — (re)generates if missing."""
-        order = OrdersService.get(db, order_id)
-        inv = order.invoice
+        inv = OrdersService.get(db, order_id).current_invoice
         if not inv:
             raise NotFoundError("Order has no invoice", order_id=str(order_id))
-        path = inv.pdf_url
-        if not path or not Path(path).exists():
+        return OrdersController._pdf_path(db, inv)
+
+    @staticmethod
+    def _pdf_path(db: Session, inv) -> str:
+        """A draft renders from current data on every download. An issued/paid/cancelled bill serves
+        ONLY the file frozen at issue — regenerating it would print today's settings on a Beleg."""
+        if inv.status == "draft":
             try:
-                inv.pdf_url = InvoicePdfService.render(db, inv)
-                db.commit()
-                db.refresh(inv)
+                return str(Path(InvoicePdfService.render(db, inv)).resolve())
             except Exception as e:
-                db.rollback()
-                logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
+                logger.error(f"Error rendering draft invoice PDF {inv.invoice_number}: {e}")
                 raise AppError("Failed to generate the invoice PDF")
-            path = inv.pdf_url
-        return str(Path(path).resolve())
+        if not inv.pdf_url or not Path(inv.pdf_url).exists():
+            logger.error(f"Frozen invoice PDF missing for {inv.invoice_number}: {inv.pdf_url}")
+            raise NotFoundError(
+                f"The issued PDF of invoice {inv.invoice_number} is missing from storage. An issued invoice is "
+                "never regenerated from current data — restore the file from backup.",
+                invoice_id=str(inv.id),
+            )
+        return str(Path(inv.pdf_url).resolve())
 
     # ── Bills (invoices): list · get · edit · PDF. Edits never touch order amounts. ──
     @staticmethod
     def list_invoices(db: Session, page: int, size: int, status: str | None, q: str | None) -> PaginatedResponse[InvoiceListResponse]:
         items, total = InvoicesService.list_invoices(db, page, size, status, q)
         today = date.today()
-        paid_map = PaymentsService.totals_for(db, [inv.order_id for inv in items])
+        paid_map = PaymentsService.invoice_totals_for(db, [inv.id for inv in items])
         rows = []
         for inv in items:
             o = inv.order
-            paid = paid_map.get(inv.order_id, money(0))
-            balance = money(inv.gross_amount - paid)
+            paid = paid_map.get(inv.id, money(0))
+            # A cancelled bill owes nothing (its credit moved to the order); only an issued one can be overdue.
+            balance = money(0) if inv.status == "cancelled" else money(inv.gross_amount - paid)
             rows.append(InvoiceListResponse(
                 id=inv.id, invoice_number=inv.invoice_number, order_id=inv.order_id,
                 order_number=o.order_number, status=inv.status, issue_date=inv.issue_date,
                 due_date=inv.due_date, customer_name=o.customer_name,
                 route_from=o.pickup_city or o.pickup_address, route_to=o.destination_city or o.destination_address,
                 gross_amount=inv.gross_amount, amount_paid=paid, balance_due=balance,
-                is_overdue=bool(balance > 0 and inv.due_date is not None and inv.due_date < today),
+                is_overdue=bool(inv.status == "issued" and balance > 0 and inv.due_date is not None and inv.due_date < today),
             ))
         return PaginatedResponse[InvoiceListResponse].build(rows, page, size, total)
 
@@ -222,28 +209,11 @@ class OrdersController:
 
     @staticmethod
     def update_invoice(db: Session, invoice_id: UUID, payload: InvoiceUpdate, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
-        inv = InvoicesService.update(db, invoice_id, payload, actor, request)
-        try:
-            inv.pdf_url = InvoicePdfService.render(db, inv)
-            db.commit()
-            db.refresh(inv)
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
-        return InvoiceAdminResponse.model_validate(inv)
+        return InvoiceAdminResponse.model_validate(InvoicesService.update(db, invoice_id, payload, actor, request))
 
     @staticmethod
     def issue_invoice(db: Session, invoice_id: UUID, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
-        inv = InvoicesService.issue(db, invoice_id, actor, request)
-        if not inv.pdf_url or not Path(inv.pdf_url).exists():
-            try:
-                inv.pdf_url = InvoicePdfService.render(db, inv)
-                db.commit()
-                db.refresh(inv)
-            except Exception as e:
-                db.rollback()
-                logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
-        return InvoiceAdminResponse.model_validate(inv)
+        return InvoiceAdminResponse.model_validate(InvoicesService.issue(db, invoice_id, actor, request))
 
     @staticmethod
     def cancel_invoice(db: Session, invoice_id: UUID, payload: InvoiceCancel, actor: AdminUser, request: Request) -> InvoiceAdminResponse:
@@ -253,19 +223,21 @@ class OrdersController:
 
     @staticmethod
     def invoice_pdf_path_by_id(db: Session, invoice_id: UUID) -> str:
+        return OrdersController._pdf_path(db, InvoicesService.get(db, invoice_id))
+
+    @staticmethod
+    def storno_pdf_path_by_id(db: Session, invoice_id: UUID) -> str:
+        """The Stornorechnung frozen at cancel() — served as-is, never re-rendered."""
         inv = InvoicesService.get(db, invoice_id)
-        path = inv.pdf_url
-        if not path or not Path(path).exists():
-            try:
-                inv.pdf_url = InvoicePdfService.render(db, inv)
-                db.commit()
-                db.refresh(inv)
-            except Exception as e:
-                db.rollback()
-                logger.error(f"Error rendering invoice PDF for invoice {inv.invoice_number}: {e}")
-                raise AppError("Failed to generate the invoice PDF")
-            path = inv.pdf_url
-        return str(Path(path).resolve())
+        if inv.status != "cancelled":
+            raise NotFoundError("Only a cancelled invoice has a Stornorechnung", invoice_id=str(invoice_id))
+        if not inv.storno_pdf_url or not Path(inv.storno_pdf_url).exists():
+            logger.error(f"Frozen Storno PDF missing for {inv.invoice_number}: {inv.storno_pdf_url}")
+            raise NotFoundError(
+                f"The Stornorechnung of invoice {inv.invoice_number} is missing from storage — restore the file from backup.",
+                invoice_id=str(invoice_id),
+            )
+        return str(Path(inv.storno_pdf_url).resolve())
 
     # ── Payments ────────────────────────────────────────────
     @staticmethod
@@ -288,41 +260,52 @@ class OrdersController:
         return PaymentResponse.model_validate(payment)
 
     @staticmethod
+    def set_payment_status(
+        db: Session,
+        payment_id: UUID,
+        payload: PaymentStatusUpdate,
+        actor: AdminUser,
+        request: Request,
+        background_tasks: BackgroundTasks,
+    ) -> PaymentResponse:
+        payment = PaymentsService.set_status(db, payment_id, payload.status, actor, request)
+        data = {"payment_id": str(payment.id), "status": payment.status, "amount": str(payment.amount)}
+        background_tasks.add_task(_emit_order_event, OrderEvent.UPDATED, str(payment.order_id), data, str(actor.id))
+        return PaymentResponse.model_validate(payment)
+
+    @staticmethod
     def list_payments(db: Session, order_id: UUID):
         return [
             PaymentResponse.model_validate(p)
             for p in PaymentsService.list_for_order(db, order_id)
         ]
 
-    # ── helper: assemble the detail response with derived amounts ──
+    # ── helpers: derived amounts, shared by the list and detail views ──
+    @staticmethod
+    def _derived(order, paid, today: date) -> dict:
+        inv = order.current_invoice
+        balance = money(PaymentsService.billed_gross(order) - paid)
+        # Billed jobs fall due on the invoice's date, and only once issued; unbilled ones on the order's.
+        due = inv.due_date if inv else order.due_date
+        return {
+            "amount_paid": paid,
+            "balance_due": balance,
+            "is_overdue": bool(
+                balance > 0 and order.status != "cancelled" and (inv is None or inv.status == "issued")
+                and due is not None and due < today
+            ),
+            "invoice_number": inv.invoice_number if inv else None,
+            "invoice_status": inv.status if inv else None,
+        }
+
     @staticmethod
     def _detail(db: Session, order) -> OrderDetailResponse:
-        paid = PaymentsService.received_total(db, order.id)
-        balance = PaymentsService.balance_due(db, order, paid)
-        payments = [
-            PaymentResponse.model_validate(p)
-            for p in PaymentsService.list_for_order(db, order.id)
-        ]
-        invoice = (
-            InvoiceAdminResponse.model_validate(order.invoice)
-            if order.invoice
-            else None
-        )
-        today = date.today()
-        is_overdue = bool(
-            balance > 0 and order.due_date is not None and order.due_date < today
-        )
+        inv = order.current_invoice
         base = OrderAdminResponse.model_validate(order).model_dump()
-        # Keep the detail response's derived fields consistent with the list view.
-        base.update(
-            amount_paid=paid,
-            balance_due=balance,
-            is_overdue=is_overdue,
-            invoice_number=order.invoice.invoice_number if order.invoice else None,
-            invoice_status=order.invoice.status if order.invoice else None,
-        )
+        base.update(OrdersController._derived(order, PaymentsService.received_total(db, order.id), date.today()))
         return OrderDetailResponse(
             **base,
-            invoice=invoice,
-            payments=payments,
+            invoice=InvoiceAdminResponse.model_validate(inv) if inv else None,
+            invoices=[InvoiceAdminResponse.model_validate(i) for i in order.invoices if not i.is_deleted],
+            payments=[PaymentResponse.model_validate(p) for p in PaymentsService.list_for_order(db, order.id)],
         )

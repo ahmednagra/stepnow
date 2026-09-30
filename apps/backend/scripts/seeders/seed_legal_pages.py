@@ -15,7 +15,7 @@ from scripts.seeders._base import get_system_actor, log_section, log_create, log
 IMPRESSUM_DE = """\
 # Impressum
 
-**Angaben gemäß § 5 TMG**
+**Angaben gemäß § 5 DDG**
 
 {site_settings.business_name}
 {site_settings.owner_name}
@@ -41,6 +41,10 @@ Erteilt am: {site_settings.concession_date}
 
 Landratsamt Esslingen, Pulverwiesen 11, 73726 Esslingen am Neckar
 
+**Handelsregister**
+
+Eintragung im Handelsregister: {site_settings.register_court}, {site_settings.commercial_register}
+
 **Umsatzsteuer-ID**
 
 USt-IdNr.: {site_settings.vat_id}
@@ -52,18 +56,13 @@ Steuernummer: {site_settings.tax_number}
 {site_settings.address_street}
 {site_settings.address_postcode} {site_settings.address_city}
 
-**EU-Streitschlichtung**
-
-Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr.
-Unsere E-Mail-Adresse finden Sie oben im Impressum.
-
 **Verbraucherstreitbeilegung / Universalschlichtungsstelle**
 
 Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
 
 **Haftung für Inhalte**
 
-Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
 
 **Haftung für Links**
 
@@ -79,7 +78,7 @@ IMPRESSUM_EN = """\
 
 > This is a translation for convenience. The German version is legally binding.
 
-**Information pursuant to § 5 TMG (German Telemedia Act)**
+**Information pursuant to § 5 DDG (German Digital Services Act)**
 
 {site_settings.business_name}
 {site_settings.owner_name}
@@ -105,6 +104,10 @@ Issued on: {site_settings.concession_date}
 
 Landratsamt Esslingen, Pulverwiesen 11, 73726 Esslingen am Neckar, Germany
 
+**Commercial Register**
+
+Registered at: {site_settings.register_court}, {site_settings.commercial_register}
+
 **VAT Identification Number**
 
 VAT ID: {site_settings.vat_id}
@@ -116,17 +119,13 @@ Tax Number: {site_settings.tax_number}
 {site_settings.address_street}
 {site_settings.address_postcode} {site_settings.address_city}
 
-**EU Online Dispute Resolution**
-
-The European Commission provides a platform for online dispute resolution (ODR): https://ec.europa.eu/consumers/odr. Our email address is shown above.
-
 **Consumer Dispute Resolution**
 
 We are neither willing nor obligated to participate in dispute resolution proceedings before a consumer arbitration body.
 
 **Liability for Content**
 
-As a service provider, we are responsible for our own content on these pages in accordance with general laws pursuant to § 7(1) TMG. According to §§ 8 to 10 TMG, however, we are not obligated as a service provider to monitor transmitted or stored third-party information.
+As a service provider, we are responsible for our own content on these pages in accordance with general laws pursuant to § 7(1) DDG. According to §§ 8 to 10 DDG, however, we are not obligated as a service provider to monitor transmitted or stored third-party information.
 
 **Liability for Links**
 
@@ -183,21 +182,23 @@ Wir verarbeiten personenbezogene Daten unserer Nutzer grundsätzlich nur, soweit
 
 **Bei Webseitenbesuch (automatisch):**
 
-- IP-Adresse (anonymisiert, max. 7 Tage zur Server-Absicherung)
-- Browser-Typ, Betriebssystem, besuchte Seiten (über Plausible Analytics — siehe unten)
+- IP-Adresse, Zeitpunkt, aufgerufene Seite und Browser-Kennung in Server-Logdateien (max. 7 Tage, zur Absicherung des Betriebs; Art. 6 Abs. 1 lit. f DSGVO)
 
-## 5. Drittanbieter
+Wir setzen keine Analyse- oder Tracking-Werkzeuge ein. Schriftarten werden von unserem eigenen Server geladen.
 
-**Plausible Analytics** (Plausible Insights OÜ, Estland)
-Wir nutzen Plausible für Reichweitenmessung. Plausible setzt **keine Cookies**, sammelt **keine personenbezogenen Daten** und überträgt **keine Daten in Drittländer**. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Reichweitenanalyse).
+## 5. Cookies und Einwilligung
 
-**Postmark** (Wildbit LLC, USA)
-Versand transaktionaler E-Mails (Buchungsbestätigungen). E-Mail-Adressen werden zur Zustellung verarbeitet. Verarbeitung auf Grundlage Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung). Es besteht ein Auftragsverarbeitungsvertrag.
+Wir verwenden nur technisch notwendige Cookies: die Sprachauswahl (`stepnow_locale`) und die Speicherung Ihrer Einwilligungsentscheidung (`sn_consent`, 12 Monate). Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG. Ihre Einwilligung können Sie jederzeit über den Link „Cookie-Einstellungen“ im Seitenfuß ändern oder widerrufen.
 
-**OpenStreetMap** (OpenStreetMap Foundation, UK)
-Für die Karte auf unserer Kontaktseite. OpenStreetMap erfasst keine personenbezogenen Daten zur Profilbildung.
+## 6. Dienstleister und Drittanbieter
 
-## 6. Ihre Rechte
+**Hosting und E-Mail-Versand** (Hostinger International Ltd., Zypern)
+Unsere Website und unsere E-Mail-Postfächer werden bei Hostinger betrieben. Dabei werden die oben genannten Server-Logdaten sowie Inhalte von E-Mails (z. B. Buchungsbestätigungen) verarbeitet. Grundlage ist ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.
+
+**OpenStreetMap** (OpenStreetMap Foundation, Vereinigtes Königreich)
+Die Karte auf unserer Kontakt- und Über-uns-Seite wird erst nach Ihrer Einwilligung geladen (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Beim Laden der Kartenkacheln wird Ihre IP-Adresse an die OpenStreetMap Foundation übertragen. Für das Vereinigte Königreich besteht ein Angemessenheitsbeschluss der EU-Kommission. Ohne Einwilligung wird die Karte nicht geladen; Sie können stattdessen einen externen Link öffnen.
+
+## 7. Ihre Rechte
 
 Sie haben das Recht auf:
 
@@ -211,15 +212,15 @@ Sie haben das Recht auf:
 
 Zuständige Aufsichtsbehörde: Landesbeauftragter für den Datenschutz und die Informationsfreiheit Baden-Württemberg, Lautenschlagerstraße 20, 70173 Stuttgart.
 
-## 7. Aufbewahrungsdauer
+## 8. Aufbewahrungsdauer
 
 Buchungsdaten werden gemäß handels- und steuerrechtlicher Vorgaben **10 Jahre** aufbewahrt. Kontaktanfragen ohne Geschäftsabschluss werden nach **6 Monaten** gelöscht. IP-Adressen aus Server-Logs werden nach **7 Tagen** gelöscht.
 
-## 8. Datensicherheit
+## 9. Datensicherheit
 
-Wir verwenden SSL/TLS-Verschlüsselung für die Datenübertragung. Unsere Server stehen in Deutschland. Zugriff auf personenbezogene Daten ist auf den Inhaber beschränkt.
+Wir verwenden TLS-Verschlüsselung für die Datenübertragung. Zugriff auf personenbezogene Daten ist auf den Inhaber beschränkt.
 
-## 9. Kontakt zum Datenschutz
+## 10. Kontakt zum Datenschutz
 
 Für Auskünfte oder die Wahrnehmung Ihrer Rechte kontaktieren Sie:
 
@@ -276,21 +277,23 @@ We process the personal data of our users only to the extent necessary to provid
 
 **On website visit (automatic):**
 
-- IP address (anonymized, max. 7 days for server security)
-- Browser type, operating system, pages visited (via Plausible Analytics — see below)
+- IP address, time, requested page and browser identifier in server log files (max. 7 days, to secure operation; Art. 6(1)(f) GDPR)
 
-## 5. Third-Party Services
+We do not use any analytics or tracking tools. Fonts are served from our own server.
 
-**Plausible Analytics** (Plausible Insights OÜ, Estonia)
-We use Plausible for reach measurement. Plausible sets **no cookies**, collects **no personal data**, and transfers **no data to third countries**. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in reach analysis).
+## 5. Cookies and Consent
 
-**Postmark** (Wildbit LLC, USA)
-Sending transactional emails (booking confirmations). Email addresses are processed for delivery. Processing on the basis of Art. 6(1)(b) GDPR (contract performance). A data processing agreement is in place.
+We only use strictly necessary cookies: the language choice (`stepnow_locale`) and the record of your consent decision (`sn_consent`, 12 months). Legal basis: § 25(2) no. 2 TDDDG. You can change or withdraw your consent at any time via the "Cookie settings" link in the page footer.
 
-**OpenStreetMap** (OpenStreetMap Foundation, UK)
-For the map on our contact page. OpenStreetMap does not collect personal data for profiling.
+## 6. Service Providers and Third Parties
 
-## 6. Your Rights
+**Hosting and email** (Hostinger International Ltd., Cyprus)
+Our website and mailboxes are operated by Hostinger. This involves the server log data named above and the content of emails (e.g. booking confirmations). A data processing agreement under Art. 28 GDPR is in place.
+
+**OpenStreetMap** (OpenStreetMap Foundation, United Kingdom)
+The map on our contact and about pages is loaded only after your consent (Art. 6(1)(a) GDPR, § 25(1) TDDDG). Loading the map tiles transmits your IP address to the OpenStreetMap Foundation. The United Kingdom is covered by an EU Commission adequacy decision. Without consent the map is not loaded; you can open an external link instead.
+
+## 7. Your Rights
 
 You have the right to:
 
@@ -304,15 +307,15 @@ You have the right to:
 
 Competent supervisory authority: Landesbeauftragter für den Datenschutz und die Informationsfreiheit Baden-Württemberg, Lautenschlagerstraße 20, 70173 Stuttgart, Germany.
 
-## 7. Retention Period
+## 8. Retention Period
 
 Booking data is retained in accordance with commercial and tax law requirements for **10 years**. Contact inquiries without business conclusion are deleted after **6 months**. IP addresses from server logs are deleted after **7 days**.
 
-## 8. Data Security
+## 9. Data Security
 
-We use SSL/TLS encryption for data transmission. Our servers are located in Germany. Access to personal data is restricted to the owner.
+We use TLS encryption for data transmission. Access to personal data is restricted to the owner.
 
-## 9. Contact for Data Protection
+## 10. Contact for Data Protection
 
 For inquiries or to exercise your rights, contact:
 
@@ -334,22 +337,22 @@ Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge über die Bef
 
 ## 2. Vertragsschluss
 
-Die Darstellung der Leistungen auf der Website stellt kein verbindliches Angebot dar. Mit Absenden des Buchungsformulars oder telefonischer Anfrage gibt der Kunde ein Angebot zum Vertragsschluss ab. Der Vertrag kommt durch eine Bestätigungs-E-Mail oder mündliche Bestätigung des Anbieters mit dem verbindlichen Pauschalpreis zustande.
+Die Darstellung der Leistungen auf der Website stellt kein verbindliches Angebot dar. Mit Absenden des Buchungsformulars oder telefonischer Anfrage gibt der Kunde ein Angebot zum Vertragsschluss ab. Der Vertrag kommt durch eine Bestätigungs-E-Mail oder mündliche Bestätigung des Anbieters zustande, die den Festpreis bzw. die Abrechnung nach Tarif benennt.
 
-## 3. Pauschalpreis-Garantie
+## 3. Preise
 
-Der bei Buchungsbestätigung mitgeteilte Pauschalpreis ist verbindlich und ändert sich nicht durch verkehrsbedingte Verzögerungen oder kürzere/längere Fahrtdauer. Änderungen entstehen nur, wenn der Kunde zusätzliche Strecken, Stopps oder Wartezeiten verlangt; in diesem Fall wird vor der Änderung ein neuer Pauschalpreis vereinbart.
+Es gilt die zum Zeitpunkt der Buchung auf der Website veröffentlichte Preisliste. Für dort ausgewiesene Strecken (insbesondere Fahrten zum Flughafen und Hauptbahnhof Stuttgart sowie Stadtfahrten) gelten Festpreise je einfacher Fahrt; ein Festpreis ändert sich nicht durch verkehrsbedingte Verzögerungen. Alle übrigen Fahrten werden nach Tarif berechnet (Anfahrt, gefahrene Kilometer und vom Kunden veranlasste Wartezeit). Alle Preise gelten pro Fahrzeug für bis zu 4 Personen und sind Endpreise inklusive gesetzlicher Mehrwertsteuer. Hin- und Rückfahrt gelten als zwei Fahrten. Verlangt der Kunde zusätzliche Strecken, Stopps oder Wartezeiten, werden diese nach Tarif berechnet.
 
 ## 4. Stornierungsbedingungen
 
 - Bis **24 Stunden** vor Fahrtbeginn: kostenfreie Stornierung
-- Bis **2 Stunden** vor Fahrtbeginn: 50 % des Pauschalpreis
-- Weniger als 2 Stunden oder Nichterscheinen: 100 % des Pauschalpreis
+- Bis **2 Stunden** vor Fahrtbeginn: 50 % des vereinbarten Fahrpreises
+- Weniger als 2 Stunden oder Nichterscheinen: 100 % des vereinbarten Fahrpreises
 - Bei medizinisch begründeten Notfällen kann die Stornogebühr im Einzelfall reduziert werden
 
 ## 5. Pünktlichkeit & Verspätungen
 
-Der Anbieter ist bestrebt, den vereinbarten Abholzeitpunkt einzuhalten. Bei Flughafenabholungen wird die Flugnummer verfolgt; Wartezeiten bis 60 Minuten nach planmäßiger Landung sind kostenfrei. Höhere Gewalt, Unwetter, Verkehrsunfälle oder behördliche Maßnahmen begründen keine Schadensersatzansprüche gegen den Anbieter.
+Der Anbieter ist bestrebt, den vereinbarten Abholzeitpunkt einzuhalten. Bei Flughafenabholungen wird die Flugnummer verfolgt und die Abholzeit an die tatsächliche Landung angepasst; darüber hinausgehende Wartezeit wird nach Tarif berechnet. Höhere Gewalt, Unwetter, Verkehrsunfälle oder behördliche Maßnahmen begründen keine Schadensersatzansprüche gegen den Anbieter.
 
 ## 6. Pflichten des Kunden
 
@@ -401,22 +404,22 @@ These General Terms and Conditions apply to all contracts for the transport of p
 
 ## 2. Conclusion of Contract
 
-The presentation of services on the website does not constitute a binding offer. By submitting the booking form or making a telephone inquiry, the customer submits an offer to conclude a contract. The contract is concluded by a confirmation email or verbal confirmation from the Provider with the binding fixed price.
+The presentation of services on the website does not constitute a binding offer. By submitting the booking form or making a telephone inquiry, the customer submits an offer to conclude a contract. The contract is concluded by a confirmation email or verbal confirmation from the Provider stating the fixed price or billing at the tariff.
 
-## 3. Fixed-Price Guarantee
+## 3. Prices
 
-The fixed price communicated upon booking confirmation is binding and does not change due to traffic delays or shorter/longer travel times. Changes only arise if the customer requests additional routes, stops or waiting times; in this case, a new fixed price is agreed before the change.
+The price list published on the website at the time of booking applies. Routes listed there (in particular trips to Stuttgart Airport and Central Station and local rides) have fixed prices per one-way trip; a fixed price does not change due to traffic delays. All other rides are charged at the tariff (call-out charge, kilometres driven and waiting time requested by the customer). All prices apply per vehicle for up to 4 persons and are final prices including statutory VAT. Outbound and return count as two trips. If the customer requests additional routes, stops or waiting times, these are charged at the tariff.
 
 ## 4. Cancellation Terms
 
 - Up to **24 hours** before departure: free cancellation
-- Up to **2 hours** before departure: 50% of the fixed price
-- Less than 2 hours or no-show: 100% of the fixed price
+- Up to **2 hours** before departure: 50% of the agreed fare
+- Less than 2 hours or no-show: 100% of the agreed fare
 - In medically justified emergencies, the cancellation fee may be reduced on a case-by-case basis
 
 ## 5. Punctuality & Delays
 
-The Provider endeavours to meet the agreed pickup time. For airport pickups, the flight number is tracked; waiting times of up to 60 minutes after scheduled landing are free of charge. Force majeure, severe weather, traffic accidents or official measures do not give rise to claims for damages against the Provider.
+The Provider endeavours to meet the agreed pickup time. For airport pickups, the flight number is tracked and the pickup time adjusted to the actual landing; any further waiting time is charged at the tariff. Force majeure, severe weather, traffic accidents or official measures do not give rise to claims for damages against the Provider.
 
 ## 6. Customer Obligations
 
@@ -463,7 +466,7 @@ LEGAL_PAGES = [
         "title_en": "Legal Notice",
         "body_de": IMPRESSUM_DE,
         "body_en": IMPRESSUM_EN,
-        "changes_summary": "Initial seed: Impressum gemäß § 5 TMG mit Konzessions- und Aufsichtsbehörde-Angaben.",
+        "changes_summary": "Initial seed: Impressum gemäß § 5 DDG mit Handelsregister-, Konzessions- und Aufsichtsbehörde-Angaben.",
     },
     {
         "slug": "datenschutz",
@@ -471,7 +474,7 @@ LEGAL_PAGES = [
         "title_en": "Privacy Policy",
         "body_de": DATENSCHUTZ_DE,
         "body_en": DATENSCHUTZ_EN,
-        "changes_summary": "Initial seed: DSGVO-konforme Datenschutzerklärung mit Plausible, Postmark, OpenStreetMap.",
+        "changes_summary": "Initial seed: Datenschutzerklärung — Hosting/E-Mail (Hostinger), Cookies, OpenStreetMap nach Einwilligung.",
     },
     {
         "slug": "agb",

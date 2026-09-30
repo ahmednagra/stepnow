@@ -3,7 +3,7 @@
 
 from decimal import Decimal
 from uuid import UUID, uuid4
-from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, text
+from sqlalchemy import Boolean, ForeignKey, Index, Integer, Numeric, String, text
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
@@ -23,6 +23,10 @@ class PricingCategory(Base, TimestampMixin, SoftDeleteMixin):
     name_en: Mapped[str] = mapped_column(String(200), nullable=False)
     description_de: Mapped[str | None] = mapped_column(String(500), nullable=True)
     description_en: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    prices_net: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false"),
+        comment="True = prices are quoted net, plus statutory VAT (B2B courier); false = Endpreise incl. VAT"
+    )
     items: Mapped[list["PricingItem"]] = relationship(back_populates="category", cascade="all, delete-orphan")
 
 
@@ -38,7 +42,15 @@ class PricingItem(Base, TimestampMixin, SoftDeleteMixin):
     from_location_en: Mapped[str | None] = mapped_column(String(200), nullable=True)
     to_location_de: Mapped[str | None] = mapped_column(String(200), nullable=True)
     to_location_en: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    price_eur: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    # NULL = "Preis auf Anfrage": the offering is listed, the fare is quoted per request.
+    price_eur: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    price_unit: Mapped[str | None] = mapped_column(
+        String(10), nullable=True, comment="NULL = flat price; 'km' / 'min' = rate per kilometre / minute"
+    )
+    is_from_price: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false"),
+        comment="True = a starting price, rendered as 'ab …'"
+    )
     currency: Mapped[str] = mapped_column(
         String(3), nullable=False, default="EUR", server_default=text("'EUR'"),
         comment="ISO 4217 unit for price_eur — the column name predates multi-currency"

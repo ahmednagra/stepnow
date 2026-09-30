@@ -155,7 +155,7 @@ export function Header({ settings }: HeaderProps) {
                   key={item.key}
                   href={item.href}
                   className={cn(
-                    "relative flex items-end pb-2 text-[14px] font-semibold tracking-[0.02em] transition-colors duration-base",
+                    "relative flex items-end whitespace-nowrap pb-2 text-[14px] font-semibold tracking-[0.02em] transition-colors duration-base",
                     active
                       ? "text-[var(--color-text-primary)]"
                       : "text-[color:rgba(15,17,21,0.72)] hover:text-[var(--color-text-primary)]",

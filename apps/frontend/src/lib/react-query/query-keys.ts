@@ -129,14 +129,16 @@ export const queryKeys = {
     lists: () => [...queryKeys.customers.all, "list"] as const,
     list: (p?: Record<string, unknown>) => (p ? [...queryKeys.customers.lists(), p] as const : queryKeys.customers.lists()),
     detail: (id: string) => [...queryKeys.customers.all, "detail", id] as const,
-    orders: (id: string) => [...queryKeys.customers.detail(id), "orders"] as const,
+    orders: (id: string, p?: Record<string, unknown>) =>
+      (p ? [...queryKeys.customers.detail(id), "orders", p] as const : [...queryKeys.customers.detail(id), "orders"] as const),
   },
   drivers: {
     all: ["drivers"] as const,
     lists: () => [...queryKeys.drivers.all, "list"] as const,
     list: (p?: Record<string, unknown>) => (p ? [...queryKeys.drivers.lists(), p] as const : queryKeys.drivers.lists()),
     detail: (id: string) => [...queryKeys.drivers.all, "detail", id] as const,
-    orders: (id: string) => [...queryKeys.drivers.detail(id), "orders"] as const,
+    orders: (id: string, p?: Record<string, unknown>) =>
+      (p ? [...queryKeys.drivers.detail(id), "orders", p] as const : [...queryKeys.drivers.detail(id), "orders"] as const),
   },
   auditLog: {
     all: ["audit-log"] as const,

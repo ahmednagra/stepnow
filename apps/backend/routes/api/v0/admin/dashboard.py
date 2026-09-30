@@ -17,7 +17,7 @@ router = APIRouter(tags=["admin: dashboard"])
 
 
 @router.get("/admin/dashboard/totals", response_model=DashboardTotalsResponse)
-async def get_totals(
+def get_totals(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
 ) -> DashboardTotalsResponse:
@@ -25,7 +25,7 @@ async def get_totals(
 
 
 @router.get("/admin/bookings/heatmap", response_model=BookingsHeatmapResponse)
-async def get_heatmap(
+def get_heatmap(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
 ) -> BookingsHeatmapResponse:
@@ -33,7 +33,7 @@ async def get_heatmap(
 
 
 @router.get("/admin/bookings/upcoming", response_model=UpcomingBookingsResponse)
-async def get_upcoming(
+def get_upcoming(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     limit: int = Query(4, ge=1, le=50),

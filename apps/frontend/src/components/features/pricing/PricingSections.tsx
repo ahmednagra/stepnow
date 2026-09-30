@@ -3,7 +3,7 @@
 // interpolates the live lowest fare rather than carrying its own copy. Exports getServiceHeroImage for PricingTabs.
 
 import Link from "next/link";
-import { Check, Banknote, CreditCard, FileText, Wallet } from "lucide-react";
+import { Check, Banknote, CreditCard, FileText, Wallet, Globe, RotateCcw, ArrowRightLeft, Users } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
 import type { Locale } from "@/types";
 import { Container } from "@/components/shared";
@@ -19,15 +19,11 @@ const SERVICE_HERO_FALLBACKS: Record<string, string> = {
     "https://images.unsplash.com/photo-1620227134464-f879b1b93807?w=1800&q=80&auto=format&fit=crop",
   krankenhausfahrten:
     "https://images.unsplash.com/photo-1626058770278-b0abe39bedfd?w=1800&q=80&auto=format&fit=crop",
-  schuelerbefoerderung:
-    "https://images.unsplash.com/photo-1471174617910-3e9c04f58ff5?w=1800&q=80&auto=format&fit=crop",
   "shuttle-service": PRICING_HERO_FALLBACK_URL,
   "airport-transfer":
     "https://images.unsplash.com/photo-1620227134464-f879b1b93807?w=1800&q=80&auto=format&fit=crop",
   "hospital-transport":
     "https://images.unsplash.com/photo-1626058770278-b0abe39bedfd?w=1800&q=80&auto=format&fit=crop",
-  "school-transport":
-    "https://images.unsplash.com/photo-1471174617910-3e9c04f58ff5?w=1800&q=80&auto=format&fit=crop",
 };
 
 export function getServiceHeroImage(slug: string, databaseUrl: string | null | undefined): string {
@@ -51,7 +47,7 @@ export function PricingTrustStrip({ t, locale }: PricingTrustStripProps) {
   const before = pickT(
     t,
     "pricing.trust.before",
-    locale === "de" ? "Pauschalpreis vor Fahrtbeginn. " : "Price before departure. ",
+    locale === "de" ? "Transparente Preise vor Fahrtbeginn. " : "Transparent prices before departure. ",
   );
   const after = pickT(
     t,
@@ -63,9 +59,7 @@ export function PricingTrustStrip({ t, locale }: PricingTrustStripProps) {
   const attribution = pickT(
     t,
     "pricing.trust.attribution",
-    locale === "de"
-      ? "— UNSERE GARANTIE, GESCHÜTZT DURCH § 49 PBEFG"
-      : "— OUR GUARANTEE, BACKED BY § 49 PBEFG",
+    locale === "de" ? "— FAIR · SICHER · ZUVERLÄSSIG" : "— FAIR · SAFE · RELIABLE",
   );
 
   return (
@@ -103,24 +97,24 @@ interface IncludedRow {
 
 const INCLUDED_ROWS: IncludedRow[] = [
   {
-    key: "luggage",
+    key: "vat",
     defaults: {
-      de: { label: "Standardgepäck", desc: "— 1 Koffer + 1 Handgepäck pro Fahrgast." },
-      en: { label: "Standard luggage", desc: "— 1 case + 1 cabin bag per passenger." },
+      de: { label: "Gesetzliche MwSt.", desc: "— bei allen Personenfahrten bereits enthalten." },
+      en: { label: "Statutory VAT", desc: "— already included in every passenger fare." },
     },
   },
   {
-    key: "waiting",
+    key: "luggage",
     defaults: {
-      de: { label: "15 Minuten Wartezeit", desc: "— 60 Minuten am Flughafen mit Meet & Greet." },
-      en: { label: "15 minutes waiting time", desc: "— 60 minutes for airport meet & greet." },
+      de: { label: "Standardgepäck", desc: "— 1 Koffer + 1 Handgepäck pro Person." },
+      en: { label: "Standard luggage", desc: "— 1 case + 1 cabin bag per person." },
     },
   },
   {
     key: "childseat",
     defaults: {
-      de: { label: "Kindersitz oder Sitzerhöhung", desc: "— auf Anfrage, kostenfrei." },
-      en: { label: "Child seat or booster", desc: "— on request, free of charge." },
+      de: { label: "Kindersitz oder Sitzerhöhung", desc: "— auf Anfrage." },
+      en: { label: "Child seat or booster", desc: "— on request." },
     },
   },
   {
@@ -154,7 +148,7 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
             {pickT(
               t,
               "pricing.included.big_caption",
-              locale === "de" ? "MwSt. · IMMER INKLUDIERT" : "VAT · ALWAYS INCLUDED",
+              locale === "de" ? "MWST. INKLUSIVE" : "VAT INCLUDED",
             )}
           </p>
         </div>
@@ -163,7 +157,7 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
             {pickT(
               t,
               "pricing.included.eyebrow",
-              locale === "de" ? "Was Ihr Pauschalpreis abdeckt" : "What your price covers",
+              locale === "de" ? "Was Ihr Fahrpreis abdeckt" : "What your fare covers",
             )}
           </p>
           <h2 className="mt-2 font-serif text-[30px] leading-tight tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
@@ -171,8 +165,8 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
               t,
               "pricing.included.heading",
               locale === "de"
-                ? "Der Preis, den Sie sehen, ist der Preis, den Sie zahlen."
-                : "The price you see is the price you pay.",
+                ? "Klare Preise, keine versteckten Kosten."
+                : "Clear prices, no hidden costs.",
             )}
           </h2>
           <p className="mt-3 max-w-xl text-[15.5px] leading-relaxed text-[var(--color-text-secondary)] md:mt-4 md:text-[16px]">
@@ -180,8 +174,8 @@ export function PricingIncludedMoment({ t, locale }: PricingIncludedMomentProps)
               t,
               "pricing.included.lead",
               locale === "de"
-                ? "Jeder Pauschalpreis enthält die deutsche Mehrwertsteuer, Standardgepäck, Wartezeit am Abholort und Kindersitz auf Anfrage — ohne Aufpreis. Nichts wird am Zielort hinzugefügt."
-                : "Every quote includes German VAT, standard luggage, waiting time at pickup, and child seat on request — at no extra charge. Nothing added at the destination.",
+                ? "Alle Preise für Personenfahrten sind Endpreise inkl. gesetzlicher MwSt. und gelten pro Fahrzeug — für bis zu 4 Personen."
+                : "All passenger prices are final prices incl. statutory VAT and apply per vehicle — for up to 4 persons.",
             )}
           </p>
           <ul className="mt-6 flex flex-col gap-3 md:gap-3.5">
@@ -227,8 +221,8 @@ const EXCLUDED_ITEMS: { key: string; defaults: { de: string; en: string } }[] = 
     defaults: { de: "Reinigungszuschlag bei Verschmutzung", en: "Cleaning surcharge if soiled" },
   },
   {
-    key: "night",
-    defaults: { de: "Nachtzuschlag 22:00–06:00", en: "Night surcharge 22:00–06:00" },
+    key: "waiting",
+    defaults: { de: "Wartezeit nach Tarif (pro Minute)", en: "Waiting time at tariff (per minute)" },
   },
 ];
 
@@ -273,6 +267,79 @@ export function PricingExcludedStrip({ t, locale }: PricingExcludedStripProps) {
   );
 }
 
+
+const DISCOUNT_ROWS: {
+  key: string;
+  Icon: typeof Check;
+  defaults: { de: { label: string; desc: string }; en: { label: string; desc: string } };
+}[] = [
+  {
+    key: "online",
+    Icon: Globe,
+    defaults: {
+      de: { label: "Bis zu 5 % Rabatt", desc: "— wenn Sie online über step-now.de/buchen vorbestellen." },
+      en: { label: "Up to 5% off", desc: "— when you pre-book online at step-now.de/buchen." },
+    },
+  },
+  {
+    key: "return",
+    Icon: RotateCcw,
+    defaults: {
+      de: { label: "10 % Rabatt auf die Rückfahrt", desc: "— wenn Sie innerhalb einer Stunde mit uns zurückfahren." },
+      en: { label: "10% off the return trip", desc: "— when you ride back with us within one hour." },
+    },
+  },
+  {
+    key: "oneway",
+    Icon: ArrowRightLeft,
+    defaults: {
+      de: { label: "Je einfache Fahrt", desc: "— Hin- und Rückfahrt sind zwei getrennte Fahrten." },
+      en: { label: "Per one-way trip", desc: "— outbound and return are two separate trips." },
+    },
+  },
+  {
+    key: "capacity",
+    Icon: Users,
+    defaults: {
+      de: { label: "Bis zu 4 Personen", desc: "— Fahrzeugkapazität; eine eigene Preisstufe für mehr Personen gibt es nicht." },
+      en: { label: "Up to 4 persons", desc: "— vehicle capacity; there is no separate price tier for more persons." },
+    },
+  },
+];
+
+interface PricingDiscountsProps {
+  t: TFunction;
+  locale: Locale;
+}
+
+/** Discounts and booking rules from the flyer + Preisliste "Hinweise". */
+export function PricingDiscounts({ t, locale }: PricingDiscountsProps) {
+  return (
+    <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
+      <Container className="py-12 md:py-14">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-primary)]">
+          {pickT(t, "pricing.discounts.eyebrow", locale === "de" ? "Rabatte & Hinweise" : "Discounts & notes")}
+        </p>
+        <h2 className="mt-2 font-serif text-[30px] leading-tight tracking-tight text-[var(--color-text-primary)] md:text-[36px]">
+          {pickT(t, "pricing.discounts.heading", locale === "de" ? "Vorbestellen lohnt sich." : "Booking ahead pays off.")}
+        </h2>
+        <ul className="mt-7 grid gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-2 lg:grid-cols-4">
+          {DISCOUNT_ROWS.map(({ key, Icon, defaults }) => (
+            <li key={key} className="flex flex-col gap-2 bg-[var(--color-bg-surface)] px-5 py-5">
+              <Icon className="h-5 w-5 text-[var(--color-accent-primary)]" strokeWidth={1.5} aria-hidden="true" />
+              <span className="font-serif text-[19px] font-medium leading-tight text-[var(--color-text-primary)]">
+                {pickT(t, `pricing.discounts.${key}.label`, defaults[locale].label)}
+              </span>
+              <span className="text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+                {pickT(t, `pricing.discounts.${key}.desc`, defaults[locale].desc)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Container>
+    </section>
+  );
+}
 
 const COMPARISON_ROW_KEYS = ["row1", "row2", "row3", "row4", "row5"] as const;
 
@@ -441,50 +508,20 @@ export function PricingPaymentCancellation({
               {pickT(
                 t,
                 "pricing.cancellation.heading",
-                locale === "de" ? "Flexible Bedingungen" : "Flexible policy",
+                locale === "de" ? "Faire Bedingungen" : "Fair terms",
               )}
             </h3>
           </div>
           <div className="flex-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
-            <div className="mb-2.5 flex flex-wrap gap-x-7 gap-y-3">
-              <CancelStep
-                whenText={pickT(
-                  t,
-                  "pricing.cancellation.step1.when",
-                  locale === "de" ? "≥ 12 Std. VORHER" : "≥ 12 H BEFORE",
-                )}
-                costText={pickT(
-                  t,
-                  "pricing.cancellation.step1.cost",
-                  locale === "de" ? "Kostenfrei" : "Free",
-                )}
-                costClass="text-[var(--color-accent-primary)]"
-              />
-              <CancelStep
-                whenText={pickT(
-                  t,
-                  "pricing.cancellation.step2.when",
-                  locale === "de" ? "< 12 Std. VORHER" : "< 12 H BEFORE",
-                )}
-                costText={pickT(
-                  t,
-                  "pricing.cancellation.step2.cost",
-                  locale === "de" ? "50% des Fahrpreises" : "50% of fare",
-                )}
-              />
-              <CancelStep
-                whenText={pickT(
-                  t,
-                  "pricing.cancellation.step3.when",
-                  locale === "de" ? "NICHT ERSCHIENEN" : "NO-SHOW",
-                )}
-                costText={pickT(
-                  t,
-                  "pricing.cancellation.step3.cost",
-                  locale === "de" ? "Voller Fahrpreis" : "Full fare",
-                )}
-              />
-            </div>
+            <p className="mb-2.5">
+              {pickT(
+                t,
+                "pricing.cancellation.body",
+                locale === "de"
+                  ? "Planänderung? Sagen Sie Ihre Fahrt bitte so früh wie möglich ab — telefonisch, per WhatsApp oder E-Mail. Es gelten unsere Allgemeinen Geschäftsbedingungen."
+                  : "Change of plans? Please cancel your ride as early as possible — by phone, WhatsApp or email. Our general terms and conditions apply.",
+              )}
+            </p>
             <Link
               href={agbHref}
               className="inline-block border-b border-[rgba(168,134,90,0.32)] pb-0.5 text-[11.5px] font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-text-primary)] hover:text-[var(--color-text-primary)]"
@@ -499,28 +536,5 @@ export function PricingPaymentCancellation({
         </div>
       </Container>
     </section>
-  );
-}
-
-function CancelStep({
-  whenText,
-  costText,
-  costClass = "text-[var(--color-text-primary)]",
-}: {
-  whenText: string;
-  costText: string;
-  costClass?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-secondary)]">
-        {whenText}
-      </span>
-      <span
-        className={`font-serif text-[18px] font-medium text-[var(--color-text-primary)] ${costClass}`}
-      >
-        {costText}
-      </span>
-    </div>
   );
 }

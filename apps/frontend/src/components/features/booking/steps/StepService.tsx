@@ -31,6 +31,7 @@ function dateOffsetStr(days: number): string {
 
 export function StepService({
   t,
+  locale,
   services,
   registerValidator,
 }: StepServiceProps) {
@@ -97,8 +98,8 @@ export function StepService({
                     )}
                   >
                     {isSelected
-                      ? pickT(t, "booking.service.selected", "Ausgewaehlt")
-                      : pickT(t, "booking.service.select", "Auswaehlen")}
+                      ? pickT(t, "booking.service.selected", locale === "de" ? "Ausgewählt" : "Selected")
+                      : pickT(t, "booking.service.select", locale === "de" ? "Auswählen" : "Select")}
                   </span>
                   <span className="font-serif text-xl tracking-tight text-[var(--color-text-primary)]">
                     {s.title}

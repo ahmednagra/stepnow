@@ -86,7 +86,7 @@ export async function deleteAdminDriver(id: string): Promise<void> {
 }
 
 import type { CourierOrder } from "@/services/courier";
-/** Job history for a driver. */
-export async function listDriverOrders(id: string): Promise<CourierOrder[]> {
-  return nextjsApiClient.get<CourierOrder[]>(ENDPOINTS.ADMIN.DRIVER_ORDERS(id));
+/** One page of a driver's job history, newest first. */
+export async function listDriverOrders(id: string, params: { page?: number; size?: number } = {}): Promise<Paginated<CourierOrder>> {
+  return nextjsApiClient.get<Paginated<CourierOrder>>(ENDPOINTS.ADMIN.DRIVER_ORDERS(id), { params });
 }

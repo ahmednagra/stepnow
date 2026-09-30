@@ -74,7 +74,7 @@ export function LegalPageRenderer({ t, page, locale, path }: LegalPageRendererPr
             </p>
             {page.published_at && (
               <p className="mt-4 text-[11.5px] leading-relaxed text-[rgba(247,244,234,0.68)]">
-                {locale === "de" ? "Stand:" : "Last updated:"}{" "}
+                {pickT(t, "legal.last_updated", locale === "de" ? "Stand" : "Last updated")}:{" "}
                 {formatDate(page.published_at, locale)}
                 {page.version_number != null && (
                   <>
@@ -126,7 +126,11 @@ export function LegalPageRenderer({ t, page, locale, path }: LegalPageRendererPr
                 )}
               </div>
 
-              {locale === "en" && <LegalDisclaimer />}
+              {locale === "en" && (
+                <LegalDisclaimer
+                  text={pickT(t, "legal.translation_disclaimer", "This English translation is provided for convenience only. The German version is the legally binding text.")}
+                />
+              )}
             </aside>
           </div>
         </Container>

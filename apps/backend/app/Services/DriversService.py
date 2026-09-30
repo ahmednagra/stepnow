@@ -6,7 +6,7 @@ from datetime import datetime, timezone, date, timedelta
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.Core.Exceptions import NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.drivers import Driver
@@ -158,11 +158,14 @@ class DriversService:
         db.commit()
 
     @staticmethod
-    def list_orders(db: Session, driver_id: UUID):
+    def list_orders(db: Session, driver_id: UUID, page: int, size: int) -> tuple[list[Order], int]:
         DriversService.get(db, driver_id)
-        return (
-            db.query(Order)
-            .filter(Order.driver_id == driver_id, Order.is_deleted == False)  # noqa: E712
-            .order_by(Order.created_at.desc())
+        query = db.query(Order).filter(Order.driver_id == driver_id, Order.is_deleted == False)  # noqa: E712
+        items = (
+            query.options(selectinload(Order.stops))
+            .order_by(Order.created_at.desc(), Order.id.desc())
+            .offset((page - 1) * size)
+            .limit(size)
             .all()
         )
+        return items, query.count()

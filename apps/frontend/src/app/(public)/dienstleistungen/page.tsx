@@ -36,8 +36,8 @@ const pricingByServiceId = new Map(allPricing.map((g) => [g.service_id, g.catego
 
 const data: ServiceWithPricing[] = services.map((s) => {
 const categories = pricingByServiceId.get(s.id) ?? [];
-const { price, currency, routeLabel } = findLowestPrice(categories);
-return { service: s, lowestPrice: price, lowestCurrency: currency, lowestRouteLabel: routeLabel };
+const { price, currency, routeLabel, isNet } = findLowestPrice(categories);
+return { service: s, lowestPrice: price, lowestCurrency: currency, lowestRouteLabel: routeLabel, lowestIsNet: isNet };
 });
 
 return (
@@ -68,12 +68,12 @@ return (
 </Container>
 </section>
 <ServicesIndex t={t} locale="de" data={data} />
-{data.slice(0, 2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel }, idx) => (
-<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} />
+{data.slice(0, 2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel, lowestIsNet }, idx) => (
+<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} lowestIsNet={lowestIsNet} />
 ))}
 <HowItWorksBeat t={t} locale="de" />
-{data.slice(2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel }, idx) => (
-<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx + 2} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} />
+{data.slice(2).map(({ service, lowestPrice, lowestCurrency, lowestRouteLabel, lowestIsNet }, idx) => (
+<ServiceRichRow key={service.id} t={t} locale="de" service={service} index={idx + 2} detailHref={`/dienstleistungen/${service.slug}`} lowestPrice={lowestPrice} lowestCurrency={lowestCurrency} lowestRouteLabel={lowestRouteLabel} lowestIsNet={lowestIsNet} />
 ))}
 <ServicesEditorialClose t={t} locale="de" pricingHref="/preise" />
 <JsonLd

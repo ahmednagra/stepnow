@@ -3,8 +3,6 @@ import Link from "next/link";
 import type { TFunction } from "@/lib/i18n/t";
 import type { FaqPublic, Locale } from "@/types";
 import { Container } from "@/components/shared";
-import { buildFaqPageJsonLd } from "@/lib/seo";
-import { JsonLd } from "@/utils/json-ld";
 import { pickT } from "@/lib/i18n/pick";
 import { FaqTeaserAccordion } from "./FaqTeaserAccordion";
 
@@ -21,7 +19,7 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
   const items = faqs.filter((f) => f.category === "general").slice(0, 5);
   if (items.length === 0) return null;
 
-  const allFaqHref = locale === "de" ? "/kontakt#faq" : "/en/contact#faq";
+  const allFaqHref = locale === "de" ? "/faq" : "/en/faq";
 
   return (
     <section className="border-t border-[color:var(--color-border-soft)] bg-[var(--color-bg-page)]">
@@ -62,7 +60,6 @@ export function FaqTeaser({ t, faqs, locale }: FaqTeaserProps) {
           </div>
         </div>
       </Container>
-      <JsonLd data={buildFaqPageJsonLd(items)} />
     </section>
   );
 }

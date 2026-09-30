@@ -17,7 +17,7 @@ router = APIRouter(tags=["admin: drivers"])
 
 
 @router.get("/admin/drivers", response_model=PaginatedResponse[DriverResponse])
-async def list_drivers(
+def list_drivers(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -30,7 +30,7 @@ async def list_drivers(
 
 
 @router.post("/admin/drivers", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
-async def create_driver(
+def create_driver(
     request: Request,
     payload: DriverCreate,
     db: Session = Depends(get_db),
@@ -40,7 +40,7 @@ async def create_driver(
 
 
 @router.get("/admin/drivers/{driver_id}", response_model=DriverResponse)
-async def get_driver(
+def get_driver(
     driver_id: UUID,
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
@@ -49,7 +49,7 @@ async def get_driver(
 
 
 @router.patch("/admin/drivers/{driver_id}", response_model=DriverResponse)
-async def update_driver(
+def update_driver(
     request: Request,
     driver_id: UUID,
     payload: DriverUpdate,
@@ -60,7 +60,7 @@ async def update_driver(
 
 
 @router.post("/admin/drivers/{driver_id}/license-check", response_model=DriverResponse)
-async def record_license_check(
+def record_license_check(
     request: Request,
     driver_id: UUID,
     payload: LicenseCheckCreate,
@@ -71,7 +71,7 @@ async def record_license_check(
 
 
 @router.delete("/admin/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_driver(
+def delete_driver(
     request: Request,
     driver_id: UUID,
     db: Session = Depends(get_db),
@@ -80,10 +80,12 @@ async def delete_driver(
     DriversController.delete(db, driver_id, actor, request)
 
 
-@router.get("/admin/drivers/{driver_id}/orders", response_model=list[CourierOrderResponse])
-async def driver_orders(
+@router.get("/admin/drivers/{driver_id}/orders", response_model=PaginatedResponse[CourierOrderResponse])
+def driver_orders(
     driver_id: UUID,
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
-) -> list[CourierOrderResponse]:
-    return DriversController.list_orders(db, driver_id)
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+) -> PaginatedResponse[CourierOrderResponse]:
+    return DriversController.list_orders(db, driver_id, page, size)

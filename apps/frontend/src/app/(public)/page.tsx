@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = createT(stringsRes.strings, "de");
   return buildMetadata({
     title: settings.default_meta_title || t("home.hero.headline"),
-    description: t("home.hero.subhead"),
+    description: t("home.meta_description"),
     path: "/", locale: "de",
     ogImage: settings.default_og_image_url ?? undefined,
   });
@@ -40,6 +40,7 @@ async function DeferredFleet({ locale }: { locale: "de" }) {
 
 async function DeferredTestimonials({ locale }: { locale: "de" }) {
   const testimonials = await listTestimonialsServer(locale);
+  if (testimonials.length === 0) return null;
   return <ScrollReveal><TestimonialsSection testimonials={testimonials} /></ScrollReveal>;
 }
 

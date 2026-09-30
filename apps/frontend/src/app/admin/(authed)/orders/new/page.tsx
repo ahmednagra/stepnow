@@ -86,7 +86,12 @@ const addDaysDE = (iso: string, d: number | string) => {
   return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-const emptyStop = () => ({ company: "", address: "", plz: "", ort: "", contact_name: "", contact_phone: "", time_from: "", time_to: "", notes: "" });
+// The bill carries its order's digits (A-45260826 → R-45260826) — same rule as the backend's
+// invoice_number_from_order / job_core. Preview only: order creation never creates the invoice itself.
+const invoiceNumberFor = (orderNumber: string) =>
+  `R-${(orderNumber.includes("-") ? orderNumber.split("-")[1] : orderNumber.replace(/^[A-Za-z]/, "")).split("-")[0]}`;
+
+const emptyStop = () => ({ company: "", address: "", plz: "", ort: "", contact_name: "", contact_phone: "", stop_date: "", time_from: "", time_to: "", notes: "" });
 
 function emptyDefaults(): AdminOrderInput {
   return {
@@ -112,6 +117,7 @@ function toPayload(v: AdminOrderInput): ParcelOrderInput {
     city: orNull(s.ort),
     contact_name: orNull(s.contact_name),
     contact_phone: orNull(s.contact_phone),
+    stop_date: orNull(s.stop_date),
     time_from: orNull(s.time_from),
     time_to: orNull(s.time_to),
     notes: orNull(s.notes),
@@ -802,7 +808,8 @@ export default function NewTransportOrderPage() {
                         <input className={adminInputClass} {...register(`pickups.${i}.plz`)} placeholder="PLZ" />
                         <input className={adminInputClass} {...register(`pickups.${i}.ort`)} placeholder="City" />
                       </div>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_140px]">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[150px_140px_140px]">
+                        <label className="flex items-center gap-1.5 text-[11px] text-slate-500">am <input type="date" className={adminInputClass} {...register(`pickups.${i}.stop_date`)} /></label>
                         <label className="flex items-center gap-1.5 text-[11px] text-slate-500">von <input type="time" className={adminInputClass} {...register(`pickups.${i}.time_from`)} /></label>
                         <label className="flex items-center gap-1.5 text-[11px] text-slate-500">bis <input type="time" className={adminInputClass} {...register(`pickups.${i}.time_to`)} /></label>
                       </div>
@@ -833,7 +840,8 @@ export default function NewTransportOrderPage() {
                       <input className={adminInputClass} {...register("dropoff.plz")} placeholder="PLZ" />
                       <input className={adminInputClass} {...register("dropoff.ort")} placeholder="City" />
                     </div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_140px]">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[150px_140px_140px]">
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-500">am <input type="date" className={adminInputClass} {...register("dropoff.stop_date")} /></label>
                       <label className="flex items-center gap-1.5 text-[11px] text-slate-500">von <input type="time" className={adminInputClass} {...register("dropoff.time_from")} /></label>
                       <label className="flex items-center gap-1.5 text-[11px] text-slate-500">bis <input type="time" className={adminInputClass} {...register("dropoff.time_to")} /></label>
                     </div>
@@ -1090,7 +1098,7 @@ export default function NewTransportOrderPage() {
                         {previewMode === "driver" ? "Transportauftrag" : "Rechnung"}
                       </p>
                       <p className="font-mono text-[12.5px] text-slate-700">
-                        {order?.order_number ? (previewMode === "driver" ? order.order_number : `R${order.order_number.replace(/^[A-Za-z]+/, "")}`) : "—"}
+                        {order?.order_number ? (previewMode === "driver" ? order.order_number : invoiceNumberFor(order.order_number)) : "—"}
                       </p>
                       <p>{deDate(orderDate)}</p>
                       {previewMode === "customer" && <p>{ISSUER.steuer}</p>}
@@ -1178,7 +1186,7 @@ export default function NewTransportOrderPage() {
                         </div>
                         <dl className="min-w-[190px] space-y-1 text-[12px]">
                           <div className="flex justify-between gap-6"><dt className="text-slate-500">Kunden-Nr.</dt><dd className="text-slate-800">{customerNumber ?? (linkedId ? "—" : "wird vergeben")}</dd></div>
-                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Rechnungs-Nr.</dt><dd className="font-mono text-slate-800">{order?.order_number ? `R${order.order_number}` : "—"}</dd></div>
+                          <div className="flex justify-between gap-6"><dt className="text-slate-500">Rechnungs-Nr.</dt><dd className="font-mono text-slate-800">{order?.order_number ? invoiceNumberFor(order.order_number) : "—"}</dd></div>
                           <div className="flex justify-between gap-6"><dt className="text-slate-500">Datum</dt><dd className="text-slate-800">{deDate(orderDate)}</dd></div>
                           {clientRef && <div className="flex justify-between gap-6"><dt className="text-slate-500">Referenz-Nr.</dt><dd className="text-slate-800">{clientRef}</dd></div>}
                         </dl>
@@ -1226,7 +1234,7 @@ export default function NewTransportOrderPage() {
                       <p className="mt-4 text-[12px] font-semibold text-slate-700">Zahlungsbedingungen</p>
                       <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
                         Bitte überweisen Sie den Rechnungsbetrag von <strong className="text-slate-900">{money(brutto)}</strong> innerhalb von {term ?? 0} Tagen ohne Abzug.
-                        Verwendungszweck: Rechnungsnummer <span className="font-mono">{order?.order_number ? `R${order.order_number}` : "—"}</span>.
+                        Verwendungszweck: Rechnungsnummer <span className="font-mono">{order?.order_number ? invoiceNumberFor(order.order_number) : "—"}</span>.
                         {" "}Fälligkeitsdatum: <strong className="text-slate-900">{term != null ? addDaysDE(orderDate, term) : "—"}</strong>.
                       </p>
                       <p className="mt-2 text-[11px] text-slate-500">{ISSUER.bank}</p>

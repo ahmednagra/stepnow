@@ -12,10 +12,10 @@ router = APIRouter(prefix="/admin/uploads", tags=["admin: uploads"])
 
 
 @router.post("", response_model=UploadResponse, status_code=201)
-async def upload_image(
+def upload_image(
     request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
 ) -> UploadResponse:
-    return await UploadsController.upload_image(db, file, actor, request)
+    return UploadsController.upload_image(db, file, actor, request)

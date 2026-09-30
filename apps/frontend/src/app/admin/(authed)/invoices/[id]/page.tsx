@@ -1,8 +1,9 @@
 // apps/frontend/src/app/admin/(authed)/invoices/[id]/page.tsx
-// Bill editor — every detail is editable in place (recipient, base net, VAT, Skonto, and ad-hoc
-// charge/discount line items like Wartezeit), before and after issue. Totals recompute live; Save
-// PATCHes the bill. Editing here only varies the company account — the vehicle account (order
-// amounts) is untouched. Built on the admin design system.
+// Bill editor — while the bill is a DRAFT every detail is editable in place (recipient, base net,
+// VAT, Skonto, and ad-hoc charge/discount line items like Wartezeit). Totals recompute live; Save
+// PATCHes the bill. Issuing freezes it (GoBD Buchungsbeleg): the form turns read-only and the only
+// correction is a Storno + replacement. Editing here only varies the company account — the vehicle
+// account (order amounts) is untouched. Built on the admin design system.
 
 "use client";
 
@@ -11,7 +12,8 @@ import Link from "next/link";
 import { ArrowLeft, Plus, X, Save, FileDown, Loader2 } from "lucide-react";
 import { AdminPageHeader, AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
 import { useDefaultCurrency, useInvoice } from "@/hooks/queries";
-import { useUpdateInvoice } from "@/hooks/mutations/useOrderMutations";
+import { useUpdateInvoice } from "@/hooks/mutations";
+import { InvoiceLifecycleActions, InvoiceStatusBadge } from "../_lifecycle";
 import { downloadInvoicePdfById, type InvoiceItemInput, type InvoiceItemKind } from "@/services/orders";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { ApiError } from "@/lib/api-errors";
@@ -92,15 +94,19 @@ export default function InvoiceEditorPage({ params }: { params: { id: string } }
 
   if (isLoading) return <div className="p-6 text-[13px] text-slate-500">Loading bill…</div>;
   if (isError || !inv) return <div className="p-6 text-[13px] text-rose-600">Could not load the bill.</div>;
+  const editable = inv.status === "draft";
 
   return (
     <>
       <AdminPageHeader
         title={`Bill ${inv.invoice_number}`}
-        description="Edit every detail — charges, discount, recipient. Vehicle accounts are unaffected."
-        center={<span className="inline-flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 capitalize">{inv.status}</span>}
+        description={editable
+          ? "Draft — edit every detail, then issue it. Vehicle accounts are unaffected."
+          : "Issued bills are frozen Buchungsbelege. Correct one with a Storno and a replacement invoice."}
+        center={<InvoiceStatusBadge status={inv.status} />}
         actions={
           <>
+            <InvoiceLifecycleActions invoice={inv} />
             <button type="button" onClick={() => downloadInvoicePdfById(inv.id, inv.invoice_number).catch(() => pushToast("error", "PDF download failed"))}
               className="flex h-9 items-center gap-1.5 border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <FileDown className="h-3.5 w-3.5" strokeWidth={1.5} /> Download PDF
@@ -112,7 +118,7 @@ export default function InvoiceEditorPage({ params }: { params: { id: string } }
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 p-6 lg:grid-cols-[1.3fr_1fr]">
+      <fieldset disabled={!editable} className="grid min-w-0 grid-cols-1 gap-4 p-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-4">
           <AdminCard title="Recipient & terms">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -174,13 +180,15 @@ export default function InvoiceEditorPage({ params }: { params: { id: string } }
                 <p className="pt-2 text-[11px] text-slate-500">Skonto {skontoPct}% bei Zahlung binnen {skontoDays} Tagen = {eur(skontoAmt)}.</p>
               )}
             </dl>
-            <button type="button" onClick={onSave} disabled={save.isPending}
-              className="mt-4 flex h-9 w-full items-center justify-center gap-1.5 bg-slate-900 px-3 text-[12.5px] font-medium text-white hover:bg-slate-800 disabled:opacity-40">
-              {save.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save bill
-            </button>
+            {editable && (
+              <button type="button" onClick={onSave} disabled={save.isPending}
+                className="mt-4 flex h-9 w-full items-center justify-center gap-1.5 bg-slate-900 px-3 text-[12.5px] font-medium text-white hover:bg-slate-800 disabled:opacity-40">
+                {save.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save bill
+              </button>
+            )}
           </AdminCard>
         </div>
-      </div>
+      </fieldset>
     </>
   );
 }

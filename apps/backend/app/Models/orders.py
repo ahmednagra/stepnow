@@ -43,6 +43,9 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
         live_unique("uq_orders_number_live", "order_number"),
         Index("ix_orders_status_created", "status", "created_at"),
         Index("ix_orders_scheduled", "scheduled_datetime"),
+        # Customer / driver detail pages: live orders for one party, newest first, paginated.
+        Index("ix_orders_customer_created_live", "customer_id", "created_at", postgresql_where=text("is_deleted = false")),
+        Index("ix_orders_driver_created_live", "driver_id", "created_at", postgresql_where=text("is_deleted = false")),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -193,14 +196,19 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     # ── Relationships ──
-    # Optional billing — at most one invoice per order.
-    invoice: Mapped["Invoice | None"] = relationship(
-        back_populates="order", uselist=False, cascade="all, delete-orphan"
+    # Billing history — every invoice ever raised for this job, incl. cancelled (Storno) ones and
+    # their replacements. No delete cascade: an invoice is a Buchungsbeleg (GoBD) and a payment a
+    # ledger entry — neither is ever removed alongside its order.
+    invoices: Mapped[list["Invoice"]] = relationship(
+        back_populates="order", order_by="Invoice.created_at"
     )
     # Payment ledger — paid-status/balance are DERIVED from these, never stored as a flag.
-    payments: Mapped[list["Payment"]] = relationship(
-        back_populates="order", cascade="all, delete-orphan"
-    )
+    payments: Mapped[list["Payment"]] = relationship(back_populates="order")
+
+    @property
+    def current_invoice(self) -> "Invoice | None":
+        """The live bill: not cancelled, not deleted. uq_invoices_order_id_live guarantees at most one."""
+        return next((i for i in self.invoices if not i.is_deleted and i.status != "cancelled"), None)
     # Courier links.
     customer: Mapped["Customer | None"] = relationship(back_populates="orders")
     driver: Mapped["Driver | None"] = relationship(back_populates="orders")

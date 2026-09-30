@@ -1,12 +1,13 @@
 // src/hooks/mutations/useCourierMutations.ts
 // React Query WRITE hooks for the parcel-dispatch feature (manual courier orders + delivery
-// lifecycle). Courier/parcel orders are orders, so each mutation invalidates the orders list.
+// lifecycle). Courier/parcel orders are orders: price, vehicle and status feed the bills, the vehicle
+// account and the dashboard, so each mutation invalidates the billing root keys.
 // Each mutation calls the existing courier admin client service.
 
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/react-query";
+import { invalidateBilling } from "./useOrderMutations";
 import {
   createParcelOrder,
   updateParcelOrder,
@@ -20,9 +21,7 @@ export function useCreateParcelOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: ParcelOrderInput) => createParcelOrder(payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-    },
+    onSuccess: () => invalidateBilling(qc),
   });
 }
 
@@ -32,9 +31,7 @@ export function useUpdateParcelOrder() {
   return useMutation({
     mutationFn: ({ orderId, payload }: { orderId: string; payload: ParcelOrderInput }) =>
       updateParcelOrder(orderId, payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-    },
+    onSuccess: () => invalidateBilling(qc),
   });
 }
 
@@ -44,8 +41,6 @@ export function useSetDeliveryStatus() {
   return useMutation({
     mutationFn: ({ orderId, delivery_status }: { orderId: string; delivery_status: DeliveryStatus }) =>
       setDeliveryStatus(orderId, delivery_status),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-    },
+    onSuccess: () => invalidateBilling(qc),
   });
 }

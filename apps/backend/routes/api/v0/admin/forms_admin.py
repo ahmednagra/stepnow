@@ -24,7 +24,7 @@ router = APIRouter(tags=["admin: bookings + contact"])
 
 # Bookings
 @router.get("/admin/bookings", response_model=PaginatedResponse[BookingAdminResponse])
-async def list_bookings(
+def list_bookings(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -37,7 +37,7 @@ async def list_bookings(
 
 
 @router.get("/admin/bookings/revenue-series", response_model=RevenueSeriesResponse)
-async def revenue_series(
+def revenue_series(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     from_date: date = Query(..., alias="from_date"),
@@ -47,7 +47,7 @@ async def revenue_series(
 
 
 @router.get("/admin/bookings/service-mix", response_model=ServiceMixResponse)
-async def service_mix(
+def service_mix(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     from_date: date = Query(..., alias="from_date"),
@@ -57,23 +57,23 @@ async def service_mix(
 
 
 @router.get("/admin/bookings/{booking_id}", response_model=BookingAdminResponse)
-async def get_booking(booking_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> BookingAdminResponse:
+def get_booking(booking_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> BookingAdminResponse:
     return FormsAdminController.get_booking(db, booking_id)
 
 
 @router.patch("/admin/bookings/{booking_id}", response_model=BookingAdminResponse)
-async def update_booking(request: Request, booking_id: UUID, payload: BookingStatusUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> BookingAdminResponse:
+def update_booking(request: Request, booking_id: UUID, payload: BookingStatusUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> BookingAdminResponse:
     return FormsAdminController.update_booking(db, booking_id, payload, actor, request)
 
 
 @router.delete("/admin/bookings/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_booking(request: Request, booking_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_booking(request: Request, booking_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     FormsAdminController.delete_booking(db, booking_id, actor, request)
 
 
 # Contact messages
 @router.get("/admin/contact-messages", response_model=PaginatedResponse[ContactMessageAdminResponse])
-async def list_messages(
+def list_messages(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -87,15 +87,15 @@ async def list_messages(
 
 
 @router.get("/admin/contact-messages/{message_id}", response_model=ContactMessageAdminResponse)
-async def get_message(message_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ContactMessageAdminResponse:
+def get_message(message_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ContactMessageAdminResponse:
     return FormsAdminController.get_contact_message(db, message_id)
 
 
 @router.patch("/admin/contact-messages/{message_id}", response_model=ContactMessageAdminResponse)
-async def update_message(request: Request, message_id: UUID, payload: ContactMessageUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ContactMessageAdminResponse:
+def update_message(request: Request, message_id: UUID, payload: ContactMessageUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ContactMessageAdminResponse:
     return FormsAdminController.update_contact_message(db, message_id, payload, actor, request)
 
 
 @router.delete("/admin/contact-messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_message(request: Request, message_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_message(request: Request, message_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     FormsAdminController.delete_contact_message(db, message_id, actor, request)

@@ -9,7 +9,7 @@ import { useDefaultCurrency } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowRightCircle } from "lucide-react";
 import { AdminCard, AdminFormField, adminInputClass } from "@/components/admin";
-import { convertBookingToOrder } from "@/services/orders";
+import { useConvertBookingToOrder } from "@/hooks/mutations";
 import { ApiError } from "@/lib/api-errors";
 import { useAdminToast } from "@/hooks/useAdminToast";
 import { normalizeDecimalInput } from "@/utils/decimal";
@@ -27,24 +27,22 @@ export function ConvertToOrderCard({ bookingId, suggestedNet }: Props) {
   const [net, setNet] = useState(suggestedNet ?? "");
   const [vatRate, setVatRate] = useState("0.07"); // 7% reduced (PBefG); switch to 0.19 for courier/special
   const [dueDays, setDueDays] = useState("14");
-  const [busy, setBusy] = useState(false);
+  const convertMutation = useConvertBookingToOrder();
 
   async function convert() {
     const normalized = normalizeDecimalInput(net);
     if (!normalized) { pushToast("error", "Enter a valid net amount (e.g. 45.00)"); return; }
-    setBusy(true);
     try {
-      const order = await convertBookingToOrder(bookingId, {
-        net_amount: normalized,
-        vat_rate: vatRate,
-        payment_due_days: Number(dueDays) || 14,
+      const order = await convertMutation.mutateAsync({
+        bookingId,
+        payload: { net_amount: normalized, vat_rate: vatRate, payment_due_days: Number(dueDays) || 14 },
       });
       pushToast("success", `Order ${order.order_number} created`);
       router.push(`/admin/orders/${order.id}`);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Network error";
       pushToast("error", "Could not convert", msg);
-    } finally { setBusy(false); }
+    }
   }
 
   return (
@@ -65,10 +63,10 @@ export function ConvertToOrderCard({ bookingId, suggestedNet }: Props) {
         </AdminFormField>
       </div>
       <button
-        type="button" onClick={convert} disabled={busy}
+        type="button" onClick={convert} disabled={convertMutation.isPending}
         className="mt-4 flex h-9 items-center gap-1.5 bg-slate-900 px-3 text-[12.5px] font-medium text-white disabled:opacity-40"
       >
-        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Convert to order
+        {convertMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightCircle className="h-3.5 w-3.5" />} Convert to order
       </button>
     </AdminCard>
   );

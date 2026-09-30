@@ -1,19 +1,14 @@
 # apps/backend/app/Services/Notifications/Channels/DatabaseChannel.py
 # Durable inbox channel: writes one notifications row (flushed, not committed — the facade's
 # caller owns the commit) and registers a post-commit WebSocket push to the recipient's
-# "user:{id}" channel. The push is best-effort and fired via asyncio bridge; a socket failure
+# "user:{id}" channel. The push is best-effort and handed to the server loop; a socket failure
 # is logged by the manager and never raised.
-
-import asyncio
 
 from sqlalchemy.orm import Session
 
 from app.Models.notification import Notification
 from app.Services.Notifications.Channels.BaseChannel import BaseChannel, NotificationPayload
-from app.Utils.Logger import get_logger
-from app.WebSocket.publisher import emit_to_user
-
-logger = get_logger("notifications")
+from app.WebSocket.publisher import emit_soon, emit_to_user
 
 
 class DatabaseChannel(BaseChannel):
@@ -43,7 +38,4 @@ class DatabaseChannel(BaseChannel):
             "title": row.title,
             "link": row.link,
         }
-        try:
-            asyncio.run(emit_to_user(recipient_id, "notification.created", data))
-        except Exception as exc:  # noqa: BLE001 — realtime is best-effort
-            logger.warning(f"[DatabaseChannel.push] recipient={recipient_id} failed: {exc}")
+        emit_soon(emit_to_user(recipient_id, "notification.created", data))

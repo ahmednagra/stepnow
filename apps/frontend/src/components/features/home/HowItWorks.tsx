@@ -58,7 +58,7 @@ export function HowItWorks({ t }: HowItWorksProps) {
                 {pickT(
                   t,
                   "home.how.summary",
-                  "Kurze Anfrage, klare Rueckmeldung und planbare Fahrt. Ohne unnötige Zwischenschritte.",
+                  "Kurze Anfrage, klare Rückmeldung und planbare Fahrt. Ohne unnötige Zwischenschritte.",
                 )}
               </p>
             </div>

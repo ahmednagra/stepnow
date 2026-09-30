@@ -8,7 +8,7 @@ from datetime import datetime, timezone, date
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy import or_, func, case
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.Core.Exceptions import NotFoundError
 from app.Models.admin import AdminUser
 from app.Models.customers import Customer
@@ -157,11 +157,14 @@ class CustomersService:
         db.commit()
 
     @staticmethod
-    def list_orders(db: Session, customer_id: UUID):
+    def list_orders(db: Session, customer_id: UUID, page: int, size: int) -> tuple[list[Order], int]:
         CustomersService.get(db, customer_id)
-        return (
-            db.query(Order)
-            .filter(Order.customer_id == customer_id, Order.is_deleted == False)  # noqa: E712
-            .order_by(Order.created_at.desc())
+        query = db.query(Order).filter(Order.customer_id == customer_id, Order.is_deleted == False)  # noqa: E712
+        items = (
+            query.options(selectinload(Order.stops))
+            .order_by(Order.created_at.desc(), Order.id.desc())
+            .offset((page - 1) * size)
+            .limit(size)
             .all()
         )
+        return items, query.count()

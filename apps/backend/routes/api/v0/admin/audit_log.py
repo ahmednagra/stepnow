@@ -13,7 +13,7 @@ router = APIRouter(prefix="/admin/audit-log", tags=["admin: audit log"])
 
 
 @router.get("", response_model=PaginatedResponse[AuditLogEntry])
-async def list_entries(
+def list_entries(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -29,5 +29,5 @@ async def list_entries(
 
 
 @router.get("/{entry_id}", response_model=AuditLogEntry)
-async def get_entry(entry_id: int, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> AuditLogEntry:
+def get_entry(entry_id: int, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> AuditLogEntry:
     return AuditLogController.get_entry(db, entry_id)

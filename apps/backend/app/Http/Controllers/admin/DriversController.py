@@ -60,8 +60,6 @@ class DriversController:
         DriversService.soft_delete(db, driver_id, actor, request)
 
     @staticmethod
-    def list_orders(db: Session, driver_id: UUID):
-        return [
-            CourierOrderResponse.model_validate(o)
-            for o in DriversService.list_orders(db, driver_id)
-        ]
+    def list_orders(db: Session, driver_id: UUID, page: int, size: int) -> PaginatedResponse[CourierOrderResponse]:
+        items, total = DriversService.list_orders(db, driver_id, page, size)
+        return PaginatedResponse[CourierOrderResponse].build([CourierOrderResponse.model_validate(o) for o in items], page, size, total)

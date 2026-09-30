@@ -102,7 +102,7 @@ export default function VehicleLedgerPage({ params }: { params: { id: string } }
                 <tbody>
                   {orders.map((o) => (
                     <tr key={o.order_id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-2.5 pr-3"><Link href={`/admin/orders/${o.order_id}`} className="font-mono text-slate-900 hover:underline">A-{o.order_number}</Link></td>
+                      <td className="py-2.5 pr-3"><Link href={`/admin/orders/${o.order_id}`} className="font-mono text-slate-900 hover:underline">{o.order_number}</Link></td>
                       <td className="py-2.5 pr-3 text-slate-500">{deDate(o.date)}</td>
                       <td className="py-2.5 pr-3 text-slate-700">{o.customer_name}</td>
                       <td className="py-2.5 pr-3 text-slate-500">{(o.route_from ?? "—") + " → " + (o.route_to ?? "—")}</td>

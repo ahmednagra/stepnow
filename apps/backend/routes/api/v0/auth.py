@@ -9,22 +9,26 @@ from app.Models.admin import AdminUser
 from app.Schemas.auth import AdminProfile, LoginRequest, LogoutRequest, RefreshRequest, TokenResponse
 from app.Schemas.common import OkResponse
 from app.Utils.Helpers import get_current_admin
+from app.Utils.rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+# Per client IP. AuthService adds a per-account failed-login throttle on top.
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
+@limiter.limit("5/minute;20/hour")
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
     return AuthController.login(db, payload, request)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(payload: RefreshRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
+@limiter.limit("20/minute;200/hour")
+def refresh(payload: RefreshRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
     return AuthController.refresh(db, payload, request)
 
 
 @router.post("/logout", response_model=OkResponse)
-async def logout(
+def logout(
     payload: LogoutRequest,
     request: Request,
     actor: AdminUser = Depends(get_current_admin),
@@ -34,5 +38,5 @@ async def logout(
 
 
 @router.get("/me", response_model=AdminProfile)
-async def me(actor: AdminUser = Depends(get_current_admin)) -> AdminProfile:
+def me(actor: AdminUser = Depends(get_current_admin)) -> AdminProfile:
     return AuthController.me(actor)

@@ -13,7 +13,7 @@ router = APIRouter(prefix="/admin/testimonials", tags=["admin: testimonials"])
 
 
 @router.get("", response_model=PaginatedResponse[TestimonialAdminResponse])
-async def list_testimonials(
+def list_testimonials(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -27,25 +27,25 @@ async def list_testimonials(
 
 
 @router.get("/{testimonial_id}", response_model=TestimonialAdminResponse)
-async def get_testimonial(testimonial_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
+def get_testimonial(testimonial_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
     return TestimonialsController.get(db, testimonial_id)
 
 
 @router.post("", response_model=TestimonialAdminResponse, status_code=status.HTTP_201_CREATED)
-async def create_testimonial(request: Request, payload: TestimonialCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
+def create_testimonial(request: Request, payload: TestimonialCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
     return TestimonialsController.create(db, payload, actor, request)
 
 
 @router.patch("/{testimonial_id}", response_model=TestimonialAdminResponse)
-async def update_testimonial(request: Request, testimonial_id: UUID, payload: TestimonialUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
+def update_testimonial(request: Request, testimonial_id: UUID, payload: TestimonialUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
     return TestimonialsController.update(db, testimonial_id, payload, actor, request)
 
 
 @router.delete("/{testimonial_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_testimonial(request: Request, testimonial_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_testimonial(request: Request, testimonial_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     TestimonialsController.delete(db, testimonial_id, actor, request)
 
 
 @router.post("/{testimonial_id}/restore", response_model=TestimonialAdminResponse)
-async def restore_testimonial(request: Request, testimonial_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
+def restore_testimonial(request: Request, testimonial_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> TestimonialAdminResponse:
     return TestimonialsController.restore(db, testimonial_id, actor, request)

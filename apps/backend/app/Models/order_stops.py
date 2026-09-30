@@ -5,11 +5,11 @@
 # denormalised mirror (first pickup + the drop) so older readers keep working. Per-stop `status`
 # lets a driver app advance each collection independently later.
 
-from datetime import datetime, time
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, Text, Time
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, Time
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.Models.base import Base
@@ -51,6 +51,7 @@ class OrderStop(Base, TimestampMixin, SoftDeleteMixin):
 
     contact_name: Mapped[str | None] = mapped_column(String(200), nullable=True, comment="On-site contact (Ansprechpartner)")
     contact_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    stop_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="Datum at this stop — an overnight run unloads the day after it loads; falls back to the order date")
     time_from: Mapped[time | None] = mapped_column(Time, nullable=True, comment="Window start (Abhol-/Lieferzeit von)")
     time_to: Mapped[time | None] = mapped_column(Time, nullable=True, comment="Window end (bis)")
     package_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Items at this stop")

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.Core.Exceptions import NotFoundError
 from app.Schemas.public import (
     FaqPublicResponse, LegalPagePublicResponse, PricingCategoryPublicResponse,
-    PricingGroupedByServicePublic, PricingItemPublicResponse, ServicePublicListItem,
+    PricingGroupedByServicePublic, ServicePublicListItem,
     ServicePublicResponse, SettingsPublicResponse, TestimonialPublicResponse,
     UiStringsPublicResponse, VehiclePublicResponse,
 )
@@ -126,12 +126,7 @@ class PublicController:
     @staticmethod
     def list_pricing_for_service(db: Session, slug: str, locale: Locale) -> list[PricingCategoryPublicResponse]:
         cats = PricingService.list_public_for_service_slug(db, slug, locale.value)
-        return [PricingCategoryPublicResponse(
-            id=c["id"],
-            name=c["name"],
-            description=c["description"],
-            items=[PricingItemPublicResponse(**i) for i in c["items"]],
-        ) for c in cats]
+        return [PricingCategoryPublicResponse.model_validate(c) for c in cats]
 
     @staticmethod
     def list_pricing_all_grouped(db: Session, locale: Locale) -> list[PricingGroupedByServicePublic]:
@@ -139,10 +134,5 @@ class PublicController:
         return [PricingGroupedByServicePublic(
             service_id=g["service_id"],
             service_slug=g["service_slug"],
-            categories=[PricingCategoryPublicResponse(
-                id=c["id"],
-                name=c["name"],
-                description=c["description"],
-                items=[PricingItemPublicResponse(**i) for i in c["items"]],
-            ) for c in g["categories"]],
+            categories=[PricingCategoryPublicResponse.model_validate(c) for c in g["categories"]],
         ) for g in grouped]

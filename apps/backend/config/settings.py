@@ -73,6 +73,14 @@ class Settings(BaseSettings):
     # ── Rate limits ──
     BOOKING_RATE_LIMIT: str = os.getenv("BOOKING_RATE_LIMIT", "5/hour")
     CONTACT_RATE_LIMIT: str = os.getenv("CONTACT_RATE_LIMIT", "3/hour")
+    # Counter store for every limit. memory:// is per-process — correct for today's single uvicorn
+    # worker; with several workers/hosts point it at shared storage, e.g. redis://localhost:6379/0.
+    RATE_LIMIT_STORAGE_URI: str = os.getenv("RATE_LIMIT_STORAGE_URI", "memory://")
+    # Failed logins per account (normalized email), across all IPs — caps distributed guessing.
+    LOGIN_ACCOUNT_FAILURE_LIMIT: str = os.getenv("LOGIN_ACCOUNT_FAILURE_LIMIT", "10/15 minutes;50/day")
+    # Peers (IPs/CIDRs, comma-separated) whose X-Forwarded-For is believed: nginx and the Next.js
+    # BFF both reach uvicorn over loopback. Anyone else is keyed on their own socket address.
+    TRUSTED_PROXIES: str = os.getenv("TRUSTED_PROXIES", "127.0.0.1,::1")
 
     # ── Backups (S3-compatible) ──
     BACKUP_S3_ENDPOINT: str | None = os.getenv("BACKUP_S3_ENDPOINT") or None

@@ -24,7 +24,7 @@ router = APIRouter(prefix="/admin/notifications", tags=["admin: notifications"])
 
 
 @router.get("", response_model=PaginatedResponse[NotificationResponse])
-async def list_notifications(
+def list_notifications(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -35,20 +35,20 @@ async def list_notifications(
 
 
 @router.get("/unread-count", response_model=UnreadCountResponse)
-async def unread_count(db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> UnreadCountResponse:
+def unread_count(db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> UnreadCountResponse:
     return NotificationController.unread_count(db, actor)
 
 
 @router.post("/read", response_model=UnreadCountResponse)
-async def mark_read(payload: MarkReadRequest, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> UnreadCountResponse:
+def mark_read(payload: MarkReadRequest, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> UnreadCountResponse:
     return NotificationController.mark_read(db, actor, payload.ids)
 
 
 @router.post("/read-all", response_model=UnreadCountResponse)
-async def mark_all_read(db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> UnreadCountResponse:
+def mark_all_read(db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> UnreadCountResponse:
     return NotificationController.mark_all_read(db, actor)
 
 
 @router.post("/{notification_id}/archive", status_code=status.HTTP_204_NO_CONTENT)
-async def archive(notification_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def archive(notification_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     NotificationController.archive(db, actor, notification_id)

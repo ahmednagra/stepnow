@@ -14,15 +14,15 @@ from config.settings import settings
 class UploadsController:
 
     @staticmethod
-    async def upload_image(
+    def upload_image(
         db: Session,
         file: UploadFile,
         actor: AdminUser,
         request: Request,
     ) -> UploadResponse:
-        # Read the bytes once. UploadFile streams from disk in FastAPI's
-        # SpooledTemporaryFile so this is fine for our 10MB cap.
-        data = await file.read()
+        # Sync read of FastAPI's SpooledTemporaryFile (this runs in the threadpool). Reading one byte
+        # past the cap detects an oversized upload without loading all of it into memory.
+        data = file.file.read(settings.UPLOAD_MAX_SIZE_BYTES + 1)
 
         # Hard cap before doing anything expensive
         if len(data) > settings.UPLOAD_MAX_SIZE_BYTES:

@@ -11,10 +11,10 @@ router = APIRouter(prefix="/admin/settings", tags=["admin: settings"])
 
 
 @router.get("", response_model=SettingsAdminResponse)
-async def get_settings(db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> SettingsAdminResponse:
+def get_settings(db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> SettingsAdminResponse:
     return SettingsController.get(db)
 
 
 @router.patch("", response_model=SettingsAdminResponse)
-async def update_settings(request: Request, payload: SettingsUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> SettingsAdminResponse:
+def update_settings(request: Request, payload: SettingsUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> SettingsAdminResponse:
     return SettingsController.update(db, payload, actor, request)

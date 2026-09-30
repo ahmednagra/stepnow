@@ -37,10 +37,14 @@ export function formatDate(isoDate: string | null | undefined, locale: Locale = 
  */
 export function formatPhone(raw: string): string {
   if (raw.includes(" ") || raw.includes("/")) return raw;
-  // Group "+49XXXXXXX" as "+49 XXX XXXXXXX"
   const cleaned = raw.replace(/[^\d+]/g, "");
   if (cleaned.startsWith("+49") && cleaned.length > 5) {
-    return `+49 ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+    const national = cleaned.slice(3);
+    // Mobile numbers (01…) group like the printed flyer: "0155 1066 9395" → "+49 155 1066 9395".
+    if (national.startsWith("1") && national.length >= 10) {
+      return `+49 ${national.slice(0, 3)} ${national.slice(3, 7)} ${national.slice(7)}`;
+    }
+    return `+49 ${national.slice(0, 3)} ${national.slice(3)}`;
   }
   return cleaned;
 }

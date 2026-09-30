@@ -15,10 +15,16 @@ import {
   adminInputClass,
 } from "@/components/admin/AdminFormField";
 
+/** `next` comes from the URL, so only a same-origin /admin path is honored — anything else
+ *  ("//evil.tld", "/\\evil.tld", "https://…") would be an open redirect after login. */
+function safeNextPath(raw: string | null | undefined): string {
+  return raw && /^\/admin(?:[/?#]|$)/.test(raw) && !/[\\\s]/.test(raw) ? raw : "/admin";
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams?.get("next") ?? "/admin";
+  const next = safeNextPath(searchParams?.get("next"));
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 

@@ -41,17 +41,17 @@ def _cached(request: Request, payload: Any, max_age: int = 300) -> Response:
 
 
 @router.get("/health")
-async def health() -> dict:
+def health() -> dict:
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @router.get("/settings")
-async def get_settings(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def get_settings(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.get_settings(db, locale))
 
 
 @router.get("/ui-strings")
-async def get_ui_strings(
+def get_ui_strings(
     request: Request,
     db: Session = Depends(get_db),
     locale: Locale = Depends(get_locale),
@@ -61,27 +61,27 @@ async def get_ui_strings(
 
 
 @router.get("/services")
-async def list_services(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def list_services(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.list_services(db, locale))
 
 
 @router.get("/services/{slug}")
-async def get_service(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def get_service(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.get_service_by_slug(db, slug, locale))
 
 
 @router.get("/legal-pages/{slug}")
-async def get_legal_page(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def get_legal_page(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.get_legal_page(db, slug, locale), max_age=600)
 
 
 @router.get("/vehicles")
-async def list_vehicles(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def list_vehicles(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.list_vehicles(db, locale))
 
 
 @router.get("/faqs")
-async def list_faqs(
+def list_faqs(
     request: Request,
     db: Session = Depends(get_db),
     locale: Locale = Depends(get_locale),
@@ -91,52 +91,52 @@ async def list_faqs(
 
 
 @router.get("/testimonials")
-async def list_testimonials(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def list_testimonials(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.list_testimonials(db, locale))
 
 
 @router.get("/pricing")
-async def list_pricing_all(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def list_pricing_all(request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.list_pricing_all_grouped(db, locale))
 
 
 @router.get("/services/{slug}/pricing")
-async def list_pricing(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
+def list_pricing(slug: str, request: Request, db: Session = Depends(get_db), locale: Locale = Depends(get_locale)) -> Response:
     return _cached(request, PublicController.list_pricing_for_service(db, slug, locale))
 
 
 @router.post("/bookings", response_model=BookingSubmitted, status_code=status.HTTP_201_CREATED)
 @limiter.limit("3/minute;10/hour")
-async def submit_booking(request: Request, payload: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> BookingSubmitted:
+def submit_booking(request: Request, payload: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> BookingSubmitted:
     return FormsController.submit_booking(db, payload, request, background_tasks)
 
 
 @router.post("/contact", response_model=ContactSubmitted, status_code=status.HTTP_201_CREATED)
 @limiter.limit("3/minute;10/hour")
-async def submit_contact(request: Request, payload: ContactCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ContactSubmitted:
+def submit_contact(request: Request, payload: ContactCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ContactSubmitted:
     return FormsController.submit_contact(db, payload, request, background_tasks)
 
 
 # ── No-login order creation for field workers (shared staff code gate) ──
 @router.get("/fleet-vehicles", response_model=list[PublicFleetVehicle])
-async def public_fleet_vehicles(db: Session = Depends(get_db)) -> list[PublicFleetVehicle]:
+def public_fleet_vehicles(db: Session = Depends(get_db)) -> list[PublicFleetVehicle]:
     return FormsController.fleet_vehicles(db)
 
 
 @router.post("/staff-gate", response_model=StaffGateResult)
 @limiter.limit("10/minute;60/hour")
-async def public_staff_gate(request: Request, payload: StaffGateCheck, db: Session = Depends(get_db)) -> StaffGateResult:
+def public_staff_gate(request: Request, payload: StaffGateCheck, db: Session = Depends(get_db)) -> StaffGateResult:
     return FormsController.verify_staff_code(db, payload.code)
 
 
 @router.post("/orders", response_model=PublicOrderSubmitted, status_code=status.HTTP_201_CREATED)
 @limiter.limit("6/minute;60/hour")
-async def public_create_order(request: Request, payload: PublicOrderCreate, db: Session = Depends(get_db)) -> PublicOrderSubmitted:
+def public_create_order(request: Request, payload: PublicOrderCreate, db: Session = Depends(get_db)) -> PublicOrderSubmitted:
     return FormsController.create_public_order(db, payload, request)
 
 
 @router.get("/slips/{public_code}")
-async def public_slip_download(
+def public_slip_download(
     public_code: str,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),

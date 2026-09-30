@@ -120,7 +120,9 @@ class PricingItemPublicResponse(BaseModel):
     id: UUID
     from_location: str | None
     to_location: str | None
-    price_eur: str
+    price_eur: str | None
+    price_unit: str | None
+    is_from_price: bool
     currency: str
     distance_km: str | None
     note: str | None
@@ -130,6 +132,7 @@ class PricingCategoryPublicResponse(BaseModel):
     id: UUID
     name: str
     description: str | None
+    prices_net: bool
     items: list[PricingItemPublicResponse]
 
 

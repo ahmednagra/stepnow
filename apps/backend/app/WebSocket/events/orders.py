@@ -6,12 +6,11 @@
 #      controller has committed, so a slow/broken socket never blocks or rolls back the request.
 #
 # Best-effort by construction: every send goes through the manager, which logs+prunes on
-# failure and never raises. We also wrap the asyncio bridge so even a loop error is swallowed.
+# failure and never raises; emit_soon hands the send to the server loop that owns the sockets.
 
-import asyncio
 from typing import Any
 
-from app.WebSocket.publisher import emit_to_admin, emit_to_channels
+from app.WebSocket.publisher import emit_soon, emit_to_channels
 from app.Utils.Logger import get_logger
 
 logger = get_logger("websocket")
@@ -38,10 +37,6 @@ async def _emit(event_type: str, order_id: str, data: dict[str, Any], triggered_
 
 
 def dispatch_order_event(event_type: str, order_id: str, data: dict[str, Any], actor_id: str | None = None) -> None:
-    """Synchronous entry point for BackgroundTasks. Bridges into the event loop and returns
+    """Synchronous entry point for BackgroundTasks. Hands the send to the server loop and returns
     immediately. Safe to call from controller code after db.commit()."""
-    triggered_by = f"user:{actor_id}" if actor_id else None
-    try:
-        asyncio.run(_emit(event_type, order_id, data, triggered_by))
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[OrderEvent.dispatch] type={event_type} order={order_id} failed: {exc}")
+    emit_soon(_emit(event_type, order_id, data, f"user:{actor_id}" if actor_id else None))

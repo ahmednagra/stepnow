@@ -5,7 +5,7 @@
 "use client";
 import { createStore } from "@/lib/createStore";
 import { buildCookie, readConsentCookie, writeConsentCookie } from "@/lib/consent/cookie";
-import { CONSENT_DEFAULT, type ConsentState } from "@/lib/consent/types";
+import { CONSENT_ALL, CONSENT_DEFAULT, type ConsentState } from "@/lib/consent/types";
 
 interface ConsentStore {
   decided: boolean;
@@ -27,9 +27,8 @@ export const useConsentStore = createStore<ConsentStore>((set, get) => ({
     set({ hydrated: true, decided: c?.decided ?? false, state: c?.state ?? CONSENT_DEFAULT });
   },
   acceptAll: () => {
-    const next: ConsentState = { maps: true, fonts: true, analytics: true };
-    writeConsentCookie(buildCookie(next, true));
-    set({ decided: true, state: next });
+    writeConsentCookie(buildCookie(CONSENT_ALL, true));
+    set({ decided: true, state: CONSENT_ALL });
   },
   rejectAll: () => {
     writeConsentCookie(buildCookie(CONSENT_DEFAULT, true));
@@ -44,7 +43,5 @@ export const useConsentStore = createStore<ConsentStore>((set, get) => ({
 }));
 
 export const useMapsConsent = () => useConsentStore((s) => s.state.maps);
-export const useFontsConsent = () => useConsentStore((s) => s.state.fonts);
-export const useAnalyticsConsent = () => useConsentStore((s) => s.state.analytics);
 export const useConsentDecided = () => useConsentStore((s) => s.decided);
 export const useConsentHydrated = () => useConsentStore((s) => s.hydrated);

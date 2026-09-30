@@ -1,5 +1,7 @@
 # StepNow Frontend
 
+> **Outdated.** The canonical, maintained guide is [CLAUDE.md](CLAUDE.md) (and the repo-root [CLAUDE.md](../../CLAUDE.md)); where this README disagrees, CLAUDE.md wins.
+
 Next.js 14 App Router + Tailwind. Bilingual (DE primary, EN at `/en`). BFF pattern — browser → Next.js Route Handlers → FastAPI.
 
 ## Quickstart

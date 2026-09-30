@@ -10,6 +10,7 @@ import type { SettingsPublic } from "@/types";
 import { toTelHref } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
 import { cn } from "@/utils/cn";
+import { ConsentSettingsButton } from "@/components/consent";
 
 interface FooterProps {
   settings: SettingsPublic;
@@ -27,6 +28,7 @@ const QUICK_LINKS: FooterLink[] = [
   { key: "footer.legal.impressum", hrefDe: "/impressum", hrefEn: "/en/legal-notice" },
   { key: "nav.pricing", hrefDe: "/preise", hrefEn: "/en/pricing" },
   { key: "nav.contact", hrefDe: "/kontakt", hrefEn: "/en/contact" },
+  { key: "nav.faq", hrefDe: "/faq", hrefEn: "/en/faq" },
 ];
 
 const SERVICE_LINKS: FooterLink[] = [
@@ -39,11 +41,6 @@ const SERVICE_LINKS: FooterLink[] = [
     key: "services.krankenhausfahrten",
     hrefDe: "/dienstleistungen/krankenhausfahrten",
     hrefEn: "/en/services/hospital-transport",
-  },
-  {
-    key: "services.schuelerbefoerderung",
-    hrefDe: "/dienstleistungen/schuelerbefoerderung",
-    hrefEn: "/en/services/school-transport",
   },
   {
     key: "services.shuttle",
@@ -152,6 +149,9 @@ export function Footer({ settings }: FooterProps) {
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <ConsentSettingsButton className="text-[11px] tracking-[0.04em] text-[color:rgba(200,197,190,0.86)] transition-colors duration-base hover:text-[var(--color-accent-secondary)]" />
+                </li>
               </ul>
 
               <LanguageSwitcher className="text-[var(--color-text-footer-muted)]" />

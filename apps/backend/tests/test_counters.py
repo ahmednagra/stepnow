@@ -74,7 +74,7 @@ def test_invoice_number_swaps_the_order_letter(db):
     db.commit()
     invoice_no = next_invoice_number(db, order_no)
     db.commit()
-    assert order_no.startswith("P-")
+    assert order_no.startswith(f"{ORDER_PREFIX}-")
     assert invoice_no == f"R-{job_core(order_no)}"
 
 
@@ -93,7 +93,7 @@ def test_customer_numbers_are_unique_and_prefixed(db):
 
 
 def test_invoice_number_gets_a_revision_after_the_first(db):
-    order_number = "P-01010199"
+    order_number = f"{ORDER_PREFIX}-01010199"
     db.execute(text('DELETE FROM counters WHERE scope = :s AND "key" = :k'), {"s": "invoice", "k": order_number})
     db.commit()
     first = next_invoice_number(db, order_number)
@@ -113,7 +113,7 @@ def test_booking_order_and_invoice_share_one_core(db):
     order_no = order_date_sequence_number(db, core=core)
     invoice_no = next_invoice_number(db, order_no)
     db.commit()
-    assert (reference, order_no, invoice_no) == (f"B-{core}", f"P-{core}", f"R-{core}")
+    assert (reference, order_no, invoice_no) == (f"B-{core}", f"{ORDER_PREFIX}-{core}", f"R-{core}")
 
 
 def test_bookings_and_orders_never_claim_the_same_core(db):

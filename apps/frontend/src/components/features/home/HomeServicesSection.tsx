@@ -28,7 +28,7 @@ export function HomeServicesSection({ t, locale, services }: HomeServicesSection
               {t("home.services.heading")}
             </h2>
           </div>
-          <p className="max-w-sm text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:max-w-none md:whitespace-nowrap md:text-right">
+          <p className="max-w-sm text-balance text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:max-w-md md:text-right">
             {t("home.services.subheading")}
           </p>
         </ScrollReveal>

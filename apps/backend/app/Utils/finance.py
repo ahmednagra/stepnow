@@ -71,7 +71,7 @@ def date_suffix(for_date: date | None = None) -> str:
 
 
 BOOKING_PREFIX = "B"
-ORDER_PREFIX = "P"
+ORDER_PREFIX = "A"  # Auftrag — matches the Transportauftrag paperwork
 INVOICE_PREFIX = "R"
 
 
@@ -98,7 +98,7 @@ def booking_reference(db: Session, for_date: date | None = None) -> str:
 
 
 def order_date_sequence_number(db: Session, for_date: date | None = None, core: str | None = None) -> str:
-    """Format: P-{order-of-day}{DDMMYY}, e.g. 'P-45260826' = 45th job of 26.08.26. Pass `core`
+    """Format: A-{order-of-day}{DDMMYY}, e.g. 'A-02130826' = 2nd job of 13.08.26. Pass `core`
     when the job already has digits (booking -> order) so they carry through unchanged."""
     return document_number(ORDER_PREFIX, core or next_job_core(db, for_date))
 
@@ -132,7 +132,7 @@ def next_customer_number(db: Session, prefix: str = "K911", width: int = 3) -> s
 
 
 def invoice_number_from_order(order_number: str, revision: int = 0) -> str:
-    """The invoice carries its order's digits: P-45260826 -> R-45260826, so a payment matches a job
+    """The invoice carries its order's digits: A-02130826 -> R-02130826, so a payment matches a job
     without a lookup. A replacement issued after a Storno appends '-{revision}' — a cancelled
     number is never reissued (§14 UStG)."""
     return document_number(INVOICE_PREFIX, job_core(order_number), revision)

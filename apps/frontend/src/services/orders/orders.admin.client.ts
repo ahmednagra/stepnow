@@ -10,6 +10,9 @@ import type { Paginated } from "@/types";
 export type OrderStatus = "open" | "completed" | "cancelled";
 export type DeliveryStatus = "draft" | "dispatched" | "picked_up" | "delivered";
 export type PaymentMethod = "cash" | "girocard" | "bank_transfer" | "paypal" | "other";
+export type PaymentStatus = "received" | "pending" | "refunded" | "failed";
+/** draft (editable) → issued (frozen Beleg) → paid (derived from the ledger), or cancelled (Storno). */
+export type InvoiceStatus = "draft" | "issued" | "paid" | "cancelled";
 
 export interface OrderAdmin {
   id: string;
@@ -54,7 +57,7 @@ export interface OrderAdmin {
   balance_due: string;
   is_overdue: boolean;
   invoice_number: string | null;
-  invoice_status: string | null;
+  invoice_status: InvoiceStatus | null;
 }
 
 export interface PaymentAdmin {
@@ -63,7 +66,7 @@ export interface PaymentAdmin {
   invoice_id: string | null;
   amount: string;
   method: PaymentMethod;
-  status: string;
+  status: PaymentStatus;
   received_at: string;
   reference: string | null;
   notes: string | null;
@@ -90,7 +93,7 @@ export interface InvoiceAdmin {
   id: string;
   invoice_number: string;
   order_id: string;
-  status: string;
+  status: InvoiceStatus;
   issue_date: string;
   recipient_block: string | null;
   tax_number: string | null;
@@ -118,7 +121,7 @@ export interface InvoiceListItem {
   invoice_number: string;
   order_id: string;
   order_number: string;
-  status: string;
+  status: InvoiceStatus;
   issue_date: string;
   due_date: string | null;
   customer_name: string;
@@ -144,7 +147,10 @@ export interface InvoiceUpdateInput {
 }
 
 export interface OrderDetail extends OrderAdmin {
+  /** The live bill (not cancelled). */
   invoice: InvoiceAdmin | null;
+  /** Full billing history, oldest first — cancelled bills (Storno) and their replacements. */
+  invoices: InvoiceAdmin[];
   payments: PaymentAdmin[];
 }
 
@@ -251,11 +257,30 @@ export async function getInvoice(id: string): Promise<InvoiceAdmin> {
 export async function updateInvoice(id: string, payload: InvoiceUpdateInput): Promise<InvoiceAdmin> {
   return nextjsApiClient.patch<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_BY_ID(id), payload);
 }
+/** Issue a draft: §14 checks run server-side and the PDF is frozen. */
+export async function issueInvoice(id: string): Promise<InvoiceAdmin> {
+  return nextjsApiClient.post<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_ISSUE(id), {});
+}
+/** Storno an issued bill. Its payments stay on the order and move to the replacement. */
+export async function cancelInvoice(id: string, reason?: string): Promise<InvoiceAdmin> {
+  return nextjsApiClient.post<InvoiceAdmin>(ENDPOINTS.ADMIN.INVOICE_CANCEL(id), reason ? { reason } : {});
+}
+/** received → refunded, pending → received | failed. Paid states re-derive server-side. */
+export async function setPaymentStatus(id: string, status: Exclude<PaymentStatus, "pending">): Promise<PaymentAdmin> {
+  return nextjsApiClient.patch<PaymentAdmin>(ENDPOINTS.ADMIN.PAYMENT_BY_ID(id), { status });
+}
 
 /** Authenticated bill PDF download by invoice id (the bearer header can't ride a plain link). */
 export async function downloadInvoicePdfById(id: string, invoiceNumber?: string): Promise<void> {
+  return downloadPdf(ENDPOINTS.ADMIN.INVOICE_PDF(id), `${invoiceNumber ?? "Rechnung"}.pdf`);
+}
+/** The Stornorechnung frozen when the bill was cancelled. */
+export async function downloadStornoPdfById(id: string, invoiceNumber: string): Promise<void> {
+  return downloadPdf(ENDPOINTS.ADMIN.INVOICE_STORNO_PDF(id), `${invoiceNumber}-STORNO.pdf`);
+}
+async function downloadPdf(path: string, filename: string): Promise<void> {
   const token = getAccessToken();
-  const res = await fetch(`/api/v0${ENDPOINTS.ADMIN.INVOICE_PDF(id)}`, {
+  const res = await fetch(`/api/v0${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
   if (!res.ok) throw new Error("PDF download failed");
@@ -263,7 +288,7 @@ export async function downloadInvoicePdfById(id: string, invoiceNumber?: string)
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${invoiceNumber ?? "Rechnung"}.pdf`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();

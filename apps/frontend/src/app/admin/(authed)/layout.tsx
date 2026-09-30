@@ -10,6 +10,7 @@ import { useCurrentAdmin } from "@/hooks/queries/useCurrentAdmin";
 import { getAccessToken, clearTokens } from "@/lib/auth-storage";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { CommandPalette } from "@/components/admin";
+import { AdminRealtimeProvider } from "@/hooks/realtime/AdminRealtimeProvider";
 
 function Loading() {
   return (
@@ -39,10 +40,13 @@ export default function AdminAuthedLayout({ children }: { children: ReactNode })
 
   if (!mounted || !hasToken || isLoading || invalid || !admin) return <Loading />;
 
+  // The realtime socket opens only for a verified admin and closes when this layout unmounts (logout).
   return (
-    <AdminLayout admin={admin}>
-      {children}
-      <CommandPalette />
-    </AdminLayout>
+    <AdminRealtimeProvider>
+      <AdminLayout admin={admin}>
+        {children}
+        <CommandPalette />
+      </AdminLayout>
+    </AdminRealtimeProvider>
   );
 }

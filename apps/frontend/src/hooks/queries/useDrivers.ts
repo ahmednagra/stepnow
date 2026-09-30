@@ -1,6 +1,6 @@
 // src/hooks/queries/useDrivers.ts
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { queryKeys, STALE_TIMES, GC_TIMES } from "@/lib/react-query";
 import { getAdminDriver, listAdminDrivers, listDriverOrders, type DriverAdmin, type ListDriversParams } from "@/services/drivers/drivers.admin.client";
 import type { CourierOrder } from "@/services/courier";
@@ -40,17 +40,18 @@ export function useDriver(id: string, opts: { enabled?: boolean } = {}) {
   });
 }
 
-/** Job history for a driver. */
-export function useDriverOrders(id: string, opts: { enabled?: boolean } = {}) {
-  return useQuery<CourierOrder[]>({
-    queryKey: queryKeys.drivers.orders(id),
+/** One page of the driver's job history (newest first); keyed per page. */
+export function useDriverOrders(id: string, params: { page?: number; size?: number } = {}, opts: { enabled?: boolean } = {}) {
+  return useQuery<Paginated<CourierOrder>>({
+    queryKey: queryKeys.drivers.orders(id, params),
     queryFn: async () => {
       console.log(`🔄 useDriverOrders: Fetching ${id}`);
-      const res = await listDriverOrders(id);
-      console.log(`✅ useDriverOrders: Fetched ${res.length} jobs`);
+      const res = await listDriverOrders(id, params);
+      console.log(`✅ useDriverOrders: Fetched ${res.items.length} jobs`);
       return res;
     },
     enabled: (opts.enabled ?? true) && Boolean(id),
+    placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.STANDARD,
     gcTime: GC_TIMES.STANDARD,
     refetchOnWindowFocus: false,

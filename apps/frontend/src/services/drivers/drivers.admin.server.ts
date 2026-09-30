@@ -54,6 +54,6 @@ export async function recordLicenseCheckServer(id: string, data: LicenseCheckInp
   return d;
 }
 
-export async function listDriverOrdersServer(id: string, authToken: string): Promise<CourierOrder[]> {
-  return unwrap(await serverApiClient.get<CourierOrder[]>(ENDPOINTS.ADMIN.DRIVER_ORDERS(id), undefined, authToken));
+export async function listDriverOrdersServer(id: string, params: { page?: number; size?: number }, authToken: string): Promise<Paginated<CourierOrder>> {
+  return unwrap(await serverApiClient.get<Paginated<CourierOrder>>(ENDPOINTS.ADMIN.DRIVER_ORDERS(id), { params }, authToken));
 }

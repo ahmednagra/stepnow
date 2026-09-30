@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = createT(stringsRes.strings, "de");
   return buildMetadata({
     title: t("about.page.title"),
-    description: t("about.page.subhead"),
+    description: t("about.meta_description"),
     path: "/ueber-uns",
     locale: "de",
   });

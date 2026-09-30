@@ -33,7 +33,8 @@ async function refreshAccessToken(): Promise<boolean> {
   return true;
 }
 
-async function ensureFreshToken(): Promise<boolean> {
+/** Single-flight access-token refresh (shared with the admin realtime socket's re-auth). */
+export async function ensureFreshToken(): Promise<boolean> {
   refreshPromise ??= refreshAccessToken()
     .catch(() => false)
     .finally(() => {

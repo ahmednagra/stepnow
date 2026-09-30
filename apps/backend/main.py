@@ -1,6 +1,7 @@
 # apps/backend/main.py
 # FastAPI app factory: lifespan syncs the schema to the models and (opt-in) runs idempotent seeders; CORS + rate-limit middleware; centralized error envelope.
 
+import asyncio
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -20,7 +21,9 @@ from config.database import engine
 from app.Models import Base
 from app.Core.Exceptions import AppError
 from app.Utils.Logger import get_logger
+from app.Utils.client_ip import client_ip
 from app.Utils.rate_limit import limiter
+from app.WebSocket.publisher import bind_loop
 from routes import setup_api_routes
 
 logger = get_logger("stepnow")
@@ -34,15 +37,22 @@ def _missing_columns(inspector, table) -> list:
     return [c for c in table.columns if c.name not in existing]
 
 
+def _add_column_sql(dialect, table_name: str, column) -> tuple[str, bool]:
+    """(ALTER TABLE … ADD COLUMN statement, has_default). The default goes through the dialect's
+    DDL compiler — the same path CREATE TABLE uses — so a plain string default is quoted
+    ('draft'), text() passes through verbatim, and quotes inside a literal are escaped."""
+    default = dialect.ddl_compiler(dialect, None).get_column_default_string(column)
+    ddl = column.type.compile(dialect=dialect)
+    clause = f" DEFAULT {default}" if default is not None else ""
+    return f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS "{column.name}" {ddl}{clause}', default is not None
+
+
 def _add_column(conn, table, column) -> None:
-    ddl = column.type.compile(dialect=conn.dialect)
-    default = ""
-    if column.server_default is not None and getattr(column.server_default, "arg", None) is not None:
-        default = f" DEFAULT {column.server_default.arg.text if hasattr(column.server_default.arg, 'text') else column.server_default.arg}"
-    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN IF NOT EXISTS "{column.name}" {ddl}{default}'))
+    sql, has_default = _add_column_sql(conn.dialect, table.name, column)
+    conn.execute(text(sql.replace(":", "\\:")))  # a literal default is not a bind parameter
     # A server_default backfills existing rows, so NOT NULL can be applied straight after —
     # without it the database stays nullable while the model claims otherwise.
-    if not column.nullable and default:
+    if not column.nullable and has_default:
         conn.execute(text(f'ALTER TABLE {table.name} ALTER COLUMN "{column.name}" SET NOT NULL'))
 
 
@@ -246,7 +256,9 @@ async def lifespan(app: FastAPI):
     sync_schema()
     seed_counters()
     _run_seeders_if_enabled()
+    bind_loop(asyncio.get_running_loop())  # sync code publishes realtime events onto this loop
     yield
+    bind_loop(None)
     logger.info(f"Shutting down {settings.APP_NAME}")
 
 
@@ -272,11 +284,11 @@ app.add_middleware(
 @app.middleware("http")
 async def request_logging(request: Request, call_next):
     start = time.perf_counter()
-    client_ip = request.client.host if request.client else "-"
+    ip = client_ip(request)
     try:
         response = await call_next(request)
         duration_ms = (time.perf_counter() - start) * 1000
-        logger.info(f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms:.1f}ms) ip={client_ip}")
+        logger.info(f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms:.1f}ms) ip={ip}")
         return response
     except Exception as exc:
         duration_ms = (time.perf_counter() - start) * 1000

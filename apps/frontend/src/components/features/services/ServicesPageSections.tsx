@@ -6,20 +6,19 @@ import {
   ArrowRight,
   ArrowUpRight,
   Check,
-  Plane,
-  HeartPulse,
-  GraduationCap,
   Users,
+  Package,
   Calendar,
   Clock,
   type LucideIcon,
 } from "lucide-react";
 import type { TFunction } from "@/lib/i18n/t";
-import type { Locale, PricingCategoryPublic, ServicePublic } from "@/types";
+import type { Locale, ServicePublic } from "@/types";
 import { Container } from "@/components/shared";
 import { formatPrice } from "@/utils/formatters";
 import { pickT } from "@/lib/i18n/pick";
 import { cn } from "@/utils/cn";
+import { getServiceIcon } from "@/utils/service-icons";
 import { getServiceHeroImage } from "@/components/features/pricing/PricingSections";
 
 export interface ServiceWithPricing {
@@ -27,40 +26,12 @@ export interface ServiceWithPricing {
   lowestPrice: string | null;
   lowestCurrency: string;
   lowestRouteLabel: string | null;
+  /** The "ab" price is net (courier) — shown with a "netto" marker. */
+  lowestIsNet: boolean;
 }
 
-const ICON_BY_SLUG: Record<string, LucideIcon> = {
-  flughafentransfer: Plane,
-  "airport-transfer": Plane,
-  krankenhausfahrten: HeartPulse,
-  "hospital-transport": HeartPulse,
-  schuelerbefoerderung: GraduationCap,
-  "school-transport": GraduationCap,
-  "shuttle-service": Users,
-};
-
-export function findLowestPrice(categories: PricingCategoryPublic[]): {
-  price: string | null;
-  currency: string;
-  routeLabel: string | null;
-} {
-  let cheapest: { price: number; raw: string; currency: string; label: string } | null = null;
-  for (const c of categories) {
-    for (const item of c.items) {
-      const num = Number(item.price_eur);
-      if (Number.isNaN(num)) continue;
-      const label =
-        item.from_location && item.to_location
-          ? `${item.from_location} → ${item.to_location}`
-          : (item.from_location ?? item.to_location ?? "");
-      if (!cheapest || num < cheapest.price) {
-        cheapest = { price: num, raw: item.price_eur, currency: item.currency, label };
-      }
-    }
-  }
-  if (!cheapest) return { price: null, currency: "EUR", routeLabel: null };
-  return { price: cheapest.raw, currency: cheapest.currency, routeLabel: cheapest.label || null };
-}
+// The headline-price rule lives with the other price-list rules.
+export { findLowestPrice } from "@/utils/pricing";
 
 function firstParagraph(md: string | null | undefined): string | null {
   if (!md) return null;
@@ -96,12 +67,12 @@ export function ServicesIndex({
             className="block h-px flex-1 bg-[color:var(--color-border-soft)]"
           />
         </p>
-        {/* auto-fit collapses empty tracks, so five services fill five columns instead of
-              leaving a void beside the fifth. gap-px lets the parent show through as hairlines,
+        {/* auto-fit collapses empty tracks, so the services fill the row instead of
+              leaving a void beside the last one. gap-px lets the parent show through as hairlines,
               which replaces the per-child nth-child border rules entirely. */}
           <div className="grid grid-cols-1 gap-px border border-[color:var(--color-border-soft)] bg-[color:var(--color-border-soft)] sm:grid-cols-[repeat(auto-fit,minmax(212px,1fr))]">
-          {data.map(({ service, lowestPrice, lowestCurrency }, idx) => {
-            const Icon = ICON_BY_SLUG[service.slug] ?? Plane;
+          {data.map(({ service, lowestPrice, lowestCurrency, lowestIsNet }, idx) => {
+            const Icon = getServiceIcon(service.icon, service.slug);
             const number = String(idx + 1).padStart(2, "0");
             return (
               <a
@@ -131,6 +102,11 @@ export function ServicesIndex({
                       <span className="font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)] md:text-[22px]">
                         {formatPrice(lowestPrice, locale, lowestCurrency)}
                       </span>
+                      {lowestIsNet && (
+                        <span className="text-[10.5px] uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
+                          {pickT(t, "pricing.price.net", locale === "de" ? "netto" : "net")}
+                        </span>
+                      )}
                     </>
                   ) : (
                     <span className="text-[13px] text-[var(--color-text-primary)]">
@@ -154,13 +130,13 @@ export function ServicesIndex({
 // ServiceRichRow ──────────────────────────────────────────────────────────────
 
 const IMAGE_TAGS: Record<string, { de: string; en: string }> = {
-  flughafentransfer: { de: "Beliebteste Buchung", en: "Most booked" },
-  "airport-transfer": { de: "Beliebteste Buchung", en: "Most booked" },
+  flughafentransfer: { de: "Festpreise", en: "Fixed prices" },
+  "airport-transfer": { de: "Festpreise", en: "Fixed prices" },
   krankenhausfahrten: { de: "Nicht-Notfall", en: "Non-emergency" },
   "hospital-transport": { de: "Nicht-Notfall", en: "Non-emergency" },
-  schuelerbefoerderung: { de: "Für Familien", en: "For families" },
-  "school-transport": { de: "Für Familien", en: "For families" },
-  "shuttle-service": { de: "Gruppentransfers", en: "Group transfers" },
+  "shuttle-service": { de: "Stadt & Gruppen", en: "Local & groups" },
+  "kurier-sondertransport": { de: "Für Geschäftskunden", en: "For business" },
+  "courier-transport": { de: "Für Geschäftskunden", en: "For business" },
 };
 
 interface DiffSpec {
@@ -180,12 +156,12 @@ const DIFFERENTIATORS: Record<string, DiffSpec> = {
     bodyKey: "services.row.flughafentransfer.diff_body",
     defaults: {
       de: {
-        label: "60 Minuten Wartezeit",
-        body: "bei Flughafenabholungen — der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.",
+        label: "Festpreis ab Wohnort",
+        body: "— pro Fahrzeug bis zu 4 Personen, zum Flughafen oder Hauptbahnhof Stuttgart.",
       },
       en: {
-        label: "60 minutes waiting included",
-        body: "for airport pickups — your driver tracks your flight and adjusts automatically.",
+        label: "Fixed price from your town",
+        body: "— per vehicle for up to 4 persons, to Stuttgart Airport or Central Station.",
       },
     },
   },
@@ -195,12 +171,12 @@ const DIFFERENTIATORS: Record<string, DiffSpec> = {
     bodyKey: "services.row.airport-transfer.diff_body",
     defaults: {
       de: {
-        label: "60 Minuten Wartezeit",
-        body: "bei Flughafenabholungen — der Fahrer verfolgt Ihren Flug und passt die Zeit automatisch an.",
+        label: "Festpreis ab Wohnort",
+        body: "— pro Fahrzeug bis zu 4 Personen, zum Flughafen oder Hauptbahnhof Stuttgart.",
       },
       en: {
-        label: "60 minutes waiting included",
-        body: "for airport pickups — your driver tracks your flight and adjusts automatically.",
+        label: "Fixed price from your town",
+        body: "— per vehicle for up to 4 persons, to Stuttgart Airport or Central Station.",
       },
     },
   },
@@ -234,48 +210,48 @@ const DIFFERENTIATORS: Record<string, DiffSpec> = {
       },
     },
   },
-  schuelerbefoerderung: {
-    Icon: Calendar,
-    labelKey: "services.row.schuelerbefoerderung.diff_label",
-    bodyKey: "services.row.schuelerbefoerderung.diff_body",
-    defaults: {
-      de: {
-        label: "Abonnement verfügbar",
-        body: "— Mo–Fr Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.",
-      },
-      en: {
-        label: "Subscription available",
-        body: "— Monday–Friday block bookings with the same driver, billed monthly, paused for school holidays automatically.",
-      },
-    },
-  },
-  "school-transport": {
-    Icon: Calendar,
-    labelKey: "services.row.school-transport.diff_label",
-    bodyKey: "services.row.school-transport.diff_body",
-    defaults: {
-      de: {
-        label: "Abonnement verfügbar",
-        body: "— Mo–Fr Blockbuchungen mit demselben Fahrer, monatliche Abrechnung, in Schulferien automatisch pausiert.",
-      },
-      en: {
-        label: "Subscription available",
-        body: "— Monday–Friday block bookings with the same driver, billed monthly, paused for school holidays automatically.",
-      },
-    },
-  },
   "shuttle-service": {
     Icon: Users,
     labelKey: "services.row.shuttle-service.diff_label",
     bodyKey: "services.row.shuttle-service.diff_body",
     defaults: {
       de: {
-        label: "Bis zu 8 Fahrgäste",
-        body: "in einem Fahrzeug. Single-Driver-Koordination — eine Telefonnummer für die gesamte Fahrt, auch bei mehreren Abholpunkten.",
+        label: "Bis zu 4 Personen",
+        body: "pro Fahrzeug — für größere Gruppen setzen wir mehrere Fahrzeuge ein und koordinieren die gesamte Fahrt.",
       },
       en: {
-        label: "Up to 8 passengers",
-        body: "in one vehicle. Single-driver coordination — one phone number for the whole journey, even with multiple pickups.",
+        label: "Up to 4 persons",
+        body: "per vehicle — for larger groups we deploy several vehicles and coordinate the whole journey.",
+      },
+    },
+  },
+  "kurier-sondertransport": {
+    Icon: Package,
+    labelKey: "services.row.kurier-sondertransport.diff_label",
+    bodyKey: "services.row.kurier-sondertransport.diff_body",
+    defaults: {
+      de: {
+        label: "PKW/Kombi oder Sprinter",
+        body: "— Grundpreis inkl. 5 km und 1 Std. Be-/Entladezeit, Express-Zuschlag bei Bedarf.",
+      },
+      en: {
+        label: "Car/estate or Sprinter",
+        body: "— base price incl. 5 km and 1 hour of loading, express surcharge when needed.",
+      },
+    },
+  },
+  "courier-transport": {
+    Icon: Package,
+    labelKey: "services.row.courier-transport.diff_label",
+    bodyKey: "services.row.courier-transport.diff_body",
+    defaults: {
+      de: {
+        label: "PKW/Kombi oder Sprinter",
+        body: "— Grundpreis inkl. 5 km und 1 Std. Be-/Entladezeit, Express-Zuschlag bei Bedarf.",
+      },
+      en: {
+        label: "Car/estate or Sprinter",
+        body: "— base price incl. 5 km and 1 hour of loading, express surcharge when needed.",
       },
     },
   },
@@ -290,6 +266,7 @@ export function ServiceRichRow({
   lowestPrice,
   lowestCurrency,
   lowestRouteLabel,
+  lowestIsNet = false,
 }: {
   t: TFunction;
   locale: Locale;
@@ -299,6 +276,7 @@ export function ServiceRichRow({
   lowestPrice: string | null;
   lowestCurrency: string;
   lowestRouteLabel: string | null;
+  lowestIsNet?: boolean;
 }) {
   const isReversed = index % 2 === 1;
   const number = String(index + 1).padStart(2, "0");
@@ -400,6 +378,11 @@ export function ServiceRichRow({
                 <span className="font-serif text-[20px] font-medium tabular-nums text-[var(--color-accent-primary)]">
                   {formatPrice(lowestPrice, locale, lowestCurrency)}
                 </span>
+                {lowestIsNet && (
+                  <span className="text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
+                    {pickT(t, "pricing.price.net", locale === "de" ? "netto" : "net")}
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -446,12 +429,12 @@ const HIW_STEPS: HiwStep[] = [
     Icon: Check,
     defaults: {
       de: {
-        heading: "Pauschalpreis innerhalb von 30 Min",
-        body: "Während der Telefonzeiten bestätigen wir den Pauschalpreis, den Fahrer und das Fahrzeug. Ab diesem Moment ist der Preis fixiert.",
+        heading: "Ihr Preis innerhalb von 30 Min.",
+        body: "Während der Telefonzeiten bestätigen wir Preis, Fahrer und Fahrzeug — zum Festpreis oder nach unserem Tarif.",
       },
       en: {
-        heading: "Fixed price within 30 min",
-        body: "During phone hours, we confirm the fixed price, the driver, and the vehicle. The price is locked from that moment on.",
+        heading: "Your price within 30 min",
+        body: "During phone hours we confirm the price, the driver and the vehicle — a fixed price or our tariff.",
       },
     },
   },
@@ -463,11 +446,11 @@ const HIW_STEPS: HiwStep[] = [
     defaults: {
       de: {
         heading: "Der Fahrer ist schon da",
-        body: "Kein Heranrufen, keine App-Dispatch, kein Surge. Der bestätigte Pauschalpreis ist der Preis, den Sie zahlen — auch im Stau, auch an Feiertagen.",
+        body: "Kein Heranwinken, keine App-Vermittlung, keine Aufschläge zu Stoßzeiten. Ein bestätigter Festpreis bleibt fest — auch im Stau.",
       },
       en: {
         heading: "The driver is already there",
-        body: "No hailing, no app dispatch, no surge. The Pauschalpreis you confirmed is the Pauschalpreis you pay — same in traffic, same on holidays.",
+        body: "No hailing, no app dispatch, no peak-time surcharges. A confirmed fixed price stays fixed — even in traffic.",
       },
     },
   },
@@ -572,7 +555,7 @@ export function ServicesEditorialClose({
           {pickT(
             t,
             "services.close.eyebrow",
-            locale === "de" ? "Fünf Services, ein Standard" : "Five services, one standard",
+            locale === "de" ? "Vier Services, ein Standard" : "Four services, one standard",
           )}
         </p>
         <p className="mx-auto mt-4 max-w-3xl font-serif text-[26px] italic leading-[1.18] tracking-tight text-[var(--color-text-primary)] md:text-[34px]">
@@ -609,7 +592,7 @@ export function ServicesEditorialClose({
           {pickT(
             t,
             "services.close.followup_lead",
-            locale === "de" ? "Pauschalpreis ansehen?" : "Looking for our prices?",
+            locale === "de" ? "Alle Preise im Überblick?" : "Looking for our prices?",
           )}{" "}
           <Link
             href={pricingHref}

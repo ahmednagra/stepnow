@@ -7,7 +7,9 @@ User=root
 WorkingDirectory=/root/stepnow/apps/backend
 EnvironmentFile=/root/stepnow/apps/backend/.env
 Environment="PATH=/root/stepnow/apps/backend/venv/bin"
-ExecStart=/root/stepnow/apps/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+# --no-proxy-headers: uvicorn keeps the real socket peer; the app resolves the client IP from
+# X-Forwarded-For itself, trusting only TRUSTED_PROXIES (app/Utils/client_ip.py).
+ExecStart=/root/stepnow/apps/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --no-proxy-headers
 Restart=always
 RestartSec=3
 

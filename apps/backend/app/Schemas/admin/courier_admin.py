@@ -41,6 +41,7 @@ class OrderStopCreate(BaseModel):
     city: str | None = Field(default=None, max_length=100)
     contact_name: str | None = Field(default=None, max_length=200)
     contact_phone: str | None = Field(default=None, max_length=50)
+    stop_date: date | None = None
     time_from: time | None = None
     time_to: time | None = None
     package_count: int | None = Field(default=None, ge=0, le=99999)
@@ -60,6 +61,7 @@ class OrderStopResponse(BaseModel):
     city: str | None
     contact_name: str | None
     contact_phone: str | None
+    stop_date: date | None
     time_from: time | None
     time_to: time | None
     package_count: int | None

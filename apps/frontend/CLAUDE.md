@@ -61,15 +61,17 @@ src/
 │   ├── queries/                     # ALL React Query read hooks
 │   │   ├── index.ts                 # barrel
 │   │   ├── useOrders.ts             # ✅ reference shape
-│   │   ├── useNotifications.ts      # ✅ exists
-│   │   ├── useCustomers.ts          # 🔲 create
-│   │   ├── useDrivers.ts            # 🔲 create
-│   │   ├── useVehicles.ts           # 🔲 create
-│   │   ├── useExpenses.ts           # 🔲 create
-│   │   └── useBookings.ts           # 🔲 create
-│   └── mutations/
-│       ├── index.ts
-│       └── use{Resource}Mutations.ts
+│   │   ├── useNotifications.ts      # ✅ polling fallback relaxes while the socket is up
+│   │   ├── useCustomers.ts          # ✅ (+ paginated useCustomerOrders)
+│   │   ├── useDrivers.ts            # ✅ (+ paginated useDriverOrders)
+│   │   ├── useVehicles.ts           # ✅
+│   │   ├── useBookings.ts           # ✅
+│   │   └── useExpenses.ts           # 🔲 create
+│   ├── mutations/
+│   │   ├── index.ts
+│   │   └── use{Resource}Mutations.ts
+│   └── realtime/
+│       └── AdminRealtimeProvider.tsx  # the ONE admin WebSocket (see Realtime)
 ├── lib/
 │   ├── nextjs-api.ts                # nextjsApiClient — browser → /api/v0/*
 │   ├── server-api.ts                # serverApiClient — BFF → FastAPI
@@ -78,6 +80,7 @@ src/
 │   ├── bff-helpers.ts               # errorResponse, apiErrorResponse, parseJsonBody, getParam
 │   ├── revalidate.ts                # revalidateForPath — bust public ISR tags after an admin write
 │   ├── api-errors.ts                # ApiError
+│   ├── realtime.ts                  # socket URL, typed frame parsing, event → queryKeys, backoff
 │   └── react-query/
 │       ├── config.ts                # STALE_TIMES, GC_TIMES
 │       ├── query-keys.ts            # queryKeys factory — ONLY place for key strings
@@ -85,9 +88,9 @@ src/
 ├── services/
 │   ├── api/endpoints.ts             # ENDPOINTS — every FastAPI URL lives here
 │   ├── orders/                      # ✅ reference shape
-│   ├── customers/                   # 🔲 create
-│   ├── drivers/                     # 🔲 create
-│   ├── vehicles/                    # 🔲 create
+│   ├── customers/                   # ✅
+│   ├── drivers/                     # ✅
+│   ├── vehicles/                    # ✅
 │   └── expenses/                    # 🔲 create
 └── types/{feature}.ts
 ```
@@ -346,7 +349,21 @@ Deps: `react-hook-form`, `@hookform/resolvers/zod`, `zod`. Never hand-roll valid
 | `vehicles`, `services`, `pricing` | `STALE_TIMES.STATIC` + `refetchOnMount: false` | `false` |
 | `customers`, `drivers` | `STALE_TIMES.STANDARD` | `false` |
 | `orders`, `bookings`, `expenses` | `STALE_TIMES.DYNAMIC` | `true` |
-| `notifications` | `STALE_TIMES.DYNAMIC` + `refetchInterval: 60_000` | `true` |
+| `notifications` | `STALE_TIMES.DYNAMIC` + unread count `refetchInterval: connected ? 5 min : 60 s` | `true` |
+
+Detail-page sub-lists (a customer's orders, a driver's jobs) are **paginated** (`page`/`size`, `Paginated<T>`, keyed `queryKeys.customers.orders(id, params)`) with `keepPreviousData`; their headline totals come from the parent record's SQL rollups (`orders_count`, `total_billed`), never from summing the loaded page.
+
+---
+
+## Realtime — `AdminRealtimeProvider`
+
+The **only** browser → FastAPI connection (Next route handlers can't proxy a WebSocket). Mounted once in `app/admin/(authed)/layout.tsx`, so it opens after `/auth/me` succeeds and closes on logout/unmount.
+
+- **URL:** `NEXT_PUBLIC_WS_URL` (origin, e.g. `wss://api.step-now.de`) → else `NEXT_PUBLIC_API_URL` with http→ws → else `ws://<host>:8000` on localhost → else disabled (polling only). Path `ENDPOINTS.REALTIME.ADMIN_SOCKET` (`/ws`, backend root). Token as `?token=`.
+- **Events → cache:** frames are parsed as `unknown` with guards (`parseRealtimeMessage`); each event only **invalidates** keys via `keysForEvent` — `orders.*` and order-category `notification.created` → orders, invoices, vehicle ledger, customers, drivers, dashboard, sidebar (+ bookings on `orders.order.created`); every `notification.created` → notifications. Bursts are coalesced (300 ms). A reconnect invalidates all `REALTIME_KEYS` (missed events).
+- **Resilience:** exponential backoff + jitter 1 s → 30 s; `{"action":"ping"}` every 25 s, one missed `pong` drops the half-open socket; close **4401** → one `ensureFreshToken()` then reconnect; reconnects immediately on `online`; closes when another tab clears the token.
+- **Fallback:** polling never goes away. Read `useRealtimeConnected()` to relax an interval while connected — never to skip a fetch.
+- New realtime event? Emit it in the backend, then map it in `keysForEvent`. Never write event payloads into the cache.
 
 ---
 
@@ -417,7 +434,7 @@ Exception: `[lang]/` public pages keep server component + `revalidate` (no auth 
 - Inline URL strings
 - Hard-coded query key arrays
 - `serverApiClient` in client components
-- Calling FastAPI from the browser (always via `/api/v0/*` BFF)
+- Calling FastAPI from the browser (always via `/api/v0/*` BFF) — sole exception: `AdminRealtimeProvider`'s WebSocket
 - Page-local UI equivalents of `AdminCard`/`AdminFormField`/`KpiTile`
 - More than one base hook per resource
 

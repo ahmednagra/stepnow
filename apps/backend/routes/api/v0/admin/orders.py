@@ -26,6 +26,7 @@ from app.Schemas.admin.orders_admin import (
     OrderStatusUpdate,
     PaymentCreate,
     PaymentResponse,
+    PaymentStatusUpdate,
 )
 from app.Utils.Helpers import get_current_admin
 
@@ -34,13 +35,13 @@ router = APIRouter(tags=["admin: orders"])
 
 # ── Convert a booking into an order ──
 @router.post("/admin/bookings/{booking_id}/convert-to-order", response_model=OrderDetailResponse, status_code=status.HTTP_201_CREATED)
-async def convert_booking(request: Request, booking_id: UUID, payload: OrderCreateFromBooking, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> OrderDetailResponse:
+def convert_booking(request: Request, booking_id: UUID, payload: OrderCreateFromBooking, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> OrderDetailResponse:
     return OrdersController.convert_from_booking(db, booking_id, payload, actor, request, background_tasks)
 
 
 # ── Orders ──
 @router.get("/admin/orders", response_model=PaginatedResponse[OrderAdminResponse])
-async def list_orders(
+def list_orders(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -53,29 +54,29 @@ async def list_orders(
 
 
 @router.get("/admin/orders/{order_id}", response_model=OrderDetailResponse)
-async def get_order(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> OrderDetailResponse:
+def get_order(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> OrderDetailResponse:
     return OrdersController.get(db, order_id)
 
 
 @router.patch("/admin/orders/{order_id}", response_model=OrderDetailResponse)
-async def update_order(request: Request, order_id: UUID, payload: OrderStatusUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> OrderDetailResponse:
+def update_order(request: Request, order_id: UUID, payload: OrderStatusUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> OrderDetailResponse:
     return OrdersController.update(db, order_id, payload, actor, request, background_tasks)
 
 
 @router.delete("/admin/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order(request: Request, order_id: UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_order(request: Request, order_id: UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     OrdersController.delete(db, order_id, actor, request, background_tasks)
 
 
 # ── Optional billing ──
 @router.post("/admin/orders/{order_id}/invoice", response_model=InvoiceAdminResponse, status_code=status.HTTP_201_CREATED)
-async def create_invoice(request: Request, order_id: UUID, payload: InvoiceCreateFromOrder, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+def create_invoice(request: Request, order_id: UUID, payload: InvoiceCreateFromOrder, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.create_invoice(db, order_id, payload, actor, request, background_tasks)
 
 
 # ── Bills (invoices) — list, edit, PDF. The vehicle account is unaffected by edits here. ──
 @router.get("/admin/invoices", response_model=PaginatedResponse[InvoiceListResponse])
-async def list_invoices(
+def list_invoices(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -87,44 +88,55 @@ async def list_invoices(
 
 
 @router.get("/admin/invoices/{invoice_id}", response_model=InvoiceAdminResponse)
-async def get_invoice(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+def get_invoice(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.get_invoice(db, invoice_id)
 
 
 @router.patch("/admin/invoices/{invoice_id}", response_model=InvoiceAdminResponse)
-async def update_invoice(request: Request, invoice_id: UUID, payload: InvoiceUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+def update_invoice(request: Request, invoice_id: UUID, payload: InvoiceUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.update_invoice(db, invoice_id, payload, actor, request)
 
 
 @router.post("/admin/invoices/{invoice_id}/issue", response_model=InvoiceAdminResponse)
-async def issue_invoice(request: Request, invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+def issue_invoice(request: Request, invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.issue_invoice(db, invoice_id, actor, request)
 
 
 @router.post("/admin/invoices/{invoice_id}/cancel", response_model=InvoiceAdminResponse)
-async def cancel_invoice(request: Request, invoice_id: UUID, payload: InvoiceCancel | None = None, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
+def cancel_invoice(request: Request, invoice_id: UUID, payload: InvoiceCancel | None = None, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> InvoiceAdminResponse:
     return OrdersController.cancel_invoice(db, invoice_id, payload, actor, request)
 
 
 @router.get("/admin/invoices/{invoice_id}/pdf")
-async def invoice_pdf_by_id(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
+def invoice_pdf_by_id(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
     path = OrdersController.invoice_pdf_path_by_id(db, invoice_id)
+    return FileResponse(path, media_type="application/pdf", filename=Path(path).name)
+
+
+@router.get("/admin/invoices/{invoice_id}/storno/pdf")
+def storno_pdf_by_id(invoice_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
+    path = OrdersController.storno_pdf_path_by_id(db, invoice_id)
     return FileResponse(path, media_type="application/pdf", filename=Path(path).name)
 
 
 # ── Payments ──
 @router.get("/admin/orders/{order_id}/payments", response_model=list[PaymentResponse])
-async def list_payments(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> list[PaymentResponse]:
+def list_payments(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> list[PaymentResponse]:
     return OrdersController.list_payments(db, order_id)
 
 
 @router.post("/admin/orders/{order_id}/payments", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
-async def record_payment(request: Request, order_id: UUID, payload: PaymentCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> PaymentResponse:
+def record_payment(request: Request, order_id: UUID, payload: PaymentCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> PaymentResponse:
     return OrdersController.record_payment(db, order_id, payload, actor, request, background_tasks)
+
+
+@router.patch("/admin/payments/{payment_id}", response_model=PaymentResponse)
+def set_payment_status(request: Request, payment_id: UUID, payload: PaymentStatusUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> PaymentResponse:
+    return OrdersController.set_payment_status(db, payment_id, payload, actor, request, background_tasks)
 
 
 # ── Invoice PDF (authenticated stream — invoices hold personal data) ──
 @router.get("/admin/orders/{order_id}/invoice/pdf")
-async def invoice_pdf(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
+def invoice_pdf(order_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> FileResponse:
     path = OrdersController.invoice_pdf_path(db, order_id)
     return FileResponse(path, media_type="application/pdf", filename=Path(path).name)

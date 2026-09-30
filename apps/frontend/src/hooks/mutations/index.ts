@@ -9,7 +9,11 @@ export {
   useUpdateOrder,
   useDeleteOrder,
   useCreateOrderInvoice,
+  useUpdateInvoice,
+  useIssueInvoice,
+  useCancelInvoice,
   useRecordOrderPayment,
+  useSetPaymentStatus,
 } from "./useOrderMutations";
 
 // ============================================

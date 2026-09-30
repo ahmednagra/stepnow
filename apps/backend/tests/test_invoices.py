@@ -68,15 +68,9 @@ def test_issue_refuses_a_non_draft(monkeypatch, status):
         InvoicesService.issue(None, "x", None, None)
 
 
-def test_cancel_refuses_an_already_cancelled_invoice(monkeypatch):
-    inv = SimpleNamespace(id="x", status="cancelled")
+@pytest.mark.parametrize("status", ["draft", "cancelled"])
+def test_cancel_refuses_a_draft_or_an_already_cancelled_invoice(monkeypatch, status):
+    inv = SimpleNamespace(id="x", status=status)
     monkeypatch.setattr(InvoicesService, "get", staticmethod(lambda db, invoice_id: inv))
     with pytest.raises(ConflictError):
         InvoicesService.cancel(None, "x", None, None)
-
-
-def test_mark_paid_refuses_a_cancelled_invoice(monkeypatch):
-    inv = SimpleNamespace(id="x", status="cancelled")
-    monkeypatch.setattr(InvoicesService, "get", staticmethod(lambda db, invoice_id: inv))
-    with pytest.raises(ConflictError):
-        InvoicesService.mark_paid(None, "x", None, None)

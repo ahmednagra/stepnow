@@ -27,6 +27,8 @@ LEGAL_PAGE_ALLOWED_PLACEHOLDERS: set[str] = {
     "site_settings.email",
     "site_settings.tax_number",
     "site_settings.vat_id",
+    "site_settings.commercial_register",
+    "site_settings.register_court",
     "site_settings.concession_number",
     "site_settings.concession_authority",
     "site_settings.concession_date",

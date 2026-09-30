@@ -13,7 +13,7 @@ router = APIRouter(prefix="/admin/services", tags=["admin: services"])
 
 
 @router.get("", response_model=PaginatedResponse[ServiceAdminResponse])
-async def list_services(
+def list_services(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -26,25 +26,25 @@ async def list_services(
 
 
 @router.get("/{service_id}", response_model=ServiceAdminResponse)
-async def get_service(service_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
+def get_service(service_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
     return ServicesController.get(db, service_id)
 
 
 @router.post("", response_model=ServiceAdminResponse, status_code=status.HTTP_201_CREATED)
-async def create_service(request: Request, payload: ServiceCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
+def create_service(request: Request, payload: ServiceCreate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
     return ServicesController.create(db, payload, actor, request)
 
 
 @router.patch("/{service_id}", response_model=ServiceAdminResponse)
-async def update_service(request: Request, service_id: UUID, payload: ServiceUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
+def update_service(request: Request, service_id: UUID, payload: ServiceUpdate, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
     return ServicesController.update(db, service_id, payload, actor, request)
 
 
 @router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_service(request: Request, service_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
+def delete_service(request: Request, service_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> None:
     ServicesController.delete(db, service_id, actor, request)
 
 
 @router.post("/{service_id}/restore", response_model=ServiceAdminResponse)
-async def restore_service(request: Request, service_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
+def restore_service(request: Request, service_id: UUID, db: Session = Depends(get_db), actor: AdminUser = Depends(get_current_admin)) -> ServiceAdminResponse:
     return ServicesController.restore(db, service_id, actor, request)

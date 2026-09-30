@@ -18,3 +18,5 @@ export { MobileStickyBar } from "./MobileStickyBar";
 export { Logo } from "./Logo";
 export { SlugMapBridge } from "./SlugMapBridge";
 export { RouteLoader } from "./RouteLoader";
+export { NotFoundView } from "./NotFoundView";
+export { ErrorView, LocalizedErrorView } from "./ErrorView";

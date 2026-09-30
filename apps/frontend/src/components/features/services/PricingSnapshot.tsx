@@ -1,7 +1,6 @@
 // apps/frontend/src/components/features/services/PricingSnapshot.tsx
-// Phase 3d polish — refined hairline rhythm, tabular-nums prices, gold
-// price color when present, and a clearer empty-state with "Pauschalpreis-
-// Angebot auf Anfrage" copy (per audit §13.2).
+// Service-detail price teaser: the first rows of the service's price list, formatted by the same
+// rules as the pricing page ("ab", "/ km", "auf Anfrage", netto), plus an empty state.
 
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -9,7 +8,7 @@ import type { TFunction } from "@/lib/i18n/t";
 import type { Locale, PricingCategoryPublic } from "@/types";
 import { Container } from "@/components/shared";
 import { Button } from "@/components/ui";
-import { formatPrice } from "@/utils/formatters";
+import { formatItemPrice, itemLabel } from "@/utils/pricing";
 import { pickT } from "@/lib/i18n/pick";
 
 interface PricingSnapshotProps {
@@ -27,7 +26,7 @@ export function PricingSnapshot({
   bookingHref,
   locale,
 }: PricingSnapshotProps) {
-  const allItems = categories.flatMap((c) => c.items);
+  const allItems = categories.flatMap((c) => c.items.map((item) => ({ item, net: c.prices_net })));
 
   if (allItems.length === 0) {
     return (
@@ -66,26 +65,33 @@ export function PricingSnapshot({
         </header>
         <p className="mb-10 max-w-prose text-[var(--color-text-secondary)]">{t("pricing.page.intro")}</p>
         <ul className="divide-y divide-[color:var(--color-border-soft)] border-y border-[color:var(--color-border-soft)]">
-          {items.map((item) => (
+          {items.map(({ item, net }) => (
             <li
               key={item.id}
               className="flex flex-wrap items-baseline justify-between gap-4 py-5"
             >
               <span className="text-[15px] tracking-tight text-[var(--color-text-primary)]">
-                {item.from_location}{" "}
-                <span className="text-[var(--color-text-secondary)]" aria-hidden="true">
-                  →
-                </span>{" "}
-                {item.to_location}
+                {itemLabel(item)}
               </span>
               <span className="font-serif text-xl tabular-nums text-[var(--color-accent-primary)]">
-                {formatPrice(item.price_eur, locale, item.currency)}
+                {formatItemPrice(item, t, locale)}
+                {net && item.price_eur !== null && (
+                  <span className="ml-1.5 font-sans text-[11px] uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
+                    {pickT(t, "pricing.price.net", locale === "de" ? "netto" : "net")}
+                  </span>
+                )}
               </span>
             </li>
           ))}
         </ul>
         <p className="mt-6 text-[12.5px] text-[var(--color-text-secondary)]">
-          {pickT(t, "pricing.disclaimer", "Alle Preise inkl. MwSt. Pauschalpreis-Garantie ab Buchungsbestätigung.")}
+          {pickT(
+            t,
+            "pricing.disclaimer",
+            locale === "de"
+              ? "Personenfahrten: Endpreise inkl. gesetzlicher MwSt., pro Fahrzeug für bis zu 4 Personen. Kurierpreise netto zzgl. MwSt."
+              : "Passenger rides: final prices incl. statutory VAT, per vehicle for up to 4 persons. Courier prices net plus VAT.",
+          )}
         </p>
       </Container>
     </section>

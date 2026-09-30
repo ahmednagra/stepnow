@@ -84,7 +84,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
                 {pickT(
                   t,
                   "home.testimonials.lead",
-                  "Persoenliche Rueckmeldungen von Fahrgaesten, die Zuverlaessigkeit, Ruhe und direkte Abstimmung benoetigen.",
+                  "Persönliche Rückmeldungen von Fahrgästen, die Zuverlässigkeit, Ruhe und direkte Abstimmung benötigen.",
                 )}
               </p>
             </div>

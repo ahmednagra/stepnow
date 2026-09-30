@@ -9,9 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
+from app.Mixins.SeedManagedMixin import SeedManagedMixin
 
 
-class Service(Base, TimestampMixin, SoftDeleteMixin):
+class Service(Base, TimestampMixin, SoftDeleteMixin, SeedManagedMixin):
     __tablename__ = "services"
     __table_args__ = (
         Index("ix_services_listing", "active", "is_deleted", "sort_order"),
@@ -39,3 +40,4 @@ class Service(Base, TimestampMixin, SoftDeleteMixin):
     meta_title_en: Mapped[str | None] = mapped_column(String(200), nullable=True)
     meta_description_de: Mapped[str | None] = mapped_column(String(300), nullable=True)
     meta_description_en: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    seed_key: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="Stable identity of a seeded service (its original slug_de); NULL for admin-created services. Survives admin slug edits")

@@ -6,7 +6,7 @@ import { getUiStringsServer } from "@/services/uiStrings";
 import { getSettingsServer } from "@/services/settings";
 import { listFaqsServer } from "@/services/faqs";
 import { createT } from "@/lib/i18n/t";
-import { buildLocalBusinessJsonLd, buildFaqPageJsonLd, buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
+import { buildLocalBusinessJsonLd, buildBreadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { Container } from "@/components/shared";
 import {
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = createT(stringsRes.strings, "de");
   return buildMetadata({
     title: t("contact.page.title"),
-    description: t("contact.page.subhead"),
+    description: t("contact.meta_description"),
     path: "/kontakt",
     locale: "de",
   });
@@ -100,7 +100,7 @@ export default async function ContactPageDe() {
               {pickT(
                 t,
                 "contact.form.lead",
-                "Schreiben Sie uns Ihr Anliegen. Wir melden uns mit einer klaren Rueckmeldung waehrend unserer Servicezeiten.",
+                "Schreiben Sie uns Ihr Anliegen. Wir melden uns mit einer klaren Rückmeldung während unserer Servicezeiten.",
               )}
             </p>
           </div>
@@ -121,7 +121,7 @@ export default async function ContactPageDe() {
                 {pickT(
                   t,
                   "contact.methods.lead",
-                  "Telefon, E-Mail und Standort auf einen Blick. Fuer kurze Rueckfragen ist der direkte Kontakt meist der schnellste Weg.",
+                  "Telefon, E-Mail und Standort auf einen Blick. Für kurze Rückfragen ist der direkte Kontakt meist der schnellste Weg.",
                 )}
               </p>
               <div className="mt-6">
@@ -156,7 +156,7 @@ export default async function ContactPageDe() {
               <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
                 <div className="max-w-2xl">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
-                    {pickT(t, "contact.faq.eyebrow", "Haeufige Fragen")}
+                    {pickT(t, "contact.faq.eyebrow", "Häufige Fragen")}
                   </p>
                   <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
                     {pickT(t, "home.faqs.heading", "Antworten auf einen Blick")}
@@ -166,7 +166,7 @@ export default async function ContactPageDe() {
                   {pickT(
                     t,
                     "contact.faq.lead",
-                    "Die wichtigsten Antworten fuer Organisation, Ablauf und Erreichbarkeit auf einen Blick.",
+                    "Die wichtigsten Antworten für Organisation, Ablauf und Erreichbarkeit auf einen Blick.",
                   )}
                 </p>
               </div>
@@ -177,7 +177,6 @@ export default async function ContactPageDe() {
       </section>
 
       <JsonLd data={buildLocalBusinessJsonLd(settings)} />
-      {topFaqs.length > 0 && <JsonLd data={buildFaqPageJsonLd(topFaqs)} />}
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: pickT(t, "nav.home", "Startseite"), href: "/" },

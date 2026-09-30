@@ -17,6 +17,7 @@ from app.Models.vehicles import Vehicle
 from app.Services.AuditService import AuditService
 from app.Services.CustomersService import CustomersService
 from app.Services.EmailService import EmailService
+from app.Services.PaymentsService import PaymentsService
 from app.Utils.finance import compute_totals, default_currency, order_date_sequence_number, vat_rate_for
 
 
@@ -133,7 +134,7 @@ class CourierOrdersService:
             OrderStop(
                 order_id=order.id, sequence=i, stop_type=s.stop_type, company=s.company,
                 address=s.address, postcode=s.postcode, city=s.city, contact_name=s.contact_name,
-                contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
+                contact_phone=s.contact_phone, stop_date=s.stop_date, time_from=s.time_from, time_to=s.time_to,
                 package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
             )
             for i, s in enumerate([*pickups, *drops], start=1)
@@ -149,6 +150,16 @@ class CourierOrdersService:
     def update_fields(db: Session, order_id: UUID, payload, actor: AdminUser, request: Request) -> Order:
         from app.Services.OrdersService import OrdersService
         o = OrdersService.get(db, order_id)
+        rate = payload.vat_rate if payload.vat_rate is not None else o.vat_rate
+        net, vat, gross = compute_totals(payload.net_amount, rate)
+        money_changed = (net, rate, payload.payment_due_days) != (o.net_amount, o.vat_rate, o.payment_due_days)
+        inv = o.current_invoice
+        if money_changed and (o.status != "open" or (inv and inv.status != "draft")):
+            raise ConflictError(
+                "The price and payment terms are locked once the order is settled or its invoice is issued. "
+                "Cancel the invoice (Storno) to correct them.",
+                order_id=str(order_id), status=o.status, invoice_status=inv.status if inv else None,
+            )
         before = CourierOrdersService._snapshot(o)
         # re-resolve customer/driver/vehicle links + courier fields + money
         if payload.vehicle_id is not None:
@@ -157,7 +168,7 @@ class CourierOrdersService:
             o.vehicle_name = CourierOrdersService._vehicle_label(vehicle)
         if payload.driver_id is not None:
             o.driver_id = payload.driver_id
-            drv = db.query(Driver).filter(Driver.id == payload.driver_id, Driver.is_deleted == False).first()
+            drv = db.query(Driver).filter(Driver.id == payload.driver_id, Driver.is_deleted == False).first()  # noqa: E712
             o.driver_name = drv.full_name if drv else (payload.driver_name or o.driver_name)
         elif payload.driver_name is not None:
             o.driver_name = payload.driver_name or None
@@ -177,14 +188,14 @@ class CourierOrdersService:
             o.stops.append(OrderStop(
                 sequence=i, stop_type=s.stop_type, company=s.company, address=s.address,
                 postcode=s.postcode, city=s.city, contact_name=s.contact_name,
-                contact_phone=s.contact_phone, time_from=s.time_from, time_to=s.time_to,
+                contact_phone=s.contact_phone, stop_date=s.stop_date, time_from=s.time_from, time_to=s.time_to,
                 package_count=s.package_count, weight_kg=s.weight_kg, notes=s.notes,
             ))
-        rate = payload.vat_rate if payload.vat_rate is not None else o.vat_rate
-        net, vat, gross = compute_totals(payload.net_amount, rate)
-        o.net_amount, o.vat_rate, o.vat_amount, o.gross_amount = net, rate, vat, gross
-        o.due_date = date.today() + timedelta(days=payload.payment_due_days)
-        o.payment_due_days = payload.payment_due_days
+        if money_changed:
+            o.net_amount, o.vat_rate, o.vat_amount, o.gross_amount = net, rate, vat, gross
+            o.due_date = o.created_at.date() + timedelta(days=payload.payment_due_days)
+            o.payment_due_days = payload.payment_due_days
+            PaymentsService.sync_states(db, o)
         o.driver_slip_pdf_url = None  # invalidate the cached slip — regenerate on next download/email
         AuditService.log(db, actor, "orders", str(o.id), "update", before, CourierOrdersService._snapshot(o), request)
         db.commit()

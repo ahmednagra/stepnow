@@ -563,7 +563,9 @@ function SortableItemRow({ item, onEdit, onDelete, onRestore }: SortableItemRowP
         {item.note_de && <p className="truncate text-[10px] italic text-slate-500">{item.note_de}</p>}
       </div>
       <span className="shrink-0 tabular-nums text-[12px] font-medium text-slate-900">
-        {formatMoney(item.price_eur, item.currency)}
+        {item.price_eur === null
+          ? "On request"
+          : `${item.is_from_price ? "ab " : ""}${formatMoney(item.price_eur, item.currency)}${item.price_unit ? ` / ${item.price_unit === "km" ? "km" : "Min."}` : ""}`}
       </span>
       <div className="flex shrink-0 items-center gap-0.5">
         {item.is_deleted ? (

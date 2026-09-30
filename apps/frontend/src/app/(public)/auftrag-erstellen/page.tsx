@@ -99,7 +99,7 @@ export default function PublicCreateOrderPage() {
       <div className="mx-auto max-w-md p-8 text-center">
         <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Check className="h-6 w-6" /></div>
         <h1 className="font-serif text-2xl text-slate-900">Auftrag erstellt</h1>
-        <p className="mt-2 text-slate-600">Auftrags-Nr.: <span className="font-mono font-semibold">A-{doneNo}</span></p>
+        <p className="mt-2 text-slate-600">Auftrags-Nr.: <span className="font-mono font-semibold">{doneNo}</span></p>
         <button type="button" onClick={() => { setDoneNo(null); setCompany(""); setPhone(""); setClientRef(""); setServiceType(""); setPickups([emptyStop()]); setDrops([emptyStop()]); setNet(""); setNotes(""); setDriverName(""); setVehicleId(""); }}
           className="mt-6 h-10 bg-slate-900 px-5 text-[13px] font-medium text-white hover:bg-slate-800">Weiteren Auftrag erstellen</button>
       </div>

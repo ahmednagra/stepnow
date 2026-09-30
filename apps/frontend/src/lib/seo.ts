@@ -45,15 +45,16 @@ export function buildMetadata({
     languages["x-default"] = alternateUrl;
   }
 
+  const desc = metaDescription(description);
   return {
     title,
-    description,
+    description: desc,
     alternates: { canonical, languages },
     openGraph: {
       type: "website",
       url: canonical,
       title,
-      description,
+      description: desc,
       locale: locale === "de" ? "de_DE" : "en_GB",
       siteName: "StepNow Rides & Movers",
       images: [{ url: image, width: 1200, height: 630, alt: title }],
@@ -61,7 +62,7 @@ export function buildMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description,
+      description: desc,
       images: [image],
     },
     robots: noindex ? { index: false, follow: false } : undefined,
@@ -76,7 +77,7 @@ export function buildLocalBusinessJsonLd(settings: SettingsPublic): Record<strin
   const businessName = settings.business_name.replace(/\s*\(Dev\)\s*$/i, "").trim();
   return {
     "@context": "https://schema.org",
-    "@type": "TaxiService",
+    "@type": "LocalBusiness",
     name: businessName,
     description:
       "Vorbestellte Mietwagen-Fahrten in der Region Stuttgart, Esslingen und Deizisau. Konzessioniert nach § 49 PBefG.",
@@ -116,7 +117,7 @@ export function buildServiceJsonLd(
     serviceType: service.title,
     url: `${SITE_CONFIG.url}${path}`,
     provider: {
-      "@type": "TaxiService",
+      "@type": "LocalBusiness",
       name: businessName,
       telephone: settings.phone,
       address: {
@@ -176,10 +177,12 @@ export function buildFaqPageJsonLd(faqs: FaqPublic[]): Record<string, unknown> {
   };
 }
 
-/** Derive a ~155-char plain-text meta description from a markdown body (e.g. legal pages). */
+/** Plain-text meta description of at most 160 chars, cut at a word boundary (search snippets truncate beyond). */
 export function metaDescription(body: string): string {
   const text = stripMarkdown(body).replace(/\s+/g, " ").trim();
-  return text.length > 155 ? `${text.slice(0, 155).trimEnd()}…` : text;
+  if (text.length <= 160) return text;
+  const cut = text.slice(0, 159);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), 120)).replace(/[\s,;:—–-]+$/, "")}…`;
 }
 
 /** Crude markdown stripper for FAQ answers in JSON-LD (HTML in JSON-LD is allowed but cleaner without). */

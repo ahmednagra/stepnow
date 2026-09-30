@@ -6,9 +6,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.Models.base import Base, live_unique
 from app.Mixins.TimestampMixin import TimestampMixin
 from app.Mixins.SoftDeleteMixin import SoftDeleteMixin
+from app.Mixins.SeedManagedMixin import SeedManagedMixin
 
 
-class UiString(Base, TimestampMixin, SoftDeleteMixin):
+class UiString(Base, TimestampMixin, SoftDeleteMixin, SeedManagedMixin):
     __tablename__ = "ui_strings"
     __table_args__ = (live_unique("uq_ui_strings_key_live", "key"),)
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)

@@ -28,7 +28,7 @@ class Payment(Base, TimestampMixin, SoftDeleteMixin):
 
     # A payment is always for a job (order). The invoice link is optional: cash jobs are paid
     # without an invoice; B2B jobs are paid against a specific one.
-    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="RESTRICT"), nullable=False, index=True)
     invoice_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True, index=True)
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)

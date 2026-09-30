@@ -31,7 +31,7 @@ apps/backend/
 │   ├── Services/                 # OrdersService DriversService VehiclesService …
 │   ├── Utils/Helpers.py          # get_current_admin decode_access_token
 │   ├── Utils/Logger.py           # get_logger(name)
-│   ├── WebSocket/manager.py      # connection_manager — admin feed only
+│   ├── WebSocket/                # manager.py (connection_manager) · publisher.py (emit_* + emit_soon) · events/
 │   └── templates/                # driver_slip.txt email templates
 └── routes/api/v0/
     ├── __init__.py               # setup_api_routes — register all routers
@@ -56,7 +56,7 @@ Model       →  persistence only
 **Router:**
 ```python
 @router.get("/admin/vehicles", response_model=PaginatedResponse[VehicleAdminResponse])
-async def list_vehicles(
+def list_vehicles(
     db: Session = Depends(get_db),
     actor: AdminUser = Depends(get_current_admin),
     page: int = Query(1, ge=1),
@@ -96,6 +96,11 @@ def create(db: Session, payload: VehicleCreate, actor: AdminUser) -> Vehicle:
 ## DB Rules
 
 - **Sync only** — `await` only for WebSocket sends and post-commit background tasks.
+- **Route handlers are `def`, not `async def`** — FastAPI runs a `def` handler in its threadpool. An `async def`
+  handler that calls sync SQLAlchemy runs the query on the event loop: requests serialise, and under a burst
+  the loop blocks in `pool.checkout()` while the connections it waits for can only be returned by teardowns
+  that need the loop — a deadlock (all pool connections "idle in transaction", API hangs). `async def` only
+  when the handler genuinely awaits (WebSocket); enforced by `tests/test_route_handlers_sync.py`.
 - **Soft-delete every read:** `.filter(Model.is_deleted == False)`
 - **Soft-delete every write:** `obj.is_deleted = True; obj.deleted_at = datetime.utcnow(); db.commit()`
 - **Shared counters:** claim via `next_counter(db, scope, key)` — atomic, no read-then-write
@@ -113,7 +118,7 @@ def create(db: Session, payload: VehicleCreate, actor: AdminUser) -> Vehicle:
 | Models | singular PascalCase: `Order` `Vehicle` `Customer` |
 | Money | `NUMERIC(10,2)` → `Decimal` — never `float`. EUR default. |
 | VAT | **DB-owned** — `services.vat_rate`, falling back to `site_settings.vat_rate_standard` (19%) / `vat_rate_reduced` (7%, PBefG). Resolve with `vat_rate_for(db, service_id, service_type)`; never a constant |
-| Docs | **Transportauftrag** (driver slip, no price, `A-…`) · **Rechnung** (§14 invoice, `R…`, IBAN/BIC + HRA footer). Issuer/bank/register from `site_settings`. Must match `Refrence Material/Docs/` templates. |
+| Docs | **Transportauftrag** (`A-…`) carries the agreed price + both signature lines; the public driver link passes `with_price=False`. **Rechnung** (§14 invoice, `R-…`, IBAN/BIC + HRA footer). Issuer/bank/register/logo from `site_settings`. Layout follows the client's `Auftragsschein`. |
 | Kunden-Nr | `customers.customer_number` — K911-series (e.g. `K911053`), generated in `CustomersService.create` |
 | Accounts | **Vehicle account = `Order.*` amounts (frozen at create); company account = `Invoice.*` (editable while draft).** Editing a bill never writes order amounts. |
 | Invoice lifecycle | `draft` → `issued` → `paid`, or `cancelled` (Storno). `update` is **draft-only** — an issued bill is a Buchungsbeleg (GoBD §§146/147 AO). Correct it with `cancel` + a replacement, which gets `R{order}-{revision}`. |
@@ -164,18 +169,34 @@ Single dep on every admin route — no RBAC, no roles:
 actor: AdminUser = Depends(get_current_admin)
 ```
 
-WebSocket: token as `?token=` query param (browsers can't set headers on WS).
+WebSocket (`/ws`, app root — [routes/api/v0/ws.py](routes/api/v0/ws.py)): token as `?token=` query param
+(browsers can't set headers on WS). A rejected token is accepted then closed with **4401** (closing
+before accept reaches the browser as a bare 1006, so the client couldn't tell it from a drop).
+`{"action":"ping"}` → `{"type":"pong"}` (client heartbeat); `subscribe`/`unsubscribe` for `order:{id}`.
+The token is checked only at connect — an open socket outlives the token's expiry.
+
+**Publishing:** sync code (services, threadpool BackgroundTasks) calls
+`emit_soon(emit_to_user(...))` / `dispatch_order_event(...)` — `emit_soon` schedules the send on the
+server loop bound in `main.lifespan`. Never `asyncio.run()` a publish: it writes to the socket from
+a foreign loop/thread, and raises outright on the loop thread. Wire shape: `build_event` →
+`{id, type, channel, data, metadata}`. Current events: `orders.order.created|updated|deleted`,
+`orders.invoice.created`, `orders.payment.recorded` (admin + `order:{id}`) and
+`notification.created` (`user:{id}`, `data.category`). The frontend maps each to React Query
+invalidations in `apps/frontend/src/lib/realtime.ts` — add new events there too. In-process only:
+one uvicorn worker (more workers need Redis fan-out behind the same publisher surface).
 
 ---
 
 ## Email
 
 ```python
-from app.Services.Notifications.Email import EmailService
-await EmailService.send(mailbox="accounts", to=[email], subject="...", html=html)
+from app.Services.EmailService import EmailService
+log = EmailService.queue(db, to_address=email, template="customer_invoice", subject="…", locale="de",
+                         module="courier_invoice")          # queued row; caller commits
+background_tasks.add_task(dispatch_emails, [log.id])       # app/Http/Controllers/_background.py, post-commit
 ```
 
-Mailboxes: `rides` taxi/bookings · `movers` driver slips · `accounts` invoices + system.
+The `module` picks the mailbox at dispatch time. Mailboxes: `rides` taxi/bookings · `movers` driver slips · `accounts` invoices + system.
 
 ---
 
@@ -219,7 +240,10 @@ failing inside `create_all`.
 There are no migration files. `sync_schema()` in [main.py](main.py) runs on every boot and makes
 the database match `Base.metadata`: creates missing tables, **adds missing columns**
 (`ALTER TABLE … ADD COLUMN IF NOT EXISTS`), creates missing indexes, and drops a legacy plain
-`UNIQUE` once a partial index supersedes it. Additive and idempotent.
+`UNIQUE` once a partial index supersedes it. Additive and idempotent. A new column's
+`server_default` is rendered by the dialect's DDL compiler (`_add_column_sql`), exactly as in
+`CREATE TABLE` — `"draft"` → `'draft'`, `text("false")` verbatim — and a NOT NULL column with a
+default gets `SET NOT NULL` right after the backfill.
 
 - `server_default=` on a new NOT NULL column — existing rows need a value.
 - `comment=` on every new column.
@@ -230,7 +254,9 @@ the database match `Base.metadata`: creates missing tables, **adds missing colum
 
 ## Sequential numbers
 
-Order numbers, Kunden-Nr. and Rechnungsnummern come from the `counters` table via
+One job, one core: the digits are claimed once via the `job` counter scope and carried by every
+document — booking `B-45260826` → order `A-45260826` → invoice `R-45260826`. The letter says which
+document, the digits say which job. Numbers come from the `counters` table via
 `next_counter(db, scope, key)` — one `INSERT … ON CONFLICT DO UPDATE … RETURNING`, so the claim
 is atomic and a number is never reissued. Never derive a number from `COUNT(*)` or `MAX()`.
 `seed_counters()` aligns the table with existing rows on boot.

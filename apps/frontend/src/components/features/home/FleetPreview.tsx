@@ -124,7 +124,7 @@ export function FleetPreview({ t, vehicles, locale = "de" }: FleetPreviewProps) 
               <span className="italic text-[var(--color-accent-primary)]">{headingPart2}</span>
             </h2>
           </div>
-          <p className="max-w-sm text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:max-w-none md:whitespace-nowrap md:text-right">
+          <p className="max-w-sm text-balance text-[13px] leading-relaxed text-[var(--color-text-secondary)] md:max-w-md md:text-right">
             {lead}
           </p>
         </header>

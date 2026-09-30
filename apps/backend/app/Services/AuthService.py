@@ -3,26 +3,38 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Request
 from sqlalchemy.orm import Session
 from config.settings import settings
-from app.Core.Exceptions import AuthError
+from app.Core.Exceptions import AuthError, RateLimitError
 from app.Models.admin import AdminUser, RefreshToken
 from app.Services.AuditService import AuditService
+from app.Utils.client_ip import client_ip
 from app.Utils.Helpers import (
     create_access_token,
     generate_refresh_token,
+    hash_password,
     hash_refresh_token,
     verify_password,
 )
+from app.Utils.rate_limit import login_throttle
+
+# Verified against when the email is unknown, so a miss costs the same bcrypt work as a wrong
+# password and response time does not reveal which admin accounts exist.
+_DUMMY_HASH = hash_password("stepnow-timing-equalizer")
 
 
 class AuthService:
 
     @staticmethod
     def login(db: Session, email: str, password: str, request: Request | None = None) -> tuple[AdminUser, dict]:
+        account = email.strip().lower()
+        if login_throttle.blocked(account):
+            raise RateLimitError("Too many failed login attempts. Try again later.")
         user = db.query(AdminUser).filter(AdminUser.email == email, AdminUser.is_deleted == False).first()
-        if not user or not verify_password(password, user.password_hash):
+        if not verify_password(password, user.password_hash if user else _DUMMY_HASH) or not user:
+            login_throttle.failed(account)
             AuditService.log(db, None, "admin_users", email, "login_failed", None, {"email": email, "reason": "invalid_credentials"}, request)
             db.commit()
             raise AuthError("Invalid credentials")
+        login_throttle.succeeded(account)
         if not user.active:
             AuditService.log(db, user, "admin_users", str(user.id), "login_failed", None, {"reason": "inactive"}, request)
             db.commit()
@@ -68,7 +80,7 @@ class AuthService:
             token_hash=hash_refresh_token(raw_refresh),
             expires_at=datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRES_DAYS),
             user_agent=request.headers.get("user-agent") if request else None,
-            ip_address=request.client.host if request and request.client else None,
+            ip_address=client_ip(request) if request else None,
         )
         db.add(refresh)
         db.flush()

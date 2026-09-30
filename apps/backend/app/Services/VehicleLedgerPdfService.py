@@ -1,6 +1,7 @@
 # apps/backend/app/Services/VehicleLedgerPdfService.py
 # Per-vehicle account PDF: that vehicle's orders + ORDER prices + totals (drivers are paid on a
-# percentage of this). Uses Order amounts only — never the editable invoice amounts.
+# percentage of this). Uses Order amounts only — never the editable invoice amounts. User text is
+# escaped before it enters Paragraph markup; the plate is reduced to a safe charset for the file name.
 
 from pathlib import Path
 from decimal import Decimal
@@ -14,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from app.Models.settings import SiteSettings
 from app.Utils.finance import default_currency
 from app.Services.InvoicePdfService import logo_flowable
+from app.Utils.pdf import atomic_output, esc, safe_filename
 
 STORAGE_DIR = Path("storage/ledgers")  # gitignored
 _INK = colors.HexColor("#0F1115")
@@ -37,7 +39,7 @@ class VehicleLedgerPdfService:
     def render(db: Session, vehicle, rows, totals, date_from=None, date_to=None) -> str:
         STORAGE_DIR.mkdir(parents=True, exist_ok=True)
         label = vehicle.plate or vehicle.name_de
-        out = STORAGE_DIR / f"Fahrzeugkonto_{label.replace(' ', '_')}.pdf"
+        out = STORAGE_DIR / f"Fahrzeugkonto_{safe_filename(label, str(vehicle.id))}.pdf"
         s = db.query(SiteSettings).filter(SiteSettings.id == 1).first()
 
         styles = getSampleStyleSheet()
@@ -45,19 +47,15 @@ class VehicleLedgerPdfService:
         body = ParagraphStyle("body", parent=styles["Normal"], fontSize=9, leading=12)
         title = ParagraphStyle("title", parent=styles["Title"], fontSize=18, textColor=_INK, spaceAfter=2)
 
-        doc = SimpleDocTemplate(
-            str(out), pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=16 * mm, bottomMargin=16 * mm,
-            title=f"Fahrzeugkonto {label}",
-        )
         story = []
         logo = logo_flowable(s)
         if logo:
             story.append(logo)
             story.append(Spacer(1, 3 * mm))
-        story.append(Paragraph((s.business_name if s else "StepNow Rides & Movers"),
+        story.append(Paragraph(esc(s.business_name if s else "StepNow Rides & Movers"),
                                ParagraphStyle("biz", parent=body, fontSize=10, textColor=_INK)))
         story.append(Spacer(1, 5 * mm))
-        story.append(Paragraph(f"Fahrzeugkonto — {label}", title))
+        story.append(Paragraph(f"Fahrzeugkonto — {esc(label)}", title))
         period = " – ".join(p for p in (_de_date(date_from) if date_from else None, _de_date(date_to) if date_to else None) if p)
         story.append(Paragraph(f"Zeitraum: {period}" if period else "Alle Aufträge", small))
         story.append(Spacer(1, 5 * mm))
@@ -67,10 +65,10 @@ class VehicleLedgerPdfService:
         data = [head]
         for o, paid, balance in rows:
             data.append([
-                f"A-{o.order_number}",
+                o.order_number,
                 _de_date(o.preferred_date or (o.scheduled_datetime.date() if o.scheduled_datetime else None)),
-                Paragraph(o.customer_name, small),
-                Paragraph(f"{o.pickup_city or o.pickup_address or '—'} → {o.destination_city or o.destination_address or '—'}", small),
+                Paragraph(esc(o.customer_name), small),
+                Paragraph(f"{esc(o.pickup_city or o.pickup_address or '—')} → {esc(o.destination_city or o.destination_address or '—')}", small),
                 _money(o.net_amount, cur), _money(o.gross_amount, cur), _money(paid, cur), _money(balance, cur),
             ])
         data.append(["", "", "", "Summe", _money(totals["net"], cur), _money(totals["gross"], cur), _money(totals["paid"], cur), _money(totals["balance"], cur)])
@@ -92,5 +90,9 @@ class VehicleLedgerPdfService:
         story.append(Spacer(1, 4 * mm))
         story.append(Paragraph(f"{totals['count']} Auftrag/Aufträge · Beträge sind Auftragspreise (nicht die Rechnungsbeträge).", small))
 
-        doc.build(story)
+        with atomic_output(out) as tmp:
+            SimpleDocTemplate(
+                str(tmp), pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=16 * mm, bottomMargin=16 * mm,
+                title=f"Fahrzeugkonto {label}",
+            ).build(story)
         return str(out)

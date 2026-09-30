@@ -1,8 +1,8 @@
 # apps/backend/app/Models/invoices.py
 # Optional billing document generated from an Order (Naeem: "...and optional billing").
-# One invoice per order (unique order_id); relax to one-to-many later if credit notes /
-# partial invoices are ever needed. All money is Numeric. invoice_number is unique and
-# sequential (§14 UStG), generated server-side in InvoicesService.
+# One LIVE invoice per order (partial unique on order_id, excluding cancelled); a Storno keeps the
+# cancelled row and its replacement takes the next '-{revision}' number. All money is Numeric.
+# invoice_number is unique and sequential (§14 UStG), generated server-side in InvoicesService.
 
 from datetime import date, datetime
 from decimal import Decimal
@@ -29,7 +29,7 @@ class Invoice(Base, TimestampMixin, SoftDeleteMixin):
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     invoice_number: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
-    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)  # indexed by uq_invoices_order_id
+    order_id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), ForeignKey("orders.id", ondelete="RESTRICT"), nullable=False)  # indexed by uq_invoices_order_id; RESTRICT: a Beleg outlives any order delete attempt
 
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)  # draft | issued | paid | cancelled
     issue_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -61,9 +61,13 @@ class Invoice(Base, TimestampMixin, SoftDeleteMixin):
 
     # Where the rendered PDF lives once generated (uploads/storage path or URL).
     pdf_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    storno_pdf_url: Mapped[str | None] = mapped_column(
+        String(500), nullable=True,
+        comment="Stornorechnung PDF, rendered once when the invoice is cancelled; never regenerated",
+    )
     internal_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    order: Mapped["Order"] = relationship(back_populates="invoice")
+    order: Mapped["Order"] = relationship(back_populates="invoices")
     payments: Mapped[list["Payment"]] = relationship(back_populates="invoice")
     # Ad-hoc charge/discount lines (Waiting Time, Zuschlag, Rabatt …). Replace-all on edit.
     items: Mapped[list["InvoiceItem"]] = relationship(

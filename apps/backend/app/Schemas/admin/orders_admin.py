@@ -82,8 +82,8 @@ class OrderAdminResponse(BaseModel):
     amount_paid: Decimal = Decimal("0.00")
     balance_due: Decimal = Decimal("0.00")
     is_overdue: bool = False           # balance_due > 0 AND due_date in the past
-    invoice_number: str | None = None  # the linked invoice's number, if one exists
-    invoice_status: str | None = None  # draft | sent | paid | ... (invoice doc lifecycle)
+    invoice_number: str | None = None  # the live (non-cancelled) invoice's number, if one exists
+    invoice_status: str | None = None  # draft | issued | paid (invoice doc lifecycle)
 
 
 # ─────────────────────────── Invoices ───────────────────────────
@@ -194,6 +194,12 @@ class PaymentCreate(BaseModel):
     notes: str | None = None
 
 
+class PaymentStatusUpdate(BaseModel):
+    # pending → received | failed, received → refunded. A refund keeps the row; derived states follow.
+    model_config = ConfigDict(extra="forbid")
+    status: str = Field(pattern=r"^(received|refunded|failed)$")
+
+
 class PaymentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -212,9 +218,10 @@ class PaymentResponse(BaseModel):
 # ─────────────────────────── Detail (order + billing + ledger) ───────────────────────────
 
 class OrderDetailResponse(OrderAdminResponse):
-    # Everything from OrderAdminResponse, plus the optional invoice, the payment ledger,
-    # and the DERIVED amounts (never stored — computed from the payments).
+    # Everything from OrderAdminResponse, plus the live invoice, the full billing history
+    # (cancelled bills + replacements), the payment ledger, and the DERIVED amounts.
     invoice: InvoiceAdminResponse | None = None
+    invoices: list[InvoiceAdminResponse] = []
     payments: list[PaymentResponse] = []
     amount_paid: Decimal
     balance_due: Decimal

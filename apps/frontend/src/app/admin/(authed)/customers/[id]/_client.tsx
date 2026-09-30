@@ -1,28 +1,33 @@
 // app/admin/(authed)/customers/[id]/_client.tsx
-// Client island: fetches the customer + order history via React Query (browser bearer auth),
-// renders the shared edit form and the order-history sub-list.
+// Client island: fetches the customer + one page of order history via React Query (browser bearer
+// auth), renders the shared edit form and the paginated order-history sub-list. The card's lifetime
+// totals come from the customer record's SQL rollups, never from summing the loaded page.
 
 "use client";
 
+import { useState } from "react";
 import { notFound } from "next/navigation";
 import { useDefaultCurrency } from "@/hooks/queries";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty } from "@/components/admin";
+import { AdminPageHeader, AdminCard, AdminTable, AdminTableRow, AdminTableCell, AdminTableEmpty, Pagination } from "@/components/admin";
 import { DeliveryStatusBadge } from "@/components/admin/DeliveryStatusBadge";
 import { formatMoney } from "@/utils/decimal";
 import { useCustomer, useCustomerOrders } from "@/hooks/queries/useCustomers";
 import { CustomerForm } from "../_form";
 
+const PAGE_SIZE = 20;
+
 export function CustomerEditClient({ id }: { id: string }) {
   const cur = useDefaultCurrency();
+  const [page, setPage] = useState(1);
   const { data: customer, isLoading, isError } = useCustomer(id);
-  const { data: orders = [] } = useCustomerOrders(id);
+  const { data: ordersPage } = useCustomerOrders(id, { page, size: PAGE_SIZE });
+  const orders = ordersPage?.items ?? [];
+  const pagination = ordersPage?.pagination;
 
   if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-slate-400" /></div>;
   if (isError || !customer) notFound();
-
-  const totalBilled = orders.reduce((sum, o) => sum + Number(o.gross_amount || 0), 0);
 
   return (
     <>
@@ -39,7 +44,7 @@ export function CustomerEditClient({ id }: { id: string }) {
       <div className="space-y-4 p-6">
         <CustomerForm mode="edit" initial={customer} />
 
-        <AdminCard flush title={`${orders.length} order${orders.length === 1 ? "" : "s"} · ${formatMoney(String(totalBilled), cur)} billed`}>
+        <AdminCard flush title={`${customer.orders_count} order${customer.orders_count === 1 ? "" : "s"} · ${formatMoney(customer.total_billed, cur)} billed`}>
           <AdminTable columns={["Order-No.", "Route", "Delivery", "Gross"]}>
             {orders.length > 0 ? orders.map((o) => (
               <AdminTableRow key={o.id}>
@@ -50,6 +55,9 @@ export function CustomerEditClient({ id }: { id: string }) {
               </AdminTableRow>
             )) : <AdminTableEmpty message="No orders yet." />}
           </AdminTable>
+          {pagination && pagination.pages > 1 && (
+            <Pagination page={pagination.page} totalPages={pagination.pages} totalItems={pagination.total} onPageChange={setPage} />
+          )}
         </AdminCard>
       </div>
     </>

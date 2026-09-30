@@ -5,6 +5,7 @@
 from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 from fastapi import Request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 from app.Core.Exceptions import ConflictError, NotFoundError
 from app.Models.admin import AdminUser
@@ -35,9 +36,11 @@ class OrdersService:
         )
         if not booking:
             raise NotFoundError("Booking not found", booking_id=str(booking_id))
+        if booking.status in ("cancelled", "rejected", "completed"):
+            raise ConflictError(f"A {booking.status} booking cannot be converted to an order", booking_id=str(booking_id), status=booking.status)
 
         # idempotency — one order per booking (also enforced by uq_orders_booking_id)
-        existing = db.query(Order).filter(Order.booking_id == booking_id, Order.is_deleted == False).first()
+        existing = db.query(Order).filter(Order.booking_id == booking_id, Order.is_deleted == False).first()  # noqa: E712
         if existing:
             raise ConflictError("Booking already converted to an order", order_number=existing.order_number)
 
@@ -77,7 +80,12 @@ class OrdersService:
             internal_notes=payload.internal_notes,
         )
         db.add(order)
-        db.flush()
+        try:
+            db.flush()
+        except IntegrityError:
+            # A concurrent convert (double-click) won the uq_orders_booking_id_live race.
+            db.rollback()
+            raise ConflictError("Booking already converted to an order", booking_id=str(booking_id))
 
         booking.status = "confirmed"
 
@@ -87,7 +95,7 @@ class OrdersService:
         return order
 
     @staticmethod
-    def get(db: Session, order_id: UUID, allow_deleted: bool = True) -> Order:
+    def get(db: Session, order_id: UUID, allow_deleted: bool = False) -> Order:
         q = db.query(Order).filter(Order.id == order_id)
         if not allow_deleted:
             q = q.filter(Order.is_deleted == False)  # noqa: E712
@@ -112,7 +120,7 @@ class OrdersService:
             )
         total = query.count()
         items = (
-            query.options(selectinload(Order.invoice))
+            query.options(selectinload(Order.invoices))
             .order_by(Order.created_at.desc())
             .offset((page - 1) * size)
             .limit(size)
@@ -159,9 +167,18 @@ class OrdersService:
     @staticmethod
     def soft_delete(db: Session, order_id: UUID, actor: AdminUser, request: Request) -> None:
         o = OrdersService.get(db, order_id)
+        live = [i for i in o.invoices if not i.is_deleted]
+        if any(i.status in ("issued", "paid") for i in live):
+            raise ConflictError(
+                "The order has an issued invoice (a Buchungsbeleg) and cannot be deleted. Cancel the invoice (Storno) and the order instead.",
+                order_id=str(order_id),
+            )
         before = OrdersService._snapshot(o)
-        o.is_deleted = True
-        o.deleted_at = datetime.now(timezone.utc)
-        o.deleted_by = actor.id
+        now = datetime.now(timezone.utc)
+        o.is_deleted, o.deleted_at, o.deleted_by = True, now, actor.id
+        # A draft was never issued — it goes with its order instead of lingering in the bills list.
+        for i in live:
+            if i.status == "draft":
+                i.is_deleted, i.deleted_at, i.deleted_by = True, now, actor.id
         AuditService.log(db, actor, "orders", str(o.id), "delete", before, OrdersService._snapshot(o), request)
         db.commit()

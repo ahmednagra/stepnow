@@ -22,6 +22,7 @@ export interface OrderStop {
   city: string | null;
   contact_name: string | null;
   contact_phone: string | null;
+  stop_date: string | null;
   time_from: string | null;
   time_to: string | null;
   package_count: number | null;
@@ -37,6 +38,7 @@ export interface OrderStopInput {
   city?: string | null;
   contact_name?: string | null;
   contact_phone?: string | null;
+  stop_date?: string | null;
   time_from?: string | null;
   time_to?: string | null;
   package_count?: number | null;

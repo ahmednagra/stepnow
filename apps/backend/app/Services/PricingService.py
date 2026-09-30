@@ -13,8 +13,8 @@ from app.Models.pricing import PricingCategory, PricingItem
 from app.Models.services import Service
 from app.Services.AuditService import AuditService
 
-_CAT_FIELDS = ("service_id", "sort_order", "name_de", "name_en", "description_de", "description_en")
-_ITEM_FIELDS = ("category_id", "sort_order", "from_location_de", "from_location_en", "to_location_de", "to_location_en", "price_eur", "currency", "distance_km", "note_de", "note_en")
+_CAT_FIELDS = ("service_id", "sort_order", "name_de", "name_en", "description_de", "description_en", "prices_net")
+_ITEM_FIELDS = ("category_id", "sort_order", "from_location_de", "from_location_en", "to_location_de", "to_location_en", "price_eur", "price_unit", "is_from_price", "currency", "distance_km", "note_de", "note_en")
 
 
 class PricingService:
@@ -156,13 +156,8 @@ class PricingService:
         return i
 
     @staticmethod
-    def list_public_for_service_slug(db: Session, slug: str, locale: str) -> list[dict[str, Any]]:
-        slug_column = Service.slug_de if locale == "de" else Service.slug_en
-        svc = db.query(Service).filter(slug_column == slug, Service.active == True, Service.is_deleted == False).first()
-        if not svc:
-            raise NotFoundError("Service not found", slug=slug, locale=locale)
-        cats = db.query(PricingCategory).filter(PricingCategory.service_id == svc.id, PricingCategory.is_deleted == False).options(selectinload(PricingCategory.items)).order_by(PricingCategory.sort_order, PricingCategory.created_at).all()
-        is_de = locale == "de"
+    def _public_categories(cats: list[PricingCategory], is_de: bool) -> list[dict[str, Any]]:
+        """Localized public payload. A NULL price_eur stays None — the UI renders it as 'auf Anfrage'."""
         result = []
         for c in cats:
             items = [i for i in c.items if not i.is_deleted]
@@ -171,17 +166,29 @@ class PricingService:
                 "id": c.id,
                 "name": c.name_de if is_de else c.name_en,
                 "description": c.description_de if is_de else c.description_en,
+                "prices_net": c.prices_net,
                 "items": [{
                     "id": i.id,
                     "from_location": i.from_location_de if is_de else i.from_location_en,
                     "to_location": i.to_location_de if is_de else i.to_location_en,
-                    "price_eur": str(i.price_eur),
+                    "price_eur": str(i.price_eur) if i.price_eur is not None else None,
+                    "price_unit": i.price_unit,
+                    "is_from_price": i.is_from_price,
                     "currency": i.currency,
                     "distance_km": str(i.distance_km) if i.distance_km is not None else None,
                     "note": i.note_de if is_de else i.note_en,
                 } for i in items],
             })
         return result
+
+    @staticmethod
+    def list_public_for_service_slug(db: Session, slug: str, locale: str) -> list[dict[str, Any]]:
+        slug_column = Service.slug_de if locale == "de" else Service.slug_en
+        svc = db.query(Service).filter(slug_column == slug, Service.active == True, Service.is_deleted == False).first()
+        if not svc:
+            raise NotFoundError("Service not found", slug=slug, locale=locale)
+        cats = db.query(PricingCategory).filter(PricingCategory.service_id == svc.id, PricingCategory.is_deleted == False).options(selectinload(PricingCategory.items)).order_by(PricingCategory.sort_order, PricingCategory.created_at).all()
+        return PricingService._public_categories(cats, locale == "de")
 
     @staticmethod
     def list_public_all_grouped(db: Session, locale: str) -> list[dict[str, Any]]:
@@ -194,33 +201,11 @@ class PricingService:
         cats_by_service: dict[UUID, list[PricingCategory]] = {sid: [] for sid in service_ids}
         for c in cats:
             cats_by_service[c.service_id].append(c)
-        result = []
-        for svc in services:
-            svc_cats = cats_by_service.get(svc.id, [])
-            categories_payload = []
-            for c in svc_cats:
-                items = [i for i in c.items if not i.is_deleted]
-                items.sort(key=lambda i: (i.sort_order, i.created_at))
-                categories_payload.append({
-                    "id": c.id,
-                    "name": c.name_de if is_de else c.name_en,
-                    "description": c.description_de if is_de else c.description_en,
-                    "items": [{
-                        "id": i.id,
-                        "from_location": i.from_location_de if is_de else i.from_location_en,
-                        "to_location": i.to_location_de if is_de else i.to_location_en,
-                        "price_eur": str(i.price_eur),
-                    "currency": i.currency,
-                    "distance_km": str(i.distance_km) if i.distance_km is not None else None,
-                        "note": i.note_de if is_de else i.note_en,
-                    } for i in items],
-                })
-            result.append({
-                "service_id": svc.id,
-                "service_slug": svc.slug_de if is_de else svc.slug_en,
-                "categories": categories_payload,
-            })
-        return result
+        return [{
+            "service_id": svc.id,
+            "service_slug": svc.slug_de if is_de else svc.slug_en,
+            "categories": PricingService._public_categories(cats_by_service.get(svc.id, []), is_de),
+        } for svc in services]
 
     @staticmethod
     def _snapshot_category(c: PricingCategory) -> dict[str, Any]:

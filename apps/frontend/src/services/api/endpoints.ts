@@ -76,6 +76,10 @@ ORDER_INVOICE: (id: string) => `/admin/orders/${id}/invoice`,
 INVOICES: "/admin/invoices",
 INVOICE_BY_ID: (id: string) => `/admin/invoices/${id}`,
 INVOICE_PDF: (id: string) => `/admin/invoices/${id}/pdf`,
+INVOICE_ISSUE: (id: string) => `/admin/invoices/${id}/issue`,
+INVOICE_CANCEL: (id: string) => `/admin/invoices/${id}/cancel`,
+INVOICE_STORNO_PDF: (id: string) => `/admin/invoices/${id}/storno/pdf`,
+PAYMENT_BY_ID: (id: string) => `/admin/payments/${id}`,
 ORDER_PARCEL: (id: string) => `/admin/orders/${id}/parcel`,
 ORDER_PAYMENTS: (id: string) => `/admin/orders/${id}/payments`,
 ORDER_DELIVERY_STATUS: (id: string) => `/admin/orders/${id}/delivery-status`,
@@ -93,5 +97,10 @@ DRIVER_ORDERS: (id: string) => `/admin/drivers/${id}/orders`,
 DRIVER_LICENSE_CHECK: (id: string) => `/admin/drivers/${id}/license-check`,
 PARCEL_ORDERS: "/admin/parcel-orders",
 BOOKING_CONVERT_TO_ORDER: (id: string) => `/admin/bookings/${id}/convert-to-order`,
+},
+// Mounted at the backend ROOT (not under /api/v0) and reached by the browser directly — the one
+// documented exception to the BFF rule, because Next route handlers cannot proxy a WebSocket.
+REALTIME: {
+ADMIN_SOCKET: "/ws",
 },
 } as const;

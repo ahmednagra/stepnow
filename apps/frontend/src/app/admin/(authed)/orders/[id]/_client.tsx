@@ -30,7 +30,7 @@ export function OrderDetailClient({ id }: { id: string }) {
           </Link>
         }
       />
-      <div className="p-6"><OrderDetailIsland initial={order} /></div>
+      <div className="p-6"><OrderDetailIsland key={order.status} order={order} /></div>
     </>
   );
 }

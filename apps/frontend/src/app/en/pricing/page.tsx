@@ -4,14 +4,15 @@ import Link from "next/link";
 import { getUiStringsServer } from "@/services/uiStrings";
 import { listServicesServer } from "@/services/services";
 import { listAllPricingServer } from "@/services/pricing";
-import { findLowestPrice } from "@/components/features/services";
+import { findLowestPrice } from "@/utils/pricing";
 import { getSettingsServer } from "@/services/settings";
 import { createT } from "@/lib/i18n/t";
 import { buildMetadata, buildBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/utils/json-ld";
 import { Container, MobileStickyBar } from "@/components/shared";
 import {
-  PricingTabs,
+  PricingPriceList,
+  PricingDiscounts,
   PricingTrustStrip,
   PricingIncludedMoment,
   PricingExcludedStrip,
@@ -105,7 +106,7 @@ export default async function PricingPageEn() {
           <div className="mb-7 flex flex-col items-start gap-5 md:mb-9 md:flex-row md:items-end md:justify-between md:gap-12">
             <div className="max-w-2xl">
               <p className="text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--color-accent-primary)]">
-                {pickT(t, "pricing.tabs.eyebrow", "Full price list")}
+                {pickT(t, "pricing.tabs.eyebrow", "Current price list")}
               </p>
               <h2 className="mt-2 font-serif text-[34px] leading-[1.05] tracking-tight text-[var(--color-text-primary)] md:text-[42px]">
                 {pickT(t, "pricing.tabs.heading", "Every route, every service")}
@@ -115,15 +116,16 @@ export default async function PricingPageEn() {
               {pickT(
                 t,
                 "pricing.tabs.lead",
-                "Select a service to browse all available routes and prices. Custom destinations get a quote within 30 minutes.",
+                "All prices from our current price list. For other routes you receive a quote within 30 minutes.",
               )}
             </p>
           </div>
-          <PricingTabs strings={stringsRes.strings} locale="en" data={pricingByService} />
+          <PricingPriceList t={t} locale="en" data={pricingByService} />
         </Container>
       </section>
 
       <PricingTrustStrip t={t} locale="en" />
+      <PricingDiscounts t={t} locale="en" />
       <PricingIncludedMoment t={t} locale="en" />
       <PricingExcludedStrip t={t} locale="en" />
       <PricingComparison t={t} locale="en" lowestPrice={lowest.price} lowestCurrency={lowest.currency} />

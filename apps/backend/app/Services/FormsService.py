@@ -10,6 +10,7 @@ from app.Models.contact import ContactMessage
 from app.Services.AuditService import AuditService
 from app.Services.EmailService import EmailService
 from app.Services.SettingsService import SettingsService
+from app.Utils.client_ip import client_ip
 from app.Utils.finance import booking_reference
 
 
@@ -44,7 +45,7 @@ class FormsService:
             company_name=data.get("company_name"),
             company_vatid=data.get("company_vatid"),
             language=data.get("language", "de"),
-            ip_address=request.client.host if request and request.client else None,
+            ip_address=client_ip(request) if request else None,
             user_agent=request.headers.get("user-agent") if request else None,
         )
         db.add(booking)
@@ -68,7 +69,7 @@ class FormsService:
             phone=data.get("phone"),
             message=data["message"],
             language=data.get("language", "de"),
-            ip_address=request.client.host if request and request.client else None,
+            ip_address=client_ip(request) if request else None,
             user_agent=request.headers.get("user-agent") if request else None,
         )
         db.add(message)
