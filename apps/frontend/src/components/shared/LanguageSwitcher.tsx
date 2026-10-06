@@ -2,7 +2,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUiStrings } from "@/hooks/useUiStrings";
 import { getMirrorUrl } from "@/lib/i18n/routes";
@@ -42,6 +41,17 @@ function persistLocaleCookie(locale: Locale): void {
   document.cookie = parts.join("; ");
 }
 
+/** Prefetch the other-locale page on hover/focus/touch so the switch loads from cache. */
+const prefetchedDocuments = new Set<string>();
+function prefetchDocument(href: string): void {
+  if (typeof document === "undefined" || prefetchedDocuments.has(href)) return;
+  prefetchedDocuments.add(href);
+  const link = document.createElement("link");
+  link.rel = "prefetch";
+  link.href = href;
+  document.head.appendChild(link);
+}
+
 export function LanguageSwitcher({ className, dynamicSlugMap }: LanguageSwitcherProps) {
   const { locale, t } = useUiStrings();
   const pathname = usePathname() ?? "/";
@@ -74,17 +84,23 @@ export function LanguageSwitcher({ className, dynamicSlugMap }: LanguageSwitcher
         </span>
       );
     }
+    const warm = isActive ? undefined : () => prefetchDocument(href);
+    // Plain <a>, not <Link>: a router prefetch made with the old cookie caches the
+    // middleware's redirect back to this page, so the click would do nothing.
     return (
-      <Link
+      <a
         href={href}
         hrefLang={target}
         aria-label={name}
         onClick={() => persistLocaleCookie(target)}
+        onPointerEnter={warm}
+        onFocus={warm}
+        onTouchStart={warm}
         aria-current={isActive ? "true" : undefined}
         className={cn("transition-colors duration-base", isActive ? activeStyles : inactiveStyles)}
       >
         {label}
-      </Link>
+      </a>
     );
   }
 
