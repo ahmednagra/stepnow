@@ -23,8 +23,24 @@ interface ErrorViewProps {
   reset: () => void;
 }
 
+const CHUNK_RELOAD_KEY = "stepnow_chunk_reload";
+
+/** A tab open across a deploy requests chunks that no longer exist; reload once per URL to fetch the new build. */
+function reloadOnceForChunkError(error: Error): boolean {
+  if (error.name !== "ChunkLoadError" && !/Loading (CSS )?chunk .+ failed/i.test(error.message)) return false;
+  try {
+    if (sessionStorage.getItem(CHUNK_RELOAD_KEY) === window.location.href) return false;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, window.location.href);
+  } catch {
+    return false;
+  }
+  window.location.reload();
+  return true;
+}
+
 export function ErrorView({ copy, error, reset }: ErrorViewProps) {
   useEffect(() => {
+    if (reloadOnceForChunkError(error)) return;
     if (process.env.NODE_ENV !== "production") {
       console.error("Route error:", error);
     }
