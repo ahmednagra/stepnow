@@ -46,8 +46,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
     (p): p is string => p !== null,
   );
 
-  const portraitUrl =
-    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80";
+  const portraitUrl = "/others/owner.webp";
   const ownerName = settings.owner_name || resolve(t, "about.story.author") || "Naeem Ahmad";
   const eyebrow = resolve(t, "about.story.eyebrow", "Die Geschichte");
   const heading = resolve(t, "about.story.heading", "Unsere Geschichte");
@@ -81,6 +80,7 @@ export function StorySection({ t, settings }: StorySectionProps) {
                 alt={ownerName}
                 fill
                 sizes="(max-width: 768px) 100vw, 220px"
+                quality={90}
                 className="object-cover"
               />
             </div>

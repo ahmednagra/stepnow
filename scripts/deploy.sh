@@ -138,6 +138,17 @@ systemctl stop stepnow-frontend || true
 # From here until the restart below the site is down; say so loudly if the build fails.
 trap 'echo "!! deploy failed after stopping the frontend — site is DOWN. Fix, then re-run deploy.sh" >&2' ERR
 
+# A server left on :3000 outside systemd would keep its old build in memory while .next is rebuilt.
+port3000_pids() { ss -ltnpH 'sport = :3000' 2>/dev/null | grep -oP 'pid=\K[0-9]+' | sort -u || true; }
+pids=$(port3000_pids)
+if [ -n "$pids" ]; then
+  echo "    !! port 3000 still in use after stopping stepnow-frontend — killing:"
+  ps -o pid=,etime=,args= -p "${pids//$'\n'/,}" || true
+  kill $pids 2>/dev/null || true; sleep 5
+  pids=$(port3000_pids); [ -z "$pids" ] || kill -9 $pids 2>/dev/null || true; sleep 1
+  [ -z "$(port3000_pids)" ] || { echo "    !! could not free port 3000 — stop it by hand"; exit 1; }
+fi
+
 echo "==> [6/8] Frontend: install + clean build"
 cd "$FRONTEND_DIR"
 if [ -f package-lock.json ]; then npm ci; else npm install; fi
@@ -155,6 +166,23 @@ echo "==> Start frontend"
 systemctl enable stepnow-backend stepnow-frontend >/dev/null 2>&1 || true
 systemctl restart stepnow-frontend
 trap - ERR
+
+# The running server must serve the build on disk (its HTML embeds the buildId it started with).
+BUILD_ID=$(cat "$FRONTEND_DIR/.next/BUILD_ID")
+echo "    verifying frontend serves build $BUILD_ID ..."
+for i in $(seq 1 30); do
+  home=$(curl -fsS http://127.0.0.1:3000/ 2>/dev/null || true)
+  if [[ "$home" == *"$BUILD_ID"* ]] \
+     && curl -fsS -o /dev/null "http://127.0.0.1:3000/_next/static/$BUILD_ID/_buildManifest.js"; then
+    echo "    frontend serves the new build (after ${i}s)"
+    break
+  fi
+  if [ "$i" = "30" ]; then
+    echo "    !! frontend is not serving build $BUILD_ID — check: journalctl -u stepnow-frontend -n 40 --no-pager"
+    exit 1
+  fi
+  sleep 1
+done
 
 echo "==> [8/8] Status"
 sleep 5

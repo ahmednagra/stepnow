@@ -58,7 +58,15 @@ function enToDeStaticOnly(path: string): string | null {
   return null;
 }
 
+/** LanguageSwitcher's document prefetch — must get the real page, not a cookie redirect. */
+function isDocumentPrefetch(request: NextRequest): boolean {
+  const purpose = request.headers.get("sec-purpose") ?? request.headers.get("purpose") ?? "";
+  return purpose.includes("prefetch");
+}
+
 export function middleware(request: NextRequest) {
+  if (isDocumentPrefetch(request)) return passThrough(request);
+
   const path = request.nextUrl.pathname;
   const englishPath = isEnglishPath(path);
   const cookieValue = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
